@@ -26,6 +26,18 @@ relay_gpio = 17
     return str(config_path)
 
 
+def _mock_gpio_pump(ok: bool = True, error: str | None = None):
+    """Create a mock GPIORelayPump for tests."""
+    mock = MagicMock()
+    mock.set_pump.return_value = MagicMock(ok=ok, error=error)
+    return mock
+
+
+def _patch_get_pump(mock_pump):
+    """Patch _get_pump_controller to return a specific mock."""
+    return patch("pi.cli.pump_control._get_pump_controller", return_value=mock_pump)
+
+
 async def _async_none():
     return None
 
@@ -39,25 +51,11 @@ async def _async_false():
 
 
 class TestPumpPulse:
-    def test_pulse_no_esp32(self, tmp_path):
-        runner = CliRunner()
-        config = _make_config(tmp_path)
-
-        mock_esp = MagicMock()
-        mock_esp.connect.return_value = False
-
-        with patch("pi.drivers.esp32_serial.ESP32Serial", return_value=mock_esp):
-            result = runner.invoke(cli, ["--config", config, "pump", "pulse", "10"])
-
-        assert "Could not connect" in result.output
-
     def test_pulse_success(self, tmp_path):
         runner = CliRunner()
         config = _make_config(tmp_path)
 
-        mock_esp = MagicMock()
-        mock_esp.connect.return_value = True
-        mock_esp.set_pump.return_value = MagicMock(ok=True)
+        mock_pump = _mock_gpio_pump()
 
         mock_repo = MagicMock()
         mock_repo.connect = MagicMock(return_value=_async_none())
@@ -67,7 +65,7 @@ class TestPumpPulse:
         mock_svc = MagicMock()
         mock_svc.pulse = MagicMock(return_value=_async_true())
 
-        with patch("pi.drivers.esp32_serial.ESP32Serial", return_value=mock_esp):
+        with _patch_get_pump(mock_pump):
             with patch("pi.data.repository.SensorRepository", return_value=mock_repo):
                 with patch("pi.services.irrigation.IrrigationService", return_value=mock_svc):
                     result = runner.invoke(
@@ -81,8 +79,7 @@ class TestPumpPulse:
         runner = CliRunner()
         config = _make_config(tmp_path)
 
-        mock_esp = MagicMock()
-        mock_esp.connect.return_value = True
+        mock_pump = _mock_gpio_pump()
 
         mock_repo = MagicMock()
         mock_repo.connect = MagicMock(return_value=_async_none())
@@ -92,7 +89,7 @@ class TestPumpPulse:
         mock_svc = MagicMock()
         mock_svc.pulse = MagicMock(return_value=_async_false())
 
-        with patch("pi.drivers.esp32_serial.ESP32Serial", return_value=mock_esp):
+        with _patch_get_pump(mock_pump):
             with patch("pi.data.repository.SensorRepository", return_value=mock_repo):
                 with patch("pi.services.irrigation.IrrigationService", return_value=mock_svc):
                     result = runner.invoke(
@@ -103,27 +100,13 @@ class TestPumpPulse:
 
 
 class TestPumpOnOff:
-    def test_pump_on_no_esp32(self, tmp_path):
-        runner = CliRunner()
-        config = _make_config(tmp_path)
-
-        mock_esp = MagicMock()
-        mock_esp.connect.return_value = False
-
-        with patch("pi.drivers.esp32_serial.ESP32Serial", return_value=mock_esp):
-            result = runner.invoke(cli, ["--config", config, "pump", "on"])
-
-        assert "Could not connect" in result.output
-
     def test_pump_on_success(self, tmp_path):
         runner = CliRunner()
         config = _make_config(tmp_path)
 
-        mock_esp = MagicMock()
-        mock_esp.connect.return_value = True
-        mock_esp.set_pump.return_value = MagicMock(ok=True)
+        mock_pump = _mock_gpio_pump()
 
-        with patch("pi.drivers.esp32_serial.ESP32Serial", return_value=mock_esp), \
+        with _patch_get_pump(mock_pump), \
              patch("time.sleep"):
             result = runner.invoke(cli, ["--config", config, "pump", "on", "--max-seconds", "1"])
 
@@ -134,11 +117,9 @@ class TestPumpOnOff:
         runner = CliRunner()
         config = _make_config(tmp_path)
 
-        mock_esp = MagicMock()
-        mock_esp.connect.return_value = True
-        mock_esp.set_pump.return_value = MagicMock(ok=True)
+        mock_pump = _mock_gpio_pump()
 
-        with patch("pi.drivers.esp32_serial.ESP32Serial", return_value=mock_esp):
+        with _patch_get_pump(mock_pump):
             result = runner.invoke(cli, ["--config", config, "pump", "off"])
 
         assert result.exit_code == 0
@@ -148,11 +129,9 @@ class TestPumpOnOff:
         runner = CliRunner()
         config = _make_config(tmp_path)
 
-        mock_esp = MagicMock()
-        mock_esp.connect.return_value = True
-        mock_esp.set_pump.return_value = MagicMock(ok=False, error="relay stuck")
+        mock_pump = _mock_gpio_pump(ok=False, error="relay stuck")
 
-        with patch("pi.drivers.esp32_serial.ESP32Serial", return_value=mock_esp):
+        with _patch_get_pump(mock_pump):
             result = runner.invoke(cli, ["--config", config, "pump", "on", "--max-seconds", "1"])
 
         assert "Error:" in result.output

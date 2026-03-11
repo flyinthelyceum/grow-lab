@@ -29,7 +29,6 @@ REG_CALIB_00 = 0x88
 REG_CALIB_26 = 0xE1
 REG_CTRL_HUM = 0xF2
 REG_CTRL_MEAS = 0xF4
-REG_CONFIG = 0xF5
 REG_DATA = 0xF7
 
 # Oversampling x1 for all, normal mode

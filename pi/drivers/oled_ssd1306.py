@@ -27,7 +27,6 @@ class OLEDDriver:
         self._device = None
         self._image = Image.new("1", (self.WIDTH, self.HEIGHT), 0)
         self._draw = ImageDraw.Draw(self._image)
-        self._font = _load_font(10)
         self._try_init_device()
 
     @property

@@ -6,17 +6,12 @@ window parameter: 1h, 24h, 7d.
 
 from __future__ import annotations
 
-import re
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 
-from fastapi import APIRouter, HTTPException, Path, Query, Request
+from fastapi import APIRouter, Path, Query, Request
 
 router = APIRouter(prefix="/api")
-
-# Sensor IDs must be alphanumeric with underscores, max 64 chars
-_SENSOR_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_]{1,64}$")
-
 
 class TimeWindow(str, Enum):
     one_hour = "1h"

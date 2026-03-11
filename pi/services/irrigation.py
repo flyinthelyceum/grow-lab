@@ -1,22 +1,28 @@
 """Irrigation scheduler with safety limits.
 
-Controls pump relay via the ESP32. Supports scheduled pulses and
-manual one-shot pulses with configurable max runtime and minimum
-interval between activations.
+Controls pump relay via ESP32 serial or direct GPIO relay.
+Supports scheduled pulses and manual one-shot pulses with
+configurable max runtime and minimum interval between activations.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, timedelta, timezone
+from typing import Protocol
 
 from pi.config.schema import IrrigationConfig
 from pi.data.models import SystemEvent
 from pi.data.repository import SensorRepository
-from pi.drivers.esp32_serial import ESP32Serial
 
 logger = logging.getLogger(__name__)
+
+
+class PumpController(Protocol):
+    """Any object that can switch a pump on/off."""
+
+    def set_pump(self, on: bool): ...
 
 
 def _utcnow() -> datetime:
@@ -29,11 +35,11 @@ class IrrigationService:
 
     def __init__(
         self,
-        esp32: ESP32Serial,
+        pump: PumpController,
         repository: SensorRepository,
         config: IrrigationConfig,
     ) -> None:
-        self._esp32 = esp32
+        self._pump = pump
         self._repository = repository
         self._config = config
         self._task: asyncio.Task | None = None
@@ -143,8 +149,6 @@ class IrrigationService:
                     if key in fired_today:
                         continue
 
-                    sched_time = time(schedule.hour, schedule.minute)
-                    # Fire if we're within 60 seconds past the scheduled time
                     sched_minutes = schedule.hour * 60 + schedule.minute
                     now_minutes = current_time.hour * 60 + current_time.minute
                     if now_minutes == sched_minutes:
@@ -157,8 +161,8 @@ class IrrigationService:
             raise
 
     async def _pump_on(self) -> None:
-        """Turn the pump on via ESP32."""
-        response = self._esp32.set_pump(True)
+        """Turn the pump on via pump controller."""
+        response = self._pump.set_pump(True)
         self._pump_active = True
         self._last_activation = _utcnow()
 
@@ -168,8 +172,8 @@ class IrrigationService:
             logger.warning("Pump ON command failed: %s", response.error)
 
     async def _pump_off(self) -> None:
-        """Turn the pump off via ESP32."""
-        response = self._esp32.set_pump(False)
+        """Turn the pump off via pump controller."""
+        response = self._pump.set_pump(False)
         self._pump_active = False
 
         if response.ok:

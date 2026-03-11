@@ -122,18 +122,29 @@ def build_registry(config: AppConfig, scan: ScanResult) -> SensorRegistry:
     # DS18B20 (1-Wire)
     if config.sensors.ds18b20.enabled:
         if scan.onewire_devices:
-            statuses.append(
-                SensorStatus(
-                    "ds18b20",
-                    False,
-                    None,
-                    "driver not yet implemented",
-                )
-            )
-            logger.info(
-                "DS18B20 detected (%d device(s)), driver pending",
-                len(scan.onewire_devices),
-            )
+            for ow_device in scan.onewire_devices:
+                try:
+                    from pi.drivers.ds18b20 import DS18B20Driver
+
+                    driver = DS18B20Driver(
+                        device_id=ow_device.device_id,
+                        device_path=ow_device.path,
+                    )
+                    sid = driver.sensor_id
+                    statuses.append(
+                        SensorStatus(sid, True, driver, "detected")
+                    )
+                    logger.info("DS18B20 registered: %s", sid)
+                except Exception as exc:
+                    statuses.append(
+                        SensorStatus(
+                            f"ds18b20_{ow_device.device_id}",
+                            False,
+                            None,
+                            f"init failed: {exc}",
+                        )
+                    )
+                    logger.error("DS18B20 %s init failed: %s", ow_device.device_id, exc)
         else:
             statuses.append(
                 SensorStatus("ds18b20", False, None, "no 1-Wire devices found")

@@ -8,6 +8,34 @@ from __future__ import annotations
 import click
 
 
+def _get_pump_controller(config):
+    """Get the best available pump controller.
+
+    Tries GPIO relay first (direct Pi control), falls back to ESP32 serial.
+    """
+    from pi.drivers.gpio_relay import GPIORelayPump
+
+    gpio_pump = GPIORelayPump(gpio_pin=config.irrigation.relay_gpio)
+    test = gpio_pump.set_pump(False)
+    if test.ok:
+        click.echo(f"Using GPIO relay on pin {config.irrigation.relay_gpio}")
+        return gpio_pump
+
+    from pi.drivers.esp32_serial import ESP32Serial
+
+    esp32 = ESP32Serial(
+        port=config.serial.port,
+        baud=config.serial.baud,
+        timeout=config.serial.timeout,
+    )
+    if esp32.connect():
+        click.echo("Using ESP32 serial pump controller")
+        return esp32
+
+    click.echo("Warning: No pump controller available (GPIO and ESP32 both failed)")
+    return gpio_pump  # Return GPIO anyway — errors will surface on set_pump
+
+
 @click.group("pump")
 def pump_group() -> None:
     """Pump and irrigation control commands."""
@@ -21,27 +49,16 @@ def pump_pulse(ctx: click.Context, duration: int) -> None:
     import asyncio
 
     from pi.data.repository import SensorRepository
-    from pi.drivers.esp32_serial import ESP32Serial
     from pi.services.irrigation import IrrigationService
 
     config = ctx.obj["config"]
-
-    esp32 = ESP32Serial(
-        port=config.serial.port,
-        baud=config.serial.baud,
-        timeout=config.serial.timeout,
-    )
-
-    if not esp32.connect():
-        click.echo("Error: Could not connect to ESP32")
-        ctx.exit(1)
-        return
+    pump = _get_pump_controller(config)
 
     async def _pulse() -> None:
         repo = SensorRepository(config.system.db_path)
         await repo.connect()
         try:
-            service = IrrigationService(esp32, repo, config.irrigation)
+            service = IrrigationService(pump, repo, config.irrigation)
             effective = min(duration, config.irrigation.max_runtime_seconds)
             click.echo(f"Pump pulse: {effective}s...")
             ok = await service.pulse(duration)
@@ -51,7 +68,7 @@ def pump_pulse(ctx: click.Context, duration: int) -> None:
                 click.echo("Pump pulse blocked (cooldown period)")
         finally:
             await repo.close()
-            esp32.close()
+            pump.close()
 
     asyncio.run(_pulse())
 
@@ -65,22 +82,10 @@ def pump_on(ctx: click.Context, max_seconds: int) -> None:
     import time as _time
 
     config = ctx.obj["config"]
-
-    from pi.drivers.esp32_serial import ESP32Serial
-
-    esp32 = ESP32Serial(
-        port=config.serial.port,
-        baud=config.serial.baud,
-        timeout=config.serial.timeout,
-    )
-
-    if not esp32.connect():
-        click.echo("Error: Could not connect to ESP32")
-        ctx.exit(1)
-        return
+    pump = _get_pump_controller(config)
 
     try:
-        response = esp32.set_pump(True)
+        response = pump.set_pump(True)
         if response.ok:
             click.echo(f"Pump ON (auto-shutoff in {max_seconds}s — Ctrl+C to stop early)")
             try:
@@ -91,8 +96,8 @@ def pump_on(ctx: click.Context, max_seconds: int) -> None:
             click.echo(f"Error: {response.error}")
             return
     finally:
-        esp32.set_pump(False)
-        esp32.close()
+        pump.set_pump(False)
+        pump.close()
         click.echo("Pump OFF")
 
 
@@ -101,28 +106,16 @@ def pump_on(ctx: click.Context, max_seconds: int) -> None:
 def pump_off(ctx: click.Context) -> None:
     """Turn the pump off."""
     config = ctx.obj["config"]
-
-    from pi.drivers.esp32_serial import ESP32Serial
-
-    esp32 = ESP32Serial(
-        port=config.serial.port,
-        baud=config.serial.baud,
-        timeout=config.serial.timeout,
-    )
-
-    if not esp32.connect():
-        click.echo("Error: Could not connect to ESP32")
-        ctx.exit(1)
-        return
+    pump = _get_pump_controller(config)
 
     try:
-        response = esp32.set_pump(False)
+        response = pump.set_pump(False)
         if response.ok:
             click.echo("Pump OFF")
         else:
             click.echo(f"Error: {response.error}")
     finally:
-        esp32.close()
+        pump.close()
 
 
 @pump_group.command("schedule")

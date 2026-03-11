@@ -41,6 +41,9 @@ include = ["pi*"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# Exclude browser (Playwright) tests from default run — they need their own session
+# Run separately: pytest tests/browser/ -v
+addopts = "--ignore=tests/browser"
 
 [tool.coverage.run]
 source = ["pi"]
