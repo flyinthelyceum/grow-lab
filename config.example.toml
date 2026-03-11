@@ -1,0 +1,77 @@
+# Living Light System — V0 Configuration
+# Copy this file to config.toml and adjust for your setup.
+
+[system]
+log_level = "INFO"
+data_dir = "/home/pi/grow-lab-data"
+db_path = "/home/pi/grow-lab-data/growlab.db"
+
+[i2c]
+bus = 1  # /dev/i2c-1
+
+[serial]
+port = "/dev/ttyUSB0"
+baud = 115200
+timeout = 2.0
+
+[sensors.bme280]
+address = 0x76
+interval_seconds = 120
+enabled = true
+
+[sensors.ezo_ph]
+address = 0x63
+interval_seconds = 300
+enabled = true
+
+[sensors.ezo_ec]
+address = 0x64
+interval_seconds = 300
+enabled = true
+
+[sensors.ds18b20]
+gpio = 4
+interval_seconds = 120
+enabled = true
+
+[sensors.soil_moisture]
+address = 0x36
+interval_seconds = 300
+enabled = true
+
+[camera]
+interval_seconds = 600
+resolution = [4608, 2592]
+output_dir = "/home/pi/grow-lab-data/images"
+enabled = true
+
+[lighting]
+mode = "veg"           # "veg" or "flower"
+on_hour = 6
+off_hour = 22
+intensity = 200        # PWM 0-255
+ramp_minutes = 15
+
+[[irrigation.schedules]]
+hour = 8
+minute = 0
+duration_seconds = 10
+
+[[irrigation.schedules]]
+hour = 14
+minute = 0
+duration_seconds = 10
+
+[[irrigation.schedules]]
+hour = 20
+minute = 0
+duration_seconds = 10
+
+[irrigation]
+max_runtime_seconds = 30
+min_interval_minutes = 60
+relay_gpio = 17
+
+[display]
+enabled = false
+address = 0x3C

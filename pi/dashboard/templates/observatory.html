@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Living Light Observatory</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="observatory-header">
+        <h1 class="observatory-title">Living Light Observatory</h1>
+        <div class="time-controls">
+            <button class="time-btn active" data-window="1h">1H</button>
+            <button class="time-btn" data-window="24h">24H</button>
+            <button class="time-btn" data-window="7d">7D</button>
+        </div>
+        <div class="system-clock" id="system-clock"></div>
+    </header>
+
+    <main class="observatory-grid">
+        <!-- LIGHT Panel -->
+        <section class="panel panel-light" id="panel-light">
+            <div class="panel-header">
+                <span class="panel-label">LIGHT</span>
+                <span class="panel-value" id="light-value">--</span>
+                <span class="panel-unit">PWM</span>
+            </div>
+            <div class="panel-chart" id="chart-light"></div>
+            <div class="panel-meta">
+                <span class="meta-item" id="light-mode">--</span>
+                <span class="meta-item" id="light-schedule">--</span>
+            </div>
+        </section>
+
+        <!-- WATER Panel -->
+        <section class="panel panel-water" id="panel-water">
+            <div class="panel-header">
+                <span class="panel-label">WATER</span>
+                <span class="panel-value" id="water-value">--</span>
+                <span class="panel-unit"></span>
+            </div>
+            <div class="panel-chart" id="chart-water"></div>
+            <div class="panel-meta">
+                <span class="meta-item" id="water-last">Last: --</span>
+            </div>
+        </section>
+
+        <!-- AIR Panel -->
+        <section class="panel panel-air" id="panel-air">
+            <div class="panel-header">
+                <span class="panel-label">AIR</span>
+                <span class="panel-value" id="air-temp">--</span>
+                <span class="panel-unit">°C</span>
+            </div>
+            <div class="panel-chart" id="chart-air"></div>
+            <div class="panel-meta">
+                <span class="meta-item" id="air-humidity">Humidity: --%</span>
+                <span class="meta-item" id="air-pressure">Pressure: -- hPa</span>
+            </div>
+        </section>
+
+        <!-- ROOT Panel -->
+        <section class="panel panel-root" id="panel-root">
+            <div class="panel-header">
+                <span class="panel-label">ROOT</span>
+                <span class="panel-value" id="root-ph">--</span>
+                <span class="panel-unit">pH</span>
+            </div>
+            <div class="panel-chart" id="chart-root"></div>
+            <div class="panel-meta">
+                <span class="meta-item" id="root-ec">EC: -- µS/cm</span>
+                <span class="meta-item" id="root-temp">Temp: --°C</span>
+            </div>
+        </section>
+
+        <!-- PLANT Panel -->
+        <section class="panel panel-plant" id="panel-plant">
+            <div class="panel-header">
+                <span class="panel-label">PLANT</span>
+            </div>
+            <div class="panel-camera" id="camera-feed">
+                <div class="camera-placeholder">No image</div>
+            </div>
+            <div class="panel-meta">
+                <span class="meta-item" id="plant-capture-time">--</span>
+                <span class="meta-item" id="plant-count">0 captures</span>
+            </div>
+        </section>
+    </main>
+
+    <footer class="observatory-footer">
+        <div class="status-bar">
+            <span class="status-indicator" id="ws-status">●</span>
+            <span id="status-text">Connecting...</span>
+            <span class="status-sensors" id="sensor-count">0 sensors</span>
+            <span class="status-db" id="db-readings">0 readings</span>
+        </div>
+    </footer>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="/static/observatory.js"></script>
+</body>
+</html>
