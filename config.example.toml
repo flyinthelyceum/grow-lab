@@ -3,8 +3,8 @@
 
 [system]
 log_level = "INFO"
-data_dir = "/home/pi/grow-lab-data"
-db_path = "/home/pi/grow-lab-data/growlab.db"
+data_dir = "~/grow-lab-data"
+db_path = "~/grow-lab-data/growlab.db"
 
 [i2c]
 bus = 1  # /dev/i2c-1
@@ -42,7 +42,7 @@ enabled = true
 [camera]
 interval_seconds = 600
 resolution = [4608, 2592]
-output_dir = "/home/pi/grow-lab-data/images"
+output_dir = "~/grow-lab-data/images"
 enabled = true
 
 [lighting]

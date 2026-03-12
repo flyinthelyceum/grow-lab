@@ -35,6 +35,13 @@ class TestAppConfigDefaults:
         assert config.irrigation.max_runtime_seconds == 30
         assert config.irrigation.relay_gpio == 17
 
+    def test_default_paths_use_user_home(self):
+        config = AppConfig()
+        expected_data_dir = Path.home() / "grow-lab-data"
+        assert config.system.data_dir == expected_data_dir
+        assert config.system.db_path == expected_data_dir / "growlab.db"
+        assert config.camera.output_dir == expected_data_dir / "images"
+
 
 class TestLoadConfig:
     def test_load_missing_file_returns_defaults(self, tmp_path: Path):
@@ -104,3 +111,39 @@ duration_seconds = 20
         assert config.irrigation.schedules[0].hour == 7
         assert config.irrigation.schedules[0].duration_seconds == 15
         assert config.irrigation.schedules[1].hour == 19
+
+    def test_tilde_paths_are_expanded(self, tmp_path: Path):
+        toml_path = tmp_path / "config.toml"
+        toml_path.write_text(
+            """
+[system]
+data_dir = "~/grow-lab-data"
+db_path = "~/grow-lab-data/growlab.db"
+
+[camera]
+output_dir = "~/grow-lab-data/images"
+"""
+        )
+        config = load_config(toml_path)
+        expected_data_dir = Path.home() / "grow-lab-data"
+        assert config.system.data_dir == expected_data_dir
+        assert config.system.db_path == expected_data_dir / "growlab.db"
+        assert config.camera.output_dir == expected_data_dir / "images"
+
+    def test_legacy_pi_paths_are_mapped_to_current_home(self, tmp_path: Path):
+        toml_path = tmp_path / "config.toml"
+        toml_path.write_text(
+            """
+[system]
+data_dir = "/home/pi/grow-lab-data"
+db_path = "/home/pi/grow-lab-data/growlab.db"
+
+[camera]
+output_dir = "/home/pi/grow-lab-data/images"
+"""
+        )
+        config = load_config(toml_path)
+        expected_data_dir = Path.home() / "grow-lab-data"
+        assert config.system.data_dir == expected_data_dir
+        assert config.system.db_path == expected_data_dir / "growlab.db"
+        assert config.camera.output_dir == expected_data_dir / "images"

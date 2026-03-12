@@ -32,12 +32,25 @@ except ModuleNotFoundError:
     import tomli as tomllib  # type: ignore[no-redef]
 
 
+def _to_path(value: Any) -> Path:
+    """Convert config path values and expand ~ for user-home paths."""
+    path = Path(str(value)).expanduser()
+    legacy_root = Path("/home/pi/grow-lab-data")
+    if Path.home() != Path("/home/pi") and path == legacy_root:
+        return Path.home() / "grow-lab-data"
+    if Path.home() != Path("/home/pi") and legacy_root in path.parents:
+        rel = path.relative_to(legacy_root)
+        return Path.home() / "grow-lab-data" / rel
+    return path
+
+
 def _build_system(raw: dict[str, Any]) -> SystemConfig:
     data = raw.get("system", {})
+    defaults = SystemConfig()
     return SystemConfig(
         log_level=data.get("log_level", "INFO"),
-        data_dir=Path(data.get("data_dir", "/home/pi/grow-lab-data")),
-        db_path=Path(data.get("db_path", "/home/pi/grow-lab-data/growlab.db")),
+        data_dir=_to_path(data.get("data_dir", defaults.data_dir)),
+        db_path=_to_path(data.get("db_path", defaults.db_path)),
     )
 
 
@@ -97,11 +110,12 @@ def _build_irrigation(raw: dict[str, Any]) -> IrrigationConfig:
 
 def _build_camera(raw: dict[str, Any]) -> CameraConfig:
     data = raw.get("camera", {})
+    defaults = CameraConfig()
     res = data.get("resolution", [4608, 2592])
     return CameraConfig(
         interval_seconds=data.get("interval_seconds", 600),
         resolution=(res[0], res[1]),
-        output_dir=Path(data.get("output_dir", "/home/pi/grow-lab-data/images")),
+        output_dir=_to_path(data.get("output_dir", defaults.output_dir)),
         enabled=data.get("enabled", True),
     )
 

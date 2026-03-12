@@ -10,11 +10,17 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 
+def _default_data_dir() -> Path:
+    return Path.home() / "grow-lab-data"
+
+
 @dataclass(frozen=True)
 class SystemConfig:
     log_level: str = "INFO"
-    data_dir: Path = Path("/home/pi/grow-lab-data")
-    db_path: Path = Path("/home/pi/grow-lab-data/growlab.db")
+    data_dir: Path = field(default_factory=_default_data_dir)
+    db_path: Path = field(
+        default_factory=lambda: _default_data_dir() / "growlab.db"
+    )
 
 
 @dataclass(frozen=True)
@@ -60,7 +66,9 @@ class SensorsConfig:
 class CameraConfig:
     interval_seconds: int = 600
     resolution: tuple[int, int] = (4608, 2592)
-    output_dir: Path = Path("/home/pi/grow-lab-data/images")
+    output_dir: Path = field(
+        default_factory=lambda: _default_data_dir() / "images"
+    )
     enabled: bool = True
 
 
