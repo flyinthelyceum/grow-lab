@@ -2,176 +2,300 @@
 
 ## Objective
 
-Build a functional test platform for the living plant system.
+Bring the hardware online in a safe, incremental sequence that matches actual part availability, while using the existing software stack exactly as implemented.
 
-The goal is to validate core subsystems before designing the sculptural installation.
+This runbook replaces the older software-build-first commissioning flow.
 
-## Subsystems
+## Current Software Reality
 
-V0 includes: LED lighting, dimmable driver, Raspberry Pi control, ESP32 PWM, drip irrigation, reservoir, airflow fan, environmental sensors, soil moisture sensor, Pi camera, and data logging.
+- Core stack is already built and tested (`284` tests passing locally).
+- Drivers/services available now: DS18B20, GPIO relay pump, BME280, ESP32 serial, camera, OLED, polling/irrigation/lighting/capture/display services, dashboard, CLI.
+- Intentionally pending for Phase 3: `ezo_ph`, `ezo_ec`, and `soil_moisture` drivers.
+- Pump control for V0 stays on Pi GPIO relay. ESP32 handles LED PWM only.
 
-For component details see: [LIGHTING_SYSTEM.md](LIGHTING_SYSTEM.md), [IRRIGATION_SYSTEM.md](IRRIGATION_SYSTEM.md), [SENSOR_STACK.md](SENSOR_STACK.md), [BOM.md](BOM.md)
+## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 
-## Success Criteria
+Hardware on hand: Pi 4, DS18B20, 5V relay, Micra Plus pump, Noctua fan.
 
-V0 is successful if:
+### 1.1 Bench Layout (Dry)
 
-• light system runs reliably  
-• irrigation runs without leaks  
-• sensors log stable data  
-• plant grows normally for multiple weeks
+- Separate into electrical and wet zones.
+- Keep Pi/relay above any water path.
+- Route drip loops on cables crossing zones.
+- Run Noctua fan always-on (no software control in V0).
 
----
+### 1.2 Pi Setup + Deploy
 
-## Deployment Runbook
+```bash
+sudo raspi-config
+# Enable I2C + 1-Wire, then reboot
 
-This runbook outlines the step‑by‑step process for commissioning the V0 bench prototype. The goal is to bring each subsystem online safely and validate that the integrated system operates reliably before introducing a plant.
+ls /dev/i2c-1
+ls /sys/bus/w1/devices/
 
-### Phase 1 — Bench Layout (Dry Setup)
+git clone <repo> grow-lab
+cd grow-lab
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+cp config.example.toml config.toml
+```
 
-Separate the workspace into zones:
+Update `config.toml` for Phase 1 by setting these to `enabled = false`:
+- `sensors.bme280`
+- `sensors.ezo_ph`
+- `sensors.ezo_ec`
+- `sensors.soil_moisture`
+- `camera`
+- `display`
 
-• **Electrical zone:** Raspberry Pi, ESP32, driver, relay, breadboard  
-• **Lighting zone:** LED strip mounted to heatsink  
-• **Wet zone:** reservoir bucket, pump, tubing, pot, tray  
-• **Sensor staging zone:** probes and environmental sensors
+```bash
+growlab sensor scan
+```
 
-Ensure the LED driver and all compute hardware are mounted **above any water path** and that all cables include **drip loops**.
+### 1.3 DS18B20 Wiring + Verify
 
----
+- `3.3V` -> Pin 1
+- `GND` -> Pin 6
+- `DATA` -> GPIO4 (Pin 7)
+- 4.7k resistor between GPIO4 and 3.3V
 
-### Phase 2 — Lighting Bring‑Up
+```bash
+ls /sys/bus/w1/devices/28-*
+growlab sensor scan
+growlab sensor read ds18b20_<device_id>
+```
 
-1. Mount the LED strip securely to the aluminum heatsink.
-2. Wire the LED strip to the Meanwell PWM driver output.
-3. Connect AC input to the driver using safe connectors and strain relief.
-4. Power on and confirm:
-   - LEDs illuminate
-   - no flicker or overheating
-   - heatsink remains within safe temperature
+Expected: plausible room/reservoir temp; avoid persistent `85C` reading (usually wiring/pull-up issue).
 
-5. Test dimming via ESP32 PWM control.
+### 1.4 Relay Dry Test (No Pump Load)
 
-Goal: stable light output with smooth dimming.
+- GPIO17 (Pin 11) -> relay IN
+- 5V (Pin 2) -> relay VCC
+- GND (Pin 9) -> relay GND
 
----
+```bash
+growlab pump on --max-seconds 5
+growlab pump off
+```
 
-### Phase 3 — Raspberry Pi Setup
+Expected: audible relay click and `Using GPIO relay on pin 17`.
 
-1. Boot Raspberry Pi and connect to network.
-2. Enable required interfaces:
-   - I²C
-   - 1‑Wire (for DS18B20)
-3. Install required software packages.
-4. Confirm SSH access.
-5. Create basic logging scripts for sensor data.
+### 1.5 Pump Wet Test
 
-Goal: Pi operates as the central data and control node.
+- Wire pump power through relay switch contacts.
+- Fill reservoir with plain water.
+- Route tubing through emitter -> media -> drain tray.
+- Submerge DS18B20 probe in reservoir.
 
----
+```bash
+growlab pump pulse 5
+growlab sensor read ds18b20_<device_id>
+growlab pump schedule
+```
 
-### Phase 4 — Sensor Commissioning
+### 1.6 Start + Soak
 
-Bring sensors online one at a time.
+```bash
+growlab start
+```
 
-1. Connect **BME280** (I²C).
-2. Verify temperature and humidity readings.
-3. Connect **DS18B20** and confirm reservoir temperature readings.
-4. Connect **Atlas EZO‑pH** circuit via I²C.
-5. Connect **Atlas EZO‑EC** circuit via I²C.
+After soak period:
 
-Perform calibration procedures:
+```bash
+growlab db info
+growlab db export --type readings --sensor ds18b20_<device_id> --limit 100
+# optional: growlab db export --type readings --format csv --output /tmp/ds18b20.csv
 
-• pH probe calibration (4 / 7 / 10 solutions)  
-• EC calibration using conductivity reference solution
+growlab dashboard
+```
 
-Goal: stable, repeatable sensor readings logged by the Pi.
+### Phase 1 Exit Criteria
 
----
+- [ ] Bench layout is physically safe (zones + drip loops).
+- [ ] DS18B20 detected and reading plausible values.
+- [ ] Relay switches reliably in CLI tests.
+- [ ] Pump circulates water with no leaks.
+- [ ] `growlab start` runs for hours without crashing.
+- [ ] DS18B20 data present in DB/dashboard.
 
-### Phase 5 — Irrigation System Test (Water Only)
+## Phase 2 (Days 2-4): BME280, ESP32+LEDs, OLED, Camera
 
-1. Fill reservoir with plain water.
-2. Install pump and connect tubing to drip emitter.
-3. Place pot filled with coco/perlite in drain tray.
-4. Trigger pump manually.
+Rule: add one device at a time, verify, then continue.
 
-Verify:
+### 2.1 BME280
 
-• emitter flow rate  
-• even media wetting  
-• clean drainage  
-• no leaks  
-• pump shuts off cleanly
+```bash
+sudo i2cdetect -y 1
+# expect 0x76 (or configured address)
+```
 
-Next, connect pump to relay and test Pi‑controlled pump pulses.
+Set `sensors.bme280.enabled = true`.
 
----
+```bash
+growlab sensor scan
+growlab sensor read bme280
+```
 
-### Phase 6 — Integrated System Test
+### 2.2 ESP32 + LED PWM
 
-Install sensors in their operational locations:
+- Flash firmware from `firmware/esp32/`.
+- Connect ESP32 over USB serial.
+- Wire ESP32 PWM pin to LED driver dimming input.
 
-• BME280 near canopy but out of direct light  
-• DS18B20 submerged in reservoir  
-• pH and EC probes mounted in reservoir using probe holder
+```bash
+ls /dev/ttyUSB0
+growlab light set 50
+growlab light set 200
+growlab light set 0
+growlab light status
+```
 
-Run the full system with **no plant** for 24 hours.
+Decision lock: pump remains GPIO relay controlled.
 
-System conditions:
+### 2.3 OLED
 
-• lighting schedule active  
-• fan running continuously  
-• irrigation pulses scheduled  
-• sensors logging
+Wire OLED onto I2C bus (with BME280), usually `0x3C`.
 
-Observe for:
+```bash
+sudo i2cdetect -y 1
+# expect 0x3C plus sensor addresses
+```
 
-• leaks  
-• sensor drift  
-• electrical noise  
-• overheating
+Set `display.enabled = true`.
 
----
+```bash
+growlab display status
+growlab display test
+```
 
-### Phase 7 — Nutrient Solution
+### 2.4 Pi Camera
 
-Replace plain water with a mild nutrient solution.
+Attach CSI ribbon cable, set `camera.enabled = true`.
 
-Initial targets:
+```bash
+growlab camera capture
+growlab camera list
+growlab camera status
+```
 
-• pH ≈ 5.8–6.2  
-• EC appropriate for plant type
+### 2.5 24-Hour Integrated Soak (No Plant)
 
-Allow solution to circulate and confirm stable readings.
+```bash
+growlab start
+```
 
----
+Monitor for sensor stability, leaks, LED heat, and service reliability.
 
-### Phase 8 — Plant Introduction
+### Phase 2 Exit Criteria
 
-Add the first plant to the pot.
+- [ ] BME280 detected and stable.
+- [ ] ESP32 controls LED PWM smoothly.
+- [ ] OLED reachable and renders test screen.
+- [ ] Camera captures valid images.
+- [ ] Full 24-hour no-plant soak completes cleanly.
 
-Set conservative initial conditions:
+## Phase 3 (Days 4-7): Atlas pH/EC + STEMMA Soil
 
-• moderate light intensity  
-• fan airflow across canopy  
-• limited irrigation pulses
+Hardware: Atlas EZO-pH + probe, Atlas EZO-EC + probe, STEMMA soil sensor.
 
-Observe plant response over several days before making adjustments.
+### 3.0 Build Missing Drivers Just-in-Time
 
----
+Build only when hardware is present and testable:
 
-### Phase 9 — First Week Stabilization
+1. `pi/drivers/stemma_soil.py`
+2. `pi/drivers/ezo_ph.py`
+3. `pi/drivers/ezo_ec.py`
 
-Monitor daily:
+For each driver:
+- Write tests first.
+- Implement driver.
+- Wire into `build_registry()`.
 
-• leaf posture  
-• moisture levels  
-• runoff behavior  
-• pH drift  
-• EC drift  
-• environmental temperature and humidity
+### 3.1 Atlas UART -> I2C Mode Switch
 
-Adjust **only one variable at a time** (light intensity, watering frequency, or nutrient strength).
+Atlas boards ship in UART mode; switch each board before I2C use.
 
-Record baseline system settings once stable.
+```bash
+minicom -D /dev/serial0 -b 9600
+# send per-board command, e.g. I2C,99 or I2C,100
+sudo i2cdetect -y 1
+# expect 0x63 (pH) and/or 0x64 (EC)
+```
+
+### 3.2 pH Calibration
+
+- Calibrate with pH 4.0 / 7.0 / 10.0 buffers.
+- Rinse probe between buffers.
+- Keep probe wet in storage solution.
+
+```bash
+growlab sensor read ezo_ph
+```
+
+### 3.3 EC Calibration
+
+- Calibrate with known reference conductivity solution.
+
+```bash
+growlab sensor read ezo_ec
+```
+
+### 3.4 STEMMA Soil
+
+Wire on I2C (typically `0x36`) and verify wet/dry response.
+
+```bash
+growlab sensor read soil_moisture
+```
+
+### Phase 3 Exit Criteria
+
+- [ ] Soil moisture driver built/tested and sensor reading changes with moisture.
+- [ ] EZO-pH driver built/tested and calibrated readings are within tolerance.
+- [ ] EZO-EC driver built/tested and calibrated readings match reference.
+- [ ] Registry reports all three sensors available when connected.
+
+## Phase 4 (Days 7-10): Full Integration, Nutrients, Plant
+
+### 4.1 Full 24-Hour Water-Only Soak
+
+```bash
+growlab start
+```
+
+Run with all hardware enabled. Watch for pH/EC drift, grounding noise, and service stability.
+
+### 4.2 Nutrient Introduction
+
+- Mix mild nutrient solution.
+- Target pH 5.8-6.2.
+- Confirm pH/EC stability for at least 4 hours before adding plant.
+
+### 4.3 Plant Introduction
+
+- Start conservative (moderate light, standard irrigation).
+- Adjust one variable at a time during the first week.
+
+### Phase 4 Exit Criteria
+
+- [ ] Full-system 24-hour soak passes with all devices online.
+- [ ] Nutrient reservoir remains stable in target pH/EC range.
+- [ ] Plant shows no stress in first 48 hours.
+- [ ] System can run unattended with stable telemetry.
+
+## Key Decisions (Locked)
+
+- Pump controller: GPIO relay for V0.
+- ESP32 role: LED PWM only.
+- Driver timing: build pH/EC/soil drivers only when hardware arrives.
+- Nutrients: only after pH/EC validation.
+- Fan control: always-on in V0.
+
+## What Not To Do
+
+- Do not pre-build untestable hardware drivers.
+- Do not move pump control to ESP32 in V0.
+- Do not enable hardware in config that is not physically connected.
+- Do not add nutrients before pH/EC sensors are validated.
+- Do not add multiple new devices at the same time during bring-up.
