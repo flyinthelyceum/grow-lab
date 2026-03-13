@@ -9,31 +9,38 @@ import click
 
 
 def _get_pump_controller(config):
-    """Get the best available pump controller.
+    """Get the pump controller specified by config.irrigation.pump_controller.
 
-    Tries GPIO relay first (direct Pi control), falls back to ESP32 serial.
+    Returns GPIORelayPump for "gpio" (default, V0) or ESP32Serial for "esp32".
+    Raises click.ClickException if the requested backend cannot initialize.
     """
-    from pi.drivers.gpio_relay import GPIORelayPump
+    backend = config.irrigation.pump_controller
 
-    gpio_pump = GPIORelayPump(gpio_pin=config.irrigation.relay_gpio)
-    test = gpio_pump.set_pump(False)
-    if test.ok:
+    if backend == "gpio":
+        from pi.drivers.gpio_relay import GPIORelayPump
+
+        pump = GPIORelayPump(gpio_pin=config.irrigation.relay_gpio)
         click.echo(f"Using GPIO relay on pin {config.irrigation.relay_gpio}")
-        return gpio_pump
+        return pump
 
-    from pi.drivers.esp32_serial import ESP32Serial
+    if backend == "esp32":
+        from pi.drivers.esp32_serial import ESP32Serial
 
-    esp32 = ESP32Serial(
-        port=config.serial.port,
-        baud=config.serial.baud,
-        timeout=config.serial.timeout,
+        esp32 = ESP32Serial(
+            port=config.serial.port,
+            baud=config.serial.baud,
+            timeout=config.serial.timeout,
+        )
+        if esp32.connect():
+            click.echo("Using ESP32 serial pump controller")
+            return esp32
+        raise click.ClickException(
+            f"ESP32 serial pump controller failed to connect on {config.serial.port}"
+        )
+
+    raise click.ClickException(
+        f"Unknown pump_controller '{backend}' — must be 'gpio' or 'esp32'"
     )
-    if esp32.connect():
-        click.echo("Using ESP32 serial pump controller")
-        return esp32
-
-    click.echo("Warning: No pump controller available (GPIO and ESP32 both failed)")
-    return gpio_pump  # Return GPIO anyway — errors will surface on set_pump
 
 
 @click.group("pump")

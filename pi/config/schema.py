@@ -90,6 +90,7 @@ class LightingConfig:
 
 @dataclass(frozen=True)
 class IrrigationConfig:
+    pump_controller: str = "gpio"  # "gpio" (direct Pi relay) or "esp32" (serial)
     schedules: tuple[IrrigationScheduleEntry, ...] = field(
         default_factory=lambda: (
             IrrigationScheduleEntry(hour=8),

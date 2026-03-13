@@ -26,7 +26,12 @@ static String input_buffer = "";
 
 void setup() {
     Serial.begin(115200);
-    while (!Serial) { delay(10); }
+    // Some boards/USB modes never assert Serial as "ready".
+    // Don't block forever; continue after a short grace period.
+    unsigned long serial_wait_start = millis();
+    while (!Serial && (millis() - serial_wait_start) < 2000) {
+        delay(10);
+    }
 
     // Initialize PWM for LED control
     pwm_init(LED_PWM_PIN);

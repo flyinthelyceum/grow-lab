@@ -193,6 +193,26 @@ This allows repeatable irrigation pulses.
 
 ---
 
+# Pump Controller Configuration
+
+The pump backend is selected explicitly via `config.toml`:
+
+```toml
+[irrigation]
+pump_controller = "gpio"   # "gpio" or "esp32"
+relay_gpio = 17
+```
+
+**V0:** `pump_controller = "gpio"` (default). The Pi drives the relay directly on GPIO17. No ESP32 involvement in pump control.
+
+**Future:** `pump_controller = "esp32"` routes pump commands through the ESP32 serial link. This is reserved for configurations where the relay is wired to the ESP32 rather than the Pi.
+
+The ESP32 remains connected for LED PWM lighting control but does not handle pump commands in V0.
+
+If RPi.GPIO is unavailable (missing package, permissions, or running off-Pi), the `growlab pump` commands will report the specific error rather than silently falling back to a different backend.
+
+---
+
 # Irrigation Scheduling
 
 Initial V0 schedule should be conservative.

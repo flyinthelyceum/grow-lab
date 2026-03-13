@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,8 @@ class ESP32Serial:
                 baudrate=self._baud,
                 timeout=self._timeout,
             )
+            # Give USB CDC devices a brief moment after open/reset.
+            time.sleep(0.3)
             # Drain any boot messages
             self._serial.reset_input_buffer()
             logger.info("ESP32 connected on %s @ %d baud", self._port, self._baud)

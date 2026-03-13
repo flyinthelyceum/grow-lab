@@ -100,7 +100,14 @@ def _build_irrigation(raw: dict[str, Any]) -> IrrigationConfig:
     else:
         schedules = IrrigationConfig().schedules
 
+    pump_controller = data.get("pump_controller", "gpio")
+    if pump_controller not in ("gpio", "esp32"):
+        raise ValueError(
+            f"irrigation.pump_controller must be 'gpio' or 'esp32', got '{pump_controller}'"
+        )
+
     return IrrigationConfig(
+        pump_controller=pump_controller,
         schedules=schedules,
         max_runtime_seconds=data.get("max_runtime_seconds", 30),
         min_interval_minutes=data.get("min_interval_minutes", 60),

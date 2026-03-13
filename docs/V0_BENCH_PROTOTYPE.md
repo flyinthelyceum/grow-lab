@@ -13,6 +13,12 @@ This runbook replaces the older software-build-first commissioning flow.
 - Intentionally pending for Phase 3: `ezo_ph`, `ezo_ec`, and `soil_moisture` drivers.
 - Pump control for V0 stays on Pi GPIO relay. ESP32 handles LED PWM only.
 
+### Known Blocker (as of March 12, 2026)
+
+- ESP32-S3-N16R8 flashing succeeds from the Pi, but runtime serial command responses are still timing out.
+- `growlab light status` / `growlab light set` currently fail with `no response (timeout)` on tested USB ports.
+- V0 execution continues with DS18B20 + GPIO relay pump path in Phase 1 while ESP32 serial profile is resolved in Phase 2.
+
 ## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 
 Hardware on hand: Pi 4, DS18B20, 5V relay, Micra Plus pump, Noctua fan.
@@ -37,11 +43,21 @@ git clone <repo> grow-lab
 cd grow-lab
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e ".[pi]"
+# If extras are unavailable in your environment, install GPIO directly:
+# pip install RPi.GPIO
 cp config.example.toml config.toml
 ```
 
-Update `config.toml` for Phase 1 by setting these to `enabled = false`:
+Update `config.toml` for Phase 1:
+
+Verify relay GPIO is configured (GPIO pump control is the default behavior):
+```toml
+[irrigation]
+relay_gpio = 17
+```
+
+Set these to `enabled = false`:
 - `sensors.bme280`
 - `sensors.ezo_ph`
 - `sensors.ezo_ec`
@@ -144,7 +160,7 @@ growlab sensor read bme280
 - Wire ESP32 PWM pin to LED driver dimming input.
 
 ```bash
-ls /dev/ttyUSB0
+ls /dev/ttyUSB0 /dev/ttyACM0
 growlab light set 50
 growlab light set 200
 growlab light set 0
@@ -152,6 +168,7 @@ growlab light status
 ```
 
 Decision lock: pump remains GPIO relay controlled.
+If ESP32 serial control is not responding, keep `lighting` disabled and continue non-ESP32 tasks until the board profile/runtime serial path is finalized.
 
 ### 2.3 OLED
 

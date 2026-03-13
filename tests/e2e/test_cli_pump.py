@@ -18,6 +18,7 @@ data_dir = "{tmp_path}"
 db_path = "{tmp_path / 'test.db'}"
 
 [irrigation]
+pump_controller = "gpio"
 max_runtime_seconds = 30
 min_interval_minutes = 5
 relay_gpio = 17
@@ -148,6 +149,7 @@ data_dir = "{tmp_path}"
 db_path = "{tmp_path / 'test.db'}"
 
 [irrigation]
+pump_controller = "gpio"
 max_runtime_seconds = 30
 min_interval_minutes = 5
 relay_gpio = 17

@@ -2,6 +2,12 @@
 
 Use this as the live checklist on the Pi terminal. Run steps in order. Do not skip safety checks.
 
+## Current Blocker Note (as of March 12, 2026)
+
+- ESP32-S3-N16R8 is currently not returning runtime serial responses to `growlab` commands after flashing.
+- This does not block Phase 1. Continue with DS18B20 + GPIO relay pump bring-up.
+- Defer ESP32 lighting control verification to Phase 2 blocker resolution.
+
 ## 0) Safety and Bench Prep (No Power to Pump Yet)
 
 1. Separate bench into:
@@ -53,7 +59,9 @@ git clone <repo-url> grow-lab
 cd grow-lab
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e ".[pi]"
+# If extras are unavailable in your environment, install GPIO directly:
+# pip install RPi.GPIO
 cp config.example.toml config.toml
 ```
 

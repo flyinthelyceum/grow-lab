@@ -31,6 +31,7 @@ class TestAppConfigDefaults:
 
     def test_irrigation_defaults(self):
         config = AppConfig()
+        assert config.irrigation.pump_controller == "gpio"
         assert len(config.irrigation.schedules) == 3
         assert config.irrigation.max_runtime_seconds == 30
         assert config.irrigation.relay_gpio == 17
@@ -111,6 +112,39 @@ duration_seconds = 20
         assert config.irrigation.schedules[0].hour == 7
         assert config.irrigation.schedules[0].duration_seconds == 15
         assert config.irrigation.schedules[1].hour == 19
+
+    def test_pump_controller_from_toml(self, tmp_path: Path):
+        toml_path = tmp_path / "config.toml"
+        toml_path.write_text(
+            """
+[irrigation]
+pump_controller = "esp32"
+"""
+        )
+        config = load_config(toml_path)
+        assert config.irrigation.pump_controller == "esp32"
+
+    def test_pump_controller_defaults_to_gpio(self, tmp_path: Path):
+        toml_path = tmp_path / "config.toml"
+        toml_path.write_text(
+            """
+[irrigation]
+max_runtime_seconds = 30
+"""
+        )
+        config = load_config(toml_path)
+        assert config.irrigation.pump_controller == "gpio"
+
+    def test_invalid_pump_controller_raises(self, tmp_path: Path):
+        toml_path = tmp_path / "config.toml"
+        toml_path.write_text(
+            """
+[irrigation]
+pump_controller = "bluetooth"
+"""
+        )
+        with pytest.raises(ValueError, match="pump_controller"):
+            load_config(toml_path)
 
     def test_tilde_paths_are_expanded(self, tmp_path: Path):
         toml_path = tmp_path / "config.toml"

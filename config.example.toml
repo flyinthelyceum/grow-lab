@@ -68,6 +68,7 @@ minute = 0
 duration_seconds = 10
 
 [irrigation]
+pump_controller = "gpio"   # "gpio" = Pi GPIO relay (V0 default), "esp32" = ESP32 serial
 max_runtime_seconds = 30
 min_interval_minutes = 60
 relay_gpio = 17
