@@ -30,7 +30,7 @@ class I2CConfig:
 
 @dataclass(frozen=True)
 class SerialConfig:
-    port: str = "/dev/ttyUSB0"
+    port: str = "/dev/ttyACM0"
     baud: int = 115200
     timeout: float = 2.0
 

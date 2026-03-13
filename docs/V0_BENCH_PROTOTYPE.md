@@ -13,11 +13,11 @@ This runbook replaces the older software-build-first commissioning flow.
 - Intentionally pending for Phase 3: `ezo_ph`, `ezo_ec`, and `soil_moisture` drivers.
 - Pump control for V0 stays on Pi GPIO relay. ESP32 handles LED PWM only.
 
-### Known Blocker (as of March 12, 2026)
+### Known Blocker (as of March 12, 2026) — RESOLVED March 13
 
-- ESP32-S3-N16R8 flashing succeeds from the Pi, but runtime serial command responses are still timing out.
-- `growlab light status` / `growlab light set` currently fail with `no response (timeout)` on tested USB ports.
-- V0 execution continues with DS18B20 + GPIO relay pump path in Phase 1 while ESP32 serial profile is resolved in Phase 2.
+- **Root cause:** PlatformIO was configured with `board = esp32dev` (classic ESP32), but the hardware is an ESP32-S3-N16R8. The S3 uses native USB CDC — `Serial` was routed to UART0 pins, not the USB port.
+- **Fix:** Updated board to `esp32-s3-devkitc-1` with `ARDUINO_USB_CDC_ON_BOOT=1` and `ARDUINO_USB_MODE=1` build flags. Updated LEDC PWM calls to new API. Changed default serial port to `/dev/ttyACM0`.
+- **Status:** Firmware rebuild and flash required. Validate with `miniterm` then `growlab light status`.
 
 ### Session Handoff (end of day: March 12, 2026)
 
@@ -25,12 +25,10 @@ This runbook replaces the older software-build-first commissioning flow.
   - DS18B20 detected and readable.
   - GPIO relay control is working from CLI.
   - Pump control path is pinned to GPIO for V0.
-- Open blocker:
-  - ESP32-S3-N16R8 flashes successfully but does not return runtime serial responses for `STATUS` / `LIGHT`.
-- Next session priority:
-  - Connect ESP32 directly to development computer (not through Pi) and validate runtime serial protocol first.
-  - Confirm exact board profile and USB serial behavior, then lock final PlatformIO environment.
-  - Return to Pi and re-test `growlab light status` and `growlab light set`.
+- March 13 progress:
+  - Identified root cause of ESP32 serial timeout (wrong board profile).
+  - Updated firmware build config, PWM driver, and serial port defaults.
+  - Next: rebuild, flash, and validate on Pi.
 
 ## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 

@@ -10,7 +10,7 @@ db_path = "~/grow-lab-data/growlab.db"
 bus = 1  # /dev/i2c-1
 
 [serial]
-port = "/dev/ttyUSB0"
+port = "/dev/ttyACM0"  # ESP32-S3 native USB CDC; classic ESP32 uses /dev/ttyUSB0
 baud = 115200
 timeout = 2.0
 

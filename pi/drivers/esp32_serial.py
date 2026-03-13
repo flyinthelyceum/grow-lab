@@ -27,7 +27,7 @@ class ESP32Response:
 class ESP32Serial:
     """Serial command interface to the ESP32 controller."""
 
-    def __init__(self, port: str = "/dev/ttyUSB0", baud: int = 115200, timeout: float = 2.0) -> None:
+    def __init__(self, port: str = "/dev/ttyACM0", baud: int = 115200, timeout: float = 2.0) -> None:
         self._port = port
         self._baud = baud
         self._timeout = timeout

@@ -93,13 +93,13 @@ def scan_onewire() -> tuple[OneWireDevice, ...]:
     return tuple(devices)
 
 
-def scan_serial(preferred_port: str = "/dev/ttyUSB0") -> tuple[SerialDevice, ...]:
+def scan_serial(preferred_port: str = "/dev/ttyACM0") -> tuple[SerialDevice, ...]:
     """Check for available serial ports (ESP32 connection).
 
     Checks the preferred port first, then scans common alternatives.
     Returns empty tuple if no serial device is found.
     """
-    candidates = [preferred_port, "/dev/ttyUSB1", "/dev/ttyACM0", "/dev/ttyACM1"]
+    candidates = [preferred_port, "/dev/ttyACM1", "/dev/ttyUSB0", "/dev/ttyUSB1"]
     devices: list[SerialDevice] = []
 
     for port in candidates:
@@ -112,7 +112,7 @@ def scan_serial(preferred_port: str = "/dev/ttyUSB0") -> tuple[SerialDevice, ...
 
 
 def scan_all(
-    i2c_bus: int = 1, serial_port: str = "/dev/ttyUSB0"
+    i2c_bus: int = 1, serial_port: str = "/dev/ttyACM0"
 ) -> ScanResult:
     """Run all hardware scans and return a combined result."""
     return ScanResult(

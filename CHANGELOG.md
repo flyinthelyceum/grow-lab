@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-03-13
+
+### Fixed
+- ESP32 serial timeout resolved: PlatformIO board profile updated from `esp32dev` to `esp32-s3-devkitc-1` with USB CDC build flags (`ARDUINO_USB_CDC_ON_BOOT=1`, `ARDUINO_USB_MODE=1`).
+- LEDC PWM driver updated to new ESP32 Arduino core API (`ledcAttach` replaces deprecated `ledcSetup`/`ledcAttachPin`).
+- Default serial port changed from `/dev/ttyUSB0` to `/dev/ttyACM0` (native USB CDC path for ESP32-S3).
+
+### Notes
+- Firmware rebuild and flash required on Pi to activate the fix.
+- Validate with `miniterm` raw serial test, then `growlab light status`.
+
 ## 2026-03-12
 
 ### Added

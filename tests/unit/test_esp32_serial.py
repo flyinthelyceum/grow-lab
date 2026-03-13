@@ -23,7 +23,7 @@ class TestESP32Response:
 class TestESP32SerialInit:
     def test_defaults(self) -> None:
         esp = ESP32Serial()
-        assert esp._port == "/dev/ttyUSB0"
+        assert esp._port == "/dev/ttyACM0"
         assert esp._baud == 115200
         assert esp.is_connected is False
 

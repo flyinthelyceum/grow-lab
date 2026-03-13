@@ -173,7 +173,7 @@ def load_config(path: Path | None = None) -> AppConfig:
         system=_build_system(raw),
         i2c=I2CConfig(bus=i2c_data.get("bus", 1)),
         serial=SerialConfig(
-            port=serial_data.get("port", "/dev/ttyUSB0"),
+            port=serial_data.get("port", "/dev/ttyACM0"),
             baud=serial_data.get("baud", 115200),
             timeout=serial_data.get("timeout", 2.0),
         ),
