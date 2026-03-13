@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 // LEDC PWM configuration
+static const uint8_t PWM_CHANNEL = 0;
 static const uint32_t PWM_FREQ = 1000;   // 1 kHz
 static const uint8_t PWM_RESOLUTION = 8; // 0-255
 
