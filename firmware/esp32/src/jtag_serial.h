@@ -4,58 +4,70 @@
 /**
  * Stream wrapper for the ESP32-S3 USB-Serial/JTAG controller.
  *
- * The Freenove ESP32-S3 WROOM board routes USB through the built-in
- * USB-Serial/JTAG peripheral (not USB-OTG). Arduino's Serial class
- * cannot target this peripheral, so we use the ESP-IDF driver directly.
+ * Uses the low-level hardware FIFO directly, bypassing the ESP-IDF
+ * driver to avoid initialization conflicts. The ROM bootloader uses
+ * the same FIFO, so this path is known to work on this board.
  */
 
 #include <Arduino.h>
-#include "driver/usb_serial_jtag.h"
+#include "hal/usb_serial_jtag_ll.h"
 
 class JtagSerial : public Stream {
 public:
-    bool begin(unsigned long = 0) {
-        usb_serial_jtag_driver_config_t cfg = {
-            .tx_buffer_size = 512,
-            .rx_buffer_size = 512,
-        };
-        return usb_serial_jtag_driver_install(&cfg) == ESP_OK;
+    void begin() {
+        // Nothing to initialize — the USB-Serial/JTAG hardware is
+        // already set up by the ROM bootloader.
     }
 
     int available() override {
-        // No direct "bytes available" API; try a zero-wait read.
-        return 0; // We use readBytes with a timeout instead.
+        return usb_serial_jtag_ll_rxfifo_data_available() ? 1 : 0;
     }
 
     int read() override {
         uint8_t c;
-        int n = usb_serial_jtag_read_bytes(&c, 1, 0);
-        return n > 0 ? c : -1;
+        if (usb_serial_jtag_ll_read_rxfifo(&c, 1) > 0) {
+            return c;
+        }
+        return -1;
     }
 
     int peek() override { return -1; }
 
     size_t write(uint8_t c) override {
-        return usb_serial_jtag_write_bytes(&c, 1, pdMS_TO_TICKS(100));
+        return write(&c, 1);
     }
 
     size_t write(const uint8_t *buf, size_t size) override {
-        return usb_serial_jtag_write_bytes(buf, size, pdMS_TO_TICKS(100));
+        size_t sent = 0;
+        uint32_t attempts = 0;
+        while (sent < size && attempts < 10000) {
+            uint32_t n = usb_serial_jtag_ll_write_txfifo(buf + sent, size - sent);
+            if (n > 0) {
+                usb_serial_jtag_ll_txfifo_flush();
+                sent += n;
+                attempts = 0;
+            } else {
+                attempts++;
+                delayMicroseconds(100);
+            }
+        }
+        return sent;
     }
 
     // Read a full line (up to newline), with a timeout.
-    // Returns number of bytes read.
     int readLine(char *buf, size_t maxlen, uint32_t timeout_ms = 100) {
         size_t pos = 0;
-        TickType_t deadline = xTaskGetTickCount() + pdMS_TO_TICKS(timeout_ms);
-        while (pos < maxlen - 1) {
-            uint8_t c;
-            TickType_t remaining = deadline - xTaskGetTickCount();
-            if ((int32_t)remaining <= 0) break;
-            int n = usb_serial_jtag_read_bytes(&c, 1, remaining);
-            if (n <= 0) break;
-            if (c == '\n') { break; }
-            if (c != '\r') { buf[pos++] = c; }
+        unsigned long deadline = millis() + timeout_ms;
+        while (pos < maxlen - 1 && millis() < deadline) {
+            if (usb_serial_jtag_ll_rxfifo_data_available()) {
+                uint8_t c;
+                if (usb_serial_jtag_ll_read_rxfifo(&c, 1) > 0) {
+                    if (c == '\n') break;
+                    if (c != '\r') buf[pos++] = c;
+                }
+            } else {
+                delay(1);
+            }
         }
         buf[pos] = '\0';
         return pos;
