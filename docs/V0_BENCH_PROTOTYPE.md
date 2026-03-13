@@ -19,6 +19,19 @@ This runbook replaces the older software-build-first commissioning flow.
 - `growlab light status` / `growlab light set` currently fail with `no response (timeout)` on tested USB ports.
 - V0 execution continues with DS18B20 + GPIO relay pump path in Phase 1 while ESP32 serial profile is resolved in Phase 2.
 
+### Session Handoff (end of day: March 12, 2026)
+
+- Completed in Phase 1:
+  - DS18B20 detected and readable.
+  - GPIO relay control is working from CLI.
+  - Pump control path is pinned to GPIO for V0.
+- Open blocker:
+  - ESP32-S3-N16R8 flashes successfully but does not return runtime serial responses for `STATUS` / `LIGHT`.
+- Next session priority:
+  - Connect ESP32 directly to development computer (not through Pi) and validate runtime serial protocol first.
+  - Confirm exact board profile and USB serial behavior, then lock final PlatformIO environment.
+  - Return to Pi and re-test `growlab light status` and `growlab light set`.
+
 ## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 
 Hardware on hand: Pi 4, DS18B20, 5V relay, Micra Plus pump, Noctua fan.

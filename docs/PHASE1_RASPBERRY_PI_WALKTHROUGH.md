@@ -208,3 +208,26 @@ Stop immediately and power down if any of the following occur:
 - unstable power/reset loop on Pi
 
 When in doubt: disconnect pump power first, then debug.
+
+## 9) End-of-Day Handoff Template
+
+Use this quick template at session end:
+
+- Date:
+- Hardware connected:
+- What passed today:
+- Current blocker:
+- Last known-good commands:
+- Next first step:
+
+Current saved handoff (March 12, 2026):
+
+- Date: March 12, 2026
+- Hardware connected: Pi 4, DS18B20, GPIO relay, ESP32-S3-N16R8
+- What passed today: DS18B20 read path, GPIO relay CLI control
+- Current blocker: ESP32 runtime serial command responses time out
+- Last known-good commands:
+  - `growlab sensor read ds18b20_28-00000070dac6`
+  - `growlab pump on --max-seconds 2`
+  - `growlab pump off`
+- Next first step: connect ESP32 directly to development computer and validate runtime serial protocol before returning to Pi integration

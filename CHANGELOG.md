@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 - Explicit pump-controller guidance in irrigation and V0 runbook docs.
 - Phase 1 blocker notes documenting current ESP32-S3-N16R8 serial runtime issue.
 - Additional config tests for pump backend parsing and validation.
+- End-of-day handoff logging sections in V0/Phase 1 docs, including a saved March 12, 2026 status snapshot and next-session priority.
 
 ### Changed
 - `growlab pump` controller selection now follows config instead of implicit fallback behavior.
