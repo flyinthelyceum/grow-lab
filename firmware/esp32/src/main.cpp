@@ -1,7 +1,7 @@
 /**
  * Living Light System — ESP32 Controller
  *
- * Receives newline-delimited commands over serial from the Pi.
+ * Receives newline-delimited commands over USB-Serial/JTAG from the Pi.
  * Controls LED PWM dimming and pump relay.
  *
  * Commands:
@@ -13,6 +13,7 @@
 #include <Arduino.h>
 #include "commands.h"
 #include "pwm_control.h"
+#include "jtag_serial.h"
 
 #ifndef LED_PWM_PIN
 #define LED_PWM_PIN 18
@@ -22,16 +23,11 @@
 #define PUMP_RELAY_PIN 17
 #endif
 
-static String input_buffer = "";
+JtagSerial usb;
 
 void setup() {
-    Serial.begin(115200);
-    // Some boards/USB modes never assert Serial as "ready".
-    // Don't block forever; continue after a short grace period.
-    unsigned long serial_wait_start = millis();
-    while (!Serial && (millis() - serial_wait_start) < 2000) {
-        delay(10);
-    }
+    usb.begin();
+    delay(200);
 
     // Initialize PWM for LED control
     pwm_init(LED_PWM_PIN);
@@ -40,24 +36,14 @@ void setup() {
     pinMode(PUMP_RELAY_PIN, OUTPUT);
     digitalWrite(PUMP_RELAY_PIN, LOW);
 
-    Serial.println("{\"event\":\"boot\",\"version\":\"0.1.0\"}");
+    usb.println("{\"event\":\"boot\",\"version\":\"0.2.0\"}");
 }
 
 void loop() {
-    while (Serial.available()) {
-        char c = Serial.read();
-        if (c == '\n') {
-            if (input_buffer.length() > 0) {
-                command_dispatch(input_buffer);
-                input_buffer = "";
-            }
-        } else if (c != '\r') {
-            input_buffer += c;
-            // Prevent buffer overflow
-            if (input_buffer.length() > 64) {
-                Serial.println("{\"error\":\"command too long\"}");
-                input_buffer = "";
-            }
-        }
+    char line[128];
+    int len = usb.readLine(line, sizeof(line), 50);
+    if (len > 0) {
+        String cmd(line);
+        command_dispatch(cmd, usb);
     }
 }
