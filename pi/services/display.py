@@ -26,13 +26,27 @@ SENSOR_DISPLAY = {
     "bme280_pressure": ("Pressure", "hPa", None),
     "ezo_ph": ("pH", "", None),
     "ezo_ec": ("EC", "uS", None),
-    "ds18b20_temperature": ("Water", "F", _c_to_f),
 }
+
+# Prefix-based fallback for sensors with serial numbers in their ID
+SENSOR_PREFIX_DISPLAY = {
+    "ds18b20": ("H2O Temp", "F", _c_to_f),
+}
+
+
+def _lookup_sensor(sensor_id: str) -> tuple[str, str, object]:
+    """Look up display config by exact ID, then by prefix."""
+    if sensor_id in SENSOR_DISPLAY:
+        return SENSOR_DISPLAY[sensor_id]
+    for prefix, config in SENSOR_PREFIX_DISPLAY.items():
+        if sensor_id.startswith(prefix):
+            return config
+    return (sensor_id[:8], "", None)
 
 
 def _format_reading(sensor_id: str, value: float) -> tuple[str, str]:
     """Format a sensor reading into (label, display_value)."""
-    label, unit, convert = SENSOR_DISPLAY.get(sensor_id, (sensor_id[:8], "", None))
+    label, unit, convert = _lookup_sensor(sensor_id)
     if convert is not None:
         value = convert(value)
     return label, f"{value:.1f}{unit}"
@@ -262,7 +276,7 @@ class DisplayService:
             return
 
         sid = sensor_ids[0]
-        label, unit, convert = SENSOR_DISPLAY.get(sid, (sid[:6], "", None))
+        label, unit, convert = _lookup_sensor(sid)
 
         end = datetime.now(timezone.utc)
         start = end - timedelta(hours=1)
