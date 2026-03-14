@@ -1,7 +1,7 @@
-"""Display service — rotating OLED screens showing live sensor data.
+"""Display service — rotating OLED screens showing live system data.
 
-Cycles through pages: current values, system status bars,
-sparkline trends. Each page displays for a configurable duration.
+Cycles through pages: current sensor values, irrigation status,
+and sparkline trends. Each page displays for a configurable duration.
 """
 
 from __future__ import annotations
@@ -10,59 +10,92 @@ import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 
-from pi.config.schema import DisplayConfig
+from pi.config.schema import DisplayConfig, IrrigationConfig
 
 logger = logging.getLogger(__name__)
 
 # Short display labels for sensor IDs
 SENSOR_LABELS = {
-    "bme280_temperature": ("TEMP", "°C"),
+    "bme280_temperature": ("TEMP", "C"),
     "bme280_humidity": ("RH", "%"),
     "bme280_pressure": ("PRES", "hPa"),
     "ezo_ph": ("PH", ""),
-    "ezo_ec": ("EC", "µS"),
-    "ds18b20_temperature": ("WTEMP", "°C"),
+    "ezo_ec": ("EC", "uS"),
+    "ds18b20_temperature": ("WTEMP", "C"),
 }
 
 
 def render_values_page(oled, readings: dict) -> None:
-    """Render current sensor values on the OLED.
-
-    Args:
-        oled: OLEDDriver instance.
-        readings: Dict of sensor_id → SensorReading.
-    """
+    """Render current sensor values on the OLED."""
     oled.clear()
     oled.draw_text(0, 0, "LIVING LIGHT", size=10)
 
     y = 14
     for sensor_id, reading in readings.items():
         label, unit = SENSOR_LABELS.get(sensor_id, (sensor_id[:6], ""))
-        text = f"{label:6s} {reading.value:>7.1f}{unit}"
+        text = f"{label:6s}{reading.value:>6.1f}{unit}"
         oled.draw_text(0, y, text, size=10)
         y += 12
         if y > 56:
             break
 
+    if not readings:
+        oled.draw_text(0, 28, "No sensors yet", size=10)
+
     oled.show()
 
 
-def render_status_page(oled, status: dict[str, float]) -> None:
-    """Render subsystem status bars on the OLED.
-
-    Args:
-        oled: OLEDDriver instance.
-        status: Dict of subsystem_name → fill (0.0–1.0).
-    """
+def render_irrigation_page(
+    oled,
+    schedules: tuple,
+    last_pump_event: str | None,
+    now: datetime,
+) -> None:
+    """Render irrigation schedule and last pump event."""
     oled.clear()
-    oled.draw_text(0, 0, "SYSTEM STATUS", size=10)
+    oled.draw_text(0, 0, "IRRIGATION", size=10)
 
-    y = 16
-    for name, fill in status.items():
-        oled.draw_text(0, y, name.upper()[:5], size=9)
-        oled.draw_bar(40, y + 1, 80, 8, fill=fill)
+    # Show schedule times
+    y = 14
+    for s in schedules[:3]:
+        marker = ">"
+        sched_min = s.hour * 60 + s.minute
+        now_min = now.hour * 60 + now.minute
+        # Mark next upcoming schedule
+        if sched_min > now_min:
+            marker = ">"
+        else:
+            marker = " "
+        text = f"{marker}{s.hour:02d}:{s.minute:02d}  {s.duration_seconds}s"
+        oled.draw_text(0, y, text, size=10)
         y += 12
-        if y > 56:
+
+    # Show last pump event
+    if last_pump_event:
+        oled.draw_text(0, 52, last_pump_event[:21], size=9)
+    else:
+        oled.draw_text(0, 52, "No pump events", size=9)
+
+    oled.show()
+
+
+def render_system_page(oled, uptime: timedelta, subsystems: dict[str, bool]) -> None:
+    """Render system overview — uptime and subsystem status."""
+    oled.clear()
+    oled.draw_text(0, 0, "SYSTEM", size=10)
+
+    # Uptime
+    hours, remainder = divmod(int(uptime.total_seconds()), 3600)
+    minutes = remainder // 60
+    oled.draw_text(0, 14, f"UP {hours:3d}h{minutes:02d}m", size=10)
+
+    # Subsystem checklist
+    y = 28
+    for name, ok in subsystems.items():
+        icon = "+" if ok else "-"
+        oled.draw_text(0, y, f"{icon} {name}", size=9)
+        y += 11
+        if y > 58:
             break
 
     oled.show()
@@ -71,14 +104,7 @@ def render_status_page(oled, status: dict[str, float]) -> None:
 def render_sparkline_page(
     oled, label: str, values: list[float], unit: str
 ) -> None:
-    """Render a sparkline trend chart on the OLED.
-
-    Args:
-        oled: OLEDDriver instance.
-        label: Chart title (e.g., "TEMP").
-        values: List of float values for the sparkline.
-        unit: Unit string for the header.
-    """
+    """Render a sparkline trend chart on the OLED."""
     oled.clear()
 
     if values:
@@ -96,13 +122,23 @@ def render_sparkline_page(
 class DisplayService:
     """Manages the OLED display lifecycle and page rotation."""
 
-    def __init__(self, oled, repo, config: DisplayConfig) -> None:
+    def __init__(
+        self,
+        oled,
+        repo,
+        config: DisplayConfig,
+        irrigation_config: IrrigationConfig | None = None,
+        irrigator=None,
+    ) -> None:
         self._oled = oled
         self._repo = repo
         self._config = config
+        self._irrigation_config = irrigation_config
+        self._irrigator = irrigator
         self._task: asyncio.Task | None = None
         self._page_index = 0
         self._page_duration = 5  # seconds per page
+        self._start_time = datetime.now(timezone.utc)
 
     async def start(self) -> None:
         """Start the display rotation loop."""
@@ -117,8 +153,11 @@ class DisplayService:
             logger.warning("OLED display not available — skipping")
             return
 
-        logger.info("Starting display service")
-        self._task = asyncio.create_task(self._rotation_loop())
+        self._start_time = datetime.now(timezone.utc)
+        logger.info("Display service started")
+        self._task = asyncio.create_task(
+            self._rotation_loop(), name="display-rotation"
+        )
 
     async def stop(self) -> None:
         """Stop the display and clear the screen."""
@@ -137,7 +176,8 @@ class DisplayService:
         """Cycle through display pages."""
         pages = [
             self._render_values,
-            self._render_status,
+            self._render_system,
+            self._render_irrigation,
             self._render_sparkline,
         ]
 
@@ -161,24 +201,45 @@ class DisplayService:
                 readings[sid] = r
         render_values_page(self._oled, readings)
 
-    async def _render_status(self) -> None:
-        """Build subsystem status and render bars."""
+    async def _render_system(self) -> None:
+        """Render system overview page."""
+        now = datetime.now(timezone.utc)
+        uptime = now - self._start_time
+
         sensor_ids = await self._repo.get_sensor_ids()
-        status = {}
+        subsystems = {
+            "sensors": len(sensor_ids) > 0,
+            "irrigation": self._irrigator is not None and self._irrigator.is_running,
+            "display": True,
+        }
 
-        # Map sensors to subsystems with normalized values
-        for sid in sensor_ids:
-            r = await self._repo.get_latest(sid)
-            if r is None:
-                continue
-            if "temperature" in sid:
-                status["air"] = max(0.0, min(1.0, r.value / 40.0))
-            elif "humidity" in sid:
-                status["water"] = max(0.0, min(1.0, r.value / 100.0))
-            elif "ph" in sid:
-                status["root"] = max(0.0, min(1.0, r.value / 14.0))
+        render_system_page(self._oled, uptime, subsystems)
 
-        render_status_page(self._oled, status)
+    async def _render_irrigation(self) -> None:
+        """Render irrigation schedule page."""
+        if self._irrigation_config is None:
+            self._oled.clear()
+            self._oled.draw_text(0, 0, "IRRIGATION", size=10)
+            self._oled.draw_text(0, 20, "Not configured", size=10)
+            self._oled.show()
+            return
+
+        now = datetime.now(timezone.utc)
+
+        # Get last irrigation event
+        events = await self._repo.get_events(limit=10)
+        last_pump = None
+        for e in events:
+            if e.event_type == "irrigation":
+                last_pump = e.description
+                break
+
+        render_irrigation_page(
+            self._oled,
+            self._irrigation_config.schedules,
+            last_pump,
+            now,
+        )
 
     async def _render_sparkline(self) -> None:
         """Fetch 1-hour trend for first available sensor and render."""

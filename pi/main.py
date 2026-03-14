@@ -108,6 +108,25 @@ async def run(config: AppConfig) -> None:
     else:
         logger.warning("Irrigation scheduler disabled — pump controller unavailable")
 
+    # Start display service
+    display_svc = None
+    if config.display.enabled:
+        from pi.drivers.oled_ssd1306 import OLEDDriver
+        from pi.services.display import DisplayService
+
+        oled = OLEDDriver(
+            address=config.display.address,
+            controller=config.display.controller,
+        )
+        display_svc = DisplayService(
+            oled=oled,
+            repo=repo,
+            config=config.display,
+            irrigation_config=config.irrigation,
+            irrigator=irrigator,
+        )
+        await display_svc.start()
+
     # Set up graceful shutdown
     shutdown_event = asyncio.Event()
 
@@ -126,6 +145,8 @@ async def run(config: AppConfig) -> None:
 
     # Clean shutdown
     logger.info("Shutting down...")
+    if display_svc is not None:
+        await display_svc.stop()
     if irrigator is not None:
         await irrigator.stop()
     await poller.stop()
