@@ -17,9 +17,36 @@ from pi.data.models import SystemEvent
 from pi.data.repository import SensorRepository
 from pi.discovery.registry import build_registry
 from pi.discovery.scanner import scan_all
+from pi.services.irrigation import IrrigationService
 from pi.services.polling import PollingService
 
 logger = logging.getLogger(__name__)
+
+
+def _build_pump_controller(config: AppConfig):
+    """Build pump controller from config (gpio or esp32)."""
+    backend = config.irrigation.pump_controller
+
+    if backend == "gpio":
+        from pi.drivers.gpio_relay import GPIORelayPump
+
+        return GPIORelayPump(gpio_pin=config.irrigation.relay_gpio)
+
+    if backend == "esp32":
+        from pi.drivers.esp32_serial import ESP32Serial
+
+        esp32 = ESP32Serial(
+            port=config.serial.port,
+            baud=config.serial.baud,
+            timeout=config.serial.timeout,
+        )
+        if esp32.connect():
+            return esp32
+        logger.error("ESP32 pump controller failed to connect on %s", config.serial.port)
+        return None
+
+    logger.error("Unknown pump_controller '%s'", backend)
+    return None
 
 
 async def run(config: AppConfig) -> None:
@@ -72,6 +99,15 @@ async def run(config: AppConfig) -> None:
     poller = PollingService(registry, repo, config)
     await poller.start()
 
+    # Start irrigation scheduler
+    irrigator: IrrigationService | None = None
+    pump = _build_pump_controller(config)
+    if pump is not None:
+        irrigator = IrrigationService(pump, repo, config.irrigation)
+        await irrigator.start()
+    else:
+        logger.warning("Irrigation scheduler disabled — pump controller unavailable")
+
     # Set up graceful shutdown
     shutdown_event = asyncio.Event()
 
@@ -90,6 +126,8 @@ async def run(config: AppConfig) -> None:
 
     # Clean shutdown
     logger.info("Shutting down...")
+    if irrigator is not None:
+        await irrigator.stop()
     await poller.stop()
 
     # Close sensor drivers
