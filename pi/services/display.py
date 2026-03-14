@@ -14,33 +14,46 @@ from pi.config.schema import DisplayConfig, IrrigationConfig
 
 logger = logging.getLogger(__name__)
 
-# Short display labels for sensor IDs
-SENSOR_LABELS = {
-    "bme280_temperature": ("TEMP", "C"),
-    "bme280_humidity": ("RH", "%"),
-    "bme280_pressure": ("PRES", "hPa"),
-    "ezo_ph": ("PH", ""),
-    "ezo_ec": ("EC", "uS"),
-    "ds18b20_temperature": ("WTEMP", "C"),
+# Human-readable labels and display config per sensor
+# (label, unit, convert_fn or None)
+def _c_to_f(c: float) -> float:
+    return c * 9.0 / 5.0 + 32.0
+
+
+SENSOR_DISPLAY = {
+    "bme280_temperature": ("Air", "F", _c_to_f),
+    "bme280_humidity": ("Humidity", "%", None),
+    "bme280_pressure": ("Pressure", "hPa", None),
+    "ezo_ph": ("pH", "", None),
+    "ezo_ec": ("EC", "uS", None),
+    "ds18b20_temperature": ("Water", "F", _c_to_f),
 }
+
+
+def _format_reading(sensor_id: str, value: float) -> tuple[str, str]:
+    """Format a sensor reading into (label, display_value)."""
+    label, unit, convert = SENSOR_DISPLAY.get(sensor_id, (sensor_id[:8], "", None))
+    if convert is not None:
+        value = convert(value)
+    return label, f"{value:.1f}{unit}"
 
 
 def render_values_page(oled, readings: dict) -> None:
     """Render current sensor values on the OLED."""
     oled.clear()
-    oled.draw_text(0, 0, "LIVING LIGHT", size=10)
+    oled.draw_text(0, 0, "LIVING LIGHT", size=11)
 
-    y = 14
+    y = 16
     for sensor_id, reading in readings.items():
-        label, unit = SENSOR_LABELS.get(sensor_id, (sensor_id[:6], ""))
-        text = f"{label:6s}{reading.value:>6.1f}{unit}"
-        oled.draw_text(0, y, text, size=10)
+        label, display_val = _format_reading(sensor_id, reading.value)
+        oled.draw_text(0, y, f"{label}", size=10)
+        oled.draw_text(70, y, display_val, size=10)
         y += 12
         if y > 56:
             break
 
     if not readings:
-        oled.draw_text(0, 28, "No sensors yet", size=10)
+        oled.draw_text(0, 28, "Waiting for data...", size=10)
 
     oled.show()
 
@@ -249,11 +262,13 @@ class DisplayService:
             return
 
         sid = sensor_ids[0]
-        label, unit = SENSOR_LABELS.get(sid, (sid[:6], ""))
+        label, unit, convert = SENSOR_DISPLAY.get(sid, (sid[:6], "", None))
 
         end = datetime.now(timezone.utc)
         start = end - timedelta(hours=1)
         readings = await self._repo.get_range(sid, start, end)
         values = [r.value for r in readings]
+        if convert is not None:
+            values = [convert(v) for v in values]
 
         render_sparkline_page(self._oled, label, values, unit)
