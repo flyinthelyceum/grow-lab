@@ -42,12 +42,17 @@ class ESP32Serial:
         try:
             import serial
 
-            self._serial = serial.Serial(
-                port=self._port,
-                baudrate=self._baud,
-                timeout=self._timeout,
-            )
-            # Give USB CDC devices a brief moment after open/reset.
+            ser = serial.Serial()
+            ser.port = self._port
+            ser.baudrate = self._baud
+            ser.timeout = self._timeout
+            # Don't assert DTR/RTS on open — the ESP32-S3 USB-Serial/JTAG
+            # interprets DTR toggle as a reset into download mode.
+            ser.dtr = False
+            ser.rts = False
+            ser.open()
+            self._serial = ser
+            # Give USB CDC devices a brief moment after open.
             time.sleep(0.3)
             # Drain any boot messages
             self._serial.reset_input_buffer()
