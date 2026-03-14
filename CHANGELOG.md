@@ -5,13 +5,19 @@ All notable changes to this project are documented in this file.
 ## 2026-03-13
 
 ### Fixed
-- ESP32 serial timeout resolved: PlatformIO board profile updated from `esp32dev` to `esp32-s3-devkitc-1` with USB CDC build flags (`ARDUINO_USB_CDC_ON_BOOT=1`, `ARDUINO_USB_MODE=1`).
-- LEDC PWM driver updated to new ESP32 Arduino core API (`ledcAttach` replaces deprecated `ledcSetup`/`ledcAttachPin`).
+- ESP32-S3 serial timeout fully resolved. Three root causes identified and fixed:
+  1. PlatformIO board profile updated from `esp32dev` to `esp32-s3-devkitc-1`.
+  2. Firmware rewritten to use USB-Serial/JTAG low-level FIFO (`usb_serial_jtag_ll`) instead of Arduino `Serial` (which targets UART0/HWCDC, not the JTAG CDC port).
+  3. Python driver opens serial without DTR/RTS assertion to prevent the S3 from resetting into download mode.
 - Default serial port changed from `/dev/ttyUSB0` to `/dev/ttyACM0` (native USB CDC path for ESP32-S3).
+- Board default `ARDUINO_USB_MODE=1` overridden to `0` to prevent Arduino core from disabling USB-Serial/JTAG controller.
 
-### Notes
-- Firmware rebuild and flash required on Pi to activate the fix.
-- Validate with `miniterm` raw serial test, then `growlab light status`.
+### Added
+- `jtag_serial.h` — Stream-compatible wrapper for ESP32-S3 USB-Serial/JTAG hardware FIFO.
+
+### Changed
+- `commands.cpp` refactored to accept a `Print&` output parameter instead of hardcoded `Serial`.
+- Firmware version bumped to `0.2.0`.
 
 ## 2026-03-12
 

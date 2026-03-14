@@ -15,20 +15,24 @@ This runbook replaces the older software-build-first commissioning flow.
 
 ### Known Blocker (as of March 12, 2026) — RESOLVED March 13
 
-- **Root cause:** PlatformIO was configured with `board = esp32dev` (classic ESP32), but the hardware is an ESP32-S3-N16R8. The S3 uses native USB CDC — `Serial` was routed to UART0 pins, not the USB port.
-- **Fix:** Updated board to `esp32-s3-devkitc-1` with `ARDUINO_USB_CDC_ON_BOOT=1` and `ARDUINO_USB_MODE=1` build flags. Updated LEDC PWM calls to new API. Changed default serial port to `/dev/ttyACM0`.
-- **Status:** Firmware rebuild and flash required. Validate with `miniterm` then `growlab light status`.
+- **Root causes (3):**
+  1. PlatformIO used `board = esp32dev` — wrong toolchain and board defaults for ESP32-S3.
+  2. Arduino `Serial` targets UART0/HWCDC, not the USB-Serial/JTAG controller used by the Freenove board. Firmware rewritten with `JtagSerial` wrapper using low-level FIFO.
+  3. pyserial's default DTR assertion resets the S3 into download mode. Driver now opens with `dtr=False, rts=False`.
+- **Fix verified:** All serial commands (`STATUS`, `LIGHT`, `PUMP`) working on Pi via `/dev/ttyACM0`.
+- **Flash note:** After flashing via esptool, the ESP32 enters download mode. Unplug/replug USB to boot into application firmware. BOOT/RESET buttons on this board are unresponsive.
 
-### Session Handoff (end of day: March 12, 2026)
+### Session Handoff (end of day: March 13, 2026)
 
-- Completed in Phase 1:
-  - DS18B20 detected and readable.
-  - GPIO relay control is working from CLI.
-  - Pump control path is pinned to GPIO for V0.
-- March 13 progress:
-  - Identified root cause of ESP32 serial timeout (wrong board profile).
-  - Updated firmware build config, PWM driver, and serial port defaults.
-  - Next: rebuild, flash, and validate on Pi.
+- Completed:
+  - ESP32-S3 serial blocker fully resolved.
+  - Firmware v0.2.0 flashed and validated on Pi.
+  - All serial commands working: STATUS, LIGHT, PUMP.
+  - Python driver updated with DTR/RTS fix.
+  - Phase 1 and Phase 2 serial prerequisite cleared.
+- Hardware note:
+  - Board is Freenove ESP32-S3 WROOM N8R8 (8MB flash, 8MB PSRAM), not N16R8 as previously noted.
+  - BOOT/RESET buttons unresponsive — power cycle via USB cable for resets.
 
 ## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 
