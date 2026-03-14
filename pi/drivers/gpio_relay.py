@@ -35,8 +35,9 @@ class GPIORelayPump:
     IrrigationService can use either backend.
     """
 
-    def __init__(self, gpio_pin: int = 17) -> None:
+    def __init__(self, gpio_pin: int = 17, active_low: bool = True) -> None:
         self._gpio_pin = gpio_pin
+        self._active_low = active_low
         self._initialized = False
 
     def set_pump(self, on: bool) -> ESP32Response:
@@ -55,10 +56,14 @@ class GPIORelayPump:
 
         try:
             if not self._initialized:
-                gpio.setup(self._gpio_pin, gpio.OUT)
+                initial = gpio.HIGH if self._active_low else gpio.LOW
+                gpio.setup(self._gpio_pin, gpio.OUT, initial=initial)
                 self._initialized = True
 
-            state = gpio.HIGH if on else gpio.LOW
+            if self._active_low:
+                state = gpio.LOW if on else gpio.HIGH
+            else:
+                state = gpio.HIGH if on else gpio.LOW
             gpio.output(self._gpio_pin, state)
 
             logger.debug("GPIO%d relay %s", self._gpio_pin, "ON" if on else "OFF")
@@ -83,7 +88,8 @@ class GPIORelayPump:
             return
 
         try:
-            gpio.output(self._gpio_pin, gpio.LOW)
+            off_state = gpio.HIGH if self._active_low else gpio.LOW
+            gpio.output(self._gpio_pin, off_state)
             gpio.cleanup(self._gpio_pin)
             self._initialized = False
             logger.debug("GPIO%d relay cleaned up", self._gpio_pin)
