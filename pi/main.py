@@ -99,11 +99,29 @@ async def run(config: AppConfig) -> None:
     poller = PollingService(registry, repo, config)
     await poller.start()
 
+    # Set up camera for pump-triggered captures
+    camera_svc = None
+    if config.camera.enabled:
+        from pi.drivers.camera import CameraDriver
+        from pi.services.camera_capture import CameraCaptureService
+
+        camera = CameraDriver(resolution=config.camera.resolution)
+        camera_svc = CameraCaptureService(camera, repo, config.camera)
+
+    async def _on_pump_done():
+        """Capture an image after each pump pulse."""
+        if camera_svc is not None and camera_svc._camera.is_available:
+            logger.info("Pump-triggered camera capture")
+            await camera_svc.capture_now()
+
     # Start irrigation scheduler
     irrigator: IrrigationService | None = None
     pump = _build_pump_controller(config)
     if pump is not None:
-        irrigator = IrrigationService(pump, repo, config.irrigation)
+        irrigator = IrrigationService(
+            pump, repo, config.irrigation,
+            on_pulse_complete=_on_pump_done,
+        )
         await irrigator.start()
     else:
         logger.warning("Irrigation scheduler disabled — pump controller unavailable")
@@ -150,6 +168,8 @@ async def run(config: AppConfig) -> None:
     if irrigator is not None:
         await irrigator.stop()
     await poller.stop()
+    if camera_svc is not None:
+        camera_svc._camera.close()
 
     # Close sensor drivers
     for driver in registry.available_drivers.values():

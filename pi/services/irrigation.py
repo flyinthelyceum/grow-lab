@@ -10,7 +10,8 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Protocol
+from collections.abc import Callable, Coroutine
+from typing import Any, Protocol
 
 from pi.config.schema import IrrigationConfig
 from pi.data.models import SystemEvent
@@ -38,10 +39,12 @@ class IrrigationService:
         pump: PumpController,
         repository: SensorRepository,
         config: IrrigationConfig,
+        on_pulse_complete: Callable[[], Coroutine[Any, Any, None]] | None = None,
     ) -> None:
         self._pump = pump
         self._repository = repository
         self._config = config
+        self._on_pulse_complete = on_pulse_complete
         self._task: asyncio.Task | None = None
         self._running = False
         self._pump_active = False
@@ -109,6 +112,13 @@ class IrrigationService:
 
         await self._pump_off()
         await self._log_event(f"Pump OFF after {clamped}s")
+
+        if self._on_pulse_complete is not None:
+            try:
+                await self._on_pulse_complete()
+            except Exception as exc:
+                logger.warning("Post-pulse callback error: %s", exc)
+
         return True
 
     def _check_min_interval(self) -> bool:
