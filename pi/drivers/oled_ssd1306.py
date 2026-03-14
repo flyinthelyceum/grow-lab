@@ -1,4 +1,4 @@
-"""SSD1306 OLED display driver (128x64, I²C).
+"""OLED display driver (128x64, I²C, SH1106/SSD1306).
 
 Renders framebuffer content to the physical OLED display.
 Uses Pillow for software rendering. On Pi, luma.oled pushes
@@ -21,9 +21,10 @@ class OLEDDriver:
     WIDTH = 128
     HEIGHT = 64
 
-    def __init__(self, address: int = 0x3C, bus: int = 1) -> None:
+    def __init__(self, address: int = 0x3C, bus: int = 1, controller: str = "sh1106") -> None:
         self._address = address
         self._bus = bus
+        self._controller = controller
         self._device = None
         self._image = Image.new("1", (self.WIDTH, self.HEIGHT), 0)
         self._draw = ImageDraw.Draw(self._image)
@@ -92,14 +93,30 @@ class OLEDDriver:
             self._device = None
 
     def _try_init_device(self) -> None:
-        """Try to initialize the physical SSD1306 via luma.oled."""
+        """Try to initialize the physical OLED via luma.oled.
+
+        Uses the configured controller (sh1106 or ssd1306). Sets
+        persist=True so the display holds its content when the
+        driver object is garbage-collected.
+        """
         try:
             from luma.core.interface.serial import i2c
-            from luma.oled.device import ssd1306
+            from luma.oled.device import sh1106, ssd1306
+
+            drivers = {"sh1106": sh1106, "ssd1306": ssd1306}
+            driver_cls = drivers.get(self._controller)
+            if driver_cls is None:
+                logger.error("Unknown OLED controller: %s", self._controller)
+                return
 
             serial = i2c(port=self._bus, address=self._address)
-            self._device = ssd1306(serial)
-            logger.info("OLED display initialized at 0x%02X on bus %d", self._address, self._bus)
+            device = driver_cls(serial)
+            device.persist = True
+            self._device = device
+            logger.info(
+                "OLED (%s) initialized at 0x%02X on bus %d",
+                self._controller.upper(), self._address, self._bus,
+            )
         except Exception as exc:
             logger.debug("OLED not available: %s", exc)
             self._device = None

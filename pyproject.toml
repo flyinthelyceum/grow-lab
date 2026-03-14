@@ -18,6 +18,7 @@ dependencies = [
 [project.optional-dependencies]
 pi = [
     "RPi.GPIO>=0.7",
+    "luma.oled>=3.13",
     "picamera2>=0.3",
     "adafruit-circuitpython-seesaw>=1.14",
 ]

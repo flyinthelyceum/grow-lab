@@ -18,7 +18,7 @@ def display_test(ctx: click.Context) -> None:
 
     from pi.drivers.oled_ssd1306 import OLEDDriver
 
-    oled = OLEDDriver(address=config.display.address)
+    oled = OLEDDriver(address=config.display.address, controller=config.display.controller)
 
     if not oled.is_available:
         click.echo("OLED display not detected")
@@ -41,7 +41,7 @@ def display_clear(ctx: click.Context) -> None:
 
     from pi.drivers.oled_ssd1306 import OLEDDriver
 
-    oled = OLEDDriver(address=config.display.address)
+    oled = OLEDDriver(address=config.display.address, controller=config.display.controller)
     oled.clear()
     oled.show()
     click.echo("Display cleared")
@@ -58,6 +58,6 @@ def display_status(ctx: click.Context) -> None:
     click.echo(f"Enabled:  {config.display.enabled}")
     click.echo(f"Address:  0x{config.display.address:02X}")
 
-    oled = OLEDDriver(address=config.display.address)
+    oled = OLEDDriver(address=config.display.address, controller=config.display.controller)
     click.echo(f"Available: {oled.is_available}")
     oled.close()

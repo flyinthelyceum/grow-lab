@@ -190,6 +190,7 @@ def load_config(path: Path | None = None) -> AppConfig:
         display=DisplayConfig(
             enabled=display_data.get("enabled", False),
             address=display_data.get("address", 0x3C),
+            controller=display_data.get("controller", "sh1106"),
         ),
     )
 

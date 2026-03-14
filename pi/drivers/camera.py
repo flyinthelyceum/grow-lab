@@ -23,6 +23,7 @@ class CameraDriver:
     ) -> None:
         self._resolution = resolution
         self._picamera2 = None
+        self._still_cmd: str = "rpicam-still"
         self._available: bool | None = None
 
     @property
@@ -79,21 +80,23 @@ class CameraDriver:
             return False
 
     def _check_libcamera(self) -> bool:
-        """Check if libcamera-still is available on the system."""
-        try:
-            result = subprocess.run(
-                ["libcamera-still", "--list-cameras"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            available = result.returncode == 0 and "Available" in result.stdout
-            if available:
-                logger.info("Camera available via libcamera-still")
-            return available
-        except (FileNotFoundError, subprocess.TimeoutExpired):
-            logger.debug("libcamera-still not found")
-            return False
+        """Check if rpicam-still (or legacy libcamera-still) is available."""
+        for cmd in ("rpicam-still", "libcamera-still"):
+            try:
+                result = subprocess.run(
+                    [cmd, "--list-cameras"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                if result.returncode == 0 and "Available" in result.stdout:
+                    self._still_cmd = cmd
+                    logger.info("Camera available via %s", cmd)
+                    return True
+            except (FileNotFoundError, subprocess.TimeoutExpired):
+                continue
+        logger.debug("No camera CLI tool found")
+        return False
 
     def _capture_picamera2(self, output_path: Path) -> bool:
         """Capture using picamera2."""
@@ -106,11 +109,11 @@ class CameraDriver:
             return False
 
     def _capture_libcamera(self, output_path: Path) -> bool:
-        """Capture using libcamera-still subprocess."""
+        """Capture using rpicam-still (or legacy libcamera-still) subprocess."""
         try:
             result = subprocess.run(
                 [
-                    "libcamera-still",
+                    self._still_cmd,
                     "-o", str(output_path),
                     "--width", str(self._resolution[0]),
                     "--height", str(self._resolution[1]),
@@ -125,8 +128,8 @@ class CameraDriver:
                 logger.debug("Captured image via libcamera-still: %s", output_path)
                 return True
             else:
-                logger.error("libcamera-still failed: %s", result.stderr)
+                logger.error("%s failed: %s", self._still_cmd, result.stderr)
                 return False
         except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
-            logger.error("libcamera-still capture error: %s", exc)
+            logger.error("%s capture error: %s", self._still_cmd, exc)
             return False

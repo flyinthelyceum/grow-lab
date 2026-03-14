@@ -107,6 +107,7 @@ class IrrigationConfig:
 class DisplayConfig:
     enabled: bool = False
     address: int = 0x3C
+    controller: str = "sh1106"  # "sh1106" or "ssd1306"
 
 
 @dataclass(frozen=True)
