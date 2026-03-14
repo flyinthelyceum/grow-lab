@@ -25,14 +25,25 @@ This runbook replaces the older software-build-first commissioning flow.
 ### Session Handoff (end of day: March 13, 2026)
 
 - Completed:
-  - ESP32-S3 serial blocker fully resolved.
-  - Firmware v0.2.0 flashed and validated on Pi.
+  - ESP32-S3 serial blocker fully resolved (3 root causes — see changelog).
+  - Firmware v0.2.1 flashed and validated on Pi. Heartbeat LED (GPIO48) confirms firmware alive.
   - All serial commands working: STATUS, LIGHT, PUMP.
   - Python driver updated with DTR/RTS fix.
   - Phase 1 and Phase 2 serial prerequisite cleared.
+  - DS18B20 reading stable (~22°C reservoir temp).
+  - GPIO17 relay tested — 3× consecutive 5s pump wet tests passed.
+  - `growlab start` soak running on Pi (PID 4484, log at `~/growlab-soak.log`).
+    - 34 readings logged in first ~4 hours, no errors.
+    - Irrigation scheduler active (08:00, 14:00, 20:00 — 10s pulses).
 - Hardware note:
   - Board is Freenove ESP32-S3 WROOM N8R8 (8MB flash, 8MB PSRAM), not N16R8 as previously noted.
   - BOOT/RESET buttons unresponsive — power cycle via USB cable for resets.
+- Next session priorities:
+  1. Check soak results: `ssh jared@10.80.1.161 "tail -50 ~/growlab-soak.log"` and `growlab db info`.
+  2. Verify overnight pump schedule fired at 08:00 (check log for relay activation).
+  3. Export DS18B20 data and review for stability/drift.
+  4. If soak passes — check Phase 1 exit criteria boxes and move to Phase 2 (BME280, ESP32 LED PWM, OLED, camera).
+  5. Phase 2 first device: wire BME280 on I²C bus, enable in config, verify with `growlab sensor scan`.
 
 ## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 

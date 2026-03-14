@@ -14,10 +14,17 @@ All notable changes to this project are documented in this file.
 
 ### Added
 - `jtag_serial.h` — Stream-compatible wrapper for ESP32-S3 USB-Serial/JTAG hardware FIFO.
+- Heartbeat blink on ESP32 onboard RGB LED (GPIO48) — dim green pulse every 2s confirms firmware is running.
 
 ### Changed
 - `commands.cpp` refactored to accept a `Print&` output parameter instead of hardcoded `Serial`.
-- Firmware version bumped to `0.2.0`.
+- Firmware version bumped to `0.2.1`.
+
+### Validated (Phase 1 Hardware)
+- DS18B20 reading stable at ~22°C (reservoir temp).
+- GPIO17 relay switching reliably — audible click, pump runs on command.
+- Pump wet test passed (3× consecutive 5-second runs, no issues).
+- `growlab start` soak initiated — DS18B20 polling every 120s, irrigation scheduler active, data logging to SQLite on Pi.
 
 ## 2026-03-12
 
