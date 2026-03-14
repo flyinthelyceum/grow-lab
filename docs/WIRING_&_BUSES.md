@@ -131,33 +131,36 @@ This separation keeps timing‑sensitive lighting control off the Raspberry Pi.
 
 # I²C Bus
 
-The I²C bus connects environmental sensors.
+The I²C bus connects environmental sensors and the status display.
 
 Devices on the bus:
 
 • BME280 (temperature + humidity) — 0x76
-• Atlas EZO‑pH — 0x63
-• Atlas EZO‑EC — 0x64
-• STEMMA Soil Sensor (media moisture) — 0x36
+• SSD1306 OLED display (128x64) — 0x3C
+• Atlas EZO‑pH — 0x63 (Phase 3)
+• Atlas EZO‑EC — 0x64 (Phase 3)
+• STEMMA Soil Sensor (media moisture) — 0x36 (Phase 3)
 
 Raspberry Pi pins:
 
-SDA → GPIO 2 (Pin 3)  
-SCL → GPIO 3 (Pin 5)  
-3.3V → Pin 1  
+SDA → GPIO 2 (Pin 3)
+SCL → GPIO 3 (Pin 5)
+3.3V → Pin 1
 GND → Pin 6
 
 Topology:
 
-Pi SDA  
-→ BME280  
-→ EZO‑pH  
-→ EZO‑EC  
+Pi SDA
+→ BME280
+→ OLED
+→ EZO‑pH (Phase 3)
+→ EZO‑EC (Phase 3)
 
-Pi SCL  
-→ BME280  
-→ EZO‑pH  
-→ EZO‑EC
+Pi SCL
+→ BME280
+→ OLED
+→ EZO‑pH (Phase 3)
+→ EZO‑EC (Phase 3)
 
 All devices share a common ground.
 
@@ -266,7 +269,7 @@ Configuration:
 • Baud rate: 115200
 • Framing: newline-delimited text commands (`\n` terminated)
 • Physical: USB cable connecting Pi to ESP32 dev board
-• Pi device: `/dev/serial0` or `/dev/ttyUSB0`
+• Pi device: `/dev/ttyACM0` (USB-Serial/JTAG on Freenove ESP32-S3)
 
 V0 command set:
 
@@ -301,15 +304,33 @@ Guidelines:
 
 ---
 
-# Fan Power
+# Fan Relay Wiring
 
-For V0 the canopy fan runs continuously.
+The 12V canopy fan (Noctua NF-A12x25) is controlled via a relay module.
 
-Recommended setup:
+Recommended Pi GPIO:
 
-Fan → dedicated power adapter
+GPIO6 (Pin 31)
 
-No software control required in V0.
+Logic wiring:
+
+Pi GPIO6 → Relay IN
+5V → Relay VCC
+GND → Relay GND
+
+Power wiring:
+
+12V fan power is routed through the relay switch.
+
+Control path:
+
+Pi GPIO6 → Relay → 12V Fan Power
+
+For V0 the fan runs continuously. Software can energize the relay at startup and leave it on. Future versions may add scheduled or temperature-triggered fan control.
+
+## 5V Pi Fan
+
+The small Pi cooling fan runs always-on from the Pi 5V/GND pins. No relay or software control needed.
 
 ---
 
@@ -355,16 +376,28 @@ Do not bundle these groups together.
 
 # Recommended Pin Map
 
-Raspberry Pi
+All Pi GPIO connections route through the RSP-GPIO-8 breakout board (screw terminals).
 
-GPIO2 → I²C SDA  
-GPIO3 → I²C SCL  
-GPIO4 → DS18B20 data  
-GPIO17 → pump relay
+## Raspberry Pi
 
-ESP32
+| Pin | GPIO | Function | Device |
+|-----|------|----------|--------|
+| 1 | — | 3.3V | DS18B20 VCC, BME280 VCC, OLED VCC |
+| 2 | — | 5V | Pump relay VCC |
+| 3 | GPIO2 | I²C SDA | BME280 + OLED (shared bus) |
+| 4 | — | 5V | 12V fan relay VCC |
+| 5 | GPIO3 | I²C SCL | BME280 + OLED (shared bus) |
+| 6 | — | GND | Common ground (all devices) |
+| 7 | GPIO4 | 1-Wire Data | DS18B20 (+ 4.7kΩ pull-up to 3.3V) |
+| 11 | GPIO17 | Relay IN | Pump relay signal |
+| 31 | GPIO6 | Relay IN | 12V fan relay signal |
+| CSI | — | Ribbon cable | Pi Camera Module 3 |
+| USB-A | — | Serial | ESP32-S3 (/dev/ttyACM0) |
+
+## ESP32
 
 GPIO18 → LED PWM dimming
+GPIO48 → Onboard RGB heartbeat LED
 
 ---
 
