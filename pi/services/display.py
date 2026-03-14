@@ -55,7 +55,7 @@ def _format_reading(sensor_id: str, value: float) -> tuple[str, str]:
 def render_values_page(oled, readings: dict) -> None:
     """Render current sensor values on the OLED."""
     oled.clear()
-    oled.draw_text(0, 0, "LIVING LIGHT", size=11)
+    oled.draw_text(0, 0, "GROWLAB", size=11)
 
     y = 16
     for sensor_id, reading in readings.items():
