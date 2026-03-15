@@ -38,12 +38,31 @@ This runbook replaces the older software-build-first commissioning flow.
 - Hardware note:
   - Board is Freenove ESP32-S3 WROOM N8R8 (8MB flash, 8MB PSRAM), not N16R8 as previously noted.
   - BOOT/RESET buttons unresponsive — power cycle via USB cable for resets.
+
+### Session Handoff (end of day: March 14, 2026)
+
+- Completed:
+  - Pi rewired to RSP-GPIO-8 breakout board.
+  - March 13 soak failure diagnosed: IrrigationService not wired into main.py at time of launch. Fixed in commit `1ae9f9f`.
+  - Phase 2 hardware brought online: BME280, OLED (SH1106), Pi Camera Module 3, 8-channel relay.
+  - OLED driver fixed: GME12864 uses SH1106 controller (not SSD1306). Added configurable `controller` field, `persist=True`.
+  - Camera driver fixed: Pi OS Bookworm uses `rpicam-still` not `libcamera-still`.
+  - GPIO relay driver fixed: SunFounder 8-channel board uses active-low logic.
+  - Display service wired into main loop with 4 rotating pages (values, system, irrigation, sparkline).
+  - Display shows human-readable labels and Fahrenheit (Air, Humidity, H2O Temp).
+  - Camera capture triggers after each pump pulse (no fixed timer).
+  - Full preflight passed: all sensors, pump relay, camera, OLED verified.
+  - Pump-triggered camera capture verified end-to-end.
+  - Overnight soak #2 launched (PID 5199, log at `~/growlab-soak.log`).
+- Pi access: `ssh jared@10.80.1.161`, user `jared`, venv at `~/grow-lab/.venv`.
+- Config on Pi: `~/grow-lab/config.toml` (camera enabled, display enabled with `controller = "sh1106"`).
 - Next session priorities:
-  1. Check soak results: `ssh jared@10.80.1.161 "tail -50 ~/growlab-soak.log"` and `growlab db info`.
-  2. Verify overnight pump schedule fired at 08:00 (check log for relay activation).
-  3. Export DS18B20 data and review for stability/drift.
-  4. If soak passes — check Phase 1 exit criteria boxes and move to Phase 2 (BME280, ESP32 LED PWM, OLED, camera).
-  5. Phase 2 first device: wire BME280 on I²C bus, enable in config, verify with `growlab sensor scan`.
+  1. Check soak #2 results: `tail -100 ~/growlab-soak.log` and `growlab db info`.
+  2. Verify pump fired at 08:00, 14:00, 20:00 UTC with camera captures in `~/grow-lab-data/images/`.
+  3. Review BME280 data for stability — compare air temp vs water temp trends.
+  4. Check Phase 2 exit criteria boxes.
+  5. Remaining Phase 2 work: ESP32 LED PWM (waiting on LED strips/Mean Well driver).
+  6. Begin Phase 3 planning if Phase 2 exit criteria met (minus LED, which is hardware-blocked).
 
 ## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 
@@ -154,12 +173,12 @@ growlab dashboard
 
 ### Phase 1 Exit Criteria
 
-- [ ] Bench layout is physically safe (zones + drip loops).
-- [ ] DS18B20 detected and reading plausible values.
-- [ ] Relay switches reliably in CLI tests.
-- [ ] Pump circulates water with no leaks.
-- [ ] `growlab start` runs for hours without crashing.
-- [ ] DS18B20 data present in DB/dashboard.
+- [x] Bench layout is physically safe (zones + drip loops).
+- [x] DS18B20 detected and reading plausible values.
+- [x] Relay switches reliably in CLI tests.
+- [x] Pump circulates water with no leaks.
+- [x] `growlab start` runs for hours without crashing.
+- [x] DS18B20 data present in DB/dashboard.
 
 ## Phase 2 (Days 2-4): BME280, ESP32+LEDs, OLED, Camera
 
@@ -232,11 +251,11 @@ Monitor for sensor stability, leaks, LED heat, and service reliability.
 
 ### Phase 2 Exit Criteria
 
-- [ ] BME280 detected and stable.
-- [ ] ESP32 controls LED PWM smoothly.
-- [ ] OLED reachable and renders test screen.
-- [ ] Camera captures valid images.
-- [ ] Full 24-hour no-plant soak completes cleanly.
+- [x] BME280 detected and stable.
+- [ ] ESP32 controls LED PWM smoothly. *(blocked — waiting on LED strips and Mean Well driver)*
+- [x] OLED reachable and renders test screen.
+- [x] Camera captures valid images.
+- [ ] Full 24-hour no-plant soak completes cleanly. *(soak #2 running overnight — check March 15)*
 
 ## Phase 3 (Days 4-7): Atlas pH/EC + STEMMA Soil
 

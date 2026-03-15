@@ -2,6 +2,39 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-03-14
+
+### Fixed
+- OLED driver switched from SSD1306 to SH1106 controller (GME12864 modules). Added configurable `controller` field in DisplayConfig with `persist=True` to hold display content after process exit.
+- Camera driver updated from `libcamera-still` to `rpicam-still` (Pi OS Bookworm naming). Falls back to legacy command for older OS versions.
+- GPIO relay driver updated to support active-low relay modules (SunFounder 8-channel board). Initial pin state set correctly to prevent relay click on startup.
+- Display sensor labels changed from raw IDs to human-readable names ("Air", "Humidity", "H2O Temp"). DS18B20 lookup uses prefix matching to handle serial-numbered sensor IDs.
+- All temperature readings converted from Celsius to Fahrenheit on OLED display.
+- OLED header renamed from "LIVING LIGHT" to "GROWLAB".
+- Pump soak failure root cause identified: IrrigationService was not wired into `main.py` during the March 13 overnight run (fix committed same day but after soak launched).
+
+### Added
+- OLED display service wired into `main.py` startup/shutdown. Rotates through 4 pages every 5s: sensor values, system overview (uptime + subsystem status), irrigation schedule with last pump event, sparkline trend chart.
+- Camera capture triggered after each pump pulse via `on_pulse_complete` callback in IrrigationService. No fixed-interval timer — captures only on irrigation events.
+- `luma.oled` added to `[pi]` optional dependencies in `pyproject.toml`.
+- MJPEG streaming server for camera aiming (`/tmp/mjpeg_server.py` — temporary, not committed).
+
+### Validated (Phase 2 Hardware)
+- BME280 detected and polling at 0x76 (air temp, humidity, pressure).
+- DS18B20 stable at ~19.75°C (67.6°F).
+- OLED (SH1106, GME12864) displaying on I²C 0x3C with all 4 page rotations confirmed.
+- Pi Camera Module 3 (IMX708) capturing at 2304×1296 and 4608×2592 via rpicam-still.
+- SunFounder 8-channel relay (active-low) switching pump on GPIO17.
+- Pump-triggered camera capture verified end-to-end (pump fires → camera captures → image saved to DB).
+- Overnight soak #2 launched: all sensors polling, irrigation at 08:00/14:00/20:00 UTC, camera on pump events, OLED rotating.
+
+### Hardware Notes
+- Rewired Pi to RSP-GPIO-8 breakout board (cleaner breadboard layout).
+- GME12864 OLED confirmed as SH1106 controller, not SSD1306 — both init without error at 0x3C but only SH1106 renders pixels.
+- SunFounder 8-channel relay uses active-low logic (LOW = relay ON). JD-VCC jumper must bridge to VCC for coil power from Pi 5V rail.
+- Noctua NF-A12x25 PWM fan control deferred — runs at full speed through relay for V0. PWM/tach wires can connect directly to Pi GPIO when ready (3.3V logic compatible).
+- User has thousands of ESP32-WROOM-32U modules available; current build uses ESP32-S3 N8R8 for native USB convenience but 32U is a drop-in replacement with UART bridge.
+
 ## 2026-03-13
 
 ### Fixed
