@@ -23,10 +23,10 @@ I2C_ADDRESS_MAP: dict[int, str] = {
     0x77: "bme280",  # alternate address
     0x63: "ezo_ph",
     0x64: "ezo_ec",
-    0x36: "soil_moisture",
-    0x37: "soil_moisture",  # alternate
-    0x38: "soil_moisture",  # alternate
-    0x39: "soil_moisture",  # alternate
+    0x48: "soil_moisture_adc",  # ADS1115 (reads DFRobot SEN0308)
+    0x49: "soil_moisture_adc",  # ADS1115 alternate
+    0x4A: "soil_moisture_adc",  # ADS1115 alternate
+    0x4B: "soil_moisture_adc",  # ADS1115 alternate
     0x3C: "oled_display",
     0x3D: "oled_display",
 }
@@ -155,10 +155,21 @@ def build_registry(config: AppConfig, scan: ScanResult) -> SensorRegistry:
         addr = config.sensors.ezo_ph.address
         device = _find_i2c_device(addr, scan)
         if device is not None:
-            statuses.append(
-                SensorStatus("ezo_ph", False, None, "driver not yet implemented")
-            )
-            logger.info("EZO-pH detected at 0x%02X, driver pending", addr)
+            try:
+                from pi.drivers.ezo_ph import EZOPhDriver
+
+                driver = EZOPhDriver(
+                    bus_number=config.i2c.bus, address=addr
+                )
+                statuses.append(
+                    SensorStatus("ezo_ph", True, driver, "detected")
+                )
+                logger.info("EZO-pH registered at 0x%02X", addr)
+            except Exception as exc:
+                statuses.append(
+                    SensorStatus("ezo_ph", False, None, f"init failed: {exc}")
+                )
+                logger.error("EZO-pH init failed: %s", exc)
         else:
             msg = f"not found at 0x{addr:02X} — may still be in UART mode"
             statuses.append(SensorStatus("ezo_ph", False, None, msg))
@@ -169,26 +180,53 @@ def build_registry(config: AppConfig, scan: ScanResult) -> SensorRegistry:
         addr = config.sensors.ezo_ec.address
         device = _find_i2c_device(addr, scan)
         if device is not None:
-            statuses.append(
-                SensorStatus("ezo_ec", False, None, "driver not yet implemented")
-            )
-            logger.info("EZO-EC detected at 0x%02X, driver pending", addr)
+            try:
+                from pi.drivers.ezo_ec import EZOECDriver
+
+                driver = EZOECDriver(
+                    bus_number=config.i2c.bus, address=addr
+                )
+                statuses.append(
+                    SensorStatus("ezo_ec", True, driver, "detected")
+                )
+                logger.info("EZO-EC registered at 0x%02X", addr)
+            except Exception as exc:
+                statuses.append(
+                    SensorStatus("ezo_ec", False, None, f"init failed: {exc}")
+                )
+                logger.error("EZO-EC init failed: %s", exc)
         else:
             msg = f"not found at 0x{addr:02X} — may still be in UART mode"
             statuses.append(SensorStatus("ezo_ec", False, None, msg))
             logger.warning("EZO-EC %s", msg)
 
-    # Soil Moisture (STEMMA)
+    # Soil Moisture (DFRobot SEN0308 via ADS1115)
     if config.sensors.soil_moisture.enabled:
         addr = config.sensors.soil_moisture.address
         device = _find_i2c_device(addr, scan)
         if device is not None:
-            statuses.append(
-                SensorStatus(
-                    "soil_moisture", False, None, "driver not yet implemented"
+            try:
+                from pi.drivers.soil_moisture import SoilMoistureDriver
+
+                driver = SoilMoistureDriver(
+                    bus_number=config.i2c.bus,
+                    address=addr,
+                    channel=config.sensors.soil_moisture_channel,
                 )
-            )
-            logger.info("Soil moisture detected at 0x%02X, driver pending", addr)
+                statuses.append(
+                    SensorStatus("soil_moisture", True, driver, "detected")
+                )
+                logger.info(
+                    "Soil moisture (ADS1115) registered at 0x%02X channel %d",
+                    addr, config.sensors.soil_moisture_channel,
+                )
+            except Exception as exc:
+                statuses.append(
+                    SensorStatus(
+                        "soil_moisture", False, None, f"init failed: {exc}"
+                    )
+                )
+                logger.error("Soil moisture init failed: %s", exc)
         else:
             statuses.append(
                 SensorStatus(

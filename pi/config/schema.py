@@ -58,8 +58,9 @@ class SensorsConfig:
         default_factory=lambda: SensorEntry(gpio=4, interval_seconds=120)
     )
     soil_moisture: SensorEntry = field(
-        default_factory=lambda: SensorEntry(address=0x36, interval_seconds=300)
+        default_factory=lambda: SensorEntry(address=0x48, interval_seconds=300)
     )
+    soil_moisture_channel: int = 0  # ADS1115 channel (0-3) for SEN0308
 
 
 @dataclass(frozen=True)

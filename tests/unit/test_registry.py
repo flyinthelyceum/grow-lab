@@ -84,18 +84,21 @@ class TestBuildRegistry:
         assert "UART mode" in statuses_by_id["ezo_ph"].reason
 
     def test_multiple_sensors_detected(self):
-        scan = _make_scan(0x76, 0x63, 0x64, 0x36)
+        scan = _make_scan(0x76, 0x63, 0x64, 0x48)
         config = AppConfig()
 
         with patch("pi.drivers.bme280.BME280Driver"):
             registry = build_registry(config, scan)
 
-        # BME280 available, others have drivers pending
+        # All sensors with drivers should be available
         assert registry.is_available("bme280")
         statuses_by_id = {s.sensor_id: s for s in registry.all_statuses}
-        assert "driver not yet implemented" in statuses_by_id["ezo_ph"].reason
-        assert "driver not yet implemented" in statuses_by_id["ezo_ec"].reason
-        assert "driver not yet implemented" in statuses_by_id["soil_moisture"].reason
+        assert statuses_by_id["ezo_ph"].available
+        assert statuses_by_id["ezo_ph"].reason == "detected"
+        assert statuses_by_id["ezo_ec"].available
+        assert statuses_by_id["ezo_ec"].reason == "detected"
+        assert statuses_by_id["soil_moisture"].available
+        assert statuses_by_id["soil_moisture"].reason == "detected"
 
     def test_bme280_init_failure(self):
         scan = _make_scan(0x76)

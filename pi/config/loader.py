@@ -82,6 +82,7 @@ def _build_sensors(raw: dict[str, Any]) -> SensorsConfig:
         soil_moisture=_build_sensor_entry(sensors.get("soil_moisture", {}))
         if "soil_moisture" in sensors
         else defaults.soil_moisture,
+        soil_moisture_channel=sensors.get("soil_moisture_channel", 0),
     )
 
 

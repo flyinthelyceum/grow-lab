@@ -27,7 +27,8 @@ class TestAppConfigDefaults:
         assert config.sensors.ezo_ph.address == 0x63
         assert config.sensors.ezo_ec.address == 0x64
         assert config.sensors.ds18b20.gpio == 4
-        assert config.sensors.soil_moisture.address == 0x36
+        assert config.sensors.soil_moisture.address == 0x48
+        assert config.sensors.soil_moisture_channel == 0
 
     def test_irrigation_defaults(self):
         config = AppConfig()
