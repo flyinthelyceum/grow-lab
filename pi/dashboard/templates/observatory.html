@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Living Light Observatory</title>
+    <title>GROWLAB</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header class="observatory-header">
-        <h1 class="observatory-title">Living Light Observatory</h1>
+        <h1 class="observatory-title">GROWLAB</h1>
         <div class="time-controls">
-            <button class="time-btn active" data-window="1h">1H</button>
-            <button class="time-btn" data-window="24h">24H</button>
+            <button class="time-btn" data-window="1h">1H</button>
+            <button class="time-btn active" data-window="24h">24H</button>
             <button class="time-btn" data-window="7d">7D</button>
         </div>
         <div class="system-clock" id="system-clock"></div>
@@ -52,7 +52,7 @@
             <div class="panel-header">
                 <span class="panel-label">AIR</span>
                 <span class="panel-value" id="air-temp">--</span>
-                <span class="panel-unit">°C</span>
+                <span class="panel-unit">°F</span>
             </div>
             <div class="panel-chart" id="chart-air"></div>
             <div class="panel-meta">
@@ -71,7 +71,7 @@
             <div class="panel-chart" id="chart-root"></div>
             <div class="panel-meta">
                 <span class="meta-item" id="root-ec">EC: -- µS/cm</span>
-                <span class="meta-item" id="root-temp">Temp: --°C</span>
+                <span class="meta-item" id="root-temp">Temp: --°F</span>
             </div>
         </section>
 
@@ -79,9 +79,14 @@
         <section class="panel panel-plant" id="panel-plant">
             <div class="panel-header">
                 <span class="panel-label">PLANT</span>
+                <span class="panel-value" id="soil-moisture-value">--</span>
+                <span class="panel-unit">% moisture</span>
             </div>
-            <div class="panel-camera" id="camera-feed">
-                <div class="camera-placeholder">No image</div>
+            <div class="plant-layout">
+                <div class="panel-camera" id="camera-feed">
+                    <div class="camera-placeholder">No image</div>
+                </div>
+                <div class="plant-gauge" id="soil-moisture-gauge"></div>
             </div>
             <div class="panel-meta">
                 <span class="meta-item" id="plant-capture-time">--</span>
@@ -100,6 +105,11 @@
     </footer>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="/static/charts/soil-gauge.js"></script>
+    <script src="/static/charts/light-chart.js"></script>
+    <script src="/static/charts/water-timeline.js"></script>
+    <script src="/static/charts/air-chart.js"></script>
+    <script src="/static/charts/root-chart.js"></script>
     <script src="/static/observatory.js"></script>
 </body>
 </html>

@@ -1,9 +1,10 @@
 /**
- * Living Light Observatory — Frontend Controller
+ * GROWLAB — Frontend Controller
  *
- * Manages: WebSocket connection, D3.js waveform charts,
+ * Manages: WebSocket connection, per-subsystem D3 chart renderers,
  * time window selection, and live value updates.
  *
+ * Chart renderers loaded from /static/charts/*.js via window.GrowLab namespace.
  * Design: Calm, scientific. 1-5s update cadence. No jitter.
  */
 
@@ -14,6 +15,28 @@
     let currentWindow = "24h";
     let ws = null;
     let charts = {};
+    let soilGauge = null;
+
+    // --- Temperature conversion ---
+    function cToF(c) { return c * 9 / 5 + 32; }
+
+    // --- Time formatting (12h local, human-readable) ---
+    function formatTime(date) {
+        return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    }
+
+    function formatDateTime(date) {
+        return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+            + " " + formatTime(date);
+    }
+
+    function timeAgo(date) {
+        var diff = Math.floor((Date.now() - date.getTime()) / 1000);
+        if (diff < 60) return "just now";
+        if (diff < 3600) return Math.floor(diff / 60) + "m ago";
+        if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
+        return Math.floor(diff / 86400) + "d ago";
+    }
 
     // --- Sensor ID mapping ---
     const SENSOR_MAP = {
@@ -24,14 +47,53 @@
         root_ph: ["ezo_ph"],
         root_ec: ["ezo_ec"],
         root_temp: ["ds18b20_temperature"],
+        soil_moisture: ["soil_moisture"],
     };
+
+    // Sensor IDs that contain temperature values (stored as °C, display as °F)
+    const TEMP_SENSORS = new Set([
+        "bme280_temperature",
+        "ds18b20_temperature",
+    ]);
+
+    // --- Optimal ranges ---
+    // Each range: [criticalLow, warningLow, warningHigh, criticalHigh]
+    // Values inside warningLow–warningHigh = normal
+    // Values in warning zone = amber drift indicator
+    // Values beyond critical = red alert
+    const RANGES = {
+        air_temp:       [60, 65, 80, 85],       // °F
+        air_humidity:   [30, 40, 70, 80],        // %
+        root_ph:        [5.0, 5.8, 6.5, 7.5],   // pH
+        root_ec:        [400, 800, 1600, 2000],  // µS/cm
+        root_temp:      [55, 60, 75, 80],        // °F
+        soil_moisture:  [20, 40, 70, 85],        // %
+    };
+
+    // Returns "normal", "warning", or "critical"
+    function classify(rangeKey, value) {
+        var r = RANGES[rangeKey];
+        if (!r) return "normal";
+        if (value < r[0] || value > r[3]) return "critical";
+        if (value < r[1] || value > r[2]) return "warning";
+        return "normal";
+    }
+
+    // Apply range status to a DOM element
+    function setRangeStatus(el, status) {
+        if (!el) return;
+        el.classList.remove("range-normal", "range-warning", "range-critical");
+        el.classList.add("range-" + status);
+    }
 
     // --- Clock ---
     function updateClock() {
         const el = document.getElementById("system-clock");
         if (el) {
             const now = new Date();
-            el.textContent = now.toISOString().replace("T", " ").slice(0, 19) + " UTC";
+            el.textContent = now.toLocaleDateString("en-US", {
+                weekday: "short", month: "short", day: "numeric"
+            }) + "  " + formatTime(now);
         }
     }
     setInterval(updateClock, 1000);
@@ -58,10 +120,6 @@
         return fetchJSON("/api/readings/" + sensorId + "?window=" + (window || currentWindow));
     }
 
-    function apiLatest() {
-        return fetchJSON("/api/readings/latest");
-    }
-
     function apiStatus() {
         return fetchJSON("/api/system/status");
     }
@@ -70,164 +128,137 @@
         return fetchJSON("/api/images/latest");
     }
 
-    // --- D3 Waveform Chart ---
-    function createWaveform(containerId, color) {
-        var container = document.getElementById(containerId);
-        if (!container) return null;
-
-        var rect = container.getBoundingClientRect();
-        var margin = { top: 8, right: 8, bottom: 20, left: 40 };
-        var width = rect.width - margin.left - margin.right;
-        var height = rect.height - margin.top - margin.bottom;
-
-        if (width <= 0 || height <= 0) {
-            width = 200;
-            height = 60;
-        }
-
-        var svg = d3.select(container).append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-        var x = d3.scaleTime().range([0, width]);
-        var y = d3.scaleLinear().range([height, 0]);
-
-        // Grid
-        svg.append("g")
-            .attr("class", "grid")
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x).ticks(4).tickSize(-height).tickFormat(""));
-
-        // Area
-        svg.append("path").attr("class", "area");
-
-        // Line
-        svg.append("path").attr("class", "line");
-
-        // X axis
-        svg.append("g")
-            .attr("class", "axis x-axis")
-            .attr("transform", "translate(0," + height + ")");
-
-        // Y axis
-        svg.append("g")
-            .attr("class", "axis y-axis");
-
-        return { svg: svg, x: x, y: y, width: width, height: height, color: color };
-    }
-
-    function updateWaveform(chart, data) {
-        if (!chart || !data || data.length === 0) return;
-
-        var parsed = data.map(function (d) {
-            return { time: new Date(d.timestamp), value: d.value };
-        });
-
-        chart.x.domain(d3.extent(parsed, function (d) { return d.time; }));
-        var yExtent = d3.extent(parsed, function (d) { return d.value; });
-        var yPad = (yExtent[1] - yExtent[0]) * 0.1 || 1;
-        chart.y.domain([yExtent[0] - yPad, yExtent[1] + yPad]);
-
-        var line = d3.line()
-            .x(function (d) { return chart.x(d.time); })
-            .y(function (d) { return chart.y(d.value); })
-            .curve(d3.curveBasis);
-
-        var area = d3.area()
-            .x(function (d) { return chart.x(d.time); })
-            .y0(chart.height)
-            .y1(function (d) { return chart.y(d.value); })
-            .curve(d3.curveBasis);
-
-        chart.svg.select(".line")
-            .datum(parsed)
-            .transition().duration(800)
-            .attr("d", line);
-
-        chart.svg.select(".area")
-            .datum(parsed)
-            .transition().duration(800)
-            .attr("d", area);
-
-        chart.svg.select(".x-axis")
-            .transition().duration(400)
-            .call(d3.axisBottom(chart.x).ticks(4).tickFormat(d3.timeFormat("%H:%M")));
-
-        chart.svg.select(".y-axis")
-            .transition().duration(400)
-            .call(d3.axisLeft(chart.y).ticks(4));
-    }
-
     // --- Initialize charts ---
     function initCharts() {
-        charts.light = createWaveform("chart-light", "var(--color-light)");
-        charts.water = createWaveform("chart-water", "var(--color-water)");
-        charts.air = createWaveform("chart-air", "var(--text-secondary)");
-        charts.root = createWaveform("chart-root", "var(--color-root)");
+        // Per-subsystem renderers (each returns { update(...) })
+        if (window.GrowLab.createLightChart) {
+            charts.light = window.GrowLab.createLightChart("chart-light");
+        }
+        if (window.GrowLab.createWaterTimeline) {
+            charts.water = window.GrowLab.createWaterTimeline("chart-water");
+        }
+        if (window.GrowLab.createAirChart) {
+            charts.air = window.GrowLab.createAirChart("chart-air");
+        }
+        if (window.GrowLab.createRootChart) {
+            charts.root = window.GrowLab.createRootChart("chart-root");
+        }
     }
 
     // --- Refresh chart data ---
-    function refreshChart(chartKey, sensorIds) {
-        if (!charts[chartKey]) return;
-
+    function fetchSensorData(sensorIds) {
         // Try each sensor ID until one returns data
-        var tryNext = function (ids, idx) {
-            if (idx >= ids.length) return;
-            apiReadings(ids[idx]).then(function (data) {
-                if (data && data.length > 0) {
-                    updateWaveform(charts[chartKey], data);
-                } else {
-                    tryNext(ids, idx + 1);
-                }
-            });
-        };
-        tryNext(sensorIds, 0);
+        return new Promise(function (resolve) {
+            var tryNext = function (ids, idx) {
+                if (idx >= ids.length) { resolve([]); return; }
+                apiReadings(ids[idx]).then(function (data) {
+                    if (data && data.length > 0) {
+                        if (TEMP_SENSORS.has(ids[idx])) {
+                            data = data.map(function (d) {
+                                return { timestamp: d.timestamp, value: cToF(d.value), unit: "°F", sensor_id: d.sensor_id };
+                            });
+                        }
+                        resolve(data);
+                    } else {
+                        tryNext(ids, idx + 1);
+                    }
+                }).catch(function () { tryNext(ids, idx + 1); });
+            };
+            tryNext(sensorIds, 0);
+        });
     }
 
     function refreshAllCharts() {
-        refreshChart("light", SENSOR_MAP.light);
-        refreshChart("air", SENSOR_MAP.air_temp);
-        refreshChart("root", SENSOR_MAP.root_ph);
-
-        // Water panel: show irrigation events as pulse timeline
-        fetchJSON("/api/events?limit=20").then(function (events) {
-            var irrigationEvents = events.filter(function (e) {
-                return e.event_type === "irrigation";
+        // LIGHT — single sensor, step area
+        if (charts.light) {
+            fetchSensorData(SENSOR_MAP.light).then(function (data) {
+                charts.light.update(data);
             });
-            var el = document.getElementById("water-last");
-            if (el && irrigationEvents.length > 0) {
-                el.textContent = "Last: " + irrigationEvents[0].timestamp.slice(11, 19);
-            }
-        });
+        }
+
+        // WATER — irrigation events as pulse timeline
+        if (charts.water) {
+            fetchJSON("/api/events?limit=50").then(function (events) {
+                var irrigationEvents = (events || []).filter(function (e) {
+                    return e.event_type === "irrigation";
+                });
+                charts.water.update(irrigationEvents);
+                var el = document.getElementById("water-last");
+                if (el && irrigationEvents.length > 0) {
+                    var lastTime = new Date(irrigationEvents[0].timestamp);
+                    el.textContent = "Last: " + formatTime(lastTime) + " (" + timeAgo(lastTime) + ")";
+                }
+            }).catch(function () {});
+        }
+
+        // AIR — dual fetch: temperature + humidity
+        if (charts.air) {
+            Promise.all([
+                fetchSensorData(SENSOR_MAP.air_temp),
+                fetchSensorData(SENSOR_MAP.air_humidity)
+            ]).then(function (results) {
+                charts.air.update(results[0], results[1]);
+            });
+        }
+
+        // ROOT — dual fetch: pH + EC
+        if (charts.root) {
+            Promise.all([
+                fetchSensorData(SENSOR_MAP.root_ph),
+                fetchSensorData(SENSOR_MAP.root_ec)
+            ]).then(function (results) {
+                charts.root.update(results[0], results[1]);
+            });
+        }
     }
 
     // --- Update live values from latest readings ---
     function updateValues(readings) {
         // readings is an array of {sensor_id, value, unit}
         readings.forEach(function (r) {
-            if (r.sensor_id === "bme280_temperature" || r.sensor_id.includes("temperature")) {
-                setText("air-temp", r.value.toFixed(1));
+            if (r.sensor_id === "bme280_temperature") {
+                var tempF = cToF(r.value);
+                setText("air-temp", tempF.toFixed(1));
+                setRangeStatus(document.getElementById("air-temp"), classify("air_temp", tempF));
             }
-            if (r.sensor_id === "bme280_humidity" || r.sensor_id.includes("humidity")) {
+            if (r.sensor_id === "bme280_humidity") {
                 setText("air-humidity", "Humidity: " + r.value.toFixed(0) + "%");
+                setRangeStatus(document.getElementById("air-humidity"), classify("air_humidity", r.value));
             }
-            if (r.sensor_id === "bme280_pressure" || r.sensor_id.includes("pressure")) {
+            if (r.sensor_id === "bme280_pressure") {
                 setText("air-pressure", "Pressure: " + r.value.toFixed(0) + " hPa");
             }
-            if (r.sensor_id.includes("ph")) {
+            if (r.sensor_id === "ezo_ph") {
                 setText("root-ph", r.value.toFixed(2));
+                setRangeStatus(document.getElementById("root-ph"), classify("root_ph", r.value));
             }
-            if (r.sensor_id.includes("ec")) {
+            if (r.sensor_id === "ezo_ec") {
                 setText("root-ec", "EC: " + r.value.toFixed(0) + " µS/cm");
+                setRangeStatus(document.getElementById("root-ec"), classify("root_ec", r.value));
+            }
+            if (r.sensor_id === "ds18b20_temperature" || r.sensor_id.startsWith("ds18b20_")) {
+                var rootTempF = cToF(r.value);
+                setText("root-temp", "Temp: " + rootTempF.toFixed(1) + "°F");
+                setRangeStatus(document.getElementById("root-temp"), classify("root_temp", rootTempF));
+            }
+            if (r.sensor_id === "soil_moisture") {
+                setText("soil-moisture-value", r.value.toFixed(0));
+                setRangeStatus(document.getElementById("soil-moisture-value"), classify("soil_moisture", r.value));
+                if (soilGauge) soilGauge.update(r.value);
             }
         });
     }
 
     function setText(id, text) {
         var el = document.getElementById(id);
-        if (el) el.textContent = text;
+        if (!el) return;
+        if (el.textContent === text) return;
+        el.textContent = text;
+        // Pulse animation for panel values
+        if (el.classList.contains("panel-value")) {
+            el.classList.add("updating");
+            setTimeout(function () { el.classList.remove("updating"); }, 400);
+        }
     }
 
     // --- System status ---
@@ -253,7 +284,8 @@
                     img.alt = "Latest capture";
                     container.appendChild(img);
                 }
-                setText("plant-capture-time", data.timestamp.slice(0, 19));
+                var captureTime = new Date(data.timestamp);
+                setText("plant-capture-time", formatDateTime(captureTime) + " (" + timeAgo(captureTime) + ")");
             }
         }).catch(function () {});
     }
@@ -319,6 +351,12 @@
     // --- Init ---
     document.addEventListener("DOMContentLoaded", function () {
         initCharts();
+
+        // Initialize soil moisture gauge
+        if (window.GrowLab && window.GrowLab.createSoilGauge) {
+            soilGauge = window.GrowLab.createSoilGauge("soil-moisture-gauge");
+        }
+
         refreshAllCharts();
         refreshStatus();
         refreshImage();

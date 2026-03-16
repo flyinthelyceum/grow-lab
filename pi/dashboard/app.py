@@ -31,7 +31,7 @@ def create_app(repo: SensorRepository) -> FastAPI:
     Returns:
         Configured FastAPI application.
     """
-    app = FastAPI(title="Living Light Observatory")
+    app = FastAPI(title="GROWLAB")
 
     # Store repo in app state for access from routes
     app.state.repo = repo
