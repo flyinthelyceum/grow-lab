@@ -2,7 +2,7 @@
 
 # Wiring & Buses
 
-This document defines the electrical wiring strategy and communication bus layout for the V0 bench prototype of the Living Light System.
+This document defines the electrical wiring strategy and communication bus layout for the V0 bench prototype of GROWLAB.
 
 The goal is to make the hardware:
 

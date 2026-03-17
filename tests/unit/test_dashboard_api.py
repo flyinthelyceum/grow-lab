@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
@@ -158,6 +159,33 @@ class TestImagesEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert data["filename"] == "img_001.jpg"
+        assert data["available"] is False
+        assert data["url"] == "/api/images/img_001.jpg/file"
+
+    async def test_image_file(self, client, mock_repo, tmp_path):
+        capture_path = tmp_path / "img_001.jpg"
+        capture_path.write_bytes(b"test-image")
+        capture = CameraCapture(
+            timestamp=datetime.now(timezone.utc),
+            filepath=str(capture_path),
+            filesize_bytes=10,
+        )
+        mock_repo.get_captures.return_value = [capture]
+
+        response = await client.get("/api/images/img_001.jpg/file")
+        assert response.status_code == 200
+        assert response.content == b"test-image"
+
+    async def test_image_file_missing(self, client, mock_repo):
+        capture = CameraCapture(
+            timestamp=datetime.now(timezone.utc),
+            filepath=str(Path("/tmp/missing-image.jpg")),
+            filesize_bytes=10,
+        )
+        mock_repo.get_captures.return_value = [capture]
+
+        response = await client.get("/api/images/missing-image.jpg/file")
+        assert response.status_code == 404
 
     async def test_images_list(self, client, mock_repo):
         captures = [

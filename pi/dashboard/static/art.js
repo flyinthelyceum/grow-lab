@@ -56,6 +56,11 @@
         return h12 + ":" + (m < 10 ? "0" : "") + m + " " + ampm;
     }
 
+    function setReadout(id, text) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = text;
+    }
+
     // --- API ---
     function fetchJSON(url) {
         return fetch(url).then(function (r) { return r.json(); });
@@ -90,6 +95,7 @@
                     };
                 });
                 ring.update(converted);
+                setReadout("art-live-temp", converted[converted.length - 1].value.toFixed(1) + " F");
             })
             .catch(function (err) {
                 console.error("Art: failed to fetch temp history", err);
@@ -99,6 +105,7 @@
             .then(function (readings) {
                 if (!readings || readings.length === 0) return;
                 humRing.update(readings);
+                setReadout("art-live-humidity", readings[readings.length - 1].value.toFixed(0) + " %");
             })
             .catch(function (err) {
                 console.error("Art: failed to fetch humidity history", err);
@@ -107,6 +114,12 @@
         fetchIrrigationEvents()
             .then(function (events) {
                 waterPulses.update(events);
+                if (events.length > 0) {
+                    setReadout("art-live-water", new Date(events[0].timestamp).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit"
+                    }));
+                }
             })
             .catch(function (err) {
                 console.error("Art: failed to fetch irrigation events", err);
@@ -126,16 +139,23 @@
                 if (data.readings) {
                     data.readings.forEach(function (r) {
                         if (r.sensor_id === "bme280_temperature") {
-                            ring.setLiveValue(cToF(r.value));
+                            var tempF = cToF(r.value);
+                            ring.setLiveValue(tempF);
+                            setReadout("art-live-temp", tempF.toFixed(1) + " F");
+                        }
+                        if (r.sensor_id === "bme280_humidity") {
+                            setReadout("art-live-humidity", r.value.toFixed(0) + " %");
                         }
                         if (r.sensor_id === "bme280_pressure") {
                             pressureField.setLiveValue(r.value);
+                            setReadout("pressure-readout", "PRESSURE " + r.value.toFixed(0) + " HPA");
                         }
                     });
                 }
                 // Trigger water pulse on live irrigation event
                 if (data.event && data.event.event_type === "irrigation") {
                     waterPulses.triggerPulse();
+                    setReadout("art-live-water", "NOW");
                 }
             } catch (e) {
                 // Ignore parse errors

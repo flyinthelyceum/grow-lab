@@ -1,6 +1,6 @@
 # Parts BOM
 
-This document tracks hardware used in the Living Light System. The initial build targets the V0 Bench Prototype.
+This document tracks hardware used in GROWLAB. The initial build targets the V0 Bench Prototype.
 
 For detailed specifications see: [LIGHTING_SYSTEM.md](LIGHTING_SYSTEM.md), [IRRIGATION_SYSTEM.md](IRRIGATION_SYSTEM.md), [SENSOR_STACK.md](SENSOR_STACK.md), [WIRING_&_BUSES.md](WIRING_&_BUSES.md)
 

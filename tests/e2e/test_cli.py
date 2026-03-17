@@ -97,4 +97,4 @@ db_path = "{tmp_path / 'test.db'}"
         runner = CliRunner()
         result = runner.invoke(cli, ["--help"])
         assert result.exit_code == 0
-        assert "Living Light System" in result.output
+        assert "GROWLAB" in result.output

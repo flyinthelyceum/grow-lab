@@ -1,4 +1,4 @@
-"""CLI entry point for the Living Light System.
+"""CLI entry point for GROWLAB.
 
 Usage: growlab [OPTIONS] COMMAND [ARGS]
 """
@@ -26,7 +26,7 @@ from pi.cli.sensor_test import sensor_group
 )
 @click.pass_context
 def cli(ctx: click.Context, config_path: str | None) -> None:
-    """Living Light System — grow lab control software."""
+    """GROWLAB control software."""
     from pathlib import Path
 
     from pi.config.loader import load_config
@@ -39,7 +39,7 @@ def cli(ctx: click.Context, config_path: str | None) -> None:
 @cli.command()
 @click.pass_context
 def start(ctx: click.Context) -> None:
-    """Start the Living Light System (polling + data logging)."""
+    """Start GROWLAB polling and data logging."""
     from pi.main import start as _start
 
     _start(config_path=None)  # Config already loaded but start() reloads for signal handling

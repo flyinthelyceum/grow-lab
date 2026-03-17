@@ -68,6 +68,7 @@
                 <span class="panel-value" id="root-ph">--</span>
                 <span class="panel-unit">pH</span>
             </div>
+            <div class="panel-note" id="root-note">Awaiting nutrient sensors</div>
             <div class="panel-chart" id="chart-root"></div>
             <div class="panel-meta">
                 <span class="meta-item" id="root-ec">EC: -- µS/cm</span>
@@ -82,14 +83,18 @@
                 <span class="panel-value" id="soil-moisture-value">--</span>
                 <span class="panel-unit">% moisture</span>
             </div>
+            <div class="panel-note" id="plant-note">Camera ready. Soil probe pending.</div>
             <div class="plant-layout">
                 <div class="panel-camera" id="camera-feed">
-                    <div class="camera-placeholder">No image</div>
+                    <div class="camera-placeholder">
+                        <div class="camera-placeholder-title">CAMERA STANDBY</div>
+                        <div class="camera-placeholder-detail">Waiting for the next logged capture.</div>
+                    </div>
                 </div>
                 <div class="plant-gauge" id="soil-moisture-gauge"></div>
             </div>
             <div class="panel-meta">
-                <span class="meta-item" id="plant-capture-time">--</span>
+                <span class="meta-item" id="plant-capture-time">No captures logged yet</span>
                 <span class="meta-item" id="plant-count">0 captures</span>
             </div>
         </section>

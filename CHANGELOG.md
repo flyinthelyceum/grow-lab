@@ -32,6 +32,13 @@ All notable changes to this project are documented in this file.
 - Dashboard header renamed to "GROWLAB".
 - All temperature values displayed in Fahrenheit across dashboard and art mode.
 - All sensor labels use plain English names (Air, Humidity, H₂O Temp) instead of raw IDs.
+- Dashboard camera panel now explains missing/stale capture states more clearly and loads the latest image via API-served file URLs instead of assuming a static captures mount.
+- ROOT and PLANT panels now show sensor-availability notes so hardware-blocked fields read as pending instrumentation instead of silent blanks.
+- Art Mode now includes a lightweight live readout for temperature, humidity, and last irrigation timing to make on-device walkthroughs easier.
+
+### Fixed
+- Dashboard image serving path aligned with stored camera capture records through `/api/images/<filename>/file`.
+- Dashboard route/browser tests updated to the current `GROWLAB` branding and Canvas-based art mode implementation.
 
 ## 2026-03-14
 

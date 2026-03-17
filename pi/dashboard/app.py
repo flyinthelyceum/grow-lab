@@ -1,4 +1,4 @@
-"""FastAPI application factory for the Living Light Observatory.
+"""FastAPI application factory for the GROWLAB dashboard.
 
 Creates and configures the dashboard application with Jinja2
 templates, static file serving, and API/WebSocket routes.

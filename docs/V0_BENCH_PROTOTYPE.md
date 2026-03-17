@@ -64,6 +64,29 @@ This runbook replaces the older software-build-first commissioning flow.
   5. Remaining Phase 2 work: ESP32 LED PWM (waiting on LED strips/Mean Well driver).
   6. Begin Phase 3 planning if Phase 2 exit criteria met (minus LED, which is hardware-blocked).
 
+### Session Handoff (end of day: March 17, 2026)
+
+- Completed:
+  - Dashboard demo path tightened around the current `GROWLAB` UI.
+  - Route/browser test expectations updated from the older dashboard branding and `p5` assumptions to the current Canvas-based implementation.
+  - Dashboard camera panel now handles empty and file-missing states more gracefully.
+  - ROOT and PLANT panels now explain pending instrumentation instead of presenting unexplained blanks.
+  - Art Mode now exposes lightweight live readouts for temperature, humidity, and last water event to support walkthroughs.
+- Demo checklist:
+  - Observatory route `/` remains the main scientific dashboard.
+  - Art route `/art` renders the radial Canvas visualization.
+  - WebSocket/API behavior stays unchanged for existing clients.
+  - Latest camera image is now served through the dashboard API rather than an assumed static directory.
+- Current blocker:
+  - Remaining pH, EC, and soil moisture hardware is still in shipping transit, so ROOT/PLANT completeness is intentionally deferred.
+  - In this workspace, no `config.toml` is present and the default CLI database path is empty, so local demo commands need the real Pi config/database to show live data.
+- Last known-good commands:
+  - `growlab dashboard --host 0.0.0.0 --port 8000`
+  - `pytest tests/unit/test_dashboard_app.py tests/unit/test_dashboard_api.py tests/unit/test_dashboard_api_downsampled.py tests/unit/test_dashboard_ws.py tests/e2e/test_dashboard_pages.py -q`
+  - `pytest tests/browser/test_browser_dashboard.py -v`
+- Next first step:
+  - Run the dashboard on the Pi with the real `config.toml`, open `/` and `/art`, and capture a short punch-list of anything still awkward in the live demo.
+
 ## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 
 Hardware on hand: Pi 4, DS18B20, 5V relay, Micra Plus pump, Noctua fan.

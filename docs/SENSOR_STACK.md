@@ -2,7 +2,7 @@
 
 # Sensor Stack
 
-This document defines the environmental sensing architecture for the Living Light System.
+This document defines the environmental sensing architecture for GROWLAB.
 
 The goal of the sensor stack is to provide reliable, continuous measurements of the environmental variables that affect plant health and growth.
 
@@ -450,4 +450,4 @@ The V0 sensor stack provides reliable monitoring of the variables most important
 • media moisture (STEMMA Soil Sensor)
 • visual growth record (Pi Camera Module 3)
 
-These measurements allow the Living Light System to function not just as a grow platform, but as a **biological instrumentation system** capable of recording and analyzing the interaction between plants and their engineered environment.
+These measurements allow GROWLAB to function not just as a grow platform, but as a **biological instrumentation system** capable of recording and analyzing the interaction between plants and their engineered environment.

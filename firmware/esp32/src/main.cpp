@@ -1,5 +1,5 @@
 /**
- * Living Light System — ESP32 Controller
+ * GROWLAB — ESP32 Controller
  *
  * Receives newline-delimited commands over USB-Serial/JTAG from the Pi.
  * Controls LED PWM dimming and pump relay.

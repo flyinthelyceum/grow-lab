@@ -1,7 +1,7 @@
 # System Charter
 
 ## Project Name
-Living Light System
+GROWLAB
 
 ## Vision
 

@@ -1,7 +1,7 @@
 [project]
 name = "growlab"
 version = "0.1.0"
-description = "Living Light System — hybrid plant sculpture control software"
+description = "GROWLAB — hybrid plant sculpture control software"
 requires-python = ">=3.11"
 dependencies = [
     "aiosqlite>=0.19",

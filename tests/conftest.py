@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -11,6 +12,24 @@ import pytest_asyncio
 from pi.config.schema import AppConfig, SystemConfig
 from pi.data.models import SensorReading, SystemEvent
 from pi.data.repository import SensorRepository
+
+
+_HAS_PLAYWRIGHT = bool(importlib.util.find_spec("pytest_playwright")) and bool(
+    importlib.util.find_spec("playwright")
+)
+
+
+def pytest_collection_modifyitems(config, items) -> None:
+    """Skip browser tests cleanly when Playwright is not installed."""
+    if _HAS_PLAYWRIGHT:
+        return
+
+    skip_browser = pytest.mark.skip(
+        reason="Browser tests require playwright + pytest-playwright"
+    )
+    for item in items:
+        if "tests/browser/" in str(item.fspath):
+            item.add_marker(skip_browser)
 
 
 @pytest.fixture

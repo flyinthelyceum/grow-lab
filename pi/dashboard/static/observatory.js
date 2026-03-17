@@ -50,6 +50,17 @@
         soil_moisture: ["soil_moisture"],
     };
 
+    function hasSensor(sensorIds, expectedIds) {
+        return expectedIds.some(function (expectedId) {
+            return sensorIds.some(function (sensorId) {
+                if (expectedId === "ds18b20_temperature") {
+                    return sensorId === expectedId || sensorId.indexOf("ds18b20_") === 0;
+                }
+                return sensorId === expectedId;
+            });
+        });
+    }
+
     // Sensor IDs that contain temperature values (stored as °C, display as °F)
     const TEMP_SENSORS = new Set([
         "bme280_temperature",
@@ -261,31 +272,92 @@
         }
     }
 
+    function renderCameraPlaceholder(title, detail) {
+        var container = document.getElementById("camera-feed");
+        if (!container) return;
+
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+
+        var wrap = document.createElement("div");
+        wrap.className = "camera-placeholder";
+
+        var titleEl = document.createElement("div");
+        titleEl.className = "camera-placeholder-title";
+        titleEl.textContent = title;
+        wrap.appendChild(titleEl);
+
+        var detailEl = document.createElement("div");
+        detailEl.className = "camera-placeholder-detail";
+        detailEl.textContent = detail;
+        wrap.appendChild(detailEl);
+
+        container.appendChild(wrap);
+    }
+
+    function updateAvailabilityNotes(sensorIds, captureCount) {
+        var rootStates = [];
+        if (!hasSensor(sensorIds, SENSOR_MAP.root_ph)) rootStates.push("pH pending");
+        if (!hasSensor(sensorIds, SENSOR_MAP.root_ec)) rootStates.push("EC pending");
+        if (!hasSensor(sensorIds, SENSOR_MAP.root_temp)) rootStates.push("reservoir probe pending");
+        setText("root-note", rootStates.length ? rootStates.join(" • ") : "All ROOT sensors live");
+
+        if (!hasSensor(sensorIds, SENSOR_MAP.root_ec)) {
+            setText("root-ec", "EC sensor pending");
+        }
+        if (!hasSensor(sensorIds, SENSOR_MAP.root_temp)) {
+            setText("root-temp", "Reservoir probe pending");
+        }
+
+        var soilLive = hasSensor(sensorIds, SENSOR_MAP.soil_moisture);
+        if (!soilLive) {
+            setText("plant-note", captureCount > 0 ? "Camera live. Soil probe pending." : "Camera waiting. Soil probe pending.");
+        } else {
+            setText("plant-note", captureCount > 0 ? "Camera and soil telemetry live." : "Soil telemetry live. Camera waiting for first capture.");
+        }
+    }
+
     // --- System status ---
     function refreshStatus() {
         apiStatus().then(function (data) {
-            setText("sensor-count", (data.sensors ? data.sensors.length : 0) + " sensors");
-            setText("db-readings", (data.db ? data.db.sensor_readings || 0 : 0) + " readings");
+            var sensorIds = data.sensors || [];
+            var db = data.db || {};
+            var captureCount = db.camera_captures || 0;
+
+            setText("sensor-count", sensorIds.length + " sensors");
+            setText("db-readings", (db.sensor_readings || 0) + " readings");
+            setText("plant-count", captureCount + " captures");
+            updateAvailabilityNotes(sensorIds, captureCount);
         }).catch(function () {});
     }
 
     // --- Latest image ---
     function refreshImage() {
         apiLatestImage().then(function (data) {
-            if (data && data.filename) {
-                var container = document.getElementById("camera-feed");
-                if (container) {
-                    // Clear previous content safely
-                    while (container.firstChild) {
-                        container.removeChild(container.firstChild);
-                    }
-                    var img = document.createElement("img");
-                    img.src = "/static/captures/" + encodeURIComponent(data.filename);
-                    img.alt = "Latest capture";
-                    container.appendChild(img);
+            if (!data || !data.filename) {
+                renderCameraPlaceholder("CAMERA STANDBY", "Waiting for the next logged capture.");
+                setText("plant-capture-time", "No captures logged yet");
+                return;
+            }
+
+            var captureTime = new Date(data.timestamp);
+            setText("plant-capture-time", formatDateTime(captureTime) + " (" + timeAgo(captureTime) + ")");
+
+            if (!data.available || !data.url) {
+                renderCameraPlaceholder("CAPTURE LOGGED", "Image metadata exists, but the file is not available from this dashboard host.");
+                return;
+            }
+
+            var container = document.getElementById("camera-feed");
+            if (container) {
+                while (container.firstChild) {
+                    container.removeChild(container.firstChild);
                 }
-                var captureTime = new Date(data.timestamp);
-                setText("plant-capture-time", formatDateTime(captureTime) + " (" + timeAgo(captureTime) + ")");
+                var img = document.createElement("img");
+                img.src = data.url;
+                img.alt = "Latest capture";
+                container.appendChild(img);
             }
         }).catch(function () {});
     }

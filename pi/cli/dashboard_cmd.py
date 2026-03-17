@@ -1,4 +1,4 @@
-"""CLI command for launching the Living Light Observatory dashboard."""
+"""CLI command for launching the GROWLAB dashboard."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import click
 @click.option("--port", default=8000, type=int, help="Port number")
 @click.pass_context
 def dashboard_cmd(ctx: click.Context, host: str, port: int) -> None:
-    """Launch the Living Light Observatory dashboard."""
+    """Launch the GROWLAB dashboard."""
     import asyncio
 
     from pi.data.repository import SensorRepository
@@ -34,7 +34,7 @@ def dashboard_cmd(ctx: click.Context, host: str, port: int) -> None:
         )
         server = uvicorn.Server(server_config)
 
-        click.echo(f"Living Light Observatory → http://{host}:{port}")
+        click.echo(f"GROWLAB Dashboard → http://{host}:{port}")
         try:
             await server.serve()
         finally:

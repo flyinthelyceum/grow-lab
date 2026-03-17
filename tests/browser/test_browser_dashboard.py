@@ -1,7 +1,7 @@
-"""Browser E2E tests for the Living Light Observatory dashboard.
+"""Browser E2E tests for the GROWLAB dashboard.
 
 Uses Playwright to verify pages render correctly in a real browser,
-D3/p5 scripts load, WebSocket connects, and UI elements are present.
+D3/Canvas scripts load, WebSocket connects, and UI elements are present.
 """
 
 from __future__ import annotations
@@ -141,13 +141,13 @@ def dashboard_url(tmp_path_factory):
 class TestObservatoryBrowser:
     def test_page_loads(self, page, dashboard_url):
         page.goto(dashboard_url)
-        assert page.title() == "Living Light Observatory"
+        assert page.title() == "GROWLAB"
 
     def test_header_visible(self, page, dashboard_url):
         page.goto(dashboard_url)
         header = page.locator("h1.observatory-title")
         assert header.is_visible()
-        assert "Living Light Observatory" in header.text_content()
+        assert "GROWLAB" in header.text_content()
 
     def test_five_panels_present(self, page, dashboard_url):
         page.goto(dashboard_url)
@@ -191,7 +191,7 @@ class TestObservatoryBrowser:
             timeout=5000,
         )
         text = page.locator("#system-clock").text_content()
-        assert "UTC" in text
+        assert len(text.strip()) > 0
 
     def test_d3_script_loaded(self, page, dashboard_url):
         page.goto(dashboard_url)
@@ -233,7 +233,7 @@ class TestObservatoryBrowser:
             timeout=10000,
         )
         temp = page.locator("#air-temp").text_content()
-        assert "23" in temp
+        assert "74" in temp
 
     def test_api_readings_latest(self, page, dashboard_url):
         page.goto(dashboard_url)
@@ -261,15 +261,15 @@ class TestObservatoryBrowser:
 class TestArtModeBrowser:
     def test_page_loads(self, page, dashboard_url):
         page.goto(f"{dashboard_url}/art")
-        assert "Art Mode" in page.title()
+        assert page.title() == "GROWLAB — Art"
 
-    def test_info_overlay_visible(self, page, dashboard_url):
+    def test_readout_visible(self, page, dashboard_url):
         page.goto(f"{dashboard_url}/art")
-        info = page.locator("#info")
-        assert info.is_visible()
-        assert "ART MODE" in info.text_content()
+        readout = page.locator("#art-readout")
+        assert readout.is_visible()
+        assert "TEMP" in readout.text_content()
 
-    def test_p5_canvas_created(self, page, dashboard_url):
+    def test_canvas_created(self, page, dashboard_url):
         page.goto(f"{dashboard_url}/art")
         page.wait_for_selector("canvas", timeout=10000)
         canvas = page.locator("canvas")
@@ -289,16 +289,13 @@ class TestArtModeBrowser:
         assert dimensions["width"] == dimensions["winW"]
         assert dimensions["height"] == dimensions["winH"]
 
-    def test_p5_is_drawing(self, page, dashboard_url):
+    def test_canvas_is_drawing(self, page, dashboard_url):
         page.goto(f"{dashboard_url}/art")
         page.wait_for_selector("canvas", timeout=10000)
         page.wait_for_timeout(1500)
 
-        # p5.js uses WebGL or 2D — check that canvas has non-empty content
-        # For p5 in instance mode, we check frameCount > 0
         has_frames = page.evaluate("""
             (() => {
-                // p5 stores instance — check if draw loop is running
                 const canvases = document.querySelectorAll('canvas');
                 return canvases.length > 0;
             })()
@@ -319,13 +316,13 @@ class TestArtModeBrowser:
 class TestNavigation:
     def test_root_to_art_and_back(self, page, dashboard_url):
         page.goto(dashboard_url)
-        assert "Living Light Observatory" in page.title()
+        assert page.title() == "GROWLAB"
 
         page.goto(f"{dashboard_url}/art")
-        assert "Art Mode" in page.title()
+        assert page.title() == "GROWLAB — Art"
 
         page.goto(dashboard_url)
-        assert "Living Light Observatory" in page.title()
+        assert page.title() == "GROWLAB"
 
     def test_static_css_accessible(self, page, dashboard_url):
         response = page.goto(f"{dashboard_url}/static/style.css")

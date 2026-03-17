@@ -222,6 +222,16 @@ html, body {
     color: var(--text-dim);
 }
 
+.panel-note {
+    min-height: 18px;
+    margin-bottom: 8px;
+    font-family: var(--font-data);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+
 /* === CHARTS === */
 
 .panel-chart {
@@ -310,10 +320,27 @@ html, body {
 }
 
 .camera-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
     font-family: var(--font-data);
     font-size: 13px;
     color: var(--text-dim);
     letter-spacing: 1px;
+    text-align: center;
+}
+
+.camera-placeholder-title {
+    color: var(--text-secondary);
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+.camera-placeholder-detail {
+    max-width: 220px;
+    font-size: 11px;
+    line-height: 1.5;
 }
 
 /* === SOIL MOISTURE GAUGE === */

@@ -1,4 +1,4 @@
-"""Immutable data models for the Living Light System.
+"""Immutable data models for GROWLAB.
 
 All models are frozen dataclasses — no mutation after creation.
 These flow through the entire pipeline: drivers -> repository -> dashboard.

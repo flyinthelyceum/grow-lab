@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Living Light System is a modular plant growth platform composed of five primary subsystems:
+GROWLAB is a modular plant growth platform composed of five primary subsystems:
 
 1. Lighting
 2. Irrigation

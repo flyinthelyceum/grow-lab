@@ -58,7 +58,7 @@ async def run(config: AppConfig) -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    logger.info("Living Light System starting...")
+    logger.info("GROWLAB starting...")
 
     # Ensure data directory exists
     config.system.data_dir.mkdir(parents=True, exist_ok=True)
@@ -74,7 +74,7 @@ async def run(config: AppConfig) -> None:
         SystemEvent(
             timestamp=datetime.now(timezone.utc),
             event_type="system_start",
-            description="Living Light System started",
+            description="GROWLAB started",
         )
     )
 
@@ -180,7 +180,7 @@ async def run(config: AppConfig) -> None:
         SystemEvent(
             timestamp=datetime.now(timezone.utc),
             event_type="system_stop",
-            description="Living Light System stopped",
+            description="GROWLAB stopped",
         )
     )
 

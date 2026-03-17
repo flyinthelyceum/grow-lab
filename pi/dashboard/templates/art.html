@@ -69,12 +69,43 @@
             color: rgba(255,255,255,0.2);
             text-transform: uppercase;
         }
+        .art-readout {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 10;
+            min-width: 180px;
+            padding: 12px 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.22);
+            backdrop-filter: blur(8px);
+        }
+        .art-readout-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.55);
+        }
+        .art-readout-row + .art-readout-row {
+            margin-top: 8px;
+        }
+        .art-readout-value {
+            color: rgba(255,255,255,0.88);
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="art-label">GROWLAB</div>
     <div class="art-sublabel">ENVIRONMENTAL ATMOSPHERE — 24H RADIAL</div>
+    <div class="art-readout" id="art-readout">
+        <div class="art-readout-row"><span>TEMP</span><span class="art-readout-value" id="art-live-temp">--</span></div>
+        <div class="art-readout-row"><span>HUMIDITY</span><span class="art-readout-value" id="art-live-humidity">--</span></div>
+        <div class="art-readout-row"><span>LAST WATER</span><span class="art-readout-value" id="art-live-water">--</span></div>
+    </div>
     <canvas id="art-canvas"></canvas>
     <div class="pressure-readout" id="pressure-readout"></div>
     <nav class="art-nav">

@@ -2,7 +2,7 @@
 
 # Data Architecture
 
-The Living Light System treats environmental data as a core component of the installation.  
+GROWLAB treats environmental data as a core component of the installation.  
 Sensor measurements, system states, and control actions are continuously logged so that the
 interaction between the biological system and the engineered system can be observed over time.
 
@@ -268,6 +268,6 @@ The architecture is intentionally simple for V0 but structured so more advanced 
 
 # Summary
 
-The data architecture transforms the Living Light System from a simple grow platform into an **observational instrument**.
+The data architecture transforms GROWLAB from a simple grow platform into an **observational instrument**.
 
 By recording environmental measurements, system states, and control actions, the installation generates a continuous record of how plants and technology interact over time.

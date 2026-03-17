@@ -39,7 +39,7 @@ class TestObservatoryPage:
 
     async def test_contains_observatory_title(self, client):
         response = await client.get("/")
-        assert "Living Light Observatory" in response.text
+        assert "GROWLAB" in response.text
 
     async def test_contains_subsystem_panels(self, client):
         response = await client.get("/")
@@ -68,11 +68,12 @@ class TestArtModePage:
 
     async def test_contains_art_mode_title(self, client):
         response = await client.get("/art")
-        assert "Art Mode" in response.text
+        assert "GROWLAB — Art" in response.text
 
-    async def test_includes_p5_script(self, client):
+    async def test_includes_canvas_art_modules(self, client):
         response = await client.get("/art")
-        assert "p5" in response.text.lower()
+        assert "art-core.js" in response.text
+        assert "ambient-particles.js" in response.text
 
     async def test_includes_art_js(self, client):
         response = await client.get("/art")

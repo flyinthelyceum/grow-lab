@@ -2,7 +2,7 @@
 
 The irrigation system delivers water and nutrients from a central reservoir to the plant media in controlled pulses.
 
-In the Living Light System, irrigation is treated as both a **biological support system** and a **controlled mechanical subsystem** that can be monitored and automated.
+In GROWLAB, irrigation is treated as both a **biological support system** and a **controlled mechanical subsystem** that can be monitored and automated.
 
 The design prioritizes:
 

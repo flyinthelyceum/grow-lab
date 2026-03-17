@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from enum import Enum
+from pathlib import Path as FsPath, PurePosixPath
 
-from fastapi import APIRouter, Path, Query, Request
+from fastapi import APIRouter, HTTPException, Path, Query, Request
+from fastapi.responses import FileResponse
 
 router = APIRouter(prefix="/api")
 
@@ -44,12 +46,15 @@ def _event_to_dict(e) -> dict:
 
 
 def _capture_to_dict(c) -> dict:
-    from pathlib import PurePosixPath
+    capture_path = FsPath(c.filepath).expanduser()
+    filename = PurePosixPath(c.filepath).name
 
     return {
         "timestamp": c.iso_timestamp,
-        "filename": PurePosixPath(c.filepath).name,
+        "filename": filename,
         "filesize_bytes": c.filesize_bytes,
+        "available": capture_path.exists(),
+        "url": f"/api/images/{filename}/file",
     }
 
 
@@ -149,6 +154,27 @@ async def get_latest_image(request: Request) -> dict | None:
     if not captures:
         return None
     return _capture_to_dict(captures[0])
+
+
+@router.get("/images/{filename}/file")
+async def get_image_file(
+    request: Request,
+    filename: str = Path(..., pattern=r"^[^/]+$"),
+) -> FileResponse:
+    """Serve an image file by filename if it exists in recent captures."""
+    repo = request.app.state.repo
+    captures = await repo.get_captures(limit=100)
+    for capture in captures:
+        if PurePosixPath(capture.filepath).name != filename:
+            continue
+
+        capture_path = FsPath(capture.filepath).expanduser()
+        if not capture_path.exists():
+            raise HTTPException(status_code=404, detail="Capture file not found")
+
+        return FileResponse(capture_path)
+
+    raise HTTPException(status_code=404, detail="Capture not found")
 
 
 @router.get("/images")

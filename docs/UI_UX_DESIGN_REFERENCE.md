@@ -1,12 +1,12 @@
 
 # UI_UX_DESIGN_REFERENCE.md
-Living Light — Data Visualization as Embodied Art
+GROWLAB — Data Visualization as Embodied Art
 
 ---
 
 ## 1. Purpose
 
-The **Living Light system interface** is not a monitoring dashboard.
+The **GROWLAB interface** is not a monitoring dashboard.
 
 It is a **translation layer** that renders invisible biological processes visible.
 
@@ -424,12 +424,12 @@ Recommended update cadence:
 
 Suggested title:
 
-Living Light Observatory
+GROWLAB
 
 Alternatives:
 
 - Plant System Monitor
-- Living Garden Instrument
+- GROWLAB Instrument
 - Bio‑Environmental Console
 
 ---

@@ -13,7 +13,7 @@ router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse)
 async def observatory(request: Request) -> HTMLResponse:
-    """Serve the main Living Light Observatory dashboard."""
+    """Serve the main GROWLAB dashboard."""
     templates = request.app.state.templates
     return templates.TemplateResponse(request, "observatory.html")
 

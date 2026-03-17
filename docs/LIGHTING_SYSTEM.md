@@ -3,7 +3,7 @@
 
 # Lighting System
 
-The lighting system provides controlled illumination for plant growth while serving as a visible technological element of the Living Light System installation.
+The lighting system provides controlled illumination for plant growth while serving as a visible technological element of the GROWLAB installation.
 
 The design emphasizes:
 
@@ -214,7 +214,7 @@ However, the V0 system intentionally remains simple to validate the core biologi
 
 # Summary
 
-The lighting system is one of the primary drivers of plant growth and a central visual element of the Living Light System.
+The lighting system is one of the primary drivers of plant growth and a central visual element of GROWLAB.
 
 The V0 implementation prioritizes:
 
