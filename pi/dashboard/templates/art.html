@@ -59,13 +59,24 @@
         .art-nav a:hover {
             color: rgba(255,255,255,0.5);
         }
+        .pressure-readout {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.2);
+            text-transform: uppercase;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="art-label">GROWLAB</div>
-    <div class="art-sublabel">BME280 AIR TEMPERATURE — 24H RADIAL</div>
+    <div class="art-sublabel">ENVIRONMENTAL ATMOSPHERE — 24H RADIAL</div>
     <canvas id="art-canvas"></canvas>
+    <div class="pressure-readout" id="pressure-readout"></div>
     <nav class="art-nav">
         <a href="/">OBSERVATORY</a>
     </nav>
@@ -73,6 +84,10 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="/static/art/art-core.js"></script>
     <script src="/static/art/radial-ring.js"></script>
+    <script src="/static/art/humidity-ring.js"></script>
+    <script src="/static/art/water-pulses.js"></script>
+    <script src="/static/art/pressure-field.js"></script>
+    <script src="/static/art/ambient-particles.js"></script>
     <script src="/static/art.js"></script>
 </body>
 </html>

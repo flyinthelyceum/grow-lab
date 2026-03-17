@@ -107,14 +107,15 @@ async def get_readings_downsampled(
     start = end - delta
 
     cursor = await repo.db.execute(
-        """SELECT
-               CAST(strftime('%%s', timestamp) AS INTEGER) / ? * ? AS bucket,
-               AVG(value) AS avg_value,
-               unit
-           FROM sensor_readings
-           WHERE sensor_id = ? AND timestamp >= ? AND timestamp <= ?
-           GROUP BY bucket
-           ORDER BY bucket ASC""",
+        "SELECT"
+        "    CAST(strftime('%s', replace(timestamp, '+00:00', 'Z')) AS INTEGER)"
+        "        / ? * ? AS bucket,"
+        "    AVG(value) AS avg_value,"
+        "    unit"
+        " FROM sensor_readings"
+        " WHERE sensor_id = ? AND timestamp >= ? AND timestamp <= ?"
+        " GROUP BY bucket"
+        " ORDER BY bucket ASC",
         (bucket_sec, bucket_sec, sensor_id, start.isoformat(), end.isoformat()),
     )
     rows = await cursor.fetchall()

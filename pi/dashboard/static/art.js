@@ -2,15 +2,21 @@
  * GROWLAB — Art Mode Controller
  *
  * Full-screen generative visualization driven by live sensor data.
- * Currently renders: Radial Thermal Ring (AIR subsystem).
+ * Renders all environmental layers:
+ *   - Pressure atmosphere (background)
+ *   - Radial thermal ring (temperature)
+ *   - Humidity breathing ring (outer)
+ *   - Water pulse markers (irrigation events)
+ *   - Ambient particles (living field)
  *
  * Data pipeline:
- *   1. Fetch 24h downsampled history on load
- *   2. WebSocket for live value updates
- *   3. Re-fetch history every 5 minutes to keep ring current
+ *   1. Fetch 24h downsampled history on load (temp + humidity)
+ *   2. Fetch irrigation events
+ *   3. WebSocket for live value updates
+ *   4. Re-fetch history every 5 minutes
  *
- * Uses Canvas 2D via art-core.js AnimationLoop (30fps, Visibility API).
- * D3 for math only — no SVG rendering.
+ * Center disc shows context-sensitive info:
+ *   Priority: water event > humidity > temperature (default)
  */
 
 (function () {
@@ -21,28 +27,61 @@
     // --- State ---
     var loop = null;
     var ring = null;
+    var humRing = null;
+    var waterPulses = null;
+    var pressureField = null;
+    var particles = null;
     var ws = null;
     var canvas = null;
 
+    // Shared canvas state (getter functions for overlay layers)
+    var sharedCtx = null;
+    var sharedCx = 0, sharedCy = 0, sharedMaxR = 0;
+
+    function getCx() { return sharedCx; }
+    function getCy() { return sharedCy; }
+    function getMaxR() { return sharedMaxR; }
+
     // --- Temperature conversion ---
     function cToF(c) { return c * 9 / 5 + 32; }
+
+    function angleToTimeStr(angle) {
+        var hours = ((angle + Math.PI / 2) / (Math.PI * 2)) * 24;
+        if (hours < 0) hours += 24;
+        if (hours >= 24) hours -= 24;
+        var h = Math.floor(hours);
+        var m = Math.floor((hours - h) * 60);
+        var ampm = h >= 12 ? "PM" : "AM";
+        var h12 = h % 12 || 12;
+        return h12 + ":" + (m < 10 ? "0" : "") + m + " " + ampm;
+    }
 
     // --- API ---
     function fetchJSON(url) {
         return fetch(url).then(function (r) { return r.json(); });
     }
 
-    function fetchHistory() {
+    function fetchTempHistory() {
         return fetchJSON("/api/readings/bme280_temperature/downsampled?window=24h");
     }
 
-    // --- Load history into ring ---
-    function loadHistory() {
-        fetchHistory()
+    function fetchHumHistory() {
+        return fetchJSON("/api/readings/bme280_humidity/downsampled?window=24h");
+    }
+
+    function fetchIrrigationEvents() {
+        return fetchJSON("/api/events?limit=50").then(function (events) {
+            return events.filter(function (e) {
+                return e.event_type === "irrigation";
+            });
+        });
+    }
+
+    // --- Load data into layers ---
+    function loadAllData() {
+        fetchTempHistory()
             .then(function (readings) {
                 if (!readings || readings.length === 0) return;
-
-                // Convert to Fahrenheit at display boundary
                 var converted = readings.map(function (d) {
                     return {
                         timestamp: d.timestamp,
@@ -50,11 +89,27 @@
                         unit: "°F",
                     };
                 });
-
                 ring.update(converted);
             })
             .catch(function (err) {
-                console.error("Art: failed to fetch history", err);
+                console.error("Art: failed to fetch temp history", err);
+            });
+
+        fetchHumHistory()
+            .then(function (readings) {
+                if (!readings || readings.length === 0) return;
+                humRing.update(readings);
+            })
+            .catch(function (err) {
+                console.error("Art: failed to fetch humidity history", err);
+            });
+
+        fetchIrrigationEvents()
+            .then(function (events) {
+                waterPulses.update(events);
+            })
+            .catch(function (err) {
+                console.error("Art: failed to fetch irrigation events", err);
             });
     }
 
@@ -73,7 +128,14 @@
                         if (r.sensor_id === "bme280_temperature") {
                             ring.setLiveValue(cToF(r.value));
                         }
+                        if (r.sensor_id === "bme280_pressure") {
+                            pressureField.setLiveValue(r.value);
+                        }
                     });
+                }
+                // Trigger water pulse on live irrigation event
+                if (data.event && data.event.event_type === "irrigation") {
+                    waterPulses.triggerPulse();
                 }
             } catch (e) {
                 // Ignore parse errors
@@ -98,9 +160,12 @@
 
     // --- Resize handler ---
     function onResize() {
-        if (ring) {
-            ring.resize();
-        }
+        if (ring) ring.resize();
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        sharedCx = w / 2;
+        sharedCy = h / 2;
+        sharedMaxR = Math.min(sharedCx, sharedCy) * 0.72;
     }
 
     // --- Init ---
@@ -108,20 +173,67 @@
         canvas = document.getElementById("art-canvas");
         if (!canvas) return;
 
-        // Create radial ring renderer
+        // Create radial ring (owns the canvas)
         ring = Art.createRadialRing(canvas);
+
+        // Set up shared canvas context for overlay layers
+        var setup = Art.setupCanvas(canvas);
+        sharedCtx = setup.ctx;
+        sharedCx = setup.width / 2;
+        sharedCy = setup.height / 2;
+        sharedMaxR = Math.min(sharedCx, sharedCy) * 0.72;
+
+        // Re-init ring after shared setup
+        ring.resize();
+
+        // Create overlay layers with hover accessor functions
+        humRing = Art.createHumidityRing(sharedCtx, getCx, getCy, getMaxR,
+            ring.getHoverAngle, ring.getMouseDist);
+        waterPulses = Art.createWaterPulses(sharedCtx, getCx, getCy, getMaxR,
+            ring.getHoverAngle, ring.getMouseDist);
+        pressureField = Art.createPressureField(sharedCtx, getCx, getCy, getMaxR);
+        particles = Art.createAmbientParticles(sharedCtx, getCx, getCy, getMaxR);
 
         // Start animation loop
         loop = new Art.AnimationLoop();
         loop.register(function (dt, now) {
+            // Route hover info to center disc — priority: water > humidity > temp
+            var waterHover = waterPulses.getHoverEvent();
+            var humHover = humRing.getHoverHum();
+
+            if (waterHover) {
+                ring.setCenterOverride({
+                    value: angleToTimeStr(waterHover.angle),
+                    unit: waterHover.ageMin + "m ago",
+                    label: "IRRIGATION",
+                    color: "rgba(30,210,255,0.9)",
+                    labelColor: "rgba(30,210,255,0.3)"
+                });
+            } else if (humHover) {
+                ring.setCenterOverride({
+                    value: humHover.hum.toFixed(0),
+                    unit: "%  RH",
+                    label: humHover.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+                    color: "rgba(0,200,220,0.9)",
+                    labelColor: "rgba(0,200,220,0.4)"
+                });
+            } else {
+                ring.setCenterOverride(null);
+            }
+
+            // Render order: pressure → ring → humidity → water → particles
+            pressureField.render(dt);
             ring.render(dt, now);
+            humRing.render(dt);
+            waterPulses.render(dt);
+            particles.render(dt);
         });
 
         // Load initial data
-        loadHistory();
+        loadAllData();
 
         // Re-fetch history every 5 minutes
-        setInterval(loadHistory, 300000);
+        setInterval(loadAllData, 300000);
 
         // Connect WebSocket for live updates
         connectWS();

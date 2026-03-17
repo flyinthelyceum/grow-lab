@@ -106,7 +106,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
     }
 
     // -------------------------------------------------------
-    // Color scales — 3-zone temperature gradient
+    // Color scales — 3-zone temperature gradient (saturated)
     // -------------------------------------------------------
 
     // Temperature (°F) → RGB: deep slate blue → cool teal → warm amber
@@ -115,23 +115,20 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         var t = Math.max(0, Math.min(1, (tempF - 58) / 30));
         var r, g, b;
         if (t < 0.35) {
-            // Cold: slate blue (40,55,90) → cool teal (50,100,120)
             var s = t / 0.35;
-            r = 40 + s * 10;
-            g = 55 + s * 45;
-            b = 90 + s * 30;
+            r = 40 + s * 20;
+            g = 60 + s * 60;
+            b = 120 + s * 40;
         } else if (t < 0.65) {
-            // Mid: teal (50,100,120) → warm neutral (160,120,70)
             var s = (t - 0.35) / 0.3;
-            r = 50 + s * 110;
-            g = 100 + s * 20;
-            b = 120 - s * 50;
-        } else {
-            // Hot: warm (160,120,70) → amber-orange (220,150,50)
-            var s = (t - 0.65) / 0.35;
-            r = 160 + s * 60;
+            r = 60 + s * 130;
             g = 120 + s * 30;
-            b = 70 - s * 20;
+            b = 160 - s * 80;
+        } else {
+            var s = (t - 0.65) / 0.35;
+            r = 190 + s * 45;
+            g = 150 + s * 20;
+            b = 80 - s * 30;
         }
         return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
     }
@@ -162,6 +159,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
     window.GrowLab.ArtMode.AnimationLoop = AnimationLoop;
     window.GrowLab.ArtMode.setupCanvas = setupCanvas;
+    window.GrowLab.ArtMode.tempToRGB = tempToRGB;
     window.GrowLab.ArtMode.temperatureColor = temperatureColor;
     window.GrowLab.ArtMode.temperatureColorRGBA = temperatureColorRGBA;
     window.GrowLab.ArtMode.humidityOpacity = humidityOpacity;

@@ -70,18 +70,29 @@
             border-color: rgba(255,255,255,0.3);
             color: rgba(255,255,255,0.6);
         }
+        .pressure-readout {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.2);
+            text-transform: uppercase;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="art-label">GROWLAB</div>
-    <div class="art-sublabel">BME280 AIR TEMPERATURE — 24H RADIAL</div>
+    <div class="art-sublabel">ENVIRONMENTAL ATMOSPHERE — 24H RADIAL</div>
     <canvas id="art-canvas"></canvas>
     <div class="demo-controls">
         <button class="demo-btn active" onclick="setScene(this, 'calm')">CALM DAY</button>
         <button class="demo-btn" onclick="setScene(this, 'swing')">BIG SWING</button>
         <button class="demo-btn" onclick="setScene(this, 'night')">COOL NIGHT</button>
     </div>
+    <div class="pressure-readout" id="pressure-readout"></div>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
@@ -147,28 +158,24 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
     }
 
     // Extended color palette: deep blue → teal → amber → warm orange
-    // 60°F = deep slate blue, 72°F = neutral grey-teal, 85°F = rich amber
     function tempToRGB(tempF) {
         var t = Math.max(0, Math.min(1, (tempF - 58) / 30));
         var r, g, b;
         if (t < 0.35) {
-            // Cold: slate blue (40,55,90) → cool teal (50,100,120)
             var s = t / 0.35;
-            r = 40 + s * 10;
-            g = 55 + s * 45;
-            b = 90 + s * 30;
+            r = 40 + s * 20;
+            g = 60 + s * 60;
+            b = 120 + s * 40;
         } else if (t < 0.65) {
-            // Mid: teal (50,100,120) → warm neutral (160,120,70)
             var s = (t - 0.35) / 0.3;
-            r = 50 + s * 110;
-            g = 100 + s * 20;
-            b = 120 - s * 50;
-        } else {
-            // Hot: warm (160,120,70) → amber-orange (220,150,50)
-            var s = (t - 0.65) / 0.35;
-            r = 160 + s * 60;
+            r = 60 + s * 130;
             g = 120 + s * 30;
-            b = 70 - s * 20;
+            b = 160 - s * 80;
+        } else {
+            var s = (t - 0.65) / 0.35;
+            r = 190 + s * 45;
+            g = 150 + s * 20;
+            b = 80 - s * 30;
         }
         return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
     }
@@ -189,11 +196,12 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
     window.GrowLab.ArtMode.setupCanvas = setupCanvas;
     window.GrowLab.ArtMode.temperatureColor = temperatureColor;
     window.GrowLab.ArtMode.temperatureColorRGBA = temperatureColorRGBA;
+    window.GrowLab.ArtMode.tempToRGB = tempToRGB;
     window.GrowLab.ArtMode.cToF = cToF;
 })();
 
 /* ============================================================
-   radial-ring.js — v3: centered, smooth, vivid, alive
+   radial-ring.js — v4: vivid, alive, color-saturated
    ============================================================ */
 (function () {
     "use strict";
@@ -214,6 +222,12 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         var ampm = h >= 12 ? "PM" : "AM";
         var h12 = h % 12 || 12;
         return h12 + ":" + (m < 10 ? "0" : "") + m + " " + ampm;
+    }
+
+    function normAngle(a) {
+        while (a > Math.PI) a -= Math.PI * 2;
+        while (a < -Math.PI) a += Math.PI * 2;
+        return a;
     }
 
     function smoothArray(arr, windowSize) {
@@ -250,10 +264,10 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
         var hoverPoint = null;
         var mouseInCanvas = false;
+        var mouseX = 0, mouseY = 0;
 
         var radiusScale = d3.scaleLinear().range([minRadius, maxRadius]);
 
-        // 8 clock labels (every 3 hours)
         var CLOCK_LABELS = [
             { label: "12A", angle: -Math.PI / 2 },
             { label: "3A",  angle: -Math.PI / 4 },
@@ -265,9 +279,10 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             { label: "9P",  angle: -Math.PI * 3 / 4 },
         ];
 
-        // --- Mouse tracking ---
         canvas.addEventListener("mousemove", function (e) {
             mouseInCanvas = true;
+            mouseX = e.clientX;
+            mouseY = e.clientY;
             if (!data || data.length < 2) { hoverPoint = null; return; }
 
             var mx = e.clientX - cx;
@@ -280,13 +295,6 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             }
 
             var mouseAngle = Math.atan2(my, mx);
-
-            // Normalize all angles to [-PI, PI] for comparison
-            function normAngle(a) {
-                while (a > Math.PI) a -= Math.PI * 2;
-                while (a < -Math.PI) a += Math.PI * 2;
-                return a;
-            }
             var mNorm = normAngle(mouseAngle);
             var bestIdx = 0, bestDist = Infinity;
             for (var i = 0; i < data.length; i++) {
@@ -308,6 +316,20 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             mouseInCanvas = false;
             hoverPoint = null;
         });
+
+        function getHoverAngle() {
+            if (!mouseInCanvas) return null;
+            var mx = mouseX - cx;
+            var my = mouseY - cy;
+            return Math.atan2(my, mx);
+        }
+
+        function getMouseDist() {
+            if (!mouseInCanvas) return Infinity;
+            var mx = mouseX - cx;
+            var my = mouseY - cy;
+            return Math.sqrt(mx * mx + my * my);
+        }
 
         function update(readings) {
             if (!readings || readings.length === 0) { data = null; smoothedRadii = []; return; }
@@ -343,9 +365,10 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
             drawRing();
             drawCenterDisc();
-            if (hoverPoint) {
+            // Only show temp hover tooltip if no higher-priority layer is overriding center
+            if (hoverPoint && !_centerOverride) {
                 drawHover();
-            } else {
+            } else if (!hoverPoint) {
                 drawNowMarker();
             }
             drawCenterValue();
@@ -355,7 +378,6 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             ctx.save();
             ctx.translate(cx, cy);
 
-            // Concentric guide circles — minimal
             ctx.lineWidth = 0.5;
             var steps = 3;
             for (var i = 1; i <= steps; i++) {
@@ -366,7 +388,6 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                 ctx.stroke();
             }
 
-            // Radial lines at every 3h
             ctx.strokeStyle = "rgba(255,255,255,0.04)";
             ctx.lineWidth = 0.5;
             CLOCK_LABELS.forEach(function (cl) {
@@ -376,7 +397,6 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                 ctx.stroke();
             });
 
-            // Clock labels
             ctx.fillStyle = "rgba(255,255,255,0.22)";
             ctx.font = "400 11px 'Space Mono', monospace";
             ctx.textAlign = "center";
@@ -393,13 +413,12 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             ctx.save();
             ctx.translate(cx, cy);
 
-            // Clip to annular region: exclude center disc
             ctx.beginPath();
-            ctx.arc(0, 0, maxRadius * 1.2, 0, Math.PI * 2);       // outer bound
-            ctx.arc(0, 0, minRadius * 0.88, 0, Math.PI * 2, true); // inner cutout
+            ctx.arc(0, 0, maxRadius * 1.2, 0, Math.PI * 2);
+            ctx.arc(0, 0, minRadius * 0.88, 0, Math.PI * 2, true);
             ctx.clip();
 
-            // --- Filled wedges with per-segment color ---
+            // Filled wedges — VIVID: higher opacity, per-segment color
             for (var i = 0; i < data.length - 1; i++) {
                 var d0 = data[i];
                 var d1 = data[i + 1];
@@ -409,12 +428,10 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                 var r1 = smoothedRadii[i + 1];
                 var avgTemp = (d0.tempF + d1.tempF) / 2;
 
-                // Filled area: inner ring to outer radius
                 ctx.beginPath();
                 ctx.arc(0, 0, minRadius * 0.92, d0.angle, d1.angle);
                 ctx.lineTo(Math.cos(d1.angle) * r1, Math.sin(d1.angle) * r1);
 
-                // Smooth outer arc approximation
                 var midAngle = (d0.angle + d1.angle) / 2;
                 var midR = (r0 + r1) / 2;
                 ctx.quadraticCurveTo(
@@ -424,13 +441,17 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                     Math.sin(d0.angle) * r0
                 );
                 ctx.closePath();
-                ctx.fillStyle = Art.temperatureColorRGBA(avgTemp, 0.2);
+
+                // Radial gradient fill per wedge for depth
+                var grad = ctx.createRadialGradient(0, 0, minRadius * 0.92, 0, 0, midR);
+                grad.addColorStop(0, Art.temperatureColorRGBA(avgTemp, 0.12));
+                grad.addColorStop(1, Art.temperatureColorRGBA(avgTemp, 0.45));
+                ctx.fillStyle = grad;
                 ctx.fill();
             }
 
-            // --- Smooth outer edge with glow ---
+            // Smooth outer edge with color-per-segment
             if (data.length > 2) {
-                // Build a smooth path through all points
                 var points = [];
                 for (var i = 0; i < data.length; i++) {
                     points.push({
@@ -440,28 +461,22 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                     });
                 }
 
-                // Glow layer (wide, low opacity)
+                // Wide glow layer — breathing
+                var breathe = 0.12 + 0.06 * Math.sin(animTime / 2000);
                 ctx.beginPath();
                 ctx.moveTo(points[0].x, points[0].y);
                 for (var i = 1; i < points.length; i++) {
                     var prev = points[i - 1];
                     var curr = points[i];
-                    var cpx = (prev.x + curr.x) / 2;
-                    var cpy = (prev.y + curr.y) / 2;
-                    ctx.quadraticCurveTo(prev.x, prev.y, cpx, cpy);
+                    ctx.quadraticCurveTo(prev.x, prev.y, (prev.x + curr.x) / 2, (prev.y + curr.y) / 2);
                 }
-                ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
-
-                // Breathing glow intensity
-                var breathe = 0.08 + 0.04 * Math.sin(animTime / 2000);
-
                 ctx.strokeStyle = Art.temperatureColorRGBA(
                     d3.mean(data, function(d) { return d.tempF; }) || 72, breathe
                 );
-                ctx.lineWidth = 6;
+                ctx.lineWidth = 8;
                 ctx.stroke();
 
-                // Main line — draw segments colored by temperature
+                // Main line — vivid per-segment color
                 for (var i = 0; i < points.length - 1; i++) {
                     var p0 = points[i];
                     var p1 = points[i + 1];
@@ -469,11 +484,9 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
                     ctx.beginPath();
                     ctx.moveTo(p0.x, p0.y);
-                    var cpx = (p0.x + p1.x) / 2;
-                    var cpy = (p0.y + p1.y) / 2;
-                    ctx.quadraticCurveTo(p0.x, p0.y, cpx, cpy);
-                    ctx.strokeStyle = Art.temperatureColorRGBA(avgT, 0.8);
-                    ctx.lineWidth = 1.8;
+                    ctx.quadraticCurveTo(p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
+                    ctx.strokeStyle = Art.temperatureColorRGBA(avgT, 0.9);
+                    ctx.lineWidth = 2;
                     ctx.stroke();
                 }
             }
@@ -487,24 +500,21 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
             var discR = minRadius * 0.88;
 
-            // Solid black disc
             ctx.beginPath();
             ctx.arc(0, 0, discR, 0, Math.PI * 2);
             ctx.fillStyle = "#000";
             ctx.fill();
 
             if (hoverPoint) {
-                // Glowing border in hovered temperature color
                 ctx.beginPath();
                 ctx.arc(0, 0, discR, 0, Math.PI * 2);
-                ctx.strokeStyle = Art.temperatureColorRGBA(hoverPoint.tempF, 0.25);
+                ctx.strokeStyle = Art.temperatureColorRGBA(hoverPoint.tempF, 0.35);
                 ctx.lineWidth = 2;
                 ctx.stroke();
             } else {
-                // Subtle default border
                 ctx.beginPath();
                 ctx.arc(0, 0, discR, 0, Math.PI * 2);
-                ctx.strokeStyle = "rgba(255,255,255,0.05)";
+                ctx.strokeStyle = "rgba(255,255,255,0.06)";
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
@@ -522,41 +532,35 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             var x = Math.cos(nowAngle) * r;
             var y = Math.sin(nowAngle) * r;
 
-            // Pulsing glow
             var pulse = 0.8 + 0.2 * Math.sin(animTime / 600);
-            var glowSize = 12 + 3 * Math.sin(animTime / 800);
+            var glowSize = 14 + 4 * Math.sin(animTime / 800);
 
-            // Outer glow ring
             ctx.beginPath();
             ctx.arc(x, y, glowSize, 0, Math.PI * 2);
-            ctx.fillStyle = Art.temperatureColorRGBA(currentTempF, 0.08 * pulse);
+            ctx.fillStyle = Art.temperatureColorRGBA(currentTempF, 0.1 * pulse);
             ctx.fill();
 
-            // Mid glow
             ctx.beginPath();
-            ctx.arc(x, y, 7, 0, Math.PI * 2);
-            ctx.fillStyle = Art.temperatureColorRGBA(currentTempF, 0.2 * pulse);
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.fillStyle = Art.temperatureColorRGBA(currentTempF, 0.25 * pulse);
             ctx.fill();
 
-            // Core dot
             ctx.beginPath();
-            ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
             ctx.fillStyle = Art.temperatureColor(currentTempF);
             ctx.globalAlpha = pulse;
             ctx.fill();
             ctx.globalAlpha = 1;
 
-            // Thin line from center
             ctx.beginPath();
             ctx.moveTo(0, 0);
             ctx.lineTo(x, y);
-            ctx.strokeStyle = "rgba(255,255,255,0.08)";
+            ctx.strokeStyle = Art.temperatureColorRGBA(currentTempF, 0.1);
             ctx.lineWidth = 0.5;
             ctx.stroke();
 
-            // "NOW" label
-            var labelR = r + 22;
-            ctx.fillStyle = "rgba(255,255,255,0.3)";
+            var labelR = r + 24;
+            ctx.fillStyle = "rgba(255,255,255,0.35)";
             ctx.font = "700 9px 'Space Mono', monospace";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
@@ -573,20 +577,18 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
             var hp = hoverPoint;
 
-            // Radial guide line
             ctx.beginPath();
             ctx.moveTo(0, 0);
             ctx.lineTo(hp.x, hp.y);
-            ctx.strokeStyle = "rgba(255,255,255,0.15)";
+            ctx.strokeStyle = Art.temperatureColorRGBA(hp.tempF, 0.2);
             ctx.lineWidth = 0.5;
             ctx.setLineDash([4, 4]);
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Highlight dot
             ctx.beginPath();
-            ctx.arc(hp.x, hp.y, 14, 0, Math.PI * 2);
-            ctx.fillStyle = Art.temperatureColorRGBA(hp.tempF, 0.15);
+            ctx.arc(hp.x, hp.y, 16, 0, Math.PI * 2);
+            ctx.fillStyle = Art.temperatureColorRGBA(hp.tempF, 0.2);
             ctx.fill();
 
             ctx.beginPath();
@@ -594,8 +596,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             ctx.fillStyle = Art.temperatureColor(hp.tempF);
             ctx.fill();
 
-            // Tooltip
-            var tooltipR = hp.r + 28;
+            var tooltipR = hp.r + 30;
             var tx = Math.cos(hp.angle) * tooltipR;
             var ty = Math.sin(hp.angle) * tooltipR;
 
@@ -618,16 +619,17 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             ctx.restore();
         }
 
+        // Center disc content is driven externally by the demo controller
+        // so it can show info from any hovered layer
+        var _centerOverride = null;
+        function setCenterOverride(override) { _centerOverride = override; }
+
         function drawCenterValue() {
-            if (currentTempF === null) return;
+            if (currentTempF === null && !_centerOverride) return;
 
             ctx.save();
             ctx.translate(cx, cy);
 
-            var displayTemp = hoverPoint ? hoverPoint.tempF : currentTempF;
-            var displayColor = Art.temperatureColor(displayTemp);
-
-            // Size calculations for true center alignment
             var tempSize = Math.round(minRadius * 0.48);
             var unitSize = Math.round(minRadius * 0.14);
             var labelSize = Math.round(minRadius * 0.1);
@@ -635,32 +637,50 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             var totalH = tempSize * 0.75 + lineGap + unitSize * 0.75 + lineGap + labelSize * 0.75;
             var startY = -totalH / 2;
 
-            // Temperature
-            ctx.fillStyle = displayColor;
-            ctx.font = "700 " + tempSize + "px 'Space Mono', monospace";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "top";
-            ctx.fillText(displayTemp.toFixed(1), 0, startY);
+            if (_centerOverride) {
+                // Show override content (from humidity or water layer)
+                ctx.fillStyle = _centerOverride.color;
+                ctx.font = "700 " + tempSize + "px 'Space Mono', monospace";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+                ctx.fillText(_centerOverride.value, 0, startY);
 
-            // °F
-            ctx.fillStyle = "rgba(255,255,255,0.3)";
-            ctx.font = "400 " + unitSize + "px 'Space Mono', monospace";
-            ctx.fillText("°F", 0, startY + tempSize * 0.75 + lineGap);
+                ctx.fillStyle = "rgba(255,255,255,0.3)";
+                ctx.font = "400 " + unitSize + "px 'Space Mono', monospace";
+                ctx.fillText(_centerOverride.unit, 0, startY + tempSize * 0.75 + lineGap);
 
-            // Label: hovered time or subsystem
-            var labelY = startY + tempSize * 0.75 + lineGap + unitSize * 0.75 + lineGap;
-            if (hoverPoint) {
-                ctx.fillStyle = "rgba(255,255,255,0.25)";
+                var labelY = startY + tempSize * 0.75 + lineGap + unitSize * 0.75 + lineGap;
+                ctx.fillStyle = _centerOverride.labelColor || "rgba(255,255,255,0.25)";
                 ctx.font = "400 " + labelSize + "px 'Space Mono', monospace";
-                var timeStr = hoverPoint.time.toLocaleTimeString("en-US", {
-                    hour: "numeric", minute: "2-digit"
-                });
-                ctx.fillText(timeStr, 0, labelY);
+                ctx.fillText(_centerOverride.label, 0, labelY);
             } else {
-                ctx.fillStyle = "rgba(255,255,255,0.12)";
-                ctx.font = "700 " + labelSize + "px 'Space Mono', monospace";
-                ctx.letterSpacing = "4px";
-                ctx.fillText("AIR", 0, labelY);
+                // Default: temperature display
+                var displayTemp = hoverPoint ? hoverPoint.tempF : currentTempF;
+                var displayColor = Art.temperatureColor(displayTemp);
+
+                ctx.fillStyle = displayColor;
+                ctx.font = "700 " + tempSize + "px 'Space Mono', monospace";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+                ctx.fillText(displayTemp.toFixed(1), 0, startY);
+
+                ctx.fillStyle = "rgba(255,255,255,0.3)";
+                ctx.font = "400 " + unitSize + "px 'Space Mono', monospace";
+                ctx.fillText("°F", 0, startY + tempSize * 0.75 + lineGap);
+
+                var labelY = startY + tempSize * 0.75 + lineGap + unitSize * 0.75 + lineGap;
+                if (hoverPoint) {
+                    ctx.fillStyle = "rgba(255,255,255,0.25)";
+                    ctx.font = "400 " + labelSize + "px 'Space Mono', monospace";
+                    var timeStr = hoverPoint.time.toLocaleTimeString("en-US", {
+                        hour: "numeric", minute: "2-digit"
+                    });
+                    ctx.fillText(timeStr, 0, labelY);
+                } else {
+                    ctx.fillStyle = "rgba(255,255,255,0.12)";
+                    ctx.font = "700 " + labelSize + "px 'Space Mono', monospace";
+                    ctx.fillText("AIR", 0, labelY);
+                }
             }
 
             ctx.restore();
@@ -669,20 +689,17 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         function drawLoadingState() {
             ctx.save();
             ctx.translate(cx, cy);
-
             var pulse = 0.3 + 0.15 * Math.sin(animTime / 1000);
             ctx.beginPath();
             ctx.arc(0, 0, (minRadius + maxRadius) / 2, 0, Math.PI * 2);
             ctx.strokeStyle = "rgba(255,255,255," + pulse + ")";
             ctx.lineWidth = 1;
             ctx.stroke();
-
             ctx.fillStyle = "rgba(255,255,255,0.15)";
             ctx.font = "400 14px 'Space Mono', monospace";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText("loading data...", 0, 0);
-
             ctx.restore();
         }
 
@@ -699,42 +716,557 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             }
         }
 
-        return { update: update, setLiveValue: setLiveValue, render: render, resize: resize };
+        return {
+            update: update, setLiveValue: setLiveValue, render: render, resize: resize,
+            getHoverAngle: getHoverAngle, getMouseDist: getMouseDist,
+            getMinRadius: function() { return minRadius; },
+            getMaxRadius: function() { return maxRadius; },
+            getHoverPoint: function() { return hoverPoint; },
+            setCenterOverride: setCenterOverride
+        };
     }
 
     window.GrowLab.ArtMode.createRadialRing = createRadialRing;
 })();
 
 /* ============================================================
-   Mock data + demo controller
+   humidity-ring.js — v2: VIVID, breathing, hover-interactive
+   ============================================================ */
+(function () {
+    "use strict";
+    var Art = window.GrowLab.ArtMode;
+
+    function timeToAngle(date) {
+        var hours = date.getHours() + date.getMinutes() / 60 + date.getSeconds() / 3600;
+        return (hours / 24) * Math.PI * 2 - Math.PI / 2;
+    }
+    function normAngle(a) {
+        while (a > Math.PI) a -= Math.PI * 2;
+        while (a < -Math.PI) a += Math.PI * 2;
+        return a;
+    }
+    function smoothArray(arr, ws) {
+        var half = Math.floor(ws / 2), result = [];
+        for (var i = 0; i < arr.length; i++) {
+            var sum = 0, count = 0;
+            for (var j = i - half; j <= i + half; j++) {
+                sum += arr[((j % arr.length) + arr.length) % arr.length]; count++;
+            }
+            result.push(sum / count);
+        }
+        return result;
+    }
+
+    // Distinct teal-cyan palette — much more saturated than before
+    var HUM = { r: 0, g: 200, b: 220 };
+    function rgba(a) { return "rgba(" + HUM.r + "," + HUM.g + "," + HUM.b + "," + a + ")"; }
+
+    function createHumidityRing(ctx, getCx, getCy, getMaxRadius, getHoverAngle, getMouseDist) {
+        var data = null, smoothedRadii = [], animTime = 0;
+        var radiusScale = d3.scaleLinear().domain([0, 100]);
+        var hoverHum = null;  // exposed for center display
+
+        function update(readings) {
+            if (!readings || readings.length === 0) { data = null; return; }
+            data = readings.map(function (d) {
+                var date = new Date(d.timestamp);
+                return { angle: timeToAngle(date), hum: d.value, time: date };
+            }).sort(function (a, b) { return a.angle - b.angle; });
+            recalc();
+        }
+        function recalc() {
+            if (!data) return;
+            var maxR = getMaxRadius();
+            radiusScale.range([maxR * 0.82, maxR * 1.12]);
+            smoothedRadii = smoothArray(data.map(function (d) { return radiusScale(d.hum); }), 7);
+        }
+
+        function render(dt) {
+            if (!data || data.length < 2) return;
+            animTime += dt; recalc();
+            var cx = getCx(), cy = getCy(), maxR = getMaxRadius();
+            var ringMin = maxR * 0.82;
+
+            // Breathing: strong amplitude, clearly visible
+            var breathe = 0.20 + 0.12 * Math.sin(animTime / 2500);
+            var glowBreathe = 0.12 + 0.08 * Math.sin(animTime / 2500 + 0.5);
+
+            // Check hover
+            hoverHum = null;
+            var hoverAngle = getHoverAngle ? getHoverAngle() : null;
+            var mouseDist = getMouseDist ? getMouseDist() : Infinity;
+            var hoverIdx = -1;
+
+            if (hoverAngle !== null && mouseDist > maxR * 0.78 && mouseDist < maxR * 1.2) {
+                var mNorm = normAngle(hoverAngle);
+                var bestDist = Infinity;
+                for (var i = 0; i < data.length; i++) {
+                    var dNorm = normAngle(data[i].angle);
+                    var diff = Math.abs(dNorm - mNorm);
+                    if (diff > Math.PI) diff = Math.PI * 2 - diff;
+                    if (diff < bestDist) { bestDist = diff; hoverIdx = i; }
+                }
+                if (bestDist < 0.05 && hoverIdx >= 0) {
+                    hoverHum = data[hoverIdx];
+                }
+            }
+
+            ctx.save(); ctx.translate(cx, cy);
+
+            // Filled area — visible teal gradient
+            for (var i = 0; i < data.length - 1; i++) {
+                var d0 = data[i], d1 = data[i + 1];
+                if (Math.abs(d1.angle - d0.angle) > Math.PI / 6) continue;
+                var r0 = smoothedRadii[i], r1 = smoothedRadii[i + 1];
+
+                ctx.beginPath();
+                ctx.arc(0, 0, ringMin, d0.angle, d1.angle);
+                ctx.lineTo(Math.cos(d1.angle) * r1, Math.sin(d1.angle) * r1);
+                var mA = (d0.angle + d1.angle) / 2, mR = (r0 + r1) / 2;
+                ctx.quadraticCurveTo(Math.cos(mA)*mR*1.01, Math.sin(mA)*mR*1.01, Math.cos(d0.angle)*r0, Math.sin(d0.angle)*r0);
+                ctx.closePath();
+
+                // Radial gradient fill for depth
+                var grad = ctx.createRadialGradient(0, 0, ringMin, 0, 0, mR);
+                grad.addColorStop(0, rgba(breathe * 0.4));
+                grad.addColorStop(1, rgba(breathe * 1.2));
+                ctx.fillStyle = grad;
+                ctx.fill();
+            }
+
+            // Outer edge — glow
+            var pts = data.map(function (d, i) {
+                return { x: Math.cos(d.angle) * smoothedRadii[i], y: Math.sin(d.angle) * smoothedRadii[i] };
+            });
+            ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+            for (var i = 1; i < pts.length; i++) {
+                var p = pts[i-1], c = pts[i];
+                ctx.quadraticCurveTo(p.x, p.y, (p.x+c.x)/2, (p.y+c.y)/2);
+            }
+            ctx.strokeStyle = rgba(glowBreathe);
+            ctx.lineWidth = 6; ctx.stroke();
+
+            // Main line — organic, not mechanical
+            ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+            for (var i = 1; i < pts.length; i++) {
+                var p = pts[i-1], c = pts[i];
+                ctx.quadraticCurveTo(p.x, p.y, (p.x+c.x)/2, (p.y+c.y)/2);
+            }
+            ctx.strokeStyle = rgba(0.3 + breathe * 0.5);
+            ctx.lineWidth = 1; ctx.stroke();
+
+            // Hover highlight on humidity ring — dot only, no floating tooltip
+            // (info shown in center disc to avoid collision with temp/water tooltips)
+            if (hoverHum && hoverIdx >= 0) {
+                var hr = smoothedRadii[hoverIdx];
+                var hx = Math.cos(hoverHum.angle) * hr;
+                var hy = Math.sin(hoverHum.angle) * hr;
+
+                // Glow dot
+                ctx.beginPath();
+                ctx.arc(hx, hy, 14, 0, Math.PI * 2);
+                ctx.fillStyle = rgba(0.2);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(hx, hy, 5, 0, Math.PI * 2);
+                ctx.fillStyle = rgba(0.8);
+                ctx.fill();
+
+                // Radial guide line from center to hovered point
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(hx, hy);
+                ctx.strokeStyle = rgba(0.12);
+                ctx.lineWidth = 0.5;
+                ctx.setLineDash([3, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            ctx.restore();
+        }
+
+        return { update: update, render: render, getHoverHum: function() { return hoverHum; } };
+    }
+    Art.createHumidityRing = createHumidityRing;
+})();
+
+/* ============================================================
+   water-pulses.js — v2: VIVID markers, hover, pulsing halos
+   ============================================================ */
+(function () {
+    "use strict";
+    var Art = window.GrowLab.ArtMode;
+
+    var PC = { r: 30, g: 210, b: 255 };  // Brighter cyan
+    function pRGBA(a) { return "rgba(" + PC.r + "," + PC.g + "," + PC.b + "," + a + ")"; }
+
+    function timeToAngle(date) {
+        var hours = date.getHours() + date.getMinutes() / 60 + date.getSeconds() / 3600;
+        return (hours / 24) * Math.PI * 2 - Math.PI / 2;
+    }
+    function normAngle(a) {
+        while (a > Math.PI) a -= Math.PI * 2;
+        while (a < -Math.PI) a += Math.PI * 2;
+        return a;
+    }
+    function angleToTimeStr(angle) {
+        var hours = ((angle + Math.PI / 2) / (Math.PI * 2)) * 24;
+        if (hours < 0) hours += 24;
+        if (hours >= 24) hours -= 24;
+        var h = Math.floor(hours);
+        var m = Math.floor((hours - h) * 60);
+        var ampm = h >= 12 ? "PM" : "AM";
+        var h12 = h % 12 || 12;
+        return h12 + ":" + (m < 10 ? "0" : "") + m + " " + ampm;
+    }
+
+    function createWaterPulses(ctx, getCx, getCy, getMaxRadius, getHoverAngle, getMouseDist) {
+        var pulses = [], ghostRings = [], animTime = 0;
+        var hoverEvent = null;
+
+        function update(events) {
+            if (!events || events.length === 0) { ghostRings = []; return; }
+            ghostRings = events.map(function (e) {
+                var t = new Date(e.timestamp);
+                var age = (Date.now() - t.getTime()) / 1000;
+                return {
+                    angle: timeToAngle(t),
+                    brightness: Math.max(0.15, 0.6 * Math.exp(-age / 7200)),
+                    time: t,
+                    ageMin: Math.round(age / 60)
+                };
+            });
+            events.forEach(function (e) {
+                if ((Date.now() - new Date(e.timestamp).getTime()) / 1000 < 30) {
+                    pulses.push({ radius: 20, alpha: 0.5, speed: 1.5 });
+                }
+            });
+        }
+
+        function triggerPulse() { pulses.push({ radius: 20, alpha: 0.5, speed: 1.5 }); }
+
+        function render(dt) {
+            animTime += dt;
+            var cx = getCx(), cy = getCy(), maxR = getMaxRadius();
+
+            // Check hover on ghost markers
+            hoverEvent = null;
+            var hoverAngle = getHoverAngle ? getHoverAngle() : null;
+            var mouseDist = getMouseDist ? getMouseDist() : Infinity;
+
+            if (hoverAngle !== null) {
+                var markerR = maxR * 0.78;
+                var mNorm = normAngle(hoverAngle);
+                for (var gi = 0; gi < ghostRings.length; gi++) {
+                    var g = ghostRings[gi];
+                    var gNorm = normAngle(g.angle);
+                    var diff = Math.abs(gNorm - mNorm);
+                    if (diff > Math.PI) diff = Math.PI * 2 - diff;
+                    // Check if mouse is near this marker
+                    var mx = Math.cos(g.angle) * markerR;
+                    var my = Math.sin(g.angle) * markerR;
+                    var dx = (mouseDist * Math.cos(hoverAngle)) - mx;
+                    var dy = (mouseDist * Math.sin(hoverAngle)) - my;
+                    var clickDist = Math.sqrt(dx * dx + dy * dy);
+                    if (diff < 0.08 && Math.abs(mouseDist - markerR) < 30) {
+                        hoverEvent = g;
+                        break;
+                    }
+                }
+            }
+
+            ctx.save(); ctx.translate(cx, cy);
+
+            // Ghost markers — VIVID: bigger dots, pulsing halos
+            ghostRings.forEach(function (g) {
+                var r = maxR * 0.78;
+                var x = Math.cos(g.angle) * r, y = Math.sin(g.angle) * r;
+                var isHovered = (hoverEvent === g);
+                var b = g.brightness;
+                var pulse = 0.7 + 0.3 * Math.sin(animTime / 1200 + g.angle * 3);
+
+                // Outer halo — always visible, pulsing
+                ctx.beginPath();
+                ctx.arc(x, y, isHovered ? 18 : 10, 0, Math.PI * 2);
+                ctx.fillStyle = pRGBA((isHovered ? 0.25 : 0.08) * pulse);
+                ctx.fill();
+
+                // Core dot — bright
+                ctx.beginPath();
+                ctx.arc(x, y, isHovered ? 6 : 4, 0, Math.PI * 2);
+                ctx.fillStyle = pRGBA(b * pulse);
+                ctx.fill();
+
+                // Radial tick
+                var innerR = r - 8;
+                var outerR = r + 8;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(g.angle) * innerR, Math.sin(g.angle) * innerR);
+                ctx.lineTo(Math.cos(g.angle) * outerR, Math.sin(g.angle) * outerR);
+                ctx.strokeStyle = pRGBA(b * 0.5 * pulse);
+                ctx.lineWidth = isHovered ? 1.5 : 0.8;
+                ctx.stroke();
+
+                // Hover: radial guide line (tooltip info goes to center disc)
+                if (isHovered) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(x, y);
+                    ctx.strokeStyle = pRGBA(0.2);
+                    ctx.lineWidth = 0.5;
+                    ctx.setLineDash([3, 5]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            });
+
+            // Expanding pulses — brighter
+            for (var i = pulses.length - 1; i >= 0; i--) {
+                var p = pulses[i];
+                p.radius += p.speed * (dt / 16);
+                p.alpha -= 0.0018 * (dt / 16);
+
+                if (p.alpha <= 0 || p.radius > maxR * 1.5) { pulses.splice(i, 1); continue; }
+
+                // Main ring
+                ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = pRGBA(p.alpha);
+                ctx.lineWidth = 2; ctx.stroke();
+
+                // Inner glow
+                ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = pRGBA(p.alpha * 0.3);
+                ctx.lineWidth = 6; ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+        return { update: update, triggerPulse: triggerPulse, render: render, getHoverEvent: function() { return hoverEvent; } };
+    }
+    Art.createWaterPulses = createWaterPulses;
+})();
+
+/* ============================================================
+   pressure-field.js — v2: VISIBLE atmosphere, colored gradient
+   ============================================================ */
+(function () {
+    "use strict";
+    var Art = window.GrowLab.ArtMode;
+
+    function createPressureField(ctx, getCx, getCy, getMaxRadius) {
+        var pressure = null, animTime = 0;
+
+        function norm() {
+            if (pressure === null) return 0.5;
+            return Math.max(0, Math.min(1, (pressure - 990) / 40));
+        }
+        function setLiveValue(hPa) { pressure = hPa; }
+
+        function render(dt) {
+            if (pressure === null) return;
+            animTime += dt;
+            var cx = getCx(), cy = getCy(), maxR = getMaxRadius(), p = norm();
+            var W = ctx.canvas.width / (window.devicePixelRatio || 1);
+            var H = ctx.canvas.height / (window.devicePixelRatio || 1);
+
+            ctx.save();
+
+            // Colored radial gradient — blue tint for low pressure, warm for high
+            var fieldR = maxR * (1.2 + p * 0.5);
+            var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, fieldR);
+
+            // Color shifts with pressure: blue-purple (low) → neutral (mid) → warm amber (high)
+            var lr = Math.round(20 + p * 30);
+            var lg = Math.round(25 + p * 20);
+            var lb = Math.round(50 - p * 20);
+            var baseAlpha = 0.03 + p * 0.04;  // Much more visible: 0.03–0.07
+
+            grad.addColorStop(0, "rgba(" + lr + "," + lg + "," + lb + "," + (baseAlpha * 2) + ")");
+            grad.addColorStop(0.4, "rgba(" + lr + "," + lg + "," + lb + "," + baseAlpha + ")");
+            grad.addColorStop(1, "rgba(" + lr + "," + lg + "," + lb + ",0)");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Drifting isobar rings — more visible
+            ctx.translate(cx, cy);
+            for (var i = 0; i < 4; i++) {
+                var phase = (i / 4 + animTime / 20000) % 1;
+                var r = maxR * 0.2 + phase * maxR * 1.1;
+                var al = 0.04 * (1 - phase);  // 2.5x brighter than before
+                var wx = Math.sin(animTime / 8000 + i * 2.1) * 5;
+                var wy = Math.cos(animTime / 9000 + i * 1.7) * 5;
+                ctx.beginPath(); ctx.arc(wx, wy, r, 0, Math.PI * 2);
+                ctx.strokeStyle = "rgba(" + lr + "," + lg + "," + lb + "," + al + ")";
+                ctx.lineWidth = 0.8; ctx.stroke();
+            }
+
+            ctx.restore();
+
+            // Update pressure readout in DOM
+            var readoutEl = document.getElementById("pressure-readout");
+            if (readoutEl) {
+                readoutEl.textContent = pressure.toFixed(0) + " hPa";
+            }
+        }
+        return { setLiveValue: setLiveValue, render: render };
+    }
+    Art.createPressureField = createPressureField;
+})();
+
+/* ============================================================
+   ambient-particles.js — drifting particles for Anadol "alive" feel
+   ============================================================ */
+(function () {
+    "use strict";
+    var Art = window.GrowLab.ArtMode;
+
+    function createAmbientParticles(ctx, getCx, getCy, getMaxRadius) {
+        var particles = [];
+        var PARTICLE_COUNT = 120;
+        var animTime = 0;
+
+        // Initialize particles
+        for (var i = 0; i < PARTICLE_COUNT; i++) {
+            particles.push(spawnParticle());
+        }
+
+        function spawnParticle() {
+            // Spread across the full canvas, not just near center
+            var W = getCx() * 2;
+            var H = getCy() * 2;
+            return {
+                x: (Math.random() - 0.5) * W * 0.9,
+                y: (Math.random() - 0.5) * H * 0.9,
+                vx: (Math.random() - 0.5) * 0.2,
+                vy: (Math.random() - 0.5) * 0.2,
+                size: 0.8 + Math.random() * 2,
+                alpha: 0.04 + Math.random() * 0.12,
+                phase: Math.random() * Math.PI * 2,
+                speed: 0.3 + Math.random() * 0.7,
+                life: Math.random(),
+            };
+        }
+
+        function render(dt) {
+            animTime += dt;
+            var cx = getCx(), cy = getCy(), maxR = getMaxRadius();
+
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+
+                // Gentle drift with sine-wave wobble
+                p.x += p.vx * p.speed * (dt / 16);
+                p.y += p.vy * p.speed * (dt / 16);
+                p.x += Math.sin(animTime / 4000 + p.phase) * 0.05;
+                p.y += Math.cos(animTime / 5000 + p.phase * 1.3) * 0.05;
+
+                // Fade in/out based on life cycle
+                p.life += 0.0002 * (dt / 16);
+
+                // Respawn if off canvas or life expired
+                var halfW = getCx();
+                var halfH = getCy();
+                if (Math.abs(p.x) > halfW || Math.abs(p.y) > halfH || p.life > 1) {
+                    particles[i] = spawnParticle();
+                    continue;
+                }
+
+                // Breathing opacity
+                var breathAlpha = p.alpha * (0.6 + 0.4 * Math.sin(animTime / 3000 + p.phase));
+                var lifeFade = p.life < 0.1 ? p.life / 0.1 : (p.life > 0.8 ? (1 - p.life) / 0.2 : 1);
+                var finalAlpha = breathAlpha * lifeFade;
+
+                // Draw particle
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(180,210,230," + finalAlpha + ")";
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        return { render: render };
+    }
+
+    Art.createAmbientParticles = createAmbientParticles;
+})();
+
+/* ============================================================
+   Mock data + demo controller (all layers)
    ============================================================ */
 (function () {
     "use strict";
 
     var Art = window.GrowLab.ArtMode;
-    var ring = null;
+    var ring = null, humRing = null, waterPulses = null, pressureField = null, particles = null;
     var loop = null;
     var currentScene = "calm";
 
+    function angleToTimeStr(angle) {
+        var hours = ((angle + Math.PI / 2) / (Math.PI * 2)) * 24;
+        if (hours < 0) hours += 24;
+        if (hours >= 24) hours -= 24;
+        var h = Math.floor(hours);
+        var m = Math.floor((hours - h) * 60);
+        var ampm = h >= 12 ? "PM" : "AM";
+        var h12 = h % 12 || 12;
+        return h12 + ":" + (m < 10 ? "0" : "") + m + " " + ampm;
+    }
+    var sharedCtx = null;
+    var sharedCx, sharedCy, sharedMaxR;
+
+    function getCx() { return sharedCx; }
+    function getCy() { return sharedCy; }
+    function getMaxR() { return sharedMaxR; }
+
     var SCENES = {
-        calm:  { baseTemp: 73, amplitude: 4,  noiseScale: 0.12 },
-        swing: { baseTemp: 75, amplitude: 12, noiseScale: 0.15 },
-        night: { baseTemp: 65, amplitude: 3,  noiseScale: 0.08 }
+        calm:  { baseTemp: 73, amplitude: 4,  noiseScale: 0.12, baseHum: 45, humAmp: 10, pressure: 1015 },
+        swing: { baseTemp: 75, amplitude: 12, noiseScale: 0.15, baseHum: 55, humAmp: 20, pressure: 1005 },
+        night: { baseTemp: 65, amplitude: 3,  noiseScale: 0.08, baseHum: 65, humAmp: 8,  pressure: 1020 }
     };
 
-    function generateData(scene) {
-        var s = SCENES[scene];
-        var now = new Date();
-        var points = [];
+    function generateTempData(scene) {
+        var s = SCENES[scene], now = new Date(), points = [];
         for (var i = 0; i < 288; i++) {
             var t = new Date(now.getTime() - (287 - i) * 5 * 60 * 1000);
             var hour = t.getHours() + t.getMinutes() / 60;
             var diurnal = -Math.cos((hour - 5) / 24 * Math.PI * 2);
             var noise = (Math.sin(i * 0.12) * 0.5 + Math.sin(i * 0.31) * 0.3) * s.noiseScale;
-            var tempF = s.baseTemp + diurnal * s.amplitude + noise * s.amplitude;
-            points.push({ timestamp: t.toISOString(), value: tempF, unit: "°F" });
+            points.push({ timestamp: t.toISOString(), value: s.baseTemp + diurnal * s.amplitude + noise * s.amplitude, unit: "°F" });
         }
         return points;
+    }
+
+    function generateHumData(scene) {
+        var s = SCENES[scene], now = new Date(), points = [];
+        for (var i = 0; i < 288; i++) {
+            var t = new Date(now.getTime() - (287 - i) * 5 * 60 * 1000);
+            var hour = t.getHours() + t.getMinutes() / 60;
+            var diurnal = Math.cos((hour - 5) / 24 * Math.PI * 2);
+            var noise = (Math.sin(i * 0.18) * 0.3 + Math.sin(i * 0.41) * 0.2) * 0.15;
+            var hum = Math.max(10, Math.min(95, s.baseHum + diurnal * s.humAmp + noise * s.humAmp));
+            points.push({ timestamp: t.toISOString(), value: hum, unit: "%" });
+        }
+        return points;
+    }
+
+    function generateIrrigationEvents() {
+        var now = new Date(), events = [];
+        var count = 4 + Math.floor(Math.random() * 3);
+        for (var i = 0; i < count; i++) {
+            var hoursAgo = 1 + Math.random() * 22;
+            events.push({
+                timestamp: new Date(now.getTime() - hoursAgo * 3600 * 1000).toISOString(),
+                event_type: "irrigation"
+            });
+        }
+        return events;
     }
 
     function simulateLive(scene) {
@@ -747,7 +1279,10 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
     window.setScene = function (btn, sceneName) {
         currentScene = sceneName;
-        ring.update(generateData(sceneName));
+        ring.update(generateTempData(sceneName));
+        humRing.update(generateHumData(sceneName));
+        waterPulses.update(generateIrrigationEvents());
+        pressureField.setLiveValue(SCENES[sceneName].pressure);
         document.querySelectorAll(".demo-btn").forEach(function (b) { b.classList.remove("active"); });
         btn.classList.add("active");
     };
@@ -756,16 +1291,78 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         var canvas = document.getElementById("art-canvas");
         ring = Art.createRadialRing(canvas);
 
+        var setup = Art.setupCanvas(canvas);
+        sharedCtx = setup.ctx;
+        sharedCx = setup.width / 2;
+        sharedCy = setup.height / 2;
+        sharedMaxR = Math.min(sharedCx, sharedCy) * 0.72;
+
+        ring.resize();
+
+        // Create overlay layers — pass hover functions for interactivity
+        humRing = Art.createHumidityRing(sharedCtx, getCx, getCy, getMaxR,
+            ring.getHoverAngle, ring.getMouseDist);
+        waterPulses = Art.createWaterPulses(sharedCtx, getCx, getCy, getMaxR,
+            ring.getHoverAngle, ring.getMouseDist);
+        pressureField = Art.createPressureField(sharedCtx, getCx, getCy, getMaxR);
+        particles = Art.createAmbientParticles(sharedCtx, getCx, getCy, getMaxR);
+
         loop = new Art.AnimationLoop();
-        loop.register(function (dt, now) { ring.render(dt, now); });
+        loop.register(function (dt, now) {
+            // Route hover info to center disc — priority: water > humidity > temp
+            var waterHover = waterPulses.getHoverEvent();
+            var humHover = humRing.getHoverHum();
 
-        ring.update(generateData("calm"));
+            if (waterHover) {
+                ring.setCenterOverride({
+                    value: angleToTimeStr(waterHover.angle),
+                    unit: waterHover.ageMin + "m ago",
+                    label: "IRRIGATION",
+                    color: "rgba(30,210,255,0.9)",
+                    labelColor: "rgba(30,210,255,0.3)"
+                });
+            } else if (humHover) {
+                ring.setCenterOverride({
+                    value: humHover.hum.toFixed(0),
+                    unit: "%  RH",
+                    label: humHover.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+                    color: "rgba(0,200,220,0.9)",
+                    labelColor: "rgba(0,200,220,0.4)"
+                });
+            } else {
+                ring.setCenterOverride(null);
+            }
 
+            // Render order: pressure → ring → humidity → water → particles (on top)
+            pressureField.render(dt);
+            ring.render(dt, now);
+            humRing.render(dt);
+            waterPulses.render(dt);
+            particles.render(dt);
+        });
+
+        // Load initial data
+        ring.update(generateTempData("calm"));
+        humRing.update(generateHumData("calm"));
+        waterPulses.update(generateIrrigationEvents());
+        pressureField.setLiveValue(1015);
+
+        // Simulate live updates
         setInterval(function () {
             ring.setLiveValue(simulateLive(currentScene));
         }, 3000);
 
-        window.addEventListener("resize", function () { ring.resize(); });
+        // Simulate occasional irrigation pulse
+        setInterval(function () {
+            if (Math.random() < 0.35) waterPulses.triggerPulse();
+        }, 6000);
+
+        window.addEventListener("resize", function () {
+            ring.resize();
+            var w = window.innerWidth, h = window.innerHeight;
+            sharedCx = w / 2; sharedCy = h / 2;
+            sharedMaxR = Math.min(sharedCx, sharedCy) * 0.72;
+        });
     }
 
     if (document.readyState === "loading") {
