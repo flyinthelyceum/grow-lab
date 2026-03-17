@@ -98,3 +98,35 @@ db_path = "{tmp_path / 'test.db'}"
         result = runner.invoke(cli, ["--help"])
         assert result.exit_code == 0
         assert "GROWLAB" in result.output
+
+    def test_db_seed_demo(self, tmp_path):
+        runner = CliRunner()
+        config_path = tmp_path / "config.toml"
+        captures_dir = tmp_path / "captures"
+        config_path.write_text(
+            f"""
+[system]
+data_dir = "{tmp_path}"
+db_path = "{tmp_path / 'test.db'}"
+
+[camera]
+enabled = true
+output_dir = "{captures_dir}"
+"""
+        )
+
+        result = runner.invoke(
+            cli,
+            ["--config", str(config_path), "db", "seed-demo", "--hours", "12"],
+        )
+
+        assert result.exit_code == 0
+        assert "Seeded demo data" in result.output
+        assert (captures_dir / "demo-capture.jpg").exists()
+
+        info_result = runner.invoke(cli, ["--config", str(config_path), "db", "info"])
+        assert info_result.exit_code == 0
+        assert "sensor_readings:" in info_result.output
+        assert "camera_captures: 1 rows" in info_result.output
+        assert "ezo_ph" in info_result.output
+        assert "soil_moisture" in info_result.output

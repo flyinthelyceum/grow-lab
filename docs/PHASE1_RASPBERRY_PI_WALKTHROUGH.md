@@ -185,6 +185,19 @@ growlab db export --type readings --sensor ds18b20_<device_id> --limit 100
 growlab dashboard
 ```
 
+If you need a non-interactive dashboard process over SSH:
+
+```bash
+nohup bash -lc 'source .venv/bin/activate && growlab dashboard --host 0.0.0.0 --port 8000' > ~/growlab-dashboard.log 2>&1 < /dev/null &
+tail -f ~/growlab-dashboard.log
+```
+
+If the remaining sensors are still in shipping transit, you can seed a design/demo dataset:
+
+```bash
+growlab db seed-demo --hours 24
+```
+
 Pass condition:
 - service remains up
 - DS18B20 readings accumulate in DB

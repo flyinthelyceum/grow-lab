@@ -1,0 +1,16 @@
+[Unit]
+Description=GROWLAB Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jared
+WorkingDirectory=/home/jared/grow-lab
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/bin/bash -lc 'source /home/jared/grow-lab/.venv/bin/activate && growlab dashboard --host 0.0.0.0 --port 8000'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

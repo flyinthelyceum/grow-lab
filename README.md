@@ -26,6 +26,33 @@ Data stored in SQLite on the Pi. Dashboard queries downsampled history via REST 
 
 SH1106 128×64 OLED mounted on the installation. Rotates 4 pages: sensor values, system overview, irrigation schedule, sparkline trend chart.
 
+## Pi Ops
+
+Launch the dashboard on the Pi:
+
+```bash
+cd ~/grow-lab
+source .venv/bin/activate
+growlab dashboard --host 0.0.0.0 --port 8000
+```
+
+Seed demo-friendly dashboard data when hardware is still in transit:
+
+```bash
+cd ~/grow-lab
+source .venv/bin/activate
+growlab db seed-demo --hours 24
+```
+
+Install the included `systemd` service for persistent dashboard hosting:
+
+```bash
+sudo cp deploy/systemd/growlab-dashboard.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now growlab-dashboard
+sudo systemctl status growlab-dashboard
+```
+
 ## Documentation
 
 - [System Architecture](docs/SYSTEM_ARCHITECTURE.md)

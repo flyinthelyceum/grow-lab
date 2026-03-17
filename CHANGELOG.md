@@ -40,6 +40,10 @@ All notable changes to this project are documented in this file.
 - Dashboard image serving path aligned with stored camera capture records through `/api/images/<filename>/file`.
 - Dashboard route/browser tests updated to the current `GROWLAB` branding and Canvas-based art mode implementation.
 
+### Added
+- `growlab db seed-demo` command for generating synthetic 24h-friendly dashboard data, irrigation events, and a demo camera capture while hardware is still in transit.
+- `deploy/systemd/growlab-dashboard.service` for running the dashboard persistently on the Pi via `systemd`.
+
 ## 2026-03-14
 
 ### Fixed

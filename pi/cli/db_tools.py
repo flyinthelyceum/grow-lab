@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import math
 from pathlib import Path
 
 import click
@@ -142,3 +143,124 @@ def db_init(ctx: click.Context) -> None:
         click.echo(f"Database initialized at {db_path}")
 
     _run_async(_init())
+
+
+@db_group.command(name="seed-demo")
+@click.option("--hours", default=24, type=int, help="History window to seed")
+@click.option(
+    "--reset/--no-reset",
+    default=True,
+    help="Clear existing readings/events/captures before seeding",
+)
+@click.pass_context
+def db_seed_demo(ctx: click.Context, hours: int, reset: bool) -> None:
+    """Seed the database with synthetic dashboard-friendly demo data."""
+    config: AppConfig = ctx.obj["config"]
+
+    async def _seed() -> None:
+        from datetime import datetime, timedelta, timezone
+
+        from PIL import Image, ImageDraw
+
+        from pi.data.models import CameraCapture, SensorReading, SystemEvent
+        from pi.data.repository import SensorRepository
+
+        db_path = config.system.db_path
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        repo = SensorRepository(db_path)
+        await repo.connect()
+
+        if reset:
+            await repo.db.execute("DELETE FROM sensor_readings")
+            await repo.db.execute("DELETE FROM system_events")
+            await repo.db.execute("DELETE FROM camera_captures")
+            await repo.db.commit()
+
+        now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+        start = now - timedelta(hours=max(hours, 1))
+        steps = max(hours * 2, 2)  # 30 min cadence
+        interval = (now - start) / (steps - 1)
+
+        for idx in range(steps):
+            timestamp = start + interval * idx
+            phase = (idx / max(steps - 1, 1)) * math.pi * 2
+
+            values = {
+                "light_pwm": 0 if idx < steps * 0.18 or idx > steps * 0.84 else 200,
+                "bme280_temperature": 22.0 + math.sin(phase - 0.3) * 2.4,
+                "bme280_humidity": 49.0 + math.sin(phase + 0.8) * 9.0,
+                "bme280_pressure": 976.0 + math.cos(phase * 0.7) * 5.5,
+                "ezo_ph": 6.15 + math.sin(phase * 0.8) * 0.18,
+                "ezo_ec": 1180.0 + math.cos(phase * 0.9) * 180.0,
+                "soil_moisture": 58.0 + math.sin(phase * 1.3) * 11.0,
+                "ds18b20_temperature": 20.2 + math.sin(phase * 0.6) * 0.8,
+            }
+
+            units = {
+                "light_pwm": "PWM",
+                "bme280_temperature": "°C",
+                "bme280_humidity": "%",
+                "bme280_pressure": "hPa",
+                "ezo_ph": "pH",
+                "ezo_ec": "µS/cm",
+                "soil_moisture": "%",
+                "ds18b20_temperature": "°C",
+            }
+
+            for sensor_id, value in values.items():
+                await repo.save_reading(
+                    SensorReading(
+                        timestamp=timestamp,
+                        sensor_id=sensor_id,
+                        value=round(value, 3),
+                        unit=units[sensor_id],
+                    )
+                )
+
+        event_hours = (2, 8, 14, 20)
+        for day_offset in range(2):
+            base_day = (now - timedelta(days=1 - day_offset)).date()
+            for hour in event_hours:
+                event_time = datetime(
+                    base_day.year,
+                    base_day.month,
+                    base_day.day,
+                    hour,
+                    0,
+                    tzinfo=timezone.utc,
+                )
+                if start <= event_time <= now:
+                    await repo.save_event(
+                        SystemEvent(
+                            timestamp=event_time,
+                            event_type="irrigation",
+                            description="Demo irrigation pulse",
+                        )
+                    )
+
+        image_dir = config.camera.output_dir
+        image_dir.mkdir(parents=True, exist_ok=True)
+        image_path = image_dir / "demo-capture.jpg"
+        image = Image.new("RGB", (1280, 720), color=(18, 28, 24))
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((80, 80, 1200, 640), outline=(60, 180, 140), width=4)
+        draw.ellipse((430, 160, 850, 580), fill=(52, 108, 74), outline=(122, 210, 168), width=5)
+        draw.text((100, 100), "GROWLAB DEMO CAPTURE", fill=(210, 240, 230))
+        draw.text((100, 132), now.strftime("%Y-%m-%d %H:%M UTC"), fill=(150, 190, 176))
+        image.save(image_path, format="JPEG", quality=88)
+
+        await repo.save_capture(
+            CameraCapture(
+                timestamp=now - timedelta(minutes=7),
+                filepath=str(image_path),
+                filesize_bytes=image_path.stat().st_size,
+            )
+        )
+
+        await repo.close()
+        click.echo(f"Seeded demo data into {db_path}")
+        click.echo(f"History window: {hours}h")
+        click.echo(f"Camera demo image: {image_path}")
+
+    _run_async(_seed())
