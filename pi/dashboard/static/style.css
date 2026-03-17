@@ -379,6 +379,19 @@ html, body {
     color: var(--accent-red);
 }
 
+.status-art-link {
+    margin-left: auto;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-decoration: none;
+    color: var(--text-dim);
+    transition: color 0.3s;
+}
+
+.status-art-link:hover {
+    color: var(--text-secondary);
+}
+
 /* === RESPONSIVE === */
 
 @media (max-width: 900px) {

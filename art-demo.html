@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GROWLAB — Art Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Space Mono', monospace;
+        }
+        #art-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+        .art-label {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 10;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+        }
+        .art-sublabel {
+            position: fixed;
+            top: 46px;
+            left: 24px;
+            z-index: 10;
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.3);
+        }
+        .demo-controls {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+        }
+        .demo-btn {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.3);
+            padding: 6px 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .demo-btn:hover {
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.5);
+        }
+        .demo-btn.active {
+            border-color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.6);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="art-label">GROWLAB</div>
+    <div class="art-sublabel">BME280 AIR TEMPERATURE — 24H RADIAL</div>
+    <canvas id="art-canvas"></canvas>
+    <div class="demo-controls">
+        <button class="demo-btn active" onclick="setScene(this, 'calm')">CALM DAY</button>
+        <button class="demo-btn" onclick="setScene(this, 'swing')">BIG SWING</button>
+        <button class="demo-btn" onclick="setScene(this, 'night')">COOL NIGHT</button>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+window.GrowLab = window.GrowLab || {};
+window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
+
+/* ============================================================
+   art-core.js
+   ============================================================ */
+(function () {
+    "use strict";
+
+    var FRAME_INTERVAL = 1000 / 30;
+    var MAX_DELTA = FRAME_INTERVAL * 2;
+
+    function AnimationLoop() {
+        this._callbacks = [];
+        this._running = false;
+        this._lastTime = 0;
+        this._rafId = null;
+        this._tick = this._tick.bind(this);
+        var self = this;
+        document.addEventListener("visibilitychange", function () {
+            if (document.hidden) { self.pause(); } else { self.resume(); }
+        });
+    }
+    AnimationLoop.prototype.register = function (cb) {
+        this._callbacks.push(cb);
+        if (!this._running && this._callbacks.length > 0) this.resume();
+    };
+    AnimationLoop.prototype.resume = function () {
+        if (this._running) return;
+        this._running = true;
+        this._lastTime = performance.now();
+        this._rafId = requestAnimationFrame(this._tick);
+    };
+    AnimationLoop.prototype.pause = function () {
+        this._running = false;
+        if (this._rafId !== null) { cancelAnimationFrame(this._rafId); this._rafId = null; }
+    };
+    AnimationLoop.prototype._tick = function (now) {
+        if (!this._running) return;
+        var delta = now - this._lastTime;
+        if (delta >= FRAME_INTERVAL) {
+            var dt = Math.min(delta, MAX_DELTA);
+            this._lastTime = now - (delta % FRAME_INTERVAL);
+            for (var i = 0; i < this._callbacks.length; i++) this._callbacks[i](dt, now);
+        }
+        this._rafId = requestAnimationFrame(this._tick);
+    };
+
+    function setupCanvas(canvas) {
+        var dpr = window.devicePixelRatio || 1;
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+        var ctx = canvas.getContext("2d");
+        ctx.scale(dpr, dpr);
+        return { ctx: ctx, width: w, height: h, dpr: dpr };
+    }
+
+    // Extended color palette: deep blue → teal → amber → warm orange
+    // 60°F = deep slate blue, 72°F = neutral grey-teal, 85°F = rich amber
+    function tempToRGB(tempF) {
+        var t = Math.max(0, Math.min(1, (tempF - 58) / 30));
+        var r, g, b;
+        if (t < 0.35) {
+            // Cold: slate blue (40,55,90) → cool teal (50,100,120)
+            var s = t / 0.35;
+            r = 40 + s * 10;
+            g = 55 + s * 45;
+            b = 90 + s * 30;
+        } else if (t < 0.65) {
+            // Mid: teal (50,100,120) → warm neutral (160,120,70)
+            var s = (t - 0.35) / 0.3;
+            r = 50 + s * 110;
+            g = 100 + s * 20;
+            b = 120 - s * 50;
+        } else {
+            // Hot: warm (160,120,70) → amber-orange (220,150,50)
+            var s = (t - 0.65) / 0.35;
+            r = 160 + s * 60;
+            g = 120 + s * 30;
+            b = 70 - s * 20;
+        }
+        return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
+    }
+
+    function temperatureColor(tempF) {
+        var c = tempToRGB(tempF);
+        return "rgb(" + c.r + "," + c.g + "," + c.b + ")";
+    }
+
+    function temperatureColorRGBA(tempF, alpha) {
+        var c = tempToRGB(tempF);
+        return "rgba(" + c.r + "," + c.g + "," + c.b + "," + alpha + ")";
+    }
+
+    function cToF(c) { return c * 9 / 5 + 32; }
+
+    window.GrowLab.ArtMode.AnimationLoop = AnimationLoop;
+    window.GrowLab.ArtMode.setupCanvas = setupCanvas;
+    window.GrowLab.ArtMode.temperatureColor = temperatureColor;
+    window.GrowLab.ArtMode.temperatureColorRGBA = temperatureColorRGBA;
+    window.GrowLab.ArtMode.cToF = cToF;
+})();
+
+/* ============================================================
+   radial-ring.js — v3: centered, smooth, vivid, alive
+   ============================================================ */
+(function () {
+    "use strict";
+
+    var Art = window.GrowLab.ArtMode;
+
+    function timeToAngle(date) {
+        var hours = date.getHours() + date.getMinutes() / 60 + date.getSeconds() / 3600;
+        return (hours / 24) * Math.PI * 2 - Math.PI / 2;
+    }
+
+    function angleToTimeStr(angle) {
+        var hours = ((angle + Math.PI / 2) / (Math.PI * 2)) * 24;
+        if (hours < 0) hours += 24;
+        if (hours >= 24) hours -= 24;
+        var h = Math.floor(hours);
+        var m = Math.floor((hours - h) * 60);
+        var ampm = h >= 12 ? "PM" : "AM";
+        var h12 = h % 12 || 12;
+        return h12 + ":" + (m < 10 ? "0" : "") + m + " " + ampm;
+    }
+
+    function smoothArray(arr, windowSize) {
+        var half = Math.floor(windowSize / 2);
+        var result = [];
+        for (var i = 0; i < arr.length; i++) {
+            var sum = 0, count = 0;
+            for (var j = i - half; j <= i + half; j++) {
+                var idx = ((j % arr.length) + arr.length) % arr.length;
+                sum += arr[idx];
+                count++;
+            }
+            result.push(sum / count);
+        }
+        return result;
+    }
+
+    function createRadialRing(canvas) {
+        var setup = Art.setupCanvas(canvas);
+        var ctx = setup.ctx;
+        var W = setup.width;
+        var H = setup.height;
+        var cx = W / 2;
+        var cy = H / 2;
+
+        var maxRadius = Math.min(cx, cy) * 0.72;
+        var minRadius = maxRadius * 0.42;
+
+        var data = null;
+        var smoothedRadii = [];
+        var currentTempF = null;
+        var nowAngle = 0;
+        var animTime = 0;
+
+        var hoverPoint = null;
+        var mouseInCanvas = false;
+
+        var radiusScale = d3.scaleLinear().range([minRadius, maxRadius]);
+
+        // 8 clock labels (every 3 hours)
+        var CLOCK_LABELS = [
+            { label: "12A", angle: -Math.PI / 2 },
+            { label: "3A",  angle: -Math.PI / 4 },
+            { label: "6A",  angle: 0 },
+            { label: "9A",  angle: Math.PI / 4 },
+            { label: "12P", angle: Math.PI / 2 },
+            { label: "3P",  angle: Math.PI * 3 / 4 },
+            { label: "6P",  angle: Math.PI },
+            { label: "9P",  angle: -Math.PI * 3 / 4 },
+        ];
+
+        // --- Mouse tracking ---
+        canvas.addEventListener("mousemove", function (e) {
+            mouseInCanvas = true;
+            if (!data || data.length < 2) { hoverPoint = null; return; }
+
+            var mx = e.clientX - cx;
+            var my = e.clientY - cy;
+            var dist = Math.sqrt(mx * mx + my * my);
+
+            if (dist < minRadius * 0.5 || dist > maxRadius * 1.3) {
+                hoverPoint = null;
+                return;
+            }
+
+            var mouseAngle = Math.atan2(my, mx);
+
+            // Normalize all angles to [-PI, PI] for comparison
+            function normAngle(a) {
+                while (a > Math.PI) a -= Math.PI * 2;
+                while (a < -Math.PI) a += Math.PI * 2;
+                return a;
+            }
+            var mNorm = normAngle(mouseAngle);
+            var bestIdx = 0, bestDist = Infinity;
+            for (var i = 0; i < data.length; i++) {
+                var dNorm = normAngle(data[i].angle);
+                var diff = Math.abs(dNorm - mNorm);
+                if (diff > Math.PI) diff = Math.PI * 2 - diff;
+                if (diff < bestDist) { bestDist = diff; bestIdx = i; }
+            }
+
+            var d = data[bestIdx];
+            var r = smoothedRadii[bestIdx] || radiusScale(d.tempF);
+            hoverPoint = {
+                angle: d.angle, tempF: d.tempF, time: d.time,
+                x: Math.cos(d.angle) * r, y: Math.sin(d.angle) * r, r: r
+            };
+        });
+
+        canvas.addEventListener("mouseleave", function () {
+            mouseInCanvas = false;
+            hoverPoint = null;
+        });
+
+        function update(readings) {
+            if (!readings || readings.length === 0) { data = null; smoothedRadii = []; return; }
+
+            var parsed = readings.map(function (d) {
+                var date = new Date(d.timestamp);
+                var tempF = (d.unit === "°F") ? d.value : Art.cToF(d.value);
+                return { angle: timeToAngle(date), tempF: tempF, time: date };
+            });
+            parsed.sort(function (a, b) { return a.angle - b.angle; });
+
+            var extent = d3.extent(parsed, function (d) { return d.tempF; });
+            var pad = Math.max((extent[1] - extent[0]) * 0.15, 2);
+            radiusScale.domain([extent[0] - pad, extent[1] + pad]);
+
+            data = parsed;
+            currentTempF = parsed[parsed.length - 1].tempF;
+
+            var rawRadii = parsed.map(function (d) { return radiusScale(d.tempF); });
+            smoothedRadii = smoothArray(rawRadii, 7);
+        }
+
+        function setLiveValue(tempF) { currentTempF = tempF; }
+
+        function render(dt, now) {
+            animTime += dt;
+            ctx.clearRect(0, 0, W, H);
+            nowAngle = timeToAngle(new Date());
+
+            drawGrid();
+
+            if (!data || data.length < 2) { drawLoadingState(); return; }
+
+            drawRing();
+            drawCenterDisc();
+            if (hoverPoint) {
+                drawHover();
+            } else {
+                drawNowMarker();
+            }
+            drawCenterValue();
+        }
+
+        function drawGrid() {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            // Concentric guide circles — minimal
+            ctx.lineWidth = 0.5;
+            var steps = 3;
+            for (var i = 1; i <= steps; i++) {
+                var r = minRadius + (maxRadius - minRadius) * (i / steps);
+                ctx.beginPath();
+                ctx.arc(0, 0, r, 0, Math.PI * 2);
+                ctx.strokeStyle = "rgba(255,255,255,0.03)";
+                ctx.stroke();
+            }
+
+            // Radial lines at every 3h
+            ctx.strokeStyle = "rgba(255,255,255,0.04)";
+            ctx.lineWidth = 0.5;
+            CLOCK_LABELS.forEach(function (cl) {
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(cl.angle) * (minRadius * 0.85), Math.sin(cl.angle) * (minRadius * 0.85));
+                ctx.lineTo(Math.cos(cl.angle) * (maxRadius * 1.06), Math.sin(cl.angle) * (maxRadius * 1.06));
+                ctx.stroke();
+            });
+
+            // Clock labels
+            ctx.fillStyle = "rgba(255,255,255,0.22)";
+            ctx.font = "400 11px 'Space Mono', monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            CLOCK_LABELS.forEach(function (cl) {
+                var lr = maxRadius * 1.14;
+                ctx.fillText(cl.label, Math.cos(cl.angle) * lr, Math.sin(cl.angle) * lr);
+            });
+
+            ctx.restore();
+        }
+
+        function drawRing() {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            // Clip to annular region: exclude center disc
+            ctx.beginPath();
+            ctx.arc(0, 0, maxRadius * 1.2, 0, Math.PI * 2);       // outer bound
+            ctx.arc(0, 0, minRadius * 0.88, 0, Math.PI * 2, true); // inner cutout
+            ctx.clip();
+
+            // --- Filled wedges with per-segment color ---
+            for (var i = 0; i < data.length - 1; i++) {
+                var d0 = data[i];
+                var d1 = data[i + 1];
+                if (Math.abs(d1.angle - d0.angle) > Math.PI / 6) continue;
+
+                var r0 = smoothedRadii[i];
+                var r1 = smoothedRadii[i + 1];
+                var avgTemp = (d0.tempF + d1.tempF) / 2;
+
+                // Filled area: inner ring to outer radius
+                ctx.beginPath();
+                ctx.arc(0, 0, minRadius * 0.92, d0.angle, d1.angle);
+                ctx.lineTo(Math.cos(d1.angle) * r1, Math.sin(d1.angle) * r1);
+
+                // Smooth outer arc approximation
+                var midAngle = (d0.angle + d1.angle) / 2;
+                var midR = (r0 + r1) / 2;
+                ctx.quadraticCurveTo(
+                    Math.cos(midAngle) * midR * 1.02,
+                    Math.sin(midAngle) * midR * 1.02,
+                    Math.cos(d0.angle) * r0,
+                    Math.sin(d0.angle) * r0
+                );
+                ctx.closePath();
+                ctx.fillStyle = Art.temperatureColorRGBA(avgTemp, 0.2);
+                ctx.fill();
+            }
+
+            // --- Smooth outer edge with glow ---
+            if (data.length > 2) {
+                // Build a smooth path through all points
+                var points = [];
+                for (var i = 0; i < data.length; i++) {
+                    points.push({
+                        x: Math.cos(data[i].angle) * smoothedRadii[i],
+                        y: Math.sin(data[i].angle) * smoothedRadii[i],
+                        temp: data[i].tempF
+                    });
+                }
+
+                // Glow layer (wide, low opacity)
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (var i = 1; i < points.length; i++) {
+                    var prev = points[i - 1];
+                    var curr = points[i];
+                    var cpx = (prev.x + curr.x) / 2;
+                    var cpy = (prev.y + curr.y) / 2;
+                    ctx.quadraticCurveTo(prev.x, prev.y, cpx, cpy);
+                }
+                ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+
+                // Breathing glow intensity
+                var breathe = 0.08 + 0.04 * Math.sin(animTime / 2000);
+
+                ctx.strokeStyle = Art.temperatureColorRGBA(
+                    d3.mean(data, function(d) { return d.tempF; }) || 72, breathe
+                );
+                ctx.lineWidth = 6;
+                ctx.stroke();
+
+                // Main line — draw segments colored by temperature
+                for (var i = 0; i < points.length - 1; i++) {
+                    var p0 = points[i];
+                    var p1 = points[i + 1];
+                    var avgT = (p0.temp + p1.temp) / 2;
+
+                    ctx.beginPath();
+                    ctx.moveTo(p0.x, p0.y);
+                    var cpx = (p0.x + p1.x) / 2;
+                    var cpy = (p0.y + p1.y) / 2;
+                    ctx.quadraticCurveTo(p0.x, p0.y, cpx, cpy);
+                    ctx.strokeStyle = Art.temperatureColorRGBA(avgT, 0.8);
+                    ctx.lineWidth = 1.8;
+                    ctx.stroke();
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function drawCenterDisc() {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            var discR = minRadius * 0.88;
+
+            // Solid black disc
+            ctx.beginPath();
+            ctx.arc(0, 0, discR, 0, Math.PI * 2);
+            ctx.fillStyle = "#000";
+            ctx.fill();
+
+            if (hoverPoint) {
+                // Glowing border in hovered temperature color
+                ctx.beginPath();
+                ctx.arc(0, 0, discR, 0, Math.PI * 2);
+                ctx.strokeStyle = Art.temperatureColorRGBA(hoverPoint.tempF, 0.25);
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else {
+                // Subtle default border
+                ctx.beginPath();
+                ctx.arc(0, 0, discR, 0, Math.PI * 2);
+                ctx.strokeStyle = "rgba(255,255,255,0.05)";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        function drawNowMarker() {
+            if (currentTempF === null) return;
+
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            var r = radiusScale(currentTempF);
+            var x = Math.cos(nowAngle) * r;
+            var y = Math.sin(nowAngle) * r;
+
+            // Pulsing glow
+            var pulse = 0.8 + 0.2 * Math.sin(animTime / 600);
+            var glowSize = 12 + 3 * Math.sin(animTime / 800);
+
+            // Outer glow ring
+            ctx.beginPath();
+            ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+            ctx.fillStyle = Art.temperatureColorRGBA(currentTempF, 0.08 * pulse);
+            ctx.fill();
+
+            // Mid glow
+            ctx.beginPath();
+            ctx.arc(x, y, 7, 0, Math.PI * 2);
+            ctx.fillStyle = Art.temperatureColorRGBA(currentTempF, 0.2 * pulse);
+            ctx.fill();
+
+            // Core dot
+            ctx.beginPath();
+            ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = Art.temperatureColor(currentTempF);
+            ctx.globalAlpha = pulse;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            // Thin line from center
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = "rgba(255,255,255,0.08)";
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+
+            // "NOW" label
+            var labelR = r + 22;
+            ctx.fillStyle = "rgba(255,255,255,0.3)";
+            ctx.font = "700 9px 'Space Mono', monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("NOW", Math.cos(nowAngle) * labelR, Math.sin(nowAngle) * labelR);
+
+            ctx.restore();
+        }
+
+        function drawHover() {
+            if (!hoverPoint) return;
+
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            var hp = hoverPoint;
+
+            // Radial guide line
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(hp.x, hp.y);
+            ctx.strokeStyle = "rgba(255,255,255,0.15)";
+            ctx.lineWidth = 0.5;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Highlight dot
+            ctx.beginPath();
+            ctx.arc(hp.x, hp.y, 14, 0, Math.PI * 2);
+            ctx.fillStyle = Art.temperatureColorRGBA(hp.tempF, 0.15);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(hp.x, hp.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = Art.temperatureColor(hp.tempF);
+            ctx.fill();
+
+            // Tooltip
+            var tooltipR = hp.r + 28;
+            var tx = Math.cos(hp.angle) * tooltipR;
+            var ty = Math.sin(hp.angle) * tooltipR;
+
+            var angleDeg = hp.angle * 180 / Math.PI;
+            if (angleDeg > -90 && angleDeg < 90) {
+                ctx.textAlign = "left"; tx += 8;
+            } else {
+                ctx.textAlign = "right"; tx -= 8;
+            }
+            ctx.textBaseline = "middle";
+
+            ctx.fillStyle = "rgba(255,255,255,0.5)";
+            ctx.font = "400 11px 'Space Mono', monospace";
+            ctx.fillText(angleToTimeStr(hp.angle), tx, ty - 10);
+
+            ctx.fillStyle = Art.temperatureColor(hp.tempF);
+            ctx.font = "700 15px 'Space Mono', monospace";
+            ctx.fillText(hp.tempF.toFixed(1) + "°F", tx, ty + 10);
+
+            ctx.restore();
+        }
+
+        function drawCenterValue() {
+            if (currentTempF === null) return;
+
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            var displayTemp = hoverPoint ? hoverPoint.tempF : currentTempF;
+            var displayColor = Art.temperatureColor(displayTemp);
+
+            // Size calculations for true center alignment
+            var tempSize = Math.round(minRadius * 0.48);
+            var unitSize = Math.round(minRadius * 0.14);
+            var labelSize = Math.round(minRadius * 0.1);
+            var lineGap = tempSize * 0.12;
+            var totalH = tempSize * 0.75 + lineGap + unitSize * 0.75 + lineGap + labelSize * 0.75;
+            var startY = -totalH / 2;
+
+            // Temperature
+            ctx.fillStyle = displayColor;
+            ctx.font = "700 " + tempSize + "px 'Space Mono', monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillText(displayTemp.toFixed(1), 0, startY);
+
+            // °F
+            ctx.fillStyle = "rgba(255,255,255,0.3)";
+            ctx.font = "400 " + unitSize + "px 'Space Mono', monospace";
+            ctx.fillText("°F", 0, startY + tempSize * 0.75 + lineGap);
+
+            // Label: hovered time or subsystem
+            var labelY = startY + tempSize * 0.75 + lineGap + unitSize * 0.75 + lineGap;
+            if (hoverPoint) {
+                ctx.fillStyle = "rgba(255,255,255,0.25)";
+                ctx.font = "400 " + labelSize + "px 'Space Mono', monospace";
+                var timeStr = hoverPoint.time.toLocaleTimeString("en-US", {
+                    hour: "numeric", minute: "2-digit"
+                });
+                ctx.fillText(timeStr, 0, labelY);
+            } else {
+                ctx.fillStyle = "rgba(255,255,255,0.12)";
+                ctx.font = "700 " + labelSize + "px 'Space Mono', monospace";
+                ctx.letterSpacing = "4px";
+                ctx.fillText("AIR", 0, labelY);
+            }
+
+            ctx.restore();
+        }
+
+        function drawLoadingState() {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            var pulse = 0.3 + 0.15 * Math.sin(animTime / 1000);
+            ctx.beginPath();
+            ctx.arc(0, 0, (minRadius + maxRadius) / 2, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(255,255,255," + pulse + ")";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.fillStyle = "rgba(255,255,255,0.15)";
+            ctx.font = "400 14px 'Space Mono', monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("loading data...", 0, 0);
+
+            ctx.restore();
+        }
+
+        function resize() {
+            var s = Art.setupCanvas(canvas);
+            ctx = s.ctx; W = s.width; H = s.height;
+            cx = W / 2; cy = H / 2;
+            maxRadius = Math.min(cx, cy) * 0.72;
+            minRadius = maxRadius * 0.42;
+            radiusScale.range([minRadius, maxRadius]);
+            if (data && data.length > 0) {
+                var rawRadii = data.map(function (d) { return radiusScale(d.tempF); });
+                smoothedRadii = smoothArray(rawRadii, 7);
+            }
+        }
+
+        return { update: update, setLiveValue: setLiveValue, render: render, resize: resize };
+    }
+
+    window.GrowLab.ArtMode.createRadialRing = createRadialRing;
+})();
+
+/* ============================================================
+   Mock data + demo controller
+   ============================================================ */
+(function () {
+    "use strict";
+
+    var Art = window.GrowLab.ArtMode;
+    var ring = null;
+    var loop = null;
+    var currentScene = "calm";
+
+    var SCENES = {
+        calm:  { baseTemp: 73, amplitude: 4,  noiseScale: 0.12 },
+        swing: { baseTemp: 75, amplitude: 12, noiseScale: 0.15 },
+        night: { baseTemp: 65, amplitude: 3,  noiseScale: 0.08 }
+    };
+
+    function generateData(scene) {
+        var s = SCENES[scene];
+        var now = new Date();
+        var points = [];
+        for (var i = 0; i < 288; i++) {
+            var t = new Date(now.getTime() - (287 - i) * 5 * 60 * 1000);
+            var hour = t.getHours() + t.getMinutes() / 60;
+            var diurnal = -Math.cos((hour - 5) / 24 * Math.PI * 2);
+            var noise = (Math.sin(i * 0.12) * 0.5 + Math.sin(i * 0.31) * 0.3) * s.noiseScale;
+            var tempF = s.baseTemp + diurnal * s.amplitude + noise * s.amplitude;
+            points.push({ timestamp: t.toISOString(), value: tempF, unit: "°F" });
+        }
+        return points;
+    }
+
+    function simulateLive(scene) {
+        var s = SCENES[scene];
+        var hour = new Date().getHours() + new Date().getMinutes() / 60;
+        var diurnal = -Math.cos((hour - 5) / 24 * Math.PI * 2);
+        var noise = Math.sin(Date.now() / 5000) * 0.5;
+        return s.baseTemp + diurnal * s.amplitude + noise;
+    }
+
+    window.setScene = function (btn, sceneName) {
+        currentScene = sceneName;
+        ring.update(generateData(sceneName));
+        document.querySelectorAll(".demo-btn").forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+    };
+
+    function init() {
+        var canvas = document.getElementById("art-canvas");
+        ring = Art.createRadialRing(canvas);
+
+        loop = new Art.AnimationLoop();
+        loop.register(function (dt, now) { ring.render(dt, now); });
+
+        ring.update(generateData("calm"));
+
+        setInterval(function () {
+            ring.setLiveValue(simulateLive(currentScene));
+        }, 3000);
+
+        window.addEventListener("resize", function () { ring.resize(); });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+})();
+</script>
+</body>
+</html>

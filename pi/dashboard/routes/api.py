@@ -81,6 +81,54 @@ async def get_readings(
     return [_reading_to_dict(r) for r in readings]
 
 
+# Bucket sizes: 5min for 24h (288 points), 1min for 1h (60 points), 30min for 7d (336 points)
+_BUCKET_SECONDS = {
+    "1h": 60,
+    "24h": 300,
+    "7d": 1800,
+}
+
+
+@router.get("/readings/{sensor_id}/downsampled")
+async def get_readings_downsampled(
+    request: Request,
+    sensor_id: str = Path(..., pattern=r"^[a-zA-Z0-9_]{1,64}$"),
+    window: TimeWindow = Query(default=TimeWindow.twenty_four_hours),
+) -> list[dict]:
+    """Get downsampled sensor readings bucketed by time interval.
+
+    Returns averaged values per bucket: 288 points for 24h,
+    60 points for 1h, 336 points for 7d.
+    """
+    repo = request.app.state.repo
+    delta = WINDOW_MAP.get(window.value, timedelta(hours=24))
+    bucket_sec = _BUCKET_SECONDS.get(window.value, 300)
+    end = datetime.now(timezone.utc)
+    start = end - delta
+
+    cursor = await repo.db.execute(
+        """SELECT
+               CAST(strftime('%%s', timestamp) AS INTEGER) / ? * ? AS bucket,
+               AVG(value) AS avg_value,
+               unit
+           FROM sensor_readings
+           WHERE sensor_id = ? AND timestamp >= ? AND timestamp <= ?
+           GROUP BY bucket
+           ORDER BY bucket ASC""",
+        (bucket_sec, bucket_sec, sensor_id, start.isoformat(), end.isoformat()),
+    )
+    rows = await cursor.fetchall()
+    return [
+        {
+            "timestamp": datetime.fromtimestamp(row[0], tz=timezone.utc).isoformat(),
+            "sensor_id": sensor_id,
+            "value": row[1],
+            "unit": row[2],
+        }
+        for row in rows
+    ]
+
+
 @router.get("/events")
 async def get_events(
     request: Request,
