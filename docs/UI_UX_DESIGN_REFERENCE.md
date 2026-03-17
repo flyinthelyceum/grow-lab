@@ -205,66 +205,27 @@ Applications:
 
 ---
 
-## 4. Dashboard Architecture
+## 4. Dashboard Architecture (Implemented)
 
-The system web interface is structured as a **Living Observatory**.
+The web interface is served by FastAPI at `http://<pi-ip>:8000`.
 
-Primary panels:
+### Observatory View (`/`)
 
-- LIGHT
-- WATER
-- AIR
-- ROOT
-- PLANT
+5-panel grid layout with header (title, time controls, system clock) and footer (WebSocket status, sensor count, ART link).
 
-Each panel displays:
+| Panel | Live Value | Chart | Meta |
+|-------|-----------|-------|------|
+| LIGHT | PWM level | StepAfter area + photoperiod band | Mode, schedule |
+| WATER | Last event | EKG pulse timeline | Time since last |
+| AIR | Temp °F | Dual-axis CatmullRom (temp + humidity) | Humidity %, pressure hPa |
+| ROOT | pH | Stacked sparklines (pH + EC) with target bands | EC µS/cm, reservoir temp °F |
+| PLANT | Soil moisture % | D3 arc gauge | Camera feed, capture count |
 
-- current state
-- 24h trend
-- event pulses
+Time window selector: **1H / 24H / 7D**. Values update live via WebSocket at 3-second intervals.
 
-Example layout:
+### Art Mode (`/art`)
 
--------------------------------------
-Living Light Observatory
--------------------------------------
-
-LIGHT  
-PPFD        620  
-Photoperiod 16h  
-
-[ 24h light curve ]
-
--------------------------------------
-
-WATER  
-Last Irrigation: 32 min ago  
-Reservoir Level: 78%  
-
-[ irrigation pulse timeline ]
-
--------------------------------------
-
-ROOT  
-pH  6.10  
-EC  1.82  
-
-[ pH drift curve ]  
-[ EC drift curve ]
-
--------------------------------------
-
-AIR  
-Temp 22.8C  
-RH   48%  
-
-[ humidity waveform ]
-
--------------------------------------
-
-PLANT  
-Latest Image  
-Growth Timelapse
+Full-screen generative visualization. See Section 8 for details.
 
 ---
 
@@ -276,20 +237,31 @@ Purpose:
 
 make the system legible to observers
 
-Hardware recommendation:
+Hardware (implemented):
 
-SSD1306 OLED  
-128x64  
-I2C
+SH1106 OLED (GME12864)
+128x64
+I2C at 0x3C
 
-Screen Example:
+Screen rotation (5-second cycle):
 
-LIVING LIGHT
+**Page 1 — Sensor Values:**
 
-PH     6.12  
-EC     1.78  
-TEMP   22.9C  
-RH     47%
+GROWLAB
+
+Air      72.4°F
+Humidity  48%
+H2O Temp  67.6°F
+
+**Page 2 — System Overview:**
+
+Uptime, subsystem status
+
+**Page 3 — Irrigation Schedule:**
+
+Next/last pump events
+
+**Page 4 — Sparkline Trend Chart**
 
 Alternate screen:
 
@@ -315,21 +287,22 @@ Use sparklines to represent trends.
 
 ## 6. Web Visualization Technology
 
-Backend:
+Backend (implemented):
 
-- Python
-- FastAPI
-- SQLite
+- Python 3.12
+- FastAPI (routes: pages, API, WebSocket)
+- SQLite (sensor readings, events, images)
 
-Frontend:
+Frontend (implemented):
 
-- D3.js
-- Chart.js
-- optional p5.js for generative visuals
+- D3.js v7 (all charts: StepAfter, CatmullRom, sparklines, arc gauge)
+- Canvas 2D (art mode: radial ring, humidity, water pulses, pressure, particles)
+- Vanilla JS (no framework)
 
-Live updates:
+Live updates (implemented):
 
-- WebSockets
+- WebSocket at `/ws/updates` (3-second polling)
+- REST API at `/api/readings/<sensor>/downsampled?window=<window>`
 
 ---
 
@@ -355,20 +328,39 @@ Example queries:
 
 ## 8. Dashboard as Artwork
 
-Include an **artistic visualization mode**.
+The system includes a dedicated **Art Mode** (`/art`) — a full-screen generative Canvas 2D visualization.
 
-Examples:
+### Implemented Layers
 
-- light cycle rendered as solar arcs
-- irrigation events as pulses
-- humidity breathing waveforms
-- pH drift as tidal motion
+1. **Pressure atmosphere** — colored radial gradient shifting blue-purple (low) to warm (high), with 4 isobar rings.
+2. **Radial thermal ring** — 24h temperature data mapped to color-graded wedges (blue 60°F → teal 70°F → amber 80°F+). Radial gradient fills per wedge for depth. Glow line at outer edge.
+3. **Humidity breathing ring** — teal-cyan (0,200,220) band at 0.82–1.12× maxRadius. Sinusoidal opacity modulation (base 0.20 + amplitude 0.12).
+4. **Water pulse markers** — bright cyan (30,210,255) dots at irrigation event angles. Ghost markers with pulsing halos. Brightness decays with age.
+5. **Ambient particle field** — 120 particles spread across full canvas. Size 0.8–2.8px, alpha 0.04–0.16. Sine-wave drift wobble, lifecycle fade-in/out.
 
-Designed for:
+### Center Disc
 
-- gallery viewing
-- projection
-- installation display
+Single information surface with priority-based hover routing:
+
+- **Water event** (highest priority): irrigation time, age in minutes, "IRRIGATION" label.
+- **Humidity**: value in %RH, timestamp.
+- **Temperature** (default): current °F value.
+
+### Data Pipeline
+
+- Fetches 24h downsampled temperature + humidity history on load.
+- Fetches irrigation events.
+- WebSocket for live temperature, pressure, and irrigation updates.
+- Re-fetches all history every 5 minutes.
+
+### Design Intent
+
+Designed for gallery viewing, projection, and installation display. Applies principles from:
+
+- **Refik Anadol**: data flows, breathes, feels alive
+- **Giorgia Lupi**: data can be poetic and expressive
+- **CERN/NASA**: thin luminous lines, signal clarity, dark backgrounds
+- **Leica**: numbers as objects of importance
 
 ---
 

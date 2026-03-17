@@ -191,17 +191,51 @@ Reliable logging is more important than extremely high sampling rates.
 
 # Data Visualization
 
-Initial visualization methods may include:
+The system provides two web-based visualization interfaces served by FastAPI on the Raspberry Pi.
 
-• simple terminal dashboards  
-• CSV inspection  
-• lightweight web dashboard on the Raspberry Pi
+## Observatory Dashboard (`/`)
 
-Future visualization tools may include:
+Scientific instrument-style interface with 5 subsystem panels. Each panel shows:
 
-• Grafana dashboards  
-• time-series databases (InfluxDB)  
-• remote monitoring interfaces
+• Current live value (updated via WebSocket)
+• Historical chart (D3.js, selectable time window: 1H / 24H / 7D)
+• Optimal range indicators
+
+Chart types per subsystem:
+
+| Panel | Chart | Library |
+|-------|-------|---------|
+| LIGHT | StepAfter area with photoperiod band | D3.js |
+| WATER | EKG pulse timeline (irrigation events) | D3.js |
+| AIR | Dual-axis CatmullRom spline (temp + humidity) | D3.js |
+| ROOT | Stacked sparklines with target bands (pH + EC) | D3.js |
+| PLANT | Arc gauge (soil moisture) + camera feed | D3.js |
+
+Data pipeline: REST API serves downsampled readings (`/api/readings/<sensor>/downsampled?window=<window>`). WebSocket pushes live values at 3-second intervals.
+
+## Art Mode (`/art`)
+
+Full-screen generative Canvas 2D visualization. Renders 24 hours of environmental data as a radial composition with 5 layers:
+
+1. Pressure atmosphere (colored gradient + isobar rings)
+2. Thermal ring (temperature → color-graded wedges)
+3. Humidity breathing ring (sinusoidal opacity modulation)
+4. Water pulse markers (irrigation event angles)
+5. Ambient particle field (120 particles, lifecycle animation)
+
+Hover interaction reveals context-sensitive detail in a center disc with priority routing (water > humidity > temperature).
+
+Design references: [UI_UX_DESIGN_REFERENCE.md](UI_UX_DESIGN_REFERENCE.md)
+
+## Embedded OLED Display
+
+SH1106 128×64 OLED rotates through 4 pages every 5 seconds showing current values, system status, irrigation schedule, and sparkline trends.
+
+## Future Expansion
+
+• Grafana dashboards
+• Time-series databases (InfluxDB)
+• Remote monitoring interfaces
 
 ---
 

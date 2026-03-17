@@ -25,7 +25,12 @@ Subsystem details: [LIGHTING_SYSTEM.md](LIGHTING_SYSTEM.md), [IRRIGATION_SYSTEM.
 
 # Data Flow
 
-Sensors → Raspberry Pi → Data Logging → Visualization
+Sensors → Raspberry Pi → SQLite → Dashboard / Art Mode
+
+- Sensor drivers poll hardware on configurable intervals (1–15 min)
+- Readings stored in SQLite with timestamps
+- REST API serves downsampled history (`/api/readings/<sensor>/downsampled?window=24h`)
+- WebSocket (`/ws/updates`) pushes live values to connected clients
 
 See [DATA_ARCHITECTURE.md](DATA_ARCHITECTURE.md) for storage format, schema, and visualization strategy.
 
@@ -33,10 +38,54 @@ See [DATA_ARCHITECTURE.md](DATA_ARCHITECTURE.md) for storage format, schema, and
 
 Raspberry Pi → Actuators
 
-- Pi → irrigation pump relay
-- Pi → LED dimming control (via ESP32)
+- Pi → irrigation pump relay (GPIO17, active-low SunFounder 8-channel board)
+- Pi → LED dimming control (via ESP32 serial)
+- Pi → camera capture on irrigation events
 
 Initial V0 system uses manual parameter tuning. Future versions may implement automated feedback loops.
+
+---
+
+# Web Dashboard
+
+FastAPI application serving two views:
+
+## Observatory (`/`)
+
+5-panel scientific dashboard showing live and historical sensor data:
+
+| Panel | Sensors | Chart Type |
+|-------|---------|------------|
+| LIGHT | PWM level | StepAfter area with photoperiod band |
+| WATER | Irrigation events | EKG pulse timeline |
+| AIR | BME280 temp + humidity | Dual-axis CatmullRom spline |
+| ROOT | EZO-pH + EZO-EC | Stacked sparklines with target bands |
+| PLANT | Soil moisture + camera | D3 arc gauge + latest image |
+
+Time window selector: 1H / 24H / 7D. All values update live via WebSocket.
+
+## Art Mode (`/art`)
+
+Full-screen generative visualization rendering 24h environmental data as a radial composition:
+
+- **Pressure atmosphere** — colored radial gradient with isobar rings
+- **Thermal ring** — temperature mapped to color-graded wedges (blue → teal → amber)
+- **Humidity ring** — breathing teal-cyan band with sinusoidal opacity
+- **Water pulses** — bright cyan markers at irrigation event angles
+- **Ambient particles** — 120 drifting particles with lifecycle animation
+
+Center disc shows context-sensitive detail on hover (priority: water > humidity > temperature).
+
+Design references: [UI_UX_DESIGN_REFERENCE.md](UI_UX_DESIGN_REFERENCE.md)
+
+## Embedded OLED Display
+
+SH1106 128×64 OLED on I²C 0x3C. Rotates through 4 pages every 5 seconds:
+
+1. Current sensor values (Fahrenheit, human labels)
+2. System overview (uptime, subsystem status)
+3. Irrigation schedule with last pump event
+4. Sparkline trend chart
 
 ---
 
@@ -56,6 +105,13 @@ Initial V0 system uses manual parameter tuning. Future versions may implement au
 - peripheral IO expansion
 
 This separation keeps timing-sensitive lighting control off the Raspberry Pi.
+
+## Web Server: FastAPI
+
+- Dashboard routes (`/`, `/art`)
+- REST API (`/api/readings/`, `/api/events`)
+- WebSocket (`/ws/updates`)
+- Static file serving (D3.js charts, art mode modules, CSS)
 
 See [WIRING_&_BUSES.md](WIRING_&_BUSES.md) for pin assignments, bus layout, and power domains.
 

@@ -2,6 +2,37 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-03-17
+
+### Added
+- **Web Dashboard (Observatory view)** — 5-panel layout (LIGHT, WATER, AIR, ROOT, PLANT) with live sensor values, D3.js charts, and WebSocket updates.
+  - LIGHT panel: StepAfter chart with photoperiod band.
+  - WATER panel: EKG-style pulse timeline of irrigation events.
+  - AIR panel: dual-axis CatmullRom chart (temperature + humidity overlaid).
+  - ROOT panel: stacked sparklines for pH and EC with target range bands.
+  - PLANT panel: soil moisture D3 arc gauge + camera feed.
+  - Time window selector: 1H / 24H / 7D.
+  - Per-panel optimal range indicators and human-readable timestamps.
+  - Footer with WebSocket status, sensor count, and ART mode link.
+- **Art Mode (generative visualization)** — full-screen Canvas 2D radial visualization driven by live sensor data.
+  - Radial thermal ring: 24h temperature mapped to color-graded wedges with radial gradients.
+  - Humidity breathing ring: teal-cyan band with sinusoidal opacity modulation.
+  - Water pulse markers: bright cyan dots at irrigation event angles with pulsing halos.
+  - Pressure atmosphere: colored radial gradient background with isobar rings.
+  - Ambient particle system: 120 particles with lifecycle fade, sine-wave drift, breathing opacity.
+  - Cross-layer hover system: center disc shows context-sensitive info with priority routing (water > humidity > temperature).
+  - WebSocket integration for live temperature, pressure, and irrigation updates.
+  - Re-fetches 24h history every 5 minutes.
+- **EZO-pH driver** — Atlas Scientific EZO-pH I²C driver with calibration support.
+- **EZO-EC driver** — Atlas Scientific EZO-EC I²C driver with temperature compensation.
+- **ADS1115 soil moisture driver** — 16-bit ADC driver for DFRobot SEN0308 capacitive sensor.
+- CSS typography scaling with fluid `clamp()` values, panel accent colors, value transitions, and responsive breakpoints.
+
+### Changed
+- Dashboard header renamed to "GROWLAB".
+- All temperature values displayed in Fahrenheit across dashboard and art mode.
+- All sensor labels use plain English names (Air, Humidity, H₂O Temp) instead of raw IDs.
+
 ## 2026-03-14
 
 ### Fixed
