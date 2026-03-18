@@ -39,8 +39,23 @@ See [DATA_ARCHITECTURE.md](DATA_ARCHITECTURE.md) for storage format, schema, and
 Raspberry Pi → Actuators
 
 - Pi → irrigation pump relay (GPIO17, active-low SunFounder 8-channel board)
-- Pi → LED dimming control (via ESP32 serial)
-- Pi → camera capture on irrigation events
+- Pi → LED dimming control (via ESP32 serial, LightingScheduler with photoperiod ramps)
+- Pi → camera capture 3s after pump activation (captures relay LED to confirm operation)
+- Pi → fan PWM (GPIO18, Noctua NF-A12x25, 25kHz, temp-triggered linear ramp 70–85°F)
+
+## Background Services
+
+All services run as async tasks within `growlab start` and shut down cleanly on SIGINT/SIGTERM:
+
+| Service | Condition | Interval | Purpose |
+|---------|-----------|----------|---------|
+| PollingService | Always | Per-sensor config | Read sensors, store to DB |
+| IrrigationService | Pump available | 30s schedule check | Timed pump pulses with safety limits |
+| AlertService | Always | 60s | Threshold monitoring with deduplication |
+| FanService | `fan.enabled` | 30s | Temperature → PWM duty ramp |
+| LightingScheduler | ESP32 connected | 30s | Photoperiod schedule with sunrise/sunset ramps |
+| DisplayService | `display.enabled` | 5s page rotation | OLED status pages |
+| CameraCaptureService | `camera.enabled` | On pump events | Captures during pump active window |
 
 Initial V0 system uses manual parameter tuning. Future versions may implement automated feedback loops.
 
@@ -97,6 +112,8 @@ SH1106 128×64 OLED on I²C 0x3C. Rotates through 4 pages every 5 seconds:
 - data logging
 - dashboard interface
 - irrigation scheduling
+- threshold alerting
+- fan PWM control
 - system orchestration
 
 ## Secondary Controller: ESP32

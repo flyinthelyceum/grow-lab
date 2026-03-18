@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 ## 2026-03-18
 
+### Added
+- **AlertService** wired into `growlab start` — monitors BME280 temperature, humidity, EZO-pH, and EZO-EC against configurable threshold rules. Logs `alert_warning` and `alert_critical` system events on state transitions with automatic deduplication (fires once per transition, not per poll). First live alert caught immediately: humidity critical at 26.1%.
+- **FanService** wired into `growlab start` behind `fan.enabled` config flag — polls air temperature every 30s and adjusts Noctua NF-A12x25 PWM duty cycle along a linear ramp (20–100% across 70–85°F). Validated live on Pi at GPIO 18 with 12V supply.
+- **LightingScheduler** wired into `growlab start` as a background service — runs photoperiod schedule with sunrise/sunset ramps when ESP32 is the pump controller (provides LED PWM). Logs info message when ESP32 is not connected.
+- Camera capture timing changed from `on_pulse_complete` (after pump off) to `on_pulse_start` with 3-second delay (while relay LED is still lit). Confirmed via camera capture showing relay LED active.
+- `on_pulse_start` callback and `pulse_start_delay` parameter added to `IrrigationService.pulse()` with error isolation — callback failure does not prevent pump shutoff.
+- 4 new tests for pulse-start callback: fires during active window, skipped for short pulses, error isolation, coexistence with `on_pulse_complete`.
+
 ### Fixed
 - Default `pytest -q` collection restored by aligning display tests to the current `render_system_page` API instead of the removed `render_status_page` name.
 - `growlab start --config <path>` now honors the provided config path instead of reloading defaults.
