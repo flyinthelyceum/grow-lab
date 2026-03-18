@@ -87,6 +87,24 @@ This runbook replaces the older software-build-first commissioning flow.
 - Next first step:
   - Run the dashboard on the Pi with the real `config.toml`, open `/` and `/art`, and capture a short punch-list of anything still awkward in the live demo.
 
+### Session Handoff (end of day: March 18, 2026)
+
+- Completed:
+  - Full repo audit pass completed for off-hardware work.
+  - Default `pytest -q` baseline restored and now passes locally again.
+  - `growlab start --config <path>` now respects the provided config path.
+  - Observatory history fetches now use the documented downsampled API path.
+  - Added `config.demo.toml` for isolated local dashboard/art review using repo-local demo data under `./.demo-data/`.
+  - Retired standalone `demo.html` and `art-demo.html` snapshots in favor of the real app-backed demo workflow.
+- Current blocker:
+  - No Pi network access from the current location, so live deployment, service inspection, and hardware validation are paused until the next on-network session.
+- Last known-good commands:
+  - `growlab --config config.demo.toml db seed-demo --hours 24`
+  - `growlab --config config.demo.toml dashboard --host 127.0.0.1 --port 8000`
+  - `pytest -q`
+- Next first step:
+  - Use the local demo profile to continue observatory/art review loops and screenshot-driven refinement without touching the Pi database.
+
 ## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 
 Hardware on hand: Pi 4, DS18B20, 5V relay, Micra Plus pump, Noctua fan.

@@ -1,8 +1,8 @@
 """Camera driver wrapping picamera2.
 
 Captures still images at configurable resolution. Falls back to
-libcamera-still subprocess if picamera2 is unavailable. Returns
-None when no camera hardware is detected.
+rpicam-still (or legacy libcamera-still) if picamera2 is unavailable.
+Returns None when no camera hardware is detected.
 """
 
 from __future__ import annotations

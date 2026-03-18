@@ -10,7 +10,10 @@
 </head>
 <body>
     <header class="observatory-header">
-        <h1 class="observatory-title">GROWLAB</h1>
+        <div class="observatory-brand">
+            <h1 class="observatory-title">GROWLAB</h1>
+            <div class="observatory-subtitle">Environmental observatory</div>
+        </div>
         <div class="time-controls">
             <button class="time-btn" data-window="1h">1H</button>
             <button class="time-btn active" data-window="24h">24H</button>
@@ -27,6 +30,7 @@
                 <span class="panel-value" id="light-value">--</span>
                 <span class="panel-unit">PWM</span>
             </div>
+            <div class="panel-note" id="light-note">Photoperiod telemetry live</div>
             <div class="panel-chart" id="chart-light"></div>
             <div class="panel-meta">
                 <span class="meta-item" id="light-mode">--</span>
@@ -41,9 +45,11 @@
                 <span class="panel-value" id="water-value">--</span>
                 <span class="panel-unit"></span>
             </div>
+            <div class="panel-note" id="water-note">Irrigation event rhythm</div>
             <div class="panel-chart" id="chart-water"></div>
             <div class="panel-meta">
                 <span class="meta-item" id="water-last">Last: --</span>
+                <span class="meta-item" id="water-count">0 pulses / 24H</span>
             </div>
         </section>
 
@@ -85,17 +91,34 @@
             </div>
             <div class="panel-note" id="plant-note">Camera ready. Soil probe pending.</div>
             <div class="plant-layout">
-                <div class="panel-camera" id="camera-feed">
-                    <div class="camera-placeholder">
-                        <div class="camera-placeholder-title">CAMERA STANDBY</div>
-                        <div class="camera-placeholder-detail">Waiting for the next logged capture.</div>
+                <div class="plant-camera-stage">
+                    <div class="camera-chip" id="camera-chip">LIVE FRAME</div>
+                    <div class="panel-camera" id="camera-feed">
+                        <div class="camera-placeholder">
+                            <div class="camera-placeholder-title">CAMERA STANDBY</div>
+                            <div class="camera-placeholder-detail">Waiting for the next logged capture.</div>
+                        </div>
                     </div>
                 </div>
-                <div class="plant-gauge" id="soil-moisture-gauge"></div>
-            </div>
-            <div class="panel-meta">
-                <span class="meta-item" id="plant-capture-time">No captures logged yet</span>
-                <span class="meta-item" id="plant-count">0 captures</span>
+                <div class="plant-telemetry-rail">
+                    <div class="plant-instrument-row">
+                        <div class="plant-gauge" id="soil-moisture-gauge"></div>
+                        <div class="plant-instrument-copy">
+                            <div class="instrument-label">SOIL STATE</div>
+                            <div class="instrument-detail" id="plant-moisture-band">Moisture band stabilizing</div>
+                        </div>
+                    </div>
+                    <div class="plant-telemetry-meta">
+                        <div class="telemetry-block">
+                            <div class="instrument-label">CAPTURE LOG</div>
+                            <div class="instrument-detail telemetry-detail" id="plant-capture-time">No captures logged yet</div>
+                        </div>
+                        <div class="telemetry-block telemetry-block-compact">
+                            <div class="instrument-label">FRAMES</div>
+                            <div class="instrument-detail telemetry-detail" id="plant-count">0 captures</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>

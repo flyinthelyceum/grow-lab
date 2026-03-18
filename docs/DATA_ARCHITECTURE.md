@@ -211,7 +211,7 @@ Chart types per subsystem:
 | ROOT | Stacked sparklines with target bands (pH + EC) | D3.js |
 | PLANT | Arc gauge (soil moisture) + camera feed | D3.js |
 
-Data pipeline: REST API serves downsampled readings (`/api/readings/<sensor>/downsampled?window=<window>`). WebSocket pushes live values at 3-second intervals.
+Data pipeline: Observatory and art mode both fetch downsampled readings from `/api/readings/<sensor>/downsampled?window=<window>`. WebSocket pushes live values at 3-second intervals.
 
 ## Art Mode (`/art`)
 

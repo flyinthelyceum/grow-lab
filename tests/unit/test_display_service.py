@@ -10,7 +10,12 @@ import pytest
 
 from pi.config.schema import DisplayConfig
 from pi.data.models import SensorReading
-from pi.services.display import DisplayService, render_values_page, render_status_page, render_sparkline_page
+from pi.services.display import (
+    DisplayService,
+    render_system_page,
+    render_sparkline_page,
+    render_values_page,
+)
 
 
 def _reading(sensor_id: str, value: float, unit: str):
@@ -77,22 +82,25 @@ class TestRenderValuesPage:
         mock_oled.show.assert_called_once()
 
 
-class TestRenderStatusPage:
-    def test_draws_bars(self, mock_oled):
-        status = {
-            "light": 0.8,
-            "water": 0.3,
-            "air": 0.6,
-            "root": 0.5,
+class TestRenderSystemPage:
+    def test_draws_system_status(self, mock_oled):
+        from datetime import timedelta
+
+        subsystems = {
+            "sensors": True,
+            "irrigation": False,
+            "display": True,
         }
-        render_status_page(mock_oled, status)
+        render_system_page(mock_oled, timedelta(hours=3, minutes=12), subsystems)
 
         mock_oled.clear.assert_called_once()
-        assert mock_oled.draw_bar.call_count == 4
+        assert mock_oled.draw_text.call_count >= 5
         mock_oled.show.assert_called_once()
 
     def test_handles_empty_status(self, mock_oled):
-        render_status_page(mock_oled, {})
+        from datetime import timedelta
+
+        render_system_page(mock_oled, timedelta(), {})
         mock_oled.clear.assert_called_once()
         mock_oled.show.assert_called_once()
 

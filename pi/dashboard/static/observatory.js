@@ -50,6 +50,10 @@
         soil_moisture: ["soil_moisture"],
     };
 
+    function isLightOn(value) {
+        return value > 0;
+    }
+
     function hasSensor(sensorIds, expectedIds) {
         return expectedIds.some(function (expectedId) {
             return sensorIds.some(function (sensorId) {
@@ -128,7 +132,7 @@
     }
 
     function apiReadings(sensorId, window) {
-        return fetchJSON("/api/readings/" + sensorId + "?window=" + (window || currentWindow));
+        return fetchJSON("/api/readings/" + sensorId + "/downsampled?window=" + (window || currentWindow));
     }
 
     function apiStatus() {
@@ -194,10 +198,15 @@
                     return e.event_type === "irrigation";
                 });
                 charts.water.update(irrigationEvents);
+                setText("water-value", irrigationEvents.length ? irrigationEvents.length : "--");
+                setText("water-count", irrigationEvents.length + " pulses / " + currentWindow.toUpperCase());
                 var el = document.getElementById("water-last");
                 if (el && irrigationEvents.length > 0) {
                     var lastTime = new Date(irrigationEvents[0].timestamp);
                     el.textContent = "Last: " + formatTime(lastTime) + " (" + timeAgo(lastTime) + ")";
+                    setText("water-note", "Recent irrigation cadence visible");
+                } else {
+                    setText("water-note", "No irrigation events in window");
                 }
             }).catch(function () {});
         }
@@ -227,6 +236,13 @@
     function updateValues(readings) {
         // readings is an array of {sensor_id, value, unit}
         readings.forEach(function (r) {
+            if (r.sensor_id === "light_pwm" || r.sensor_id === "bme280_light") {
+                var rounded = Math.round(r.value);
+                setText("light-value", rounded);
+                setText("light-mode", isLightOn(rounded) ? "Photoperiod active" : "Lights idle");
+                setText("light-schedule", isLightOn(rounded) ? "Canopy output holding steady" : "Awaiting next cycle");
+                setText("light-note", isLightOn(rounded) ? "Active growth window" : "Dark interval in effect");
+            }
             if (r.sensor_id === "bme280_temperature") {
                 var tempF = cToF(r.value);
                 setText("air-temp", tempF.toFixed(1));
@@ -255,6 +271,13 @@
             if (r.sensor_id === "soil_moisture") {
                 setText("soil-moisture-value", r.value.toFixed(0));
                 setRangeStatus(document.getElementById("soil-moisture-value"), classify("soil_moisture", r.value));
+                if (r.value < 40) {
+                    setText("plant-moisture-band", "Lower moisture band — ready for the next watering window");
+                } else if (r.value > 70) {
+                    setText("plant-moisture-band", "Upper moisture band — media still holding water");
+                } else {
+                    setText("plant-moisture-band", "Mid moisture band — root zone looks balanced");
+                }
                 if (soilGauge) soilGauge.update(r.value);
             }
         });
@@ -337,15 +360,18 @@
         apiLatestImage().then(function (data) {
             if (!data || !data.filename) {
                 renderCameraPlaceholder("CAMERA STANDBY", "Waiting for the next logged capture.");
+                setText("camera-chip", "CAMERA STANDBY");
                 setText("plant-capture-time", "No captures logged yet");
                 return;
             }
 
             var captureTime = new Date(data.timestamp);
+            setText("camera-chip", "LATEST CAPTURE");
             setText("plant-capture-time", formatDateTime(captureTime) + " (" + timeAgo(captureTime) + ")");
 
             if (!data.available || !data.url) {
                 renderCameraPlaceholder("CAPTURE LOGGED", "Image metadata exists, but the file is not available from this dashboard host.");
+                setText("camera-chip", "CAPTURE LOGGED");
                 return;
             }
 

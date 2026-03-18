@@ -4,7 +4,8 @@ Controls a 5V relay module connected to a Pi GPIO pin.
 Returns ESP32Response objects for compatibility with the
 IrrigationService (drop-in replacement for ESP32Serial pump control).
 
-Relay logic: HIGH = relay ON (pump running), LOW = relay OFF.
+Default relay logic is active-low for the SunFounder-style modules used in V0:
+LOW = relay ON (pump running), HIGH = relay OFF.
 """
 
 from __future__ import annotations

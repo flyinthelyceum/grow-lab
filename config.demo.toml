@@ -1,0 +1,67 @@
+# GROWLAB — Local demo profile for off-hardware dashboard work
+# Safe defaults: repo-local DB and image directory, no hardware polling/display.
+
+[system]
+log_level = "INFO"
+data_dir = "./.demo-data"
+db_path = "./.demo-data/growlab-demo.db"
+
+[i2c]
+bus = 1
+
+[serial]
+port = "/dev/null"
+baud = 115200
+timeout = 2.0
+
+[sensors.bme280]
+address = 0x76
+interval_seconds = 120
+enabled = false
+
+[sensors.ezo_ph]
+address = 0x63
+interval_seconds = 300
+enabled = false
+
+[sensors.ezo_ec]
+address = 0x64
+interval_seconds = 300
+enabled = false
+
+[sensors.ds18b20]
+gpio = 4
+interval_seconds = 120
+enabled = false
+
+[sensors.soil_moisture]
+address = 0x48
+interval_seconds = 300
+enabled = false
+
+[sensors]
+soil_moisture_channel = 0
+
+[camera]
+interval_seconds = 600
+resolution = [1280, 720]
+output_dir = "./.demo-data/images"
+enabled = true
+
+[lighting]
+mode = "veg"
+on_hour = 6
+off_hour = 22
+intensity = 200
+ramp_minutes = 15
+
+[irrigation]
+pump_controller = "gpio"
+max_runtime_seconds = 30
+min_interval_minutes = 60
+relay_gpio = 17
+
+[display]
+enabled = false
+address = 0x3C
+controller = "sh1106"

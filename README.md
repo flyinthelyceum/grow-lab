@@ -17,10 +17,10 @@ Actuators: GPIO relay pump, fan relay, ESP32 LED dimmer.
 
 FastAPI serves two views at `http://<pi-ip>:8000`:
 
-- **Observatory** (`/`) — 5-panel layout (LIGHT, WATER, AIR, ROOT, PLANT) with D3.js charts, live WebSocket values, time window selection (1H / 24H / 7D), and per-subsystem range indicators.
+- **Observatory** (`/`) — 5-panel layout (LIGHT, WATER, AIR, ROOT, PLANT) with D3.js charts backed by downsampled history, live WebSocket values, time window selection (1H / 24H / 7D), and per-subsystem range indicators.
 - **Art Mode** (`/art`) — full-screen generative visualization. 24h environmental data rendered as a radial composition: thermal ring, humidity breathing ring, water pulse markers, pressure atmosphere, and ambient particle field. Hover reveals context-sensitive detail in the center disc.
 
-Data stored in SQLite on the Pi. Dashboard queries downsampled history via REST API and receives live values over WebSocket.
+Data stored in SQLite on the Pi. Observatory and art mode both query downsampled history via REST API and receive live values over WebSocket.
 
 ## OLED Display
 
@@ -51,6 +51,41 @@ sudo cp deploy/systemd/growlab-dashboard.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now growlab-dashboard
 sudo systemctl status growlab-dashboard
+```
+
+## Working Away From Hardware
+
+Use the tracked demo profile for local dashboard iteration without touching the Pi database:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+growlab --config config.demo.toml db seed-demo --hours 24
+growlab --config config.demo.toml dashboard --host 127.0.0.1 --port 8000
+```
+
+The demo profile writes to `./.demo-data/` and keeps hardware polling/display disabled.
+
+Good local-only tasks:
+
+- observatory and art-mode UI/UX refinement
+- seeded-data review loops and screenshot critique
+- docs, tests, and CLI/config cleanup
+- browser coverage once Playwright is installed
+
+Still Pi-dependent:
+
+- live sensor validation
+- service and camera-path debugging
+- hardware bus discovery and ESP32 runtime verification
+
+Browser tests are optional and require both `playwright` and `pytest-playwright`:
+
+```bash
+pip install pytest-playwright playwright
+playwright install chromium
+pytest tests/browser/test_browser_dashboard.py -v
 ```
 
 ## Documentation

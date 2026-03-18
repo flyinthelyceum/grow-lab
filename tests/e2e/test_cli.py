@@ -1,5 +1,8 @@
 """E2E tests for CLI commands."""
 
+from pathlib import Path
+from unittest.mock import patch
+
 from click.testing import CliRunner
 
 from pi.cli.main import cli
@@ -130,3 +133,22 @@ output_dir = "{captures_dir}"
         assert "camera_captures: 1 rows" in info_result.output
         assert "ezo_ph" in info_result.output
         assert "soil_moisture" in info_result.output
+
+
+class TestStartCommand:
+    def test_start_honors_config_path(self, tmp_path):
+        runner = CliRunner()
+        config_path = tmp_path / "config.toml"
+        config_path.write_text(
+            f"""
+[system]
+data_dir = "{tmp_path}"
+db_path = "{tmp_path / 'test.db'}"
+"""
+        )
+
+        with patch("pi.main.start") as mock_start:
+            result = runner.invoke(cli, ["--config", str(config_path), "start"])
+
+        assert result.exit_code == 0
+        mock_start.assert_called_once_with(config_path=Path(config_path))

@@ -89,7 +89,7 @@ class TestCameraCapture:
         assert result is True
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
-        assert args[0] == "libcamera-still"
+        assert args[0] == "rpicam-still"
 
     def test_capture_libcamera_failure(self, tmp_path: Path) -> None:
         cam = CameraDriver()

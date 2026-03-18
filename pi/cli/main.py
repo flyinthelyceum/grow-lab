@@ -33,6 +33,7 @@ def cli(ctx: click.Context, config_path: str | None) -> None:
 
     path = Path(config_path) if config_path else None
     ctx.ensure_object(dict)
+    ctx.obj["config_path"] = path
     ctx.obj["config"] = load_config(path)
 
 
@@ -42,7 +43,7 @@ def start(ctx: click.Context) -> None:
     """Start GROWLAB polling and data logging."""
     from pi.main import start as _start
 
-    _start(config_path=None)  # Config already loaded but start() reloads for signal handling
+    _start(config_path=ctx.obj.get("config_path"))
 
 
 cli.add_command(camera_group, name="camera")

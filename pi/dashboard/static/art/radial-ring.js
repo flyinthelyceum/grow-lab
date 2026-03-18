@@ -3,11 +3,11 @@
  *
  * 24h temperature data rendered in polar coordinates on canvas.
  * Midnight at top (12 o'clock), noon at bottom.
- * Radius = temperature (warmer expands outward, cooler contracts).
+ * Radius = stable outer band with restrained temperature wobble.
  * Color shifts deep blue → teal → warm amber along the ring.
  *
  * Features:
- *  - Smoothed ring edge (7-point moving average + quadratic curves)
+ *  - Smoothed ring edge (9-point moving average + quadratic curves)
  *  - Radial gradient fills per wedge for depth
  *  - Center disc with current value or layer-override content
  *  - Pulsing "now" marker that tracks current time
@@ -85,7 +85,9 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         var mouseInCanvas = false;
         var mouseX = 0, mouseY = 0;
 
-        var radiusScale = d3.scaleLinear().range([minRadius, maxRadius]);
+        var radiusScale = d3.scaleLinear();
+        var baseOuterRadius = minRadius + (maxRadius - minRadius) * 0.68;
+        var wobbleAmplitude = (maxRadius - minRadius) * 0.22;
 
         var CLOCK_LABELS = [
             { label: "12A", angle: -Math.PI / 2 },
@@ -163,15 +165,22 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             });
             parsed.sort(function (a, b) { return a.angle - b.angle; });
 
-            var extent = d3.extent(parsed, function (d) { return d.tempF; });
-            var pad = Math.max((extent[1] - extent[0]) * 0.15, 2);
-            radiusScale.domain([extent[0] - pad, extent[1] + pad]);
+            var tempMean = d3.mean(parsed, function (d) { return d.tempF; }) || 72;
+            var maxDeviation = d3.max(parsed, function (d) {
+                return Math.abs(d.tempF - tempMean);
+            }) || 0;
+            var deviationSpan = Math.max(maxDeviation * 1.15, 3.5);
+
+            radiusScale
+                .domain([tempMean - deviationSpan, tempMean + deviationSpan])
+                .range([baseOuterRadius - wobbleAmplitude, baseOuterRadius + wobbleAmplitude])
+                .clamp(true);
 
             data = parsed;
             currentTempF = parsed[parsed.length - 1].tempF;
 
             var rawRadii = parsed.map(function (d) { return radiusScale(d.tempF); });
-            smoothedRadii = smoothArray(rawRadii, 7);
+            smoothedRadii = smoothArray(rawRadii, 9);
         }
 
         function setLiveValue(tempF) { currentTempF = tempF; }
@@ -279,7 +288,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                     });
                 }
 
-                var breathe = 0.12 + 0.06 * Math.sin(animTime / 2000);
+                var breathe = 0.08 + 0.03 * Math.sin(animTime / 2600);
                 ctx.beginPath();
                 ctx.moveTo(points[0].x, points[0].y);
                 for (var i = 1; i < points.length; i++) {
@@ -290,7 +299,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                 ctx.strokeStyle = Art.temperatureColorRGBA(
                     d3.mean(data, function(d) { return d.tempF; }) || 72, breathe
                 );
-                ctx.lineWidth = 8;
+                ctx.lineWidth = 5;
                 ctx.stroke();
 
                 for (var i = 0; i < points.length - 1; i++) {
@@ -301,8 +310,8 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                     ctx.beginPath();
                     ctx.moveTo(p0.x, p0.y);
                     ctx.quadraticCurveTo(p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
-                    ctx.strokeStyle = Art.temperatureColorRGBA(avgT, 0.9);
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = Art.temperatureColorRGBA(avgT, 0.75);
+                    ctx.lineWidth = 1.5;
                     ctx.stroke();
                 }
             }
@@ -518,10 +527,11 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             cx = W / 2; cy = H / 2;
             maxRadius = Math.min(cx, cy) * 0.72;
             minRadius = maxRadius * 0.42;
-            radiusScale.range([minRadius, maxRadius]);
+            baseOuterRadius = minRadius + (maxRadius - minRadius) * 0.68;
+            wobbleAmplitude = (maxRadius - minRadius) * 0.22;
             if (data && data.length > 0) {
                 var rawRadii = data.map(function (d) { return radiusScale(d.tempF); });
-                smoothedRadii = smoothArray(rawRadii, 7);
+                smoothedRadii = smoothArray(rawRadii, 9);
             }
         }
 

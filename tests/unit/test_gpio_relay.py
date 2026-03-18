@@ -22,8 +22,8 @@ class TestGPIORelayPump:
             response = driver.set_pump(True)
 
         assert response.ok is True
-        mock_gpio.setup.assert_called_once_with(17, mock_gpio.OUT)
-        mock_gpio.output.assert_called_once_with(17, mock_gpio.HIGH)
+        mock_gpio.setup.assert_called_once_with(17, mock_gpio.OUT, initial=mock_gpio.HIGH)
+        mock_gpio.output.assert_called_once_with(17, mock_gpio.LOW)
 
     def test_set_pump_off_returns_ok_response(self):
         mock_gpio = MagicMock()
@@ -32,7 +32,7 @@ class TestGPIORelayPump:
             response = driver.set_pump(False)
 
         assert response.ok is True
-        mock_gpio.output.assert_called_once_with(17, mock_gpio.LOW)
+        mock_gpio.output.assert_called_once_with(17, mock_gpio.HIGH)
 
     def test_set_pump_returns_error_on_gpio_failure(self):
         mock_gpio = MagicMock()
@@ -59,7 +59,7 @@ class TestGPIORelayPump:
             driver.set_pump(True)  # Initialize pin
             driver.close()
 
-        mock_gpio.output.assert_any_call(17, mock_gpio.LOW)
+        mock_gpio.output.assert_any_call(17, mock_gpio.HIGH)
         mock_gpio.cleanup.assert_called_once_with(17)
 
     def test_close_without_activation_is_safe(self):
@@ -82,5 +82,5 @@ class TestGPIORelayPump:
             driver = self._make_driver(gpio_pin=27)
             driver.set_pump(True)
 
-        mock_gpio.setup.assert_called_once_with(27, mock_gpio.OUT)
-        mock_gpio.output.assert_called_once_with(27, mock_gpio.HIGH)
+        mock_gpio.setup.assert_called_once_with(27, mock_gpio.OUT, initial=mock_gpio.HIGH)
+        mock_gpio.output.assert_called_once_with(27, mock_gpio.LOW)

@@ -29,7 +29,7 @@ Sensors → Raspberry Pi → SQLite → Dashboard / Art Mode
 
 - Sensor drivers poll hardware on configurable intervals (1–15 min)
 - Readings stored in SQLite with timestamps
-- REST API serves downsampled history (`/api/readings/<sensor>/downsampled?window=24h`)
+- REST API serves downsampled history (`/api/readings/<sensor>/downsampled?window=24h`) to both dashboard views
 - WebSocket (`/ws/updates`) pushes live values to connected clients
 
 See [DATA_ARCHITECTURE.md](DATA_ARCHITECTURE.md) for storage format, schema, and visualization strategy.
@@ -62,7 +62,7 @@ FastAPI application serving two views:
 | ROOT | EZO-pH + EZO-EC | Stacked sparklines with target bands |
 | PLANT | Soil moisture + camera | D3 arc gauge + latest image |
 
-Time window selector: 1H / 24H / 7D. All values update live via WebSocket.
+Time window selector: 1H / 24H / 7D. Historical charts query downsampled REST endpoints; current values update live via WebSocket.
 
 ## Art Mode (`/art`)
 

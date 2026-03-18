@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-03-18
+
+### Fixed
+- Default `pytest -q` collection restored by aligning display tests to the current `render_system_page` API instead of the removed `render_status_page` name.
+- `growlab start --config <path>` now honors the provided config path instead of reloading defaults.
+- Observatory history fetches now use the documented downsampled REST endpoint rather than the raw readings route.
+
+### Added
+- `config.demo.toml` for safe off-hardware dashboard work with repo-local demo data under `./.demo-data/`.
+
+### Changed
+- README and architecture docs now describe the current local demo workflow, browser-test requirements, and the downsampled-history data path used by both dashboard views.
+- Retired standalone `demo.html` and `art-demo.html` snapshots in favor of the real FastAPI-backed demo workflow.
+
 ## 2026-03-17
 
 ### Added
@@ -35,6 +49,7 @@ All notable changes to this project are documented in this file.
 - Dashboard camera panel now explains missing/stale capture states more clearly and loads the latest image via API-served file URLs instead of assuming a static captures mount.
 - ROOT and PLANT panels now show sensor-availability notes so hardware-blocked fields read as pending instrumentation instead of silent blanks.
 - Art Mode now includes a lightweight live readout for temperature, humidity, and last irrigation timing to make on-device walkthroughs easier.
+- Art Mode thermal ring geometry now uses a calmer, more centered soft wobble with reduced radial deformation and stronger smoothing.
 
 ### Fixed
 - Dashboard image serving path aligned with stored camera capture records through `/api/images/<filename>/file`.
