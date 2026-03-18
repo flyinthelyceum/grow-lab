@@ -84,3 +84,25 @@ class TestGPIORelayPump:
 
         mock_gpio.setup.assert_called_once_with(27, mock_gpio.OUT, initial=mock_gpio.HIGH)
         mock_gpio.output.assert_called_once_with(27, mock_gpio.LOW)
+
+    def test_close_handles_cleanup_error(self):
+        """close() should not raise even if GPIO cleanup fails."""
+        mock_gpio = MagicMock()
+        mock_gpio.cleanup.side_effect = RuntimeError("bus error")
+        with patch("pi.drivers.gpio_relay._get_gpio", return_value=mock_gpio):
+            driver = self._make_driver()
+            driver.set_pump(True)  # Initialize
+            driver.close()  # Should not raise
+
+    def test_active_high_mode(self):
+        """Active-high relay should invert pin logic."""
+        from pi.drivers.gpio_relay import GPIORelayPump
+
+        mock_gpio = MagicMock()
+        with patch("pi.drivers.gpio_relay._get_gpio", return_value=mock_gpio):
+            driver = GPIORelayPump(gpio_pin=17, active_low=False)
+            response = driver.set_pump(True)
+
+        assert response.ok is True
+        mock_gpio.setup.assert_called_once_with(17, mock_gpio.OUT, initial=mock_gpio.LOW)
+        mock_gpio.output.assert_called_once_with(17, mock_gpio.HIGH)

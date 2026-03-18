@@ -109,6 +109,53 @@ class TestCameraCapture:
         assert result is False
 
 
+class TestCameraInternals:
+    def test_try_init_picamera2_import_error(self) -> None:
+        """picamera2 import failure should return False."""
+        cam = CameraDriver()
+        with patch.dict("sys.modules", {"picamera2": None}):
+            result = cam._try_init_picamera2()
+        assert result is False
+
+    def test_check_libcamera_rpicam_still(self) -> None:
+        """Should detect rpicam-still when available."""
+        cam = CameraDriver()
+        mock_result = MagicMock(returncode=0, stdout="Available cameras")
+        with patch("pi.drivers.camera.subprocess.run", return_value=mock_result):
+            result = cam._check_libcamera()
+        assert result is True
+        assert cam._still_cmd == "rpicam-still"
+
+    def test_check_libcamera_fallback_to_legacy(self) -> None:
+        """Should fall back to libcamera-still if rpicam-still fails."""
+        cam = CameraDriver()
+
+        def _side_effect(cmd, **kwargs):
+            if cmd[0] == "rpicam-still":
+                raise FileNotFoundError
+            return MagicMock(returncode=0, stdout="Available cameras")
+
+        with patch("pi.drivers.camera.subprocess.run", side_effect=_side_effect):
+            result = cam._check_libcamera()
+        assert result is True
+        assert cam._still_cmd == "libcamera-still"
+
+    def test_check_libcamera_none_available(self) -> None:
+        """Should return False when no camera tools found."""
+        cam = CameraDriver()
+        with patch("pi.drivers.camera.subprocess.run", side_effect=FileNotFoundError):
+            result = cam._check_libcamera()
+        assert result is False
+
+    def test_check_libcamera_timeout(self) -> None:
+        """Should handle subprocess timeout."""
+        cam = CameraDriver()
+        import subprocess
+        with patch("pi.drivers.camera.subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 5)):
+            result = cam._check_libcamera()
+        assert result is False
+
+
 class TestCameraClose:
     def test_close_with_picamera2(self) -> None:
         cam = CameraDriver()

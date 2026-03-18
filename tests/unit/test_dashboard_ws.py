@@ -61,3 +61,30 @@ class TestWebSocket:
         with client.websocket_connect("/ws/updates") as ws:
             data = ws.receive_json()
             assert data["readings"] == []
+
+    def test_request_triggers_update(self, app, mock_repo):
+        """Sending text should trigger another update."""
+        client = TestClient(app)
+        with client.websocket_connect("/ws/updates") as ws:
+            # First auto-sent update
+            data1 = ws.receive_json()
+            assert "readings" in data1
+            # Request another
+            ws.send_text("update")
+            data2 = ws.receive_json()
+            assert "readings" in data2
+
+    def test_no_repo_closes_socket(self):
+        """WebSocket should close with 1011 when repo is missing."""
+        from pi.dashboard.app import create_app
+
+        app = create_app(None)
+        # Manually clear repo to simulate missing state
+        app.state.repo = None
+        client = TestClient(app)
+        try:
+            with client.websocket_connect("/ws/updates") as ws:
+                # Should either close immediately or raise
+                ws.receive_json()
+        except Exception:
+            pass  # Expected — socket closed

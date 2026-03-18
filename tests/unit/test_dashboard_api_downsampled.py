@@ -67,12 +67,13 @@ class TestDownsampledEndpoint:
         assert response.json() == []
 
     async def test_returns_bucketed_averages(self, client, repo):
-        """Multiple readings in the same 5-min bucket get averaged."""
+        """Multiple readings in the same 60-sec bucket get averaged."""
         now = datetime.now(timezone.utc)
-        # Insert 3 readings within the same 5-min bucket (~2 min ago)
-        for val in [20.0, 22.0, 24.0]:
+        # Pin base to a round minute boundary so all 3 land in one bucket
+        base = now.replace(second=30, microsecond=0) - timedelta(minutes=2)
+        for i, val in enumerate([20.0, 22.0, 24.0]):
             await repo.save_reading(SensorReading(
-                timestamp=now - timedelta(minutes=2, seconds=val),
+                timestamp=base + timedelta(seconds=i),
                 sensor_id="bme280_temperature",
                 value=val,
                 unit="°C",
@@ -168,8 +169,10 @@ class TestDownsampledEndpoint:
     async def test_24h_window_uses_5min_buckets(self, client, repo):
         """24h window should use 300s buckets — readings 30s apart merge."""
         now = datetime.now(timezone.utc)
-        # Place both readings at exactly the same minute to guarantee same bucket
-        base = now - timedelta(minutes=10)
+        # Pin to a round 5-min boundary so both readings land in one bucket
+        epoch = int(now.timestamp()) - 600  # ~10 min ago
+        bucket_start = (epoch // 300) * 300 + 60  # 60s into the bucket
+        base = datetime.fromtimestamp(bucket_start, tz=timezone.utc)
         await repo.save_reading(SensorReading(
             timestamp=base,
             sensor_id="bme280_temperature",

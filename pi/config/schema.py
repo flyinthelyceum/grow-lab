@@ -105,6 +105,18 @@ class IrrigationConfig:
 
 
 @dataclass(frozen=True)
+class FanConfig:
+    enabled: bool = False
+    gpio_pin: int = 18
+    frequency: int = 25000
+    min_duty: int = 20
+    max_duty: int = 100
+    ramp_temp_low_f: float = 70.0
+    ramp_temp_high_f: float = 85.0
+    poll_interval_seconds: int = 30
+
+
+@dataclass(frozen=True)
 class DisplayConfig:
     enabled: bool = False
     address: int = 0x3C
@@ -120,4 +132,5 @@ class AppConfig:
     camera: CameraConfig = field(default_factory=CameraConfig)
     lighting: LightingConfig = field(default_factory=LightingConfig)
     irrigation: IrrigationConfig = field(default_factory=IrrigationConfig)
+    fan: FanConfig = field(default_factory=FanConfig)
     display: DisplayConfig = field(default_factory=DisplayConfig)

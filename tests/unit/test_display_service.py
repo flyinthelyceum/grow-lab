@@ -10,8 +10,12 @@ import pytest
 
 from pi.config.schema import DisplayConfig
 from pi.data.models import SensorReading
+from pi.config.schema import IrrigationConfig, IrrigationScheduleEntry
 from pi.services.display import (
     DisplayService,
+    _format_reading,
+    _lookup_sensor,
+    render_irrigation_page,
     render_system_page,
     render_sparkline_page,
     render_values_page,
@@ -180,3 +184,76 @@ class TestDisplayServiceRotation:
         # Should have rendered at least 3 pages
         assert mock_oled.clear.call_count >= 3
         assert mock_oled.show.call_count >= 3
+
+
+class TestLookupSensor:
+    def test_exact_match(self):
+        label, unit, convert = _lookup_sensor("bme280_temperature")
+        assert label == "Air"
+        assert unit == "F"
+        assert convert is not None
+
+    def test_prefix_match_ds18b20(self):
+        label, unit, convert = _lookup_sensor("ds18b20_abc123")
+        assert label == "H2O Temp"
+        assert unit == "F"
+
+    def test_unknown_sensor(self):
+        label, unit, convert = _lookup_sensor("some_unknown_sensor")
+        assert label == "some_unk"  # truncated to 8 chars
+        assert convert is None
+
+
+class TestFormatReading:
+    def test_temperature_converted(self):
+        label, val = _format_reading("bme280_temperature", 20.0)
+        assert label == "Air"
+        assert "68.0" in val  # 20C = 68F
+
+    def test_humidity_no_conversion(self):
+        label, val = _format_reading("bme280_humidity", 55.0)
+        assert label == "Humidity"
+        assert "55.0" in val
+
+
+class TestRenderIrrigationPage:
+    def test_draws_schedule(self, mock_oled):
+        schedules = (
+            IrrigationScheduleEntry(hour=8, minute=0, duration_seconds=10),
+            IrrigationScheduleEntry(hour=14, minute=0, duration_seconds=10),
+        )
+        now = datetime(2026, 3, 18, 10, 0, tzinfo=timezone.utc)
+        render_irrigation_page(mock_oled, schedules, "Pump fired at 08:00", now)
+        mock_oled.clear.assert_called_once()
+        mock_oled.show.assert_called_once()
+
+    def test_no_pump_events(self, mock_oled):
+        schedules = (IrrigationScheduleEntry(hour=8),)
+        now = datetime(2026, 3, 18, 6, 0, tzinfo=timezone.utc)
+        render_irrigation_page(mock_oled, schedules, None, now)
+        mock_oled.show.assert_called_once()
+
+
+class TestDisplayServiceIrrigation:
+    async def test_render_irrigation_no_config(self, mock_oled, mock_repo, config):
+        """Should render 'Not configured' when no irrigation config."""
+        svc = DisplayService(mock_oled, mock_repo, config, irrigation_config=None)
+        await svc._render_irrigation()
+        mock_oled.show.assert_called()
+
+    async def test_render_irrigation_with_config(self, mock_oled, mock_repo, config):
+        """Should render irrigation schedule page."""
+        irr_config = IrrigationConfig()
+        mock_repo.get_events = AsyncMock(return_value=[])
+        svc = DisplayService(
+            mock_oled, mock_repo, config, irrigation_config=irr_config
+        )
+        await svc._render_irrigation()
+        mock_oled.show.assert_called()
+
+    async def test_render_sparkline_no_sensors(self, mock_oled, mock_repo, config):
+        """Should handle no sensors gracefully."""
+        mock_repo.get_sensor_ids = AsyncMock(return_value=[])
+        svc = DisplayService(mock_oled, mock_repo, config)
+        await svc._render_sparkline()
+        mock_oled.show.assert_called()

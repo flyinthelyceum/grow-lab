@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GROWLAB</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Fonts: gracefully degrade to system fonts when offline on Pi -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 </head>
 <body>
     <header class="observatory-header">
@@ -133,7 +134,7 @@
         </div>
     </footer>
 
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="/static/vendor/d3.v7.min.js"></script>
     <script src="/static/charts/soil-gauge.js"></script>
     <script src="/static/charts/light-chart.js"></script>
     <script src="/static/charts/water-timeline.js"></script>

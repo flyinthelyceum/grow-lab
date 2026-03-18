@@ -36,7 +36,7 @@ class TestOLEDDrawing:
         driver = OLEDDriver()
         driver.clear()
         # Image should be blank (all zeros)
-        pixels = list(driver._image.getdata())
+        pixels = list(driver._image.tobytes())
         assert all(p == 0 for p in pixels)
 
     def test_draw_text(self) -> None:
@@ -44,7 +44,7 @@ class TestOLEDDrawing:
         driver.clear()
         driver.draw_text(0, 0, "HELLO")
         # Some pixels should be non-zero after drawing text
-        pixels = list(driver._image.getdata())
+        pixels = list(driver._image.tobytes())
         assert any(p > 0 for p in pixels)
 
     def test_draw_text_position(self) -> None:
@@ -58,17 +58,17 @@ class TestOLEDDrawing:
         driver.draw_text(50, 30, "A")
         img2 = driver._image.copy()
 
-        assert list(img1.getdata()) != list(img2.getdata())
+        assert img1.tobytes() != img2.tobytes()
 
     def test_draw_bar_empty_less_than_full(self) -> None:
         driver = OLEDDriver()
         driver.clear()
         driver.draw_bar(0, 0, 100, 8, fill=0.0)
-        pixels_empty = sum(1 for p in driver._image.getdata() if p > 0)
+        pixels_empty = sum(1 for p in driver._image.tobytes() if p > 0)
 
         driver.clear()
         driver.draw_bar(0, 0, 100, 8, fill=1.0)
-        pixels_full = sum(1 for p in driver._image.getdata() if p > 0)
+        pixels_full = sum(1 for p in driver._image.tobytes() if p > 0)
 
         # Full bar should have more lit pixels than empty bar
         assert pixels_full > pixels_empty
@@ -77,7 +77,7 @@ class TestOLEDDrawing:
         driver = OLEDDriver()
         driver.clear()
         driver.draw_bar(0, 0, 100, 8, fill=1.0)
-        pixels = sum(1 for p in driver._image.getdata() if p > 0)
+        pixels = sum(1 for p in driver._image.tobytes() if p > 0)
         assert pixels > 50  # Mostly filled
 
     def test_draw_bar_clamps(self) -> None:
@@ -103,7 +103,7 @@ class TestOLEDDrawing:
         driver = OLEDDriver()
         driver.clear()
         driver.draw_sparkline(0, 0, 100, 30, values=[1.0, 3.0, 2.0, 5.0, 4.0])
-        pixels = list(driver._image.getdata())
+        pixels = list(driver._image.tobytes())
         assert any(p > 0 for p in pixels)
 
 

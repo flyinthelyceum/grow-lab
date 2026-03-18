@@ -14,6 +14,7 @@ from pi.config.schema import (
     AppConfig,
     CameraConfig,
     DisplayConfig,
+    FanConfig,
     I2CConfig,
     IrrigationConfig,
     IrrigationScheduleEntry,
@@ -168,6 +169,7 @@ def load_config(path: Path | None = None) -> AppConfig:
     i2c_data = raw.get("i2c", {})
     serial_data = raw.get("serial", {})
     lighting_data = raw.get("lighting", {})
+    fan_data = raw.get("fan", {})
     display_data = raw.get("display", {})
 
     config = AppConfig(
@@ -188,6 +190,16 @@ def load_config(path: Path | None = None) -> AppConfig:
             ramp_minutes=lighting_data.get("ramp_minutes", 15),
         ),
         irrigation=_build_irrigation(raw),
+        fan=FanConfig(
+            enabled=fan_data.get("enabled", False),
+            gpio_pin=fan_data.get("gpio_pin", 18),
+            frequency=fan_data.get("frequency", 25000),
+            min_duty=fan_data.get("min_duty", 20),
+            max_duty=fan_data.get("max_duty", 100),
+            ramp_temp_low_f=fan_data.get("ramp_temp_low_f", 70.0),
+            ramp_temp_high_f=fan_data.get("ramp_temp_high_f", 85.0),
+            poll_interval_seconds=fan_data.get("poll_interval_seconds", 30),
+        ),
         display=DisplayConfig(
             enabled=display_data.get("enabled", False),
             address=display_data.get("address", 0x3C),
