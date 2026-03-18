@@ -40,11 +40,15 @@ class IrrigationService:
         repository: SensorRepository,
         config: IrrigationConfig,
         on_pulse_complete: Callable[[], Coroutine[Any, Any, None]] | None = None,
+        on_pulse_start: Callable[[], Coroutine[Any, Any, None]] | None = None,
+        pulse_start_delay: float = 3.0,
     ) -> None:
         self._pump = pump
         self._repository = repository
         self._config = config
         self._on_pulse_complete = on_pulse_complete
+        self._on_pulse_start = on_pulse_start
+        self._pulse_start_delay = pulse_start_delay
         self._task: asyncio.Task | None = None
         self._running = False
         self._pump_active = False
@@ -108,7 +112,16 @@ class IrrigationService:
         await self._pump_on()
         await self._log_event(f"Pump ON for {clamped}s")
 
-        await asyncio.sleep(clamped)
+        # Fire start callback after a short delay (relay LED still on)
+        if self._on_pulse_start is not None and clamped > self._pulse_start_delay:
+            await asyncio.sleep(self._pulse_start_delay)
+            try:
+                await self._on_pulse_start()
+            except Exception as exc:
+                logger.warning("Pulse-start callback error: %s", exc)
+            await asyncio.sleep(clamped - self._pulse_start_delay)
+        else:
+            await asyncio.sleep(clamped)
 
         await self._pump_off()
         await self._log_event(f"Pump OFF after {clamped}s")

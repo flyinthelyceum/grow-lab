@@ -206,6 +206,69 @@ class TestScheduleLoop:
         assert esp32.set_pump.call_count == 2
 
 
+class TestPulseStartCallback:
+    async def test_on_pulse_start_fires_during_pump_active(self) -> None:
+        """on_pulse_start should fire while the pump is still running."""
+        callback = AsyncMock()
+        service, esp32, repo = _make_service()
+        service._on_pulse_start = callback
+        service._pulse_start_delay = 3.0
+
+        sleep_calls = []
+
+        async def track_sleep(seconds: float) -> None:
+            sleep_calls.append(seconds)
+
+        with patch("pi.services.irrigation.asyncio.sleep", side_effect=track_sleep):
+            await service.pulse(10)
+
+        callback.assert_called_once()
+        # Should sleep 3s (delay), then callback, then 7s (remainder)
+        assert sleep_calls[0] == 3.0
+        assert sleep_calls[1] == 7.0
+
+    async def test_on_pulse_start_skipped_for_short_pulse(self) -> None:
+        """on_pulse_start should not fire if pulse is shorter than delay."""
+        callback = AsyncMock()
+        config = IrrigationConfig(max_runtime_seconds=2)
+        service, esp32, repo = _make_service(config)
+        service._on_pulse_start = callback
+        service._pulse_start_delay = 3.0
+
+        with patch("pi.services.irrigation.asyncio.sleep", new_callable=AsyncMock):
+            await service.pulse(2)
+
+        callback.assert_not_called()
+
+    async def test_on_pulse_start_error_doesnt_block_pump(self) -> None:
+        """Callback error should not prevent pump from turning off."""
+        callback = AsyncMock(side_effect=RuntimeError("camera failed"))
+        service, esp32, repo = _make_service()
+        service._on_pulse_start = callback
+        service._pulse_start_delay = 1.0
+
+        with patch("pi.services.irrigation.asyncio.sleep", new_callable=AsyncMock):
+            result = await service.pulse(10)
+
+        assert result is True
+        esp32.set_pump.assert_any_call(False)  # Pump still turned off
+
+    async def test_both_callbacks_can_fire(self) -> None:
+        """Both on_pulse_start and on_pulse_complete can coexist."""
+        start_cb = AsyncMock()
+        complete_cb = AsyncMock()
+        service, esp32, repo = _make_service()
+        service._on_pulse_start = start_cb
+        service._on_pulse_complete = complete_cb
+        service._pulse_start_delay = 1.0
+
+        with patch("pi.services.irrigation.asyncio.sleep", new_callable=AsyncMock):
+            await service.pulse(10)
+
+        start_cb.assert_called_once()
+        complete_cb.assert_called_once()
+
+
 class TestStartStop:
     async def test_start_creates_task(self) -> None:
         service, _, _ = _make_service()

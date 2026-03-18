@@ -108,10 +108,10 @@ async def run(config: AppConfig) -> None:
         camera = CameraDriver(resolution=config.camera.resolution)
         camera_svc = CameraCaptureService(camera, repo, config.camera)
 
-    async def _on_pump_done():
-        """Capture an image after each pump pulse."""
+    async def _on_pump_active():
+        """Capture an image while the pump relay is active (LED lit)."""
         if camera_svc is not None and camera_svc._camera.is_available:
-            logger.info("Pump-triggered camera capture")
+            logger.info("Pump-active camera capture (relay LED on)")
             await camera_svc.capture_now()
 
     # Start irrigation scheduler
@@ -120,7 +120,8 @@ async def run(config: AppConfig) -> None:
     if pump is not None:
         irrigator = IrrigationService(
             pump, repo, config.irrigation,
-            on_pulse_complete=_on_pump_done,
+            on_pulse_start=_on_pump_active,
+            pulse_start_delay=3.0,
         )
         await irrigator.start()
     else:
