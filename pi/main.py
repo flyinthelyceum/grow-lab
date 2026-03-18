@@ -17,6 +17,7 @@ from pi.data.models import SystemEvent
 from pi.data.repository import SensorRepository
 from pi.discovery.registry import build_registry
 from pi.discovery.scanner import scan_all
+from pi.services.alerts import AlertService
 from pi.services.irrigation import IrrigationService
 from pi.services.polling import PollingService
 
@@ -146,6 +147,37 @@ async def run(config: AppConfig) -> None:
         )
         await display_svc.start()
 
+    # Start alert service (threshold monitoring)
+    alert_svc = AlertService(repo)
+    await alert_svc.start()
+
+    # Start fan service (temperature-triggered PWM)
+    fan_svc = None
+    if config.fan.enabled:
+        from pi.drivers.fan_pwm import FanPWMDriver
+        from pi.services.fan import FanService
+
+        fan_driver = FanPWMDriver(
+            gpio_pin=config.fan.gpio_pin,
+            frequency=config.fan.frequency,
+            min_duty=config.fan.min_duty,
+            max_duty=config.fan.max_duty,
+            ramp_temp_low_f=config.fan.ramp_temp_low_f,
+            ramp_temp_high_f=config.fan.ramp_temp_high_f,
+        )
+        fan_svc = FanService(fan_driver, repo, config.fan)
+        await fan_svc.start()
+
+    # Start lighting scheduler (requires ESP32 for LED PWM)
+    lighting_svc = None
+    if pump is not None and config.irrigation.pump_controller == "esp32":
+        from pi.services.lighting import LightingScheduler
+
+        lighting_svc = LightingScheduler(pump, repo, config.lighting)
+        await lighting_svc.start()
+    elif config.lighting.on_hour != config.lighting.off_hour:
+        logger.info("Lighting scheduler inactive — ESP32 not connected")
+
     # Set up graceful shutdown
     shutdown_event = asyncio.Event()
 
@@ -164,6 +196,11 @@ async def run(config: AppConfig) -> None:
 
     # Clean shutdown
     logger.info("Shutting down...")
+    if lighting_svc is not None:
+        await lighting_svc.stop()
+    if fan_svc is not None:
+        await fan_svc.stop()
+    await alert_svc.stop()
     if display_svc is not None:
         await display_svc.stop()
     if irrigator is not None:
