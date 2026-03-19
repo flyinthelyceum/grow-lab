@@ -80,6 +80,8 @@ FastAPI application serving two views:
 
 Alert history timeline strip between banner and grid shows warning/critical events as color-coded dots on a time axis with hover tooltips.
 
+All data charts support crosshair hover: vertical guide line with colored dots on data lines and auto-positioned tooltip showing time and values at the cursor position. Dual-axis charts (AIR) show both series in the tooltip.
+
 Time window selector: 1H / 24H / 7D. Historical charts query downsampled REST endpoints; current values update live via WebSocket. Alert events push to clients in real time via ConnectionManager server-push.
 
 ## Art Mode (`/art`)
@@ -92,7 +94,7 @@ Full-screen generative visualization rendering 24h environmental data as a radia
 - **Water pulses** — bright cyan markers at irrigation event angles
 - **Ambient particles** — 120 drifting particles with lifecycle animation
 
-Center disc shows context-sensitive detail on hover (priority: water > humidity > temperature).
+Center disc shows context-sensitive detail on hover. Distance-based priority: water markers always win, then whichever ring (temperature or humidity) the mouse is physically closer to.
 
 Design references: [UI_UX_DESIGN_REFERENCE.md](UI_UX_DESIGN_REFERENCE.md)
 

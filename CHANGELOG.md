@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 ## 2026-03-19
 
+### Fixed
+- **Irrigation pump safety** — pump state flags (`_pump_active`, `_last_activation`) now set only after hardware confirms success. `try/finally` ensures pump-off even if a DB write fails mid-pulse. Concurrent pulse guard rejects overlapping activations.
+- **Fan error visibility** — fan control loop exceptions upgraded from `debug` to `error` with traceback. Silent fan failure on a grow system is a plant-killing heat event.
+- **XSS in alert timeline** — tooltip switched from D3 `.html()` to safe DOM construction (`.textContent`). Alert descriptions no longer interpreted as HTML.
+- **EZO UART port safety** — `serial.Serial` constructor moved into `with` context manager so port-open failures don't cause `NameError` in cleanup.
+- **SMTP password leak** — `EmailConfig.__repr__` now redacts `smtp_password` so logging the config object doesn't expose credentials.
+- **GPIO.setmode collision** — extracted shared `_gpio.py` module; `setmode(BCM)` called once and cached instead of repeated per-call in both `fan_pwm.py` and `gpio_relay.py`.
+- **Service start() guards** — `AlertService` and `FanService` use `is_running` property instead of `_task is not None`, allowing restart after a crashed task.
+- **Alert logging** — rule evaluation errors and `on_alert` callback exceptions upgraded from `debug` to `warning` so they appear in production logs.
+- **Notification service** — shared `httpx.AsyncClient` (was creating one per webhook call); `raise_for_status()` on webhook responses (was treating 4xx/5xx as success); cooldown recorded on attempt not success (prevents notification storm on repeated failures).
+- **WebSocket interval leak** — art mode `setInterval` for WS updates now cleared on close before reconnect, preventing accumulated duplicate intervals.
+- **Midnight sliver gap** — radial and humidity rings add 0.003 radian overlap per wedge to eliminate sub-pixel rendering gaps at midnight boundary.
+
+### Added
+- **Art view distance-based hover** — when mouse is in the overlap zone between temperature and humidity rings, the closer ring wins hover priority instead of humidity always dominating. Water markers still take top priority.
+- **Observatory chart hover** — crosshair + tooltip on all data graphs (air temp/humidity, pH, EC, light). Vertical guide line with colored dots on data lines and auto-positioned tooltip showing time and values. Shared `chart-hover.js` utility supports single and dual-axis charts.
+
 ### Added
 - **Fan duty override** — `POST /api/fan/override` accepts `{"duty": 0-100}` for manual control or `{"mode": "auto"}` to resume temperature ramp. FanService tracks override state; control loop skips temp calculation when override is active. Returns 503 when fan service is unavailable (standalone dashboard mode).
 - **WebSocket server-push for alerts** — new `ConnectionManager` maintains active WebSocket connections and broadcasts alert events in real time. AlertService accepts an `on_alert` async callback, fired on every warning/critical transition. Dashboard JS handles `{"type": "alert"}` push messages alongside existing poll responses.
