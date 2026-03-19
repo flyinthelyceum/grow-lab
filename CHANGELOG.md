@@ -11,11 +11,18 @@ All notable changes to this project are documented in this file.
 - **Gallery lightbox** — clicking a capture thumbnail opens a full-screen overlay instead of replacing the camera feed inline. Close by clicking outside or the CLOSE button.
 - **Gallery empty state** — "No captures yet" placeholder shown when no images are available.
 - 18 new unit tests: fan override (6), connection manager (6), alert callback (2), API endpoint (4).
+- **Notification service** — `NotificationService` dispatches alert events via webhook (POST JSON) and email (SMTP) channels with per-sensor cooldown to prevent notification storms. Configured via `[notifications]`, `[notifications.webhook]`, and `[notifications.email]` in config.
+- **EZO UART mode-switch driver** — `ezo_uart.py` sends `I2C,<addr>` command over UART to switch Atlas EZO sensors from UART to I2C mode.
+- **`growlab sensor ezo-setup`** CLI command — interactive UART→I2C mode switch for EZO pH/EC sensors with automatic I2C bus verification after reboot.
+- **`growlab sensor validate-all`** CLI command — scans all hardware buses, reads every detected sensor, and reports pass/fail with human-readable values (temperatures in °F).
+- 23 new unit tests: EZO UART driver (7), notification service (16).
 
 ### Changed
 - `create_app()` now accepts optional `fan_service` and `connection_manager` parameters for runtime wiring.
 - WebSocket route registers/unregisters connections with ConnectionManager on connect/disconnect.
-- `main.py` wires alert callback from AlertService to ConnectionManager broadcast.
+- `main.py` wires alert callback from AlertService to ConnectionManager broadcast and NotificationService dispatch.
+- AlertService now passes `sensor_id` as event metadata for per-sensor notification cooldown.
+- `httpx` moved from dev to core dependencies (used by webhook notifications at runtime).
 
 ## 2026-03-18
 

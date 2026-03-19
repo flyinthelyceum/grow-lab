@@ -51,7 +51,8 @@ All services run as async tasks within `growlab start` and shut down cleanly on 
 |---------|-----------|----------|---------|
 | PollingService | Always | Per-sensor config | Read sensors, store to DB |
 | IrrigationService | Pump available | 30s schedule check | Timed pump pulses with safety limits |
-| AlertService | Always | 60s | Threshold monitoring with deduplication |
+| AlertService | Always | 60s | Threshold monitoring with deduplication; fires NotificationService on transitions |
+| NotificationService | Alert callback | On alert | Webhook POST + SMTP email dispatch with per-sensor cooldown |
 | FanService | `fan.enabled` | 30s | Temperature → PWM duty ramp (supports manual override via API) |
 | LightingScheduler | ESP32 connected | 30s | Photoperiod schedule with sunrise/sunset ramps |
 | DisplayService | `display.enabled` | 5s page rotation | OLED status pages |
@@ -114,7 +115,7 @@ SH1106 128×64 OLED on I²C 0x3C. Rotates through 4 pages every 5 seconds:
 - data logging
 - dashboard interface
 - irrigation scheduling
-- threshold alerting
+- threshold alerting with webhook/email notifications
 - fan PWM control
 - system orchestration
 

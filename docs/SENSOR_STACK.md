@@ -345,7 +345,7 @@ Devices, addresses, and strap conditions:
 
 No address conflicts in this configuration.
 
-Note: Atlas EZO boards ship in UART mode by default. See [WIRING_&_BUSES.md](WIRING_&_BUSES.md) for the UART→I²C mode switching procedure.
+Note: Atlas EZO boards ship in UART mode by default. Use `growlab sensor ezo-setup --sensor ph|ec` to switch via UART, or see [WIRING_&_BUSES.md](WIRING_&_BUSES.md) for the manual procedure. After setup, `growlab sensor validate-all` confirms all sensors are reading correctly.
 
 ## 1-Wire Bus
 
