@@ -277,6 +277,43 @@ class TestAlertServiceCheckLoop:
         # Should fire twice: warning → normal (recovery) → warning
         assert mock_repo.save_event.call_count == 2
 
+    async def test_on_alert_callback_fires(self, mock_repo, rules):
+        """on_alert callback should fire when an alert event is saved."""
+        # 28°C = 82.4°F → warning
+        mock_repo.get_latest = AsyncMock(
+            return_value=_reading("bme280_temperature", 28.0, "°C")
+        )
+        callback = AsyncMock()
+        svc = AlertService(mock_repo, rules, poll_interval=1, on_alert=callback)
+
+        with patch("pi.services.alerts.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+            mock_sleep.side_effect = [None, asyncio.CancelledError()]
+            try:
+                await svc._check_loop()
+            except asyncio.CancelledError:
+                pass
+
+        callback.assert_called_once()
+        event = callback.call_args[0][0]
+        assert event.event_type == "alert_warning"
+
+    async def test_on_alert_not_called_for_normal(self, mock_repo, rules):
+        """on_alert callback should NOT fire for normal readings."""
+        mock_repo.get_latest = AsyncMock(
+            return_value=_reading("bme280_temperature", 23.0, "°C")
+        )
+        callback = AsyncMock()
+        svc = AlertService(mock_repo, rules, poll_interval=1, on_alert=callback)
+
+        with patch("pi.services.alerts.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+            mock_sleep.side_effect = [None, asyncio.CancelledError()]
+            try:
+                await svc._check_loop()
+            except asyncio.CancelledError:
+                pass
+
+        callback.assert_not_called()
+
     async def test_handles_missing_sensor(self, mock_repo, rules):
         """Should not crash when a rule's sensor has no readings."""
         mock_repo.get_latest = AsyncMock(return_value=None)

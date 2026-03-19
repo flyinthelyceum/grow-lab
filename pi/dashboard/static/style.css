@@ -641,6 +641,50 @@ html, body {
     opacity: 1;
 }
 
+/* --- Alert history timeline --- */
+.alert-timeline-strip {
+    padding: 4px 16px 0;
+}
+.alert-timeline-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+.alert-timeline-label {
+    font-family: var(--font-data);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+.alert-timeline-chart {
+    position: relative;
+    height: 36px;
+    width: 100%;
+}
+.alert-timeline-chart svg {
+    display: block;
+}
+.alert-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    font-family: var(--font-data);
+    font-size: 11px;
+    color: var(--text-primary);
+    line-height: 1.5;
+    z-index: 10;
+    white-space: nowrap;
+}
+.alert-tooltip-time {
+    color: var(--text-dim);
+    font-size: 10px;
+}
+
 /* --- Image gallery strip --- */
 .plant-gallery {
     margin-top: 8px;
@@ -669,4 +713,56 @@ html, body {
 .gallery-thumb:hover {
     opacity: 1;
     border-color: var(--accent-violet);
+}
+.gallery-empty {
+    font-family: var(--font-data);
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 8px 0;
+}
+
+/* --- Lightbox overlay --- */
+.lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+.lightbox-wrap {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.lightbox-img {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+.lightbox-caption {
+    font-family: var(--font-data);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.lightbox-close {
+    background: none;
+    border: 1px solid var(--text-dim);
+    color: var(--text-secondary);
+    font-family: var(--font-data);
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+.lightbox-close:hover {
+    color: var(--text-primary);
+    border-color: var(--text-primary);
 }

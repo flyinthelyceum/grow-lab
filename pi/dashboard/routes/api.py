@@ -10,8 +10,9 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path as FsPath, PurePosixPath
 
-from fastapi import APIRouter, HTTPException, Path, Query, Request
+from fastapi import APIRouter, Body, HTTPException, Path, Query, Request
 from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/api")
 
@@ -254,6 +255,31 @@ async def get_fan_status(request: Request) -> dict:
         "ramp_temp_high_f": config.ramp_temp_high_f,
         "min_duty": config.min_duty,
         "max_duty": config.max_duty,
+    }
+
+
+class FanOverrideRequest(BaseModel):
+    duty: int | None = Field(default=None, ge=0, le=100)
+    mode: str | None = Field(default=None, pattern=r"^auto$")
+
+
+@router.post("/fan/override")
+async def set_fan_override(request: Request, body: FanOverrideRequest) -> dict:
+    """Set a manual fan duty cycle or return to auto mode."""
+    fan_svc = getattr(request.app.state, "fan_service", None)
+    if fan_svc is None:
+        raise HTTPException(status_code=503, detail="Fan service not available")
+
+    if body.mode == "auto":
+        fan_svc.clear_override()
+    elif body.duty is not None:
+        fan_svc.set_override(body.duty)
+    else:
+        raise HTTPException(status_code=422, detail="Provide 'duty' or 'mode: auto'")
+
+    return {
+        "override_duty": fan_svc.override_duty,
+        "mode": "auto" if fan_svc.override_duty is None else "manual",
     }
 
 

@@ -16,6 +16,7 @@
     let ws = null;
     let charts = {};
     let soilGauge = null;
+    let alertTimeline = null;
 
     // --- Temperature conversion ---
     function cToF(c) { return c * 9 / 5 + 32; }
@@ -372,31 +373,78 @@
     function refreshGallery() {
         fetchJSON("/api/images?limit=6").then(function (images) {
             var strip = document.getElementById("gallery-strip");
-            if (!strip || !images || !images.length) return;
+            if (!strip) return;
 
             while (strip.firstChild) strip.removeChild(strip.firstChild);
 
-            images.forEach(function (img) {
-                if (!img.available || !img.url) return;
+            var available = (images || []).filter(function (img) {
+                return img.available && img.url;
+            });
+
+            if (available.length === 0) {
+                var empty = document.createElement("div");
+                empty.className = "gallery-empty";
+                empty.textContent = "No captures yet";
+                strip.appendChild(empty);
+                return;
+            }
+
+            available.forEach(function (img) {
                 var thumb = document.createElement("img");
                 thumb.src = img.url;
                 thumb.alt = img.filename;
                 thumb.className = "gallery-thumb";
                 thumb.title = formatDateTime(new Date(img.timestamp));
                 thumb.addEventListener("click", function () {
-                    // Show in main camera feed
-                    var container = document.getElementById("camera-feed");
-                    if (container) {
-                        while (container.firstChild) container.removeChild(container.firstChild);
-                        var full = document.createElement("img");
-                        full.src = img.url;
-                        full.alt = img.filename;
-                        container.appendChild(full);
-                        setText("camera-chip", "CAPTURE: " + formatDateTime(new Date(img.timestamp)));
-                    }
+                    openLightbox(img.url, img.filename, img.timestamp);
                 });
                 strip.appendChild(thumb);
             });
+        }).catch(function () {});
+    }
+
+    // --- Lightbox ---
+    function openLightbox(url, filename, timestamp) {
+        // Remove existing lightbox if any
+        var existing = document.getElementById("gallery-lightbox");
+        if (existing) existing.remove();
+
+        var overlay = document.createElement("div");
+        overlay.id = "gallery-lightbox";
+        overlay.className = "lightbox-overlay";
+        overlay.addEventListener("click", function (e) {
+            if (e.target === overlay) overlay.remove();
+        });
+
+        var wrap = document.createElement("div");
+        wrap.className = "lightbox-wrap";
+
+        var img = document.createElement("img");
+        img.src = url;
+        img.alt = filename;
+        img.className = "lightbox-img";
+        wrap.appendChild(img);
+
+        var caption = document.createElement("div");
+        caption.className = "lightbox-caption";
+        caption.textContent = formatDateTime(new Date(timestamp));
+        wrap.appendChild(caption);
+
+        var close = document.createElement("button");
+        close.className = "lightbox-close";
+        close.textContent = "CLOSE";
+        close.addEventListener("click", function () { overlay.remove(); });
+        wrap.appendChild(close);
+
+        overlay.appendChild(wrap);
+        document.body.appendChild(overlay);
+    }
+
+    // --- Alert timeline ---
+    function refreshAlertTimeline() {
+        if (!alertTimeline) return;
+        fetchJSON("/api/alerts?limit=100").then(function (alerts) {
+            alertTimeline.update(alerts || []);
         }).catch(function () {});
     }
 
@@ -466,6 +514,12 @@
         ws.onmessage = function (event) {
             try {
                 var data = JSON.parse(event.data);
+                // Server-push alert (from ConnectionManager broadcast)
+                if (data.type === "alert") {
+                    showAlert(data.alert);
+                    return;
+                }
+                // Standard poll response
                 if (data.readings) {
                     updateValues(data.readings);
                 }
@@ -501,6 +555,7 @@
         setInterval(refreshImage, 60000);
         setInterval(refreshFanStatus, 30000);
         setInterval(refreshGallery, 60000);
+        setInterval(refreshAlertTimeline, 60000);
 
         // Request WS update every 3s
         setInterval(function () {
@@ -519,11 +574,17 @@
             soilGauge = window.GrowLab.createSoilGauge("soil-moisture-gauge");
         }
 
+        // Initialize alert timeline
+        if (window.GrowLab && window.GrowLab.createAlertTimeline) {
+            alertTimeline = window.GrowLab.createAlertTimeline("chart-alert-timeline");
+        }
+
         refreshAllCharts();
         refreshStatus();
         refreshImage();
         refreshFanStatus();
         refreshGallery();
+        refreshAlertTimeline();
         connectWS();
         startPolling();
     });

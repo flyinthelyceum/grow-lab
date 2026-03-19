@@ -29,6 +29,13 @@
         <button class="alert-dismiss" onclick="document.getElementById('alert-banner').style.display='none'">dismiss</button>
     </div>
 
+    <section class="alert-timeline-strip" id="alert-timeline-section">
+        <div class="alert-timeline-header">
+            <span class="alert-timeline-label">ALERT HISTORY</span>
+        </div>
+        <div class="alert-timeline-chart" id="chart-alert-timeline"></div>
+    </section>
+
     <main class="observatory-grid">
         <!-- LIGHT Panel -->
         <section class="panel panel-light" id="panel-light">
@@ -151,6 +158,7 @@
     <script src="/static/charts/water-timeline.js"></script>
     <script src="/static/charts/air-chart.js"></script>
     <script src="/static/charts/root-chart.js"></script>
+    <script src="/static/charts/alert-timeline.js"></script>
     <script src="/static/observatory.js"></script>
 </body>
 </html>

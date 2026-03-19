@@ -268,6 +268,40 @@ class TestFanStatusEndpoint:
         assert 0 <= data["duty_percent"] <= 100
 
 
+class TestFanOverrideEndpoint:
+    async def test_set_manual_duty(self, mock_repo):
+        from unittest.mock import MagicMock
+
+        fan_svc = MagicMock()
+        fan_svc.override_duty = None
+        app = create_app(mock_repo, fan_service=fan_svc)
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post("/api/fan/override", json={"duty": 60})
+        assert response.status_code == 200
+        fan_svc.set_override.assert_called_once_with(60)
+
+    async def test_set_auto_mode(self, mock_repo):
+        from unittest.mock import MagicMock
+
+        fan_svc = MagicMock()
+        fan_svc.override_duty = 60
+        app = create_app(mock_repo, fan_service=fan_svc)
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post("/api/fan/override", json={"mode": "auto"})
+        assert response.status_code == 200
+        fan_svc.clear_override.assert_called_once()
+
+    async def test_invalid_duty_rejected(self, client):
+        response = await client.post("/api/fan/override", json={"duty": 150})
+        assert response.status_code == 422
+
+    async def test_no_fan_service_returns_503(self, client):
+        response = await client.post("/api/fan/override", json={"duty": 50})
+        assert response.status_code == 503
+
+
 class TestSystemStatus:
     async def test_status(self, client, mock_repo):
         mock_repo.get_db_info.return_value = {

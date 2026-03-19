@@ -36,10 +36,24 @@ class FanService:
         self._repo = repo
         self._config = config
         self._task: asyncio.Task | None = None
+        self._override_duty: int | None = None
 
     @property
     def is_running(self) -> bool:
         return self._task is not None and not self._task.done()
+
+    @property
+    def override_duty(self) -> int | None:
+        """Current manual override duty, or None if in auto mode."""
+        return self._override_duty
+
+    def set_override(self, duty: int) -> None:
+        """Set a manual duty cycle override (0-100)."""
+        self._override_duty = max(0, min(100, duty))
+
+    def clear_override(self) -> None:
+        """Return to automatic temperature-based ramp."""
+        self._override_duty = None
 
     async def start(self) -> None:
         """Start the fan control loop."""
@@ -80,16 +94,22 @@ class FanService:
         """Poll temperature and adjust fan duty cycle."""
         while True:
             try:
-                temp_f = await self._get_air_temp_f()
-                if temp_f is not None:
-                    target = self._fan.duty_for_temperature(temp_f)
+                if self._override_duty is not None:
+                    target = self._override_duty
                     if target != self._fan.duty_cycle:
                         self._fan.set_duty(target)
-                        logger.debug(
-                            "Fan adjusted: %.1f°F → %d%% duty",
-                            temp_f,
-                            target,
-                        )
+                        logger.debug("Fan override: %d%% duty", target)
+                else:
+                    temp_f = await self._get_air_temp_f()
+                    if temp_f is not None:
+                        target = self._fan.duty_for_temperature(temp_f)
+                        if target != self._fan.duty_cycle:
+                            self._fan.set_duty(target)
+                            logger.debug(
+                                "Fan adjusted: %.1f°F → %d%% duty",
+                                temp_f,
+                                target,
+                            )
             except Exception as exc:
                 logger.debug("Fan control error: %s", exc)
 

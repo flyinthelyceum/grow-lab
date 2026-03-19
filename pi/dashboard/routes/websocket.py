@@ -71,6 +71,12 @@ async def ws_updates(websocket: WebSocket) -> None:
     if repo is None:
         await websocket.close(code=1011, reason="Repository not available")
         return
+
+    # Register with connection manager for server-push broadcasts
+    manager = getattr(websocket.app.state, "connection_manager", None)
+    if manager is not None:
+        await manager.connect(websocket)
+
     last_send = 0.0
     try:
         # Send initial update immediately
@@ -95,3 +101,6 @@ async def ws_updates(websocket: WebSocket) -> None:
         logger.debug("WebSocket client disconnected")
     except Exception as exc:
         logger.debug("WebSocket error: %s", exc)
+    finally:
+        if manager is not None:
+            manager.disconnect(websocket)

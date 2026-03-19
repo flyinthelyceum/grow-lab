@@ -159,3 +159,56 @@ class TestGetAirTempF:
         svc = FanService(mock_fan, mock_repo, config)
         temp = await svc._get_air_temp_f()
         assert temp is None
+
+
+class TestFanServiceOverride:
+    def test_no_override_by_default(self, mock_fan, mock_repo, config):
+        svc = FanService(mock_fan, mock_repo, config)
+        assert svc.override_duty is None
+
+    def test_set_override(self, mock_fan, mock_repo, config):
+        svc = FanService(mock_fan, mock_repo, config)
+        svc.set_override(75)
+        assert svc.override_duty == 75
+
+    def test_set_override_clamps_to_range(self, mock_fan, mock_repo, config):
+        svc = FanService(mock_fan, mock_repo, config)
+        svc.set_override(150)
+        assert svc.override_duty == 100
+        svc.set_override(-10)
+        assert svc.override_duty == 0
+
+    def test_clear_override(self, mock_fan, mock_repo, config):
+        svc = FanService(mock_fan, mock_repo, config)
+        svc.set_override(75)
+        svc.clear_override()
+        assert svc.override_duty is None
+
+    async def test_control_loop_uses_override(self, mock_fan, mock_repo, config):
+        """When override is set, control loop uses override duty instead of temp ramp."""
+        svc = FanService(mock_fan, mock_repo, config)
+        svc.set_override(80)
+
+        with patch("pi.services.fan.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+            mock_sleep.side_effect = [None, asyncio.CancelledError()]
+            try:
+                await svc._control_loop()
+            except asyncio.CancelledError:
+                pass
+
+        # Should use override value, not temp-derived value
+        mock_fan.set_duty.assert_called_with(80)
+        mock_fan.duty_for_temperature.assert_not_called()
+
+    async def test_control_loop_auto_when_no_override(self, mock_fan, mock_repo, config):
+        """When no override, control loop uses temp-based ramp as before."""
+        svc = FanService(mock_fan, mock_repo, config)
+
+        with patch("pi.services.fan.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+            mock_sleep.side_effect = [None, asyncio.CancelledError()]
+            try:
+                await svc._control_loop()
+            except asyncio.CancelledError:
+                pass
+
+        mock_fan.duty_for_temperature.assert_called()

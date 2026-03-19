@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-03-19
+
+### Added
+- **Fan duty override** — `POST /api/fan/override` accepts `{"duty": 0-100}` for manual control or `{"mode": "auto"}` to resume temperature ramp. FanService tracks override state; control loop skips temp calculation when override is active. Returns 503 when fan service is unavailable (standalone dashboard mode).
+- **WebSocket server-push for alerts** — new `ConnectionManager` maintains active WebSocket connections and broadcasts alert events in real time. AlertService accepts an `on_alert` async callback, fired on every warning/critical transition. Dashboard JS handles `{"type": "alert"}` push messages alongside existing poll responses.
+- **Alert history timeline** — D3.js horizontal dot timeline strip between alert banner and main grid. Warning dots in amber, critical in red, with hover tooltips showing description and timestamp. Fetches `/api/alerts?limit=100`, refreshes every 60s.
+- **Gallery lightbox** — clicking a capture thumbnail opens a full-screen overlay instead of replacing the camera feed inline. Close by clicking outside or the CLOSE button.
+- **Gallery empty state** — "No captures yet" placeholder shown when no images are available.
+- 18 new unit tests: fan override (6), connection manager (6), alert callback (2), API endpoint (4).
+
+### Changed
+- `create_app()` now accepts optional `fan_service` and `connection_manager` parameters for runtime wiring.
+- WebSocket route registers/unregisters connections with ConnectionManager on connect/disconnect.
+- `main.py` wires alert callback from AlertService to ConnectionManager broadcast.
+
 ## 2026-03-18
 
 ### Added

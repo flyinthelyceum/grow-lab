@@ -148,7 +148,22 @@ async def run(config: AppConfig) -> None:
         await display_svc.start()
 
     # Start alert service (threshold monitoring)
-    alert_svc = AlertService(repo)
+    from pi.dashboard.connections import ConnectionManager
+
+    connection_manager = ConnectionManager()
+
+    async def _on_alert(event):
+        """Push alert events to connected dashboard clients."""
+        await connection_manager.broadcast_json({
+            "type": "alert",
+            "alert": {
+                "timestamp": event.iso_timestamp,
+                "event_type": event.event_type,
+                "description": event.description,
+            },
+        })
+
+    alert_svc = AlertService(repo, on_alert=_on_alert)
     await alert_svc.start()
 
     # Start fan service (temperature-triggered PWM)

@@ -30,7 +30,7 @@ Sensors → Raspberry Pi → SQLite → Dashboard / Art Mode
 - Sensor drivers poll hardware on configurable intervals (1–15 min)
 - Readings stored in SQLite with timestamps
 - REST API serves downsampled history (`/api/readings/<sensor>/downsampled?window=24h`) to both dashboard views
-- WebSocket (`/ws/updates`) pushes live values to connected clients
+- WebSocket (`/ws/updates`) pushes live values to connected clients (poll-response) and server-push alert events via ConnectionManager broadcast
 
 See [DATA_ARCHITECTURE.md](DATA_ARCHITECTURE.md) for storage format, schema, and visualization strategy.
 
@@ -52,7 +52,7 @@ All services run as async tasks within `growlab start` and shut down cleanly on 
 | PollingService | Always | Per-sensor config | Read sensors, store to DB |
 | IrrigationService | Pump available | 30s schedule check | Timed pump pulses with safety limits |
 | AlertService | Always | 60s | Threshold monitoring with deduplication |
-| FanService | `fan.enabled` | 30s | Temperature → PWM duty ramp |
+| FanService | `fan.enabled` | 30s | Temperature → PWM duty ramp (supports manual override via API) |
 | LightingScheduler | ESP32 connected | 30s | Photoperiod schedule with sunrise/sunset ramps |
 | DisplayService | `display.enabled` | 5s page rotation | OLED status pages |
 | CameraCaptureService | `camera.enabled` | On pump events | Captures during pump active window |
@@ -77,7 +77,9 @@ FastAPI application serving two views:
 | ROOT | EZO-pH + EZO-EC | Stacked sparklines with target bands |
 | PLANT | Soil moisture + camera | D3 arc gauge + latest image |
 
-Time window selector: 1H / 24H / 7D. Historical charts query downsampled REST endpoints; current values update live via WebSocket.
+Alert history timeline strip between banner and grid shows warning/critical events as color-coded dots on a time axis with hover tooltips.
+
+Time window selector: 1H / 24H / 7D. Historical charts query downsampled REST endpoints; current values update live via WebSocket. Alert events push to clients in real time via ConnectionManager server-push.
 
 ## Art Mode (`/art`)
 
@@ -126,8 +128,8 @@ This separation keeps timing-sensitive lighting control off the Raspberry Pi.
 ## Web Server: FastAPI
 
 - Dashboard routes (`/`, `/art`)
-- REST API (`/api/readings/`, `/api/events`)
-- WebSocket (`/ws/updates`)
+- REST API (`/api/readings/`, `/api/events`, `/api/alerts`, `/api/fan/`)
+- WebSocket (`/ws/updates`) with ConnectionManager for server-push broadcasts
 - Static file serving (D3.js charts, art mode modules, CSS)
 
 See [WIRING_&_BUSES.md](WIRING_&_BUSES.md) for pin assignments, bus layout, and power domains.

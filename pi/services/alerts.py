@@ -100,10 +100,12 @@ class AlertService:
         repo,
         rules: list[ThresholdRule] | None = None,
         poll_interval: int = 60,
+        on_alert: Callable | None = None,
     ) -> None:
         self._repo = repo
         self._rules = list(rules) if rules is not None else list(DEFAULT_RULES)
         self._poll_interval = poll_interval
+        self._on_alert = on_alert
         self._task: asyncio.Task | None = None
         # Track last alert state per sensor to avoid duplicate events
         self._last_state: dict[str, str] = {}
@@ -185,3 +187,9 @@ class AlertService:
             value,
             unit_str,
         )
+
+        if self._on_alert is not None:
+            try:
+                await self._on_alert(event)
+            except Exception as exc:
+                logger.debug("on_alert callback error: %s", exc)
