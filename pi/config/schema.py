@@ -124,6 +124,32 @@ class DisplayConfig:
 
 
 @dataclass(frozen=True)
+class WebhookConfig:
+    enabled: bool = False
+    url: str = ""
+    timeout_seconds: float = 10.0
+
+
+@dataclass(frozen=True)
+class EmailConfig:
+    enabled: bool = False
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    use_tls: bool = True
+    from_address: str = ""
+    to_addresses: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class NotificationConfig:
+    webhook: WebhookConfig = field(default_factory=WebhookConfig)
+    email: EmailConfig = field(default_factory=EmailConfig)
+    cooldown_seconds: int = 300
+
+
+@dataclass(frozen=True)
 class AppConfig:
     system: SystemConfig = field(default_factory=SystemConfig)
     i2c: I2CConfig = field(default_factory=I2CConfig)
@@ -134,3 +160,4 @@ class AppConfig:
     irrigation: IrrigationConfig = field(default_factory=IrrigationConfig)
     fan: FanConfig = field(default_factory=FanConfig)
     display: DisplayConfig = field(default_factory=DisplayConfig)
+    notifications: NotificationConfig = field(default_factory=NotificationConfig)

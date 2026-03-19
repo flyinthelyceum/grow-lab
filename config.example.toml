@@ -79,3 +79,21 @@ relay_gpio = 17
 [display]
 enabled = false
 address = 0x3C
+
+[notifications]
+cooldown_seconds = 300  # Per-sensor cooldown between repeated notifications
+
+[notifications.webhook]
+enabled = false
+url = ""                    # POST JSON payload to this URL on alert
+timeout_seconds = 10.0
+
+[notifications.email]
+enabled = false
+smtp_host = ""
+smtp_port = 587
+smtp_user = ""
+smtp_password = ""          # Plaintext — consider using an env var for production
+use_tls = true
+from_address = ""
+to_addresses = []

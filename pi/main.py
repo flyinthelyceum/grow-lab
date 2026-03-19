@@ -149,11 +149,13 @@ async def run(config: AppConfig) -> None:
 
     # Start alert service (threshold monitoring)
     from pi.dashboard.connections import ConnectionManager
+    from pi.services.notifications import NotificationService
 
     connection_manager = ConnectionManager()
+    notification_svc = NotificationService(config.notifications)
 
     async def _on_alert(event):
-        """Push alert events to connected dashboard clients."""
+        """Push alert events to dashboard clients and notification channels."""
         await connection_manager.broadcast_json({
             "type": "alert",
             "alert": {
@@ -162,6 +164,7 @@ async def run(config: AppConfig) -> None:
                 "description": event.description,
             },
         })
+        await notification_svc.dispatch(event)
 
     alert_svc = AlertService(repo, on_alert=_on_alert)
     await alert_svc.start()

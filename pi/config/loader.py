@@ -14,15 +14,18 @@ from pi.config.schema import (
     AppConfig,
     CameraConfig,
     DisplayConfig,
+    EmailConfig,
     FanConfig,
     I2CConfig,
     IrrigationConfig,
     IrrigationScheduleEntry,
     LightingConfig,
+    NotificationConfig,
     SensorEntry,
     SensorsConfig,
     SerialConfig,
     SystemConfig,
+    WebhookConfig,
 )
 
 logger = logging.getLogger(__name__)
@@ -129,6 +132,35 @@ def _build_camera(raw: dict[str, Any]) -> CameraConfig:
     )
 
 
+def _build_notifications(raw: dict[str, Any]) -> NotificationConfig:
+    data = raw.get("notifications", {})
+    wh = data.get("webhook", {})
+    em = data.get("email", {})
+
+    to_addrs = em.get("to_addresses", ())
+    if isinstance(to_addrs, list):
+        to_addrs = tuple(to_addrs)
+
+    return NotificationConfig(
+        webhook=WebhookConfig(
+            enabled=wh.get("enabled", False),
+            url=wh.get("url", ""),
+            timeout_seconds=wh.get("timeout_seconds", 10.0),
+        ),
+        email=EmailConfig(
+            enabled=em.get("enabled", False),
+            smtp_host=em.get("smtp_host", ""),
+            smtp_port=em.get("smtp_port", 587),
+            smtp_user=em.get("smtp_user", ""),
+            smtp_password=em.get("smtp_password", ""),
+            use_tls=em.get("use_tls", True),
+            from_address=em.get("from_address", ""),
+            to_addresses=to_addrs,
+        ),
+        cooldown_seconds=data.get("cooldown_seconds", 300),
+    )
+
+
 def _validate_config(config: AppConfig) -> None:
     """Validate config values are within acceptable ranges."""
     lc = config.lighting
@@ -205,6 +237,7 @@ def load_config(path: Path | None = None) -> AppConfig:
             address=display_data.get("address", 0x3C),
             controller=display_data.get("controller", "sh1106"),
         ),
+        notifications=_build_notifications(raw),
     )
 
     _validate_config(config)

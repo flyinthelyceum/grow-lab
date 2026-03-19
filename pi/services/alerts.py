@@ -177,6 +177,7 @@ class AlertService:
             timestamp=datetime.now(timezone.utc),
             event_type=f"alert_{state}",
             description=f"{label} {state}: {value:.1f}{unit_str}",
+            metadata=rule.sensor_id,
         )
         await self._repo.save_event(event)
         logger.warning(
