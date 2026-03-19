@@ -32,6 +32,7 @@
     var pressureField = null;
     var particles = null;
     var ws = null;
+    var wsIntervalId = null;
     var canvas = null;
 
     // Shared canvas state (getter functions for overlay layers)
@@ -163,6 +164,10 @@
         };
 
         ws.onclose = function () {
+            if (wsIntervalId !== null) {
+                clearInterval(wsIntervalId);
+                wsIntervalId = null;
+            }
             setTimeout(connectWS, 5000);
         };
 
@@ -171,7 +176,7 @@
         };
 
         // Request updates every 3s
-        setInterval(function () {
+        wsIntervalId = setInterval(function () {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send("update");
             }
@@ -217,9 +222,12 @@
         // Start animation loop
         loop = new Art.AnimationLoop();
         loop.register(function (dt, now) {
-            // Route hover info to center disc — priority: water > humidity > temp
+            // Route hover info to center disc
+            // Priority: water markers > distance-based (temp vs humidity) > none
             var waterHover = waterPulses.getHoverEvent();
             var humHover = humRing.getHoverHum();
+            var tempHover = ring.getHoverPoint();
+            var mouseDist = ring.getMouseDist();
 
             if (waterHover) {
                 ring.setCenterOverride({
@@ -229,6 +237,21 @@
                     color: "rgba(30,210,255,0.9)",
                     labelColor: "rgba(30,210,255,0.3)"
                 });
+            } else if (tempHover && humHover) {
+                // Both rings active — pick based on mouse distance
+                var tempMid = (ring.getMinRadius() + ring.getMaxRadius()) / 2;
+                var humMid = ring.getMaxRadius() * 0.97;
+                if (Math.abs(mouseDist - tempMid) <= Math.abs(mouseDist - humMid)) {
+                    ring.setCenterOverride(null); // let temp ring show its own hover
+                } else {
+                    ring.setCenterOverride({
+                        value: humHover.hum.toFixed(0),
+                        unit: "%  RH",
+                        label: humHover.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+                        color: "rgba(0,200,220,0.9)",
+                        labelColor: "rgba(0,200,220,0.4)"
+                    });
+                }
             } else if (humHover) {
                 ring.setCenterOverride({
                     value: humHover.hum.toFixed(0),

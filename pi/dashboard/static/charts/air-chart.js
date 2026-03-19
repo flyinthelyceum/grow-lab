@@ -64,6 +64,14 @@ window.GrowLab.createAirChart = function (containerId) {
     svg.append("g").attr("class", "axis y-axis-right")
         .attr("transform", "translate(" + width + ",0)");
 
+    // Hover crosshair
+    var hover = null;
+    if (window.GrowLab.addChartHover) {
+        hover = window.GrowLab.addChartHover({
+            svg: svg, width: width, height: height, xScale: x
+        });
+    }
+
     function update(tempData, humData) {
         if ((!tempData || tempData.length === 0) && (!humData || humData.length === 0)) return;
 
@@ -177,6 +185,26 @@ window.GrowLab.createAirChart = function (containerId) {
         svg.select(".y-axis-right")
             .transition().duration(400)
             .call(d3.axisRight(yHum).ticks(4).tickFormat(function (d) { return d + "%"; }));
+
+        // Update hover datasets
+        if (hover) {
+            var hoverSets = [];
+            if (parsedTemp.length > 0) {
+                hoverSets.push({
+                    data: parsedTemp, yScale: yTemp, label: "Temp",
+                    color: "var(--text-primary)",
+                    format: function (v) { return v.toFixed(1) + "°F"; }
+                });
+            }
+            if (parsedHum.length > 0) {
+                hoverSets.push({
+                    data: parsedHum, yScale: yHum, label: "Humidity",
+                    color: "var(--accent-cyan)",
+                    format: function (v) { return v.toFixed(0) + "%"; }
+                });
+            }
+            hover.update(hoverSets);
+        }
     }
 
     return { update: update };

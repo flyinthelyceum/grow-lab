@@ -116,7 +116,7 @@ class AlertService:
 
     async def start(self) -> None:
         """Start the alert checking loop."""
-        if self._task is not None:
+        if self.is_running:
             return
 
         logger.info(
@@ -145,7 +145,7 @@ class AlertService:
                 try:
                     await self._evaluate_rule(rule)
                 except Exception as exc:
-                    logger.debug("Alert check error for %s: %s", rule.sensor_id, exc)
+                    logger.warning("Alert check error for %s: %s", rule.sensor_id, exc)
 
             await asyncio.sleep(self._poll_interval)
 
@@ -193,4 +193,4 @@ class AlertService:
             try:
                 await self._on_alert(event)
             except Exception as exc:
-                logger.debug("on_alert callback error: %s", exc)
+                logger.warning("on_alert callback error: %s", exc)

@@ -292,12 +292,12 @@ class TestStartStop:
         assert service.is_running is False
         esp32.set_pump.assert_called_with(False)
 
-    async def test_pump_command_failure_still_updates_state(self) -> None:
+    async def test_pump_command_failure_does_not_update_state(self) -> None:
         service, esp32, _ = _make_service()
         esp32.set_pump.return_value = _fail_response()
 
-        await service._pump_on()
-        assert service.pump_active is True
+        with pytest.raises(RuntimeError, match="Pump ON failed"):
+            await service._pump_on()
 
-        await service._pump_off()
         assert service.pump_active is False
+        assert service.last_activation is None

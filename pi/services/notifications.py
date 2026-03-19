@@ -27,6 +27,7 @@ class NotificationService:
     def __init__(self, config: NotificationConfig) -> None:
         self._config = config
         self._last_sent: dict[str, datetime] = {}
+        self._http_client: httpx.AsyncClient | None = None
 
     def _is_cooled_down(self, event: SystemEvent) -> bool:
         """Check if enough time has passed since the last notification for this sensor."""
@@ -39,7 +40,17 @@ class NotificationService:
 
     def _record_sent(self, event: SystemEvent) -> None:
         key = event.metadata or event.event_type
-        self._last_sent[key] = datetime.now(timezone.utc)
+        self._last_sent = {**self._last_sent, key: datetime.now(timezone.utc)}
+
+    async def _get_http_client(self) -> httpx.AsyncClient:
+        if self._http_client is None or self._http_client.is_closed:
+            self._http_client = httpx.AsyncClient()
+        return self._http_client
+
+    async def close(self) -> None:
+        """Close shared HTTP client."""
+        if self._http_client is not None and not self._http_client.is_closed:
+            await self._http_client.aclose()
 
     async def dispatch(self, event: SystemEvent) -> None:
         """Send notifications for an alert event, respecting cooldown."""
@@ -47,24 +58,20 @@ class NotificationService:
             logger.debug("Notification suppressed (cooldown): %s", event.description)
             return
 
-        sent = False
+        # Record cooldown on attempt to prevent storm on repeated failures
+        self._record_sent(event)
 
         if self._config.webhook.enabled:
             try:
                 await self._send_webhook(event)
-                sent = True
             except Exception as exc:
                 logger.warning("Webhook notification failed: %s", exc)
 
         if self._config.email.enabled:
             try:
                 await self._send_email(event)
-                sent = True
             except Exception as exc:
                 logger.warning("Email notification failed: %s", exc)
-
-        if sent:
-            self._record_sent(event)
 
     async def _send_webhook(self, event: SystemEvent) -> None:
         """POST alert as JSON to the configured webhook URL."""
@@ -75,15 +82,16 @@ class NotificationService:
             "sensor_id": event.metadata,
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                self._config.webhook.url,
-                json=payload,
-                timeout=self._config.webhook.timeout_seconds,
-            )
-            logger.info(
-                "Webhook sent (%d): %s", response.status_code, event.description
-            )
+        client = await self._get_http_client()
+        response = await client.post(
+            self._config.webhook.url,
+            json=payload,
+            timeout=self._config.webhook.timeout_seconds,
+        )
+        response.raise_for_status()
+        logger.info(
+            "Webhook sent (%d): %s", response.status_code, event.description
+        )
 
     async def _send_email(self, event: SystemEvent) -> None:
         """Send alert email via SMTP (runs in thread to avoid blocking)."""

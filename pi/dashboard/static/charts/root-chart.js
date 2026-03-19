@@ -79,6 +79,18 @@ window.GrowLab.createRootChart = function (containerId) {
 
     var curveFn = d3.curveMonotoneX;
 
+    // Hover crosshairs for each sub-chart
+    var phHover = null;
+    var ecHover = null;
+    if (window.GrowLab.addChartHover) {
+        phHover = window.GrowLab.addChartHover({
+            svg: phGroup, width: fullWidth, height: chartHeight, xScale: phX
+        });
+        ecHover = window.GrowLab.addChartHover({
+            svg: ecGroup, width: fullWidth, height: chartHeight, xScale: ecX
+        });
+    }
+
     function update(phData, ecData) {
         // pH
         if (phData && phData.length > 0) {
@@ -114,6 +126,14 @@ window.GrowLab.createRootChart = function (containerId) {
             phGroup.select(".ph-y-axis")
                 .transition().duration(400)
                 .call(d3.axisLeft(phY).ticks(3).tickFormat(function (d) { return d.toFixed(1); }));
+
+            if (phHover) {
+                phHover.update([{
+                    data: parsedPh, yScale: phY, label: "pH",
+                    color: "var(--accent-green)",
+                    format: function (v) { return v.toFixed(2); }
+                }]);
+            }
         }
 
         // EC
@@ -155,6 +175,14 @@ window.GrowLab.createRootChart = function (containerId) {
             ecGroup.select(".ec-x-axis")
                 .transition().duration(400)
                 .call(d3.axisBottom(ecX).ticks(4).tickFormat(d3.timeFormat("%-I%p")));
+
+            if (ecHover) {
+                ecHover.update([{
+                    data: parsedEc, yScale: ecY, label: "EC",
+                    color: "var(--accent-green)",
+                    format: function (v) { return v.toFixed(0) + " µS/cm"; }
+                }]);
+            }
         }
     }
 

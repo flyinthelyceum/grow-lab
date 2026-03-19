@@ -55,13 +55,94 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         for (var i = 0; i < arr.length; i++) {
             var sum = 0, count = 0;
             for (var j = i - half; j <= i + half; j++) {
-                var idx = ((j % arr.length) + arr.length) % arr.length;
-                sum += arr[idx];
+                if (j < 0 || j >= arr.length) continue;
+                sum += arr[j];
                 count++;
             }
             result.push(sum / count);
         }
         return result;
+    }
+
+    function getMedianGapMs(points) {
+        var diffs = [];
+        for (var i = 1; i < points.length; i++) {
+            var diff = points[i].time.getTime() - points[i - 1].time.getTime();
+            if (diff > 0) diffs.push(diff);
+        }
+        return diffs.length ? (d3.median(diffs) || 0) : 0;
+    }
+
+    function buildSegments(points, gapThresholdMs) {
+        if (!points || points.length === 0) return [];
+
+        var segments = [];
+        var segment = [];
+        var angleOffset = 0;
+        var prevClockAngle = null;
+
+        function commitSegment() {
+            if (segment.length > 0) {
+                segments.push(segment);
+                segment = [];
+            }
+            angleOffset = 0;
+            prevClockAngle = null;
+        }
+
+        for (var i = 0; i < points.length; i++) {
+            var point = points[i];
+            var prevPoint = segment.length ? segment[segment.length - 1] : null;
+
+            if (prevPoint && (point.time.getTime() - prevPoint.time.getTime()) > gapThresholdMs) {
+                commitSegment();
+            }
+
+            if (prevClockAngle !== null && point.clockAngle < prevClockAngle - Math.PI) {
+                angleOffset += Math.PI * 2;
+            }
+
+            point.renderAngle = point.clockAngle + angleOffset;
+            segment.push(point);
+            prevClockAngle = point.clockAngle;
+        }
+
+        commitSegment();
+        return segments;
+    }
+
+    function padToWindow(points, windowMs, valueKey) {
+        if (!points || points.length === 0) return [];
+
+        var endTime = new Date();
+        var startTime = new Date(endTime.getTime() - windowMs);
+        var padded = points.slice();
+        var first = padded[0];
+        var last = padded[padded.length - 1];
+
+        if (first.time.getTime() > startTime.getTime()) {
+            var firstClone = {};
+            for (var key in first) firstClone[key] = first[key];
+            firstClone.time = startTime;
+            firstClone.clockAngle = timeToAngle(startTime);
+            firstClone.angle = firstClone.clockAngle;
+            firstClone.synthetic = true;
+            firstClone[valueKey] = first[valueKey];
+            padded.unshift(firstClone);
+        }
+
+        if (last.time.getTime() < endTime.getTime()) {
+            var lastClone = {};
+            for (var key2 in last) lastClone[key2] = last[key2];
+            lastClone.time = endTime;
+            lastClone.clockAngle = timeToAngle(endTime);
+            lastClone.angle = lastClone.clockAngle;
+            lastClone.synthetic = true;
+            lastClone[valueKey] = last[valueKey];
+            padded.push(lastClone);
+        }
+
+        return padded;
     }
 
     function createRadialRing(canvas) {
@@ -76,10 +157,11 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         var minRadius = maxRadius * 0.42;
 
         var data = null;
-        var smoothedRadii = [];
+        var segments = [];
         var currentTempF = null;
         var nowAngle = 0;
         var animTime = 0;
+        var gapThresholdMs = 20 * 60 * 1000;
 
         var hoverPoint = null;
         var mouseInCanvas = false;
@@ -129,9 +211,9 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             }
 
             var d = data[bestIdx];
-            var r = smoothedRadii[bestIdx] || radiusScale(d.tempF);
+            var r = d.radius || radiusScale(d.tempF);
             hoverPoint = {
-                angle: d.angle, tempF: d.tempF, time: d.time,
+                angle: d.clockAngle, tempF: d.tempF, time: d.time,
                 x: Math.cos(d.angle) * r, y: Math.sin(d.angle) * r, r: r
             };
         });
@@ -156,14 +238,19 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         function setCenterOverride(override) { _centerOverride = override; }
 
         function update(readings) {
-            if (!readings || readings.length === 0) { data = null; smoothedRadii = []; return; }
+            if (!readings || readings.length === 0) {
+                data = null;
+                segments = [];
+                return;
+            }
 
             var parsed = readings.map(function (d) {
                 var date = new Date(d.timestamp);
                 var tempF = (d.unit === "°F") ? d.value : Art.cToF(d.value);
-                return { angle: timeToAngle(date), tempF: tempF, time: date };
+                return { angle: timeToAngle(date), clockAngle: timeToAngle(date), tempF: tempF, time: date };
             });
-            parsed.sort(function (a, b) { return a.angle - b.angle; });
+            parsed.sort(function (a, b) { return a.time - b.time; });
+            parsed = padToWindow(parsed, 24 * 60 * 60 * 1000, "tempF");
 
             var tempMean = d3.mean(parsed, function (d) { return d.tempF; }) || 72;
             var maxDeviation = d3.max(parsed, function (d) {
@@ -176,11 +263,20 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                 .range([baseOuterRadius - wobbleAmplitude, baseOuterRadius + wobbleAmplitude])
                 .clamp(true);
 
+            gapThresholdMs = Math.max((getMedianGapMs(parsed) || 0) * 3, 20 * 60 * 1000);
+            segments = buildSegments(parsed, gapThresholdMs);
+
+            segments.forEach(function (segment) {
+                var rawRadii = segment.map(function (d) { return radiusScale(d.tempF); });
+                var smoothed = smoothArray(rawRadii, 9);
+                for (var i = 0; i < segment.length; i++) {
+                    segment[i].radius = smoothed[i];
+                    segment[i].angle = segment[i].renderAngle;
+                }
+            });
+
             data = parsed;
             currentTempF = parsed[parsed.length - 1].tempF;
-
-            var rawRadii = parsed.map(function (d) { return radiusScale(d.tempF); });
-            smoothedRadii = smoothArray(rawRadii, 9);
         }
 
         function setLiveValue(tempF) { currentTempF = tempF; }
@@ -248,45 +344,52 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             ctx.arc(0, 0, minRadius * 0.88, 0, Math.PI * 2, true);
             ctx.clip();
 
-            for (var i = 0; i < data.length - 1; i++) {
-                var d0 = data[i];
-                var d1 = data[i + 1];
-                if (Math.abs(d1.angle - d0.angle) > Math.PI / 6) continue;
+            // Small angular overlap to prevent sub-pixel gaps between wedges
+            var overlap = 0.003;
 
-                var r0 = smoothedRadii[i];
-                var r1 = smoothedRadii[i + 1];
-                var avgTemp = (d0.tempF + d1.tempF) / 2;
+            segments.forEach(function (segment) {
+                for (var i = 0; i < segment.length - 1; i++) {
+                    var d0 = segment[i];
+                    var d1 = segment[i + 1];
+                    var gapMs = d1.time.getTime() - d0.time.getTime();
+                    if (gapMs > gapThresholdMs) continue;
 
-                ctx.beginPath();
-                ctx.arc(0, 0, minRadius * 0.92, d0.angle, d1.angle);
-                ctx.lineTo(Math.cos(d1.angle) * r1, Math.sin(d1.angle) * r1);
+                    var r0 = d0.radius;
+                    var r1 = d1.radius;
+                    var avgTemp = (d0.tempF + d1.tempF) / 2;
 
-                var midAngle = (d0.angle + d1.angle) / 2;
-                var midR = (r0 + r1) / 2;
-                ctx.quadraticCurveTo(
-                    Math.cos(midAngle) * midR * 1.02,
-                    Math.sin(midAngle) * midR * 1.02,
-                    Math.cos(d0.angle) * r0,
-                    Math.sin(d0.angle) * r0
-                );
-                ctx.closePath();
+                    ctx.beginPath();
+                    ctx.arc(0, 0, minRadius * 0.92, d0.renderAngle, d1.renderAngle + overlap);
+                    ctx.lineTo(Math.cos(d1.renderAngle) * r1, Math.sin(d1.renderAngle) * r1);
 
-                var grad = ctx.createRadialGradient(0, 0, minRadius * 0.92, 0, 0, midR);
-                grad.addColorStop(0, Art.temperatureColorRGBA(avgTemp, 0.12));
-                grad.addColorStop(1, Art.temperatureColorRGBA(avgTemp, 0.45));
-                ctx.fillStyle = grad;
-                ctx.fill();
-            }
+                    var midAngle = (d0.renderAngle + d1.renderAngle) / 2;
+                    var midR = (r0 + r1) / 2;
+                    ctx.quadraticCurveTo(
+                        Math.cos(midAngle) * midR * 1.02,
+                        Math.sin(midAngle) * midR * 1.02,
+                        Math.cos(d0.renderAngle) * r0,
+                        Math.sin(d0.renderAngle) * r0
+                    );
+                    ctx.closePath();
 
-            if (data.length > 2) {
-                var points = [];
-                for (var i = 0; i < data.length; i++) {
-                    points.push({
-                        x: Math.cos(data[i].angle) * smoothedRadii[i],
-                        y: Math.sin(data[i].angle) * smoothedRadii[i],
-                        temp: data[i].tempF
-                    });
+                    var grad = ctx.createRadialGradient(0, 0, minRadius * 0.92, 0, 0, midR);
+                    grad.addColorStop(0, Art.temperatureColorRGBA(avgTemp, 0.12));
+                    grad.addColorStop(1, Art.temperatureColorRGBA(avgTemp, 0.45));
+                    ctx.fillStyle = grad;
+                    ctx.fill();
                 }
+            });
+
+            segments.forEach(function (segment) {
+                if (segment.length < 2) return;
+
+                var points = segment.map(function (point) {
+                    return {
+                        x: Math.cos(point.renderAngle) * point.radius,
+                        y: Math.sin(point.renderAngle) * point.radius,
+                        temp: point.tempF
+                    };
+                });
 
                 var breathe = 0.08 + 0.03 * Math.sin(animTime / 2600);
                 ctx.beginPath();
@@ -297,7 +400,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                     ctx.quadraticCurveTo(prev.x, prev.y, (prev.x + curr.x) / 2, (prev.y + curr.y) / 2);
                 }
                 ctx.strokeStyle = Art.temperatureColorRGBA(
-                    d3.mean(data, function(d) { return d.tempF; }) || 72, breathe
+                    d3.mean(segment, function(d) { return d.tempF; }) || 72, breathe
                 );
                 ctx.lineWidth = 5;
                 ctx.stroke();
@@ -314,7 +417,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                     ctx.lineWidth = 1.5;
                     ctx.stroke();
                 }
-            }
+            });
 
             ctx.restore();
         }
@@ -530,8 +633,13 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             baseOuterRadius = minRadius + (maxRadius - minRadius) * 0.68;
             wobbleAmplitude = (maxRadius - minRadius) * 0.22;
             if (data && data.length > 0) {
-                var rawRadii = data.map(function (d) { return radiusScale(d.tempF); });
-                smoothedRadii = smoothArray(rawRadii, 9);
+                segments.forEach(function (segment) {
+                    var rawRadii = segment.map(function (d) { return radiusScale(d.tempF); });
+                    var smoothed = smoothArray(rawRadii, 9);
+                    for (var i = 0; i < segment.length; i++) {
+                        segment[i].radius = smoothed[i];
+                    }
+                });
             }
         }
 

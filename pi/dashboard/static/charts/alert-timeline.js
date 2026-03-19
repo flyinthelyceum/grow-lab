@@ -117,11 +117,19 @@ window.GrowLab.createAlertTimeline = function (containerId) {
                 d3.select(this).transition().duration(150).attr("r", 6);
                 tooltip.transition().duration(150).style("opacity", 1);
                 var level = d.type === "alert_critical" ? "CRITICAL" : "WARNING";
-                tooltip.html(
-                    "<strong>" + level + "</strong><br>" +
-                    d.description + "<br>" +
-                    "<span class='alert-tooltip-time'>" + formatDateTime(d.time) + "</span>"
-                )
+                var node = tooltip.node();
+                node.textContent = "";
+                var strong = document.createElement("strong");
+                strong.textContent = level;
+                node.appendChild(strong);
+                node.appendChild(document.createElement("br"));
+                node.appendChild(document.createTextNode(d.description));
+                node.appendChild(document.createElement("br"));
+                var timeSpan = document.createElement("span");
+                timeSpan.className = "alert-tooltip-time";
+                timeSpan.textContent = formatDateTime(d.time);
+                node.appendChild(timeSpan);
+                tooltip
                 .style("left", (event.offsetX + 10) + "px")
                 .style("top", (event.offsetY - 10) + "px");
             })

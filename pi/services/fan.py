@@ -57,7 +57,7 @@ class FanService:
 
     async def start(self) -> None:
         """Start the fan control loop."""
-        if self._task is not None:
+        if self.is_running:
             return
 
         if not self._config.enabled:
@@ -111,7 +111,7 @@ class FanService:
                                 target,
                             )
             except Exception as exc:
-                logger.debug("Fan control error: %s", exc)
+                logger.error("Fan control error: %s", exc, exc_info=True)
 
             await asyncio.sleep(self._config.poll_interval_seconds)
 

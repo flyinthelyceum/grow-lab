@@ -37,8 +37,7 @@ def switch_to_i2c(port: str, baud: int, i2c_address: int) -> str:
     Raises:
         serial.SerialException: If the port cannot be opened.
     """
-    conn = serial.Serial(port, baud, timeout=2)
-    try:
+    with serial.Serial(port, baud, timeout=2) as conn:
         command = f"I2C,{i2c_address}\r".encode()
         conn.write(command)
         response = conn.readline().decode().strip()
@@ -49,5 +48,3 @@ def switch_to_i2c(port: str, baud: int, i2c_address: int) -> str:
             response,
         )
         return response
-    finally:
-        conn.close()

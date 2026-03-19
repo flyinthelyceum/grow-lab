@@ -108,22 +108,28 @@ class IrrigationService:
         if not self._check_min_interval():
             return False
 
+        if self._pump_active:
+            logger.warning("Pulse rejected: pump already active")
+            return False
+
         logger.info("Pump pulse: %ds (requested %ds)", clamped, duration_seconds)
         await self._pump_on()
-        await self._log_event(f"Pump ON for {clamped}s")
+        try:
+            await self._log_event(f"Pump ON for {clamped}s")
 
-        # Fire start callback after a short delay (relay LED still on)
-        if self._on_pulse_start is not None and clamped > self._pulse_start_delay:
-            await asyncio.sleep(self._pulse_start_delay)
-            try:
-                await self._on_pulse_start()
-            except Exception as exc:
-                logger.warning("Pulse-start callback error: %s", exc)
-            await asyncio.sleep(clamped - self._pulse_start_delay)
-        else:
-            await asyncio.sleep(clamped)
+            # Fire start callback after a short delay (relay LED still on)
+            if self._on_pulse_start is not None and clamped > self._pulse_start_delay:
+                await asyncio.sleep(self._pulse_start_delay)
+                try:
+                    await self._on_pulse_start()
+                except Exception as exc:
+                    logger.warning("Pulse-start callback error: %s", exc)
+                await asyncio.sleep(clamped - self._pulse_start_delay)
+            else:
+                await asyncio.sleep(clamped)
+        finally:
+            await self._pump_off()
 
-        await self._pump_off()
         await self._log_event(f"Pump OFF after {clamped}s")
 
         if self._on_pulse_complete is not None:
@@ -186,13 +192,14 @@ class IrrigationService:
     async def _pump_on(self) -> None:
         """Turn the pump on via pump controller."""
         response = self._pump.set_pump(True)
-        self._pump_active = True
-        self._last_activation = _utcnow()
 
         if response.ok:
+            self._pump_active = True
+            self._last_activation = _utcnow()
             logger.debug("Pump ON")
         else:
             logger.warning("Pump ON command failed: %s", response.error)
+            raise RuntimeError(f"Pump ON failed: {response.error}")
 
     async def _pump_off(self) -> None:
         """Turn the pump off via pump controller."""

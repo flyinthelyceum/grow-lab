@@ -123,22 +123,21 @@ class TestWebhookChannel:
 
         mock_response = MagicMock()
         mock_response.status_code = 200
+        mock_response.raise_for_status = MagicMock()
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.is_closed = False
+        svc._http_client = mock_client
 
-        with patch("pi.services.notifications.httpx.AsyncClient") as MockClient:
-            MockClient.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
+        await svc._send_webhook(event)
 
-            await svc._send_webhook(event)
-
-            mock_client.post.assert_called_once()
-            call_kwargs = mock_client.post.call_args
-            assert call_kwargs[0][0] == "https://example.com/hook"
-            payload = call_kwargs[1]["json"]
-            assert payload["event_type"] == "alert_warning"
-            assert "description" in payload
-            assert "timestamp" in payload
+        mock_client.post.assert_called_once()
+        call_kwargs = mock_client.post.call_args
+        assert call_kwargs[0][0] == "https://example.com/hook"
+        payload = call_kwargs[1]["json"]
+        assert payload["event_type"] == "alert_warning"
+        assert "description" in payload
+        assert "timestamp" in payload
 
     async def test_webhook_error_propagates(self, webhook_config):
         """Webhook errors propagate (caught by dispatch, not _send_webhook)."""
@@ -147,13 +146,11 @@ class TestWebhookChannel:
 
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(side_effect=Exception("connection refused"))
+        mock_client.is_closed = False
+        svc._http_client = mock_client
 
-        with patch("pi.services.notifications.httpx.AsyncClient") as MockClient:
-            MockClient.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            MockClient.return_value.__aexit__ = AsyncMock(return_value=False)
-
-            with pytest.raises(Exception, match="connection refused"):
-                await svc._send_webhook(event)
+        with pytest.raises(Exception, match="connection refused"):
+            await svc._send_webhook(event)
 
     async def test_dispatch_catches_webhook_error(self, webhook_config):
         """dispatch() should catch webhook errors and not raise."""

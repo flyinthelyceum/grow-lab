@@ -12,21 +12,10 @@ from __future__ import annotations
 
 import logging
 
+from pi.drivers._gpio import get_gpio as _get_gpio
 from pi.drivers.esp32_serial import ESP32Response
 
 logger = logging.getLogger(__name__)
-
-
-def _get_gpio():
-    """Lazy-import RPi.GPIO. Returns None if unavailable (dev/Mac)."""
-    try:
-        import RPi.GPIO as GPIO
-
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
-        return GPIO
-    except (ImportError, RuntimeError):
-        return None
 
 
 class GPIORelayPump:

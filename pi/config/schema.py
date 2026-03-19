@@ -141,6 +141,16 @@ class EmailConfig:
     from_address: str = ""
     to_addresses: tuple[str, ...] = ()
 
+    def __repr__(self) -> str:
+        masked = "***" if self.smtp_password else ""
+        return (
+            f"EmailConfig(enabled={self.enabled!r}, smtp_host={self.smtp_host!r}, "
+            f"smtp_port={self.smtp_port!r}, smtp_user={self.smtp_user!r}, "
+            f"smtp_password={masked!r}, use_tls={self.use_tls!r}, "
+            f"from_address={self.from_address!r}, "
+            f"to_addresses={self.to_addresses!r})"
+        )
+
 
 @dataclass(frozen=True)
 class NotificationConfig:

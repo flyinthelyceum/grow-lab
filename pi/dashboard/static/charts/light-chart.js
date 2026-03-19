@@ -55,6 +55,14 @@ window.GrowLab.createLightChart = function (containerId) {
         .text("")
         .attr("opacity", 0);
 
+    // Hover crosshair
+    var hover = null;
+    if (window.GrowLab.addChartHover) {
+        hover = window.GrowLab.addChartHover({
+            svg: svg, width: width, height: height, xScale: x
+        });
+    }
+
     function update(data) {
         if (!data || data.length === 0) {
             svg.select(".light-line").attr("d", null);
@@ -107,6 +115,14 @@ window.GrowLab.createLightChart = function (containerId) {
         svg.select(".y-axis")
             .transition().duration(400)
             .call(d3.axisLeft(y).ticks(4));
+
+        if (hover) {
+            hover.update([{
+                data: parsed, yScale: y, label: "Light",
+                color: "var(--accent-amber)",
+                format: function (v) { return Math.round(v); }
+            }]);
+        }
     }
 
     return { update: update };
