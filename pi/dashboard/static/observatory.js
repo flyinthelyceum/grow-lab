@@ -341,6 +341,65 @@
         }
     }
 
+    // --- Alert banner ---
+    function showAlert(alert) {
+        var banner = document.getElementById("alert-banner");
+        var text = document.getElementById("alert-text");
+        if (!banner || !text) return;
+
+        var level = alert.event_type === "alert_critical" ? "CRITICAL" : "WARNING";
+        text.textContent = level + ": " + alert.description;
+        banner.className = "alert-banner alert-" + (alert.event_type === "alert_critical" ? "critical" : "warning");
+        banner.style.display = "flex";
+    }
+
+    // --- Fan status ---
+    function refreshFanStatus() {
+        fetchJSON("/api/fan/status").then(function (data) {
+            if (!data || !data.enabled) {
+                setText("air-fan", "Fan: off");
+                return;
+            }
+            if (data.duty_percent !== null) {
+                setText("air-fan", "Fan: " + data.duty_percent + "% @ " + data.temp_f + "°F");
+            } else {
+                setText("air-fan", "Fan: no temp data");
+            }
+        }).catch(function () {});
+    }
+
+    // --- Image gallery ---
+    function refreshGallery() {
+        fetchJSON("/api/images?limit=6").then(function (images) {
+            var strip = document.getElementById("gallery-strip");
+            if (!strip || !images || !images.length) return;
+
+            while (strip.firstChild) strip.removeChild(strip.firstChild);
+
+            images.forEach(function (img) {
+                if (!img.available || !img.url) return;
+                var thumb = document.createElement("img");
+                thumb.src = img.url;
+                thumb.alt = img.filename;
+                thumb.className = "gallery-thumb";
+                thumb.title = formatDateTime(new Date(img.timestamp));
+                thumb.addEventListener("click", function () {
+                    // Show in main camera feed
+                    var container = document.getElementById("camera-feed");
+                    if (container) {
+                        while (container.firstChild) container.removeChild(container.firstChild);
+                        var full = document.createElement("img");
+                        full.src = img.url;
+                        full.alt = img.filename;
+                        container.appendChild(full);
+                        setText("camera-chip", "CAPTURE: " + formatDateTime(new Date(img.timestamp)));
+                    }
+                });
+                strip.appendChild(thumb);
+            });
+        }).catch(function () {});
+    }
+
     // --- System status ---
     function refreshStatus() {
         apiStatus().then(function (data) {
@@ -410,6 +469,9 @@
                 if (data.readings) {
                     updateValues(data.readings);
                 }
+                if (data.alerts && data.alerts.length > 0) {
+                    showAlert(data.alerts[0]);
+                }
             } catch (e) {
                 console.error("WS parse error:", e);
             }
@@ -437,6 +499,8 @@
         setInterval(refreshAllCharts, 30000);
         setInterval(refreshStatus, 10000);
         setInterval(refreshImage, 60000);
+        setInterval(refreshFanStatus, 30000);
+        setInterval(refreshGallery, 60000);
 
         // Request WS update every 3s
         setInterval(function () {
@@ -458,6 +522,8 @@
         refreshAllCharts();
         refreshStatus();
         refreshImage();
+        refreshFanStatus();
+        refreshGallery();
         connectWS();
         startPolling();
     });

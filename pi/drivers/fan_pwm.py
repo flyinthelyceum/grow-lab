@@ -104,15 +104,33 @@ class FanPWMDriver:
         Below ramp_temp_low: fan off (0%).
         Above ramp_temp_high: full speed (100%).
         """
-        if temp_f < self._ramp_temp_low_f:
-            return 0
-        if temp_f >= self._ramp_temp_high_f:
-            return self._max_duty
+        return self.static_duty_for_temperature(
+            temp_f,
+            min_duty=self._min_duty,
+            max_duty=self._max_duty,
+            ramp_low=self._ramp_temp_low_f,
+            ramp_high=self._ramp_temp_high_f,
+        )
 
-        temp_range = self._ramp_temp_high_f - self._ramp_temp_low_f
-        fraction = (temp_f - self._ramp_temp_low_f) / temp_range
-        duty_range = self._max_duty - self._min_duty
-        return round(self._min_duty + fraction * duty_range)
+    @staticmethod
+    def static_duty_for_temperature(
+        temp_f: float,
+        *,
+        min_duty: int = 20,
+        max_duty: int = 100,
+        ramp_low: float = 70.0,
+        ramp_high: float = 85.0,
+    ) -> int:
+        """Calculate duty cycle without needing a driver instance."""
+        if temp_f < ramp_low:
+            return 0
+        if temp_f >= ramp_high:
+            return max_duty
+
+        temp_range = ramp_high - ramp_low
+        fraction = (temp_f - ramp_low) / temp_range
+        duty_range = max_duty - min_duty
+        return round(min_duty + fraction * duty_range)
 
     def close(self) -> None:
         """Stop PWM and release GPIO pin."""

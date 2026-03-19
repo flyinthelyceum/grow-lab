@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -29,18 +29,38 @@ def _reading_to_dict(r) -> dict:
     }
 
 
+def _event_to_dict(e) -> dict:
+    return {
+        "timestamp": e.iso_timestamp,
+        "event_type": e.event_type,
+        "description": e.description,
+    }
+
+
 async def _build_update(repo) -> dict:
-    """Build a sensor update payload from the latest readings."""
+    """Build a sensor update payload from the latest readings and alerts."""
     sensor_ids = await repo.get_sensor_ids()
     readings = []
     for sid in sensor_ids:
         r = await repo.get_latest(sid)
         if r is not None:
             readings.append(_reading_to_dict(r))
-    return {
+
+    # Include recent alerts (last 5 minutes)
+    alerts = []
+    events = await repo.get_events(limit=10)
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
+    for e in events:
+        if e.event_type in ("alert_warning", "alert_critical") and e.timestamp > cutoff:
+            alerts.append(_event_to_dict(e))
+
+    payload: dict = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "readings": readings,
     }
+    if alerts:
+        payload["alerts"] = alerts
+    return payload
 
 
 @router.websocket("/ws/updates")

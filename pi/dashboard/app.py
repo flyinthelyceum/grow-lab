@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from pi.config.schema import FanConfig
 from pi.dashboard.routes.api import router as api_router
 from pi.dashboard.routes.pages import router as pages_router
 from pi.dashboard.routes.websocket import router as ws_router
@@ -22,11 +23,15 @@ TEMPLATES_DIR = DASHBOARD_DIR / "templates"
 STATIC_DIR = DASHBOARD_DIR / "static"
 
 
-def create_app(repo: SensorRepository) -> FastAPI:
+def create_app(
+    repo: SensorRepository,
+    fan_config: FanConfig | None = None,
+) -> FastAPI:
     """Build the observatory dashboard application.
 
     Args:
         repo: Connected SensorRepository for data access.
+        fan_config: Optional fan configuration for status endpoint.
 
     Returns:
         Configured FastAPI application.
@@ -35,6 +40,7 @@ def create_app(repo: SensorRepository) -> FastAPI:
 
     # Store repo in app state for access from routes
     app.state.repo = repo
+    app.state.fan_config = fan_config or FanConfig()
     app.state.templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
     # Mount static files

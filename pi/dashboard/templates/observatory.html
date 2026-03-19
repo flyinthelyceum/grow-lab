@@ -23,6 +23,12 @@
         <div class="system-clock" id="system-clock"></div>
     </header>
 
+    <div class="alert-banner" id="alert-banner" style="display:none">
+        <span class="alert-icon">!</span>
+        <span class="alert-text" id="alert-text"></span>
+        <button class="alert-dismiss" onclick="document.getElementById('alert-banner').style.display='none'">dismiss</button>
+    </div>
+
     <main class="observatory-grid">
         <!-- LIGHT Panel -->
         <section class="panel panel-light" id="panel-light">
@@ -65,6 +71,7 @@
             <div class="panel-meta">
                 <span class="meta-item" id="air-humidity">Humidity: --%</span>
                 <span class="meta-item" id="air-pressure">Pressure: -- hPa</span>
+                <span class="meta-item" id="air-fan">Fan: --</span>
             </div>
         </section>
 
@@ -118,6 +125,10 @@
                             <div class="instrument-label">FRAMES</div>
                             <div class="instrument-detail telemetry-detail" id="plant-count">0 captures</div>
                         </div>
+                    </div>
+                    <div class="plant-gallery" id="plant-gallery">
+                        <div class="instrument-label">RECENT CAPTURES</div>
+                        <div class="gallery-strip" id="gallery-strip"></div>
                     </div>
                 </div>
             </div>

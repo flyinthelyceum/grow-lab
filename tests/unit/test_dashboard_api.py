@@ -204,6 +204,70 @@ class TestImagesEndpoint:
         assert len(data) == 3
 
 
+class TestAlertsEndpoint:
+    async def test_alerts_empty(self, client, mock_repo):
+        mock_repo.get_events.return_value = []
+        response = await client.get("/api/alerts")
+        assert response.status_code == 200
+        assert response.json() == []
+
+    async def test_alerts_filters_by_type(self, client, mock_repo):
+        events = [
+            SystemEvent(
+                timestamp=datetime.now(timezone.utc),
+                event_type="alert_warning",
+                description="Humidity warning: 28.0%",
+            ),
+            SystemEvent(
+                timestamp=datetime.now(timezone.utc),
+                event_type="irrigation",
+                description="Pump pulse 10s",
+            ),
+            SystemEvent(
+                timestamp=datetime.now(timezone.utc),
+                event_type="alert_critical",
+                description="Humidity critical: 26.1%",
+            ),
+        ]
+        mock_repo.get_events.return_value = events
+        response = await client.get("/api/alerts")
+        data = response.json()
+        assert len(data) == 2
+        assert all(d["event_type"].startswith("alert_") for d in data)
+
+
+class TestAlertRulesEndpoint:
+    async def test_rules_returns_defaults(self, client):
+        response = await client.get("/api/alerts/rules")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 4
+        assert data[0]["sensor_id"] == "bme280_temperature"
+        assert "warning_low" in data[0]
+        assert "critical_high" in data[0]
+        assert data[0]["label"] == "Air"
+
+
+class TestFanStatusEndpoint:
+    async def test_fan_status_no_temp(self, client, mock_repo):
+        mock_repo.get_latest.return_value = None
+        response = await client.get("/api/fan/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["temp_f"] is None
+        assert data["duty_percent"] is None
+
+    async def test_fan_status_with_temp(self, client, mock_repo):
+        mock_repo.get_latest.return_value = _reading("bme280_temperature", 23.8, "°C")
+        response = await client.get("/api/fan/status")
+        assert response.status_code == 200
+        data = response.json()
+        # 23.8°C = 74.84°F — in ramp range
+        assert data["temp_f"] is not None
+        assert data["duty_percent"] is not None
+        assert 0 <= data["duty_percent"] <= 100
+
+
 class TestSystemStatus:
     async def test_status(self, client, mock_repo):
         mock_repo.get_db_info.return_value = {

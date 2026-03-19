@@ -188,6 +188,75 @@ async def get_images(
     return [_capture_to_dict(c) for c in captures]
 
 
+@router.get("/alerts")
+async def get_alerts(
+    request: Request,
+    limit: int = Query(default=50, ge=1, le=500),
+) -> list[dict]:
+    """Get recent alert events (warning and critical only)."""
+    repo = request.app.state.repo
+    events = await repo.get_events(limit=limit)
+    return [
+        _event_to_dict(e)
+        for e in events
+        if e.event_type in ("alert_warning", "alert_critical")
+    ]
+
+
+@router.get("/alerts/rules")
+async def get_alert_rules() -> list[dict]:
+    """Get the current threshold alerting rules."""
+    from pi.services.alerts import DEFAULT_RULES
+
+    return [
+        {
+            "sensor_id": r.sensor_id,
+            "label": r.label or r.sensor_id,
+            "unit": r.unit,
+            "warning_low": r.warning_low,
+            "warning_high": r.warning_high,
+            "critical_low": r.critical_low,
+            "critical_high": r.critical_high,
+        }
+        for r in DEFAULT_RULES
+    ]
+
+
+@router.get("/fan/status")
+async def get_fan_status(request: Request) -> dict:
+    """Get fan status based on latest air temperature and config."""
+    from pi.config.schema import FanConfig
+    from pi.drivers.fan_pwm import FanPWMDriver
+
+    repo = request.app.state.repo
+    reading = await repo.get_latest("bme280_temperature")
+
+    config = getattr(request.app.state, "fan_config", FanConfig())
+    temp_f = None
+    duty = None
+
+    if reading is not None:
+        temp_f = reading.value * 9.0 / 5.0 + 32.0
+        duty = FanPWMDriver.static_duty_for_temperature(
+            temp_f,
+            min_duty=config.min_duty,
+            max_duty=config.max_duty,
+            ramp_low=config.ramp_temp_low_f,
+            ramp_high=config.ramp_temp_high_f,
+        )
+
+    return {
+        "enabled": config.enabled,
+        "temp_f": round(temp_f, 1) if temp_f is not None else None,
+        "duty_percent": duty,
+        "gpio_pin": config.gpio_pin,
+        "ramp_temp_low_f": config.ramp_temp_low_f,
+        "ramp_temp_high_f": config.ramp_temp_high_f,
+        "min_duty": config.min_duty,
+        "max_duty": config.max_duty,
+    }
+
+
 @router.get("/system/status")
 async def get_system_status(request: Request) -> dict:
     """Get system status: database stats and active sensors."""
