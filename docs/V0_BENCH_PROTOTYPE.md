@@ -387,6 +387,39 @@ Run with all hardware enabled. Watch for pH/EC drift, grounding noise, and servi
 - [ ] Plant shows no stress in first 48 hours.
 - [ ] System can run unattended with stable telemetry.
 
+## Remote Access: Tailscale Setup
+
+Install Tailscale on the Pi to enable SSH and dashboard access from home (or anywhere) without port forwarding or router changes.
+
+### On the Pi
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+```
+
+Follow the browser link to authenticate. The Pi gets a stable `100.x.x.x` Tailscale IP.
+
+### On your Mac
+
+```bash
+brew install tailscale
+```
+
+Or install the macOS app from tailscale.com/download. Authenticate with the same account.
+
+### Usage
+
+```bash
+# SSH from anywhere
+ssh jared@<pi-tailscale-ip>
+
+# Dashboard from anywhere
+open http://<pi-tailscale-ip>:8000
+```
+
+Tailscale uses WireGuard encryption, works behind NAT on both sides, and is free for personal use (up to 100 devices). MagicDNS gives the Pi a hostname like `growlab-pi.tail<net>.ts.net` so you don't need to memorize IPs.
+
 ## Key Decisions (Locked)
 
 - Pump controller: GPIO relay for V0.
