@@ -23,3 +23,10 @@ async def art_mode(request: Request) -> HTMLResponse:
     """Serve the Art Mode generative visualization page."""
     templates = request.app.state.templates
     return templates.TemplateResponse(request, "art.html")
+
+
+@router.get("/dream", response_class=HTMLResponse)
+async def dream_mode(request: Request) -> HTMLResponse:
+    """Serve the Dream Mode ML-driven particle visualization."""
+    templates = request.app.state.templates
+    return templates.TemplateResponse(request, "dream.html")

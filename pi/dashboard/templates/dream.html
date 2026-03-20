@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GROWLAB — Dream</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Space Mono', monospace;
+        }
+        #dream-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .dream-label {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 10;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+        }
+        .dream-sublabel {
+            position: fixed;
+            top: 46px;
+            left: 24px;
+            z-index: 10;
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.3);
+        }
+        .dream-readout {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 10;
+            min-width: 180px;
+            padding: 12px 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.22);
+            backdrop-filter: blur(8px);
+        }
+        .dream-readout-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.55);
+        }
+        .dream-readout-row + .dream-readout-row {
+            margin-top: 8px;
+        }
+        .dream-readout-value {
+            color: rgba(255,255,255,0.88);
+        }
+        .dream-nav {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: 10;
+        }
+        .dream-nav a {
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.25);
+            text-decoration: none;
+            transition: color 0.3s;
+            margin-right: 20px;
+        }
+        .dream-nav a:hover {
+            color: rgba(255,255,255,0.5);
+        }
+        .dream-status {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.2);
+            text-transform: uppercase;
+        }
+        .dream-debug {
+            position: fixed;
+            bottom: 50px;
+            right: 24px;
+            z-index: 10;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.3);
+            font-family: 'Space Mono', monospace;
+            display: none;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div class="dream-label">GROWLAB</div>
+    <div class="dream-sublabel">DREAM MODE — ENVIRONMENTAL PARTICLE FIELD</div>
+    <div class="dream-readout" id="dream-readout">
+        <div class="dream-readout-row"><span>TEMP</span><span class="dream-readout-value" id="dream-temp">--</span></div>
+        <div class="dream-readout-row"><span>HUMIDITY</span><span class="dream-readout-value" id="dream-humidity">--</span></div>
+        <div class="dream-readout-row"><span>PRESSURE</span><span class="dream-readout-value" id="dream-pressure">--</span></div>
+        <div class="dream-readout-row"><span>PARTICLES</span><span class="dream-readout-value" id="dream-particles">--</span></div>
+    </div>
+    <canvas id="dream-canvas"></canvas>
+    <div class="dream-status" id="dream-status">INITIALIZING</div>
+    <div class="dream-debug" id="dream-debug"></div>
+    <nav class="dream-nav">
+        <a href="/">OBSERVATORY</a>
+        <a href="/art">ART</a>
+    </nav>
+
+    <script type="module" src="/static/dream/dream-controller.js"></script>
+</body>
+</html>

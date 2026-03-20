@@ -78,3 +78,42 @@ class TestArtModePage:
     async def test_includes_art_js(self, client):
         response = await client.get("/art")
         assert "art.js" in response.text
+
+    async def test_art_links_to_dream(self, client):
+        response = await client.get("/art")
+        assert "/dream" in response.text
+
+
+class TestDreamModePage:
+    async def test_dream_returns_html(self, client):
+        response = await client.get("/dream")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+
+    async def test_contains_dream_mode_title(self, client):
+        response = await client.get("/dream")
+        assert "GROWLAB" in response.text
+        assert "Dream" in response.text
+
+    async def test_includes_threejs_importmap(self, client):
+        response = await client.get("/dream")
+        assert "importmap" in response.text
+        assert "three" in response.text
+
+    async def test_includes_dream_controller(self, client):
+        response = await client.get("/dream")
+        assert "dream-controller.js" in response.text
+
+    async def test_includes_canvas(self, client):
+        response = await client.get("/dream")
+        assert "dream-canvas" in response.text
+
+    async def test_dream_nav_links(self, client):
+        response = await client.get("/dream")
+        html = response.text
+        assert "OBSERVATORY" in html
+        assert "/art" in html
+
+    async def test_observatory_links_to_dream(self, client):
+        response = await client.get("/")
+        assert "/dream" in response.text
