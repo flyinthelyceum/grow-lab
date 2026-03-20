@@ -103,7 +103,7 @@ function createDreamData(callbacks) {
             var val = r.value;
 
             if (id.indexOf("temperature") !== -1 && id.indexOf("bme280") !== -1) {
-                var tempF = r.unit === "celsius" ? cToF(val) : val;
+                var tempF = (r.unit === "°F" || r.unit === "fahrenheit") ? val : cToF(val);
                 state.tempF = ema(state.tempF, tempF);
             } else if (id.indexOf("humidity") !== -1) {
                 state.humidity = ema(state.humidity, val);
@@ -139,7 +139,7 @@ function createDreamData(callbacks) {
                     if (!data || !data.length) return;
                     var latest = data[data.length - 1];
                     if (sensorId.indexOf("temperature") !== -1) {
-                        state.tempF = latest.unit === "celsius" ? cToF(latest.value) : latest.value;
+                        state.tempF = (latest.unit === "°F" || latest.unit === "fahrenheit") ? latest.value : cToF(latest.value);
                     } else if (sensorId.indexOf("humidity") !== -1) {
                         state.humidity = latest.value;
                     } else if (sensorId.indexOf("pressure") !== -1) {
