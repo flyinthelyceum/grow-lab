@@ -315,15 +315,40 @@ For each driver:
 - Implement driver.
 - Wire into `build_registry()`.
 
+### 3.0.1 i3 InterLink Installation
+
+The Atlas Scientific i3 InterLink is a Pi HAT carrier board that provides 5 EZO circuit slots (2 electrically isolated, 3 non-isolated) over I2C. It passes through all GPIO pins.
+
+1. **Power off the Pi** before installing.
+2. Seat the i3 InterLink onto the Pi's 40-pin GPIO header.
+3. Snap EZO-pH and EZO-EC circuits into the isolated slots (isolation prevents sensor cross-talk in shared nutrient solution).
+4. Power on and verify the carrier is detected:
+
+```bash
+sudo i2cdetect -y 1
+# The i3 InterLink itself doesn't have an address — look for
+# the EZO circuits at their configured addresses (default UART mode
+# won't show; switch to I2C first)
+```
+
 ### 3.1 Atlas UART -> I2C Mode Switch
 
-Atlas boards ship in UART mode; switch each board before I2C use.
+Atlas EZO circuits ship in UART mode; switch each to I2C before use. The `growlab sensor ezo-setup` CLI automates this:
 
+```bash
+# Connect EZO circuit to USB-UART adapter (or use i3 InterLink UART header)
+growlab sensor ezo-setup --sensor ph --port /dev/ttyUSB0
+growlab sensor ezo-setup --sensor ec --port /dev/ttyUSB0
+
+# Verify on I2C bus
+sudo i2cdetect -y 1
+# expect 0x63 (pH) and/or 0x64 (EC)
+```
+
+Alternative manual method:
 ```bash
 minicom -D /dev/serial0 -b 9600
 # send per-board command, e.g. I2C,99 or I2C,100
-sudo i2cdetect -y 1
-# expect 0x63 (pH) and/or 0x64 (EC)
 ```
 
 ### 3.2 pH Calibration
