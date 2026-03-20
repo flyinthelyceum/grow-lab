@@ -98,6 +98,21 @@ Center disc shows context-sensitive detail on hover. Distance-based priority: wa
 
 Design references: [UI_UX_DESIGN_REFERENCE.md](UI_UX_DESIGN_REFERENCE.md)
 
+## Dream Mode (`/dream`)
+
+Anadol-inspired 3D particle visualization driven by live sensor data via Three.js WebGL:
+
+- **50K point sprites** — additive-blended with soft circle texture, auto-downscales on weaker GPUs
+- **3D curl noise flow field** — simplex noise derivatives create divergence-free velocity field; two octaves for fine turbulence over macro flow
+- **Sensor mapping** — temperature→particle color (blue→teal→amber) + noise scale, humidity→particle density, pressure→flow amplitude, irrigation→cyan burst events
+- **UnrealBloomPass** — post-processing glow for Anadol-style ethereal aesthetic
+- **Auto-orbit camera** — slow perspective rotation around particle field
+- **HUD overlay** — live sensor readouts (temp, humidity, pressure, particle count)
+
+Keyboard: Space=pause, D=debug HUD, F=fullscreen.
+
+Future phases: VAE trained on sensor time-series (Phase B), learned environmental pattern visualization (Phase C), and generative "dreaming" mode replaying historical states (Phase D).
+
 ## Embedded OLED Display
 
 SH1106 128×64 OLED on I²C 0x3C. Rotates through 4 pages every 5 seconds:

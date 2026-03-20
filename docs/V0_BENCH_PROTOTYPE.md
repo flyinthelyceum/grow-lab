@@ -105,6 +105,26 @@ This runbook replaces the older software-build-first commissioning flow.
 - Next first step:
   - Use the local demo profile to continue observatory/art review loops and screenshot-driven refinement without touching the Pi database.
 
+### Session Handoff (end of day: March 20, 2026)
+
+- Completed:
+  - **Dream Mode** (`/dream`) — Phase A foundation shipped. Anadol-inspired WebGL particle visualization with 50K additive-blended particles, 3D curl noise flow field, UnrealBloomPass glow, and auto-orbit camera. Sensor data drives visuals in real time: temperature→color, humidity→density, pressure→flow amplitude, irrigation→burst events. Three.js loaded as ES module. Nav links added to Observatory and Art views. 7 new e2e tests.
+  - **EZO-pH online** — i3 InterLink HAT installed, EZO circuits switched from UART to I2C via PGND-TX pin short. pH sensor at 0x63, 3-point calibration completed (4.00, 7.00, 10.00 buffers). Now polling every 300s.
+  - **EZO-EC online** — EC sensor at 0x64, 2-point calibration completed (12,880 and 80,000 µS/cm). Now polling every 300s.
+  - **Reservoir readings** — pH 8.3, EC 1,529 µS/cm in plain water. Plausible baseline.
+  - **Tailscale installed** — Pi reachable from anywhere at `100.77.46.126`. Mac and iPhone on same mesh. Attendance-scanner Pi also added (`100.83.65.68`).
+  - **Temperature conversion fix** — Dream Mode was displaying Celsius as Fahrenheit. BME280 unit is `°C` not `"celsius"`. Fixed to assume Celsius unless explicitly Fahrenheit.
+  - `httpx` installed on Pi (was missing, blocked `growlab start` due to NotificationService import).
+- Pi access: `ssh jared@100.77.46.126` (Tailscale) or `ssh jared@10.80.1.161` (local network).
+- Dashboard: `http://100.77.46.126:8000` (Tailscale) — Observatory, Art, and Dream Mode all live.
+- Processes running: `growlab start` (polling all 4 sensors, irrigation, alerts, fan, display), `growlab dashboard` on port 8000.
+- Phase 3 exit criteria: pH and EC done. Soil moisture blocked on hardware delivery.
+- Next session priorities:
+  1. Monitor pH/EC stability over 24h — check for drift or grounding noise from i3 InterLink isolation.
+  2. Begin Phase 4: nutrient introduction once pH/EC stability confirmed.
+  3. Dream Mode refinement — tune particle aesthetics, bloom settings, flow field parameters based on live data.
+  4. Plan Phase B (ML): VAE training pipeline on Pi once sufficient sensor history accumulates (~7 days).
+
 ## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 
 Hardware on hand: Pi 4, DS18B20, 5V relay, Micra Plus pump, Noctua fan.
@@ -379,10 +399,10 @@ growlab sensor read soil_moisture
 
 ### Phase 3 Exit Criteria
 
-- [ ] Soil moisture driver built/tested and sensor reading changes with moisture.
-- [ ] EZO-pH driver built/tested and calibrated readings are within tolerance.
-- [ ] EZO-EC driver built/tested and calibrated readings match reference.
-- [ ] Registry reports all three sensors available when connected.
+- [ ] Soil moisture driver built/tested and sensor reading changes with moisture. *(hardware not yet arrived)*
+- [x] EZO-pH driver built/tested and calibrated readings are within tolerance. *(3-point cal: 4.00→3.998, 7.00→6.995, 10.00→10.011)*
+- [x] EZO-EC driver built/tested and calibrated readings match reference. *(2-point cal: 12,880 and 80,000 µS/cm)*
+- [x] Registry reports pH and EC sensors available when connected. *(soil moisture pending hardware)*
 
 ## Phase 4 (Days 7-10): Full Integration, Nutrients, Plant
 

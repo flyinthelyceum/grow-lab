@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-03-20
+
+### Added
+- **Dream Mode** (`/dream`) — Anadol-inspired WebGL particle visualization using Three.js. 50K additive-blended point sprites driven by a 3D curl noise flow field. Sensor data modulates visuals in real time: temperature→particle color (blue→teal→amber), humidity→particle density, pressure→flow amplitude, irrigation→cyan burst events. UnrealBloomPass post-processing for glow. Auto-orbit perspective camera. 60fps animation loop with visibility pause. Auto-downscales particle count on weaker GPUs.
+- `/dream` route added to dashboard. Nav links from Observatory and Art views.
+- 7 new e2e tests for Dream Mode page.
+
+### Fixed
+- **Dream Mode temperature conversion** — BME280 reports unit as `°C`, not `"celsius"`. Conversion logic now assumes Celsius unless unit is explicitly `°F` or `"fahrenheit"`.
+
+### Validated (Phase 3 Hardware)
+- Atlas EZO-pH circuit online at I2C 0x63 via i3 InterLink HAT. 3-point calibration: pH 4.00→3.998, 7.00→6.995, 10.00→10.011. Polling every 300s.
+- Atlas EZO-EC circuit online at I2C 0x64 via i3 InterLink HAT. 2-point calibration: 12,880 µS/cm and 80,000 µS/cm. Polling every 300s.
+- EZO circuits switched from UART to I2C mode via PGND-TX pin short (no USB-UART adapter needed).
+- Reservoir baseline: pH 8.3, EC 1,529 µS/cm in plain water.
+- All 4 sensors passing `growlab sensor validate-all`: BME280, DS18B20, EZO-pH, EZO-EC.
+
+### Infrastructure
+- **Tailscale** installed on grow-lab Pi (100.77.46.126). SSH and dashboard accessible from anywhere.
+- `httpx` added to Pi venv (required by NotificationService at runtime).
+
 ## 2026-03-19
 
 ### Fixed
