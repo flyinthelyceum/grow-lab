@@ -43,19 +43,26 @@
     box-sizing: border-box;
 }
 
-html, body {
+html {
     height: 100%;
+}
+
+body {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     background: var(--bg-primary);
     color: var(--text-primary);
     font-family: var(--font-body);
     font-size: 14px;
     line-height: 1.5;
-    overflow-x: hidden;
 }
 
 /* === HEADER === */
 
 .observatory-header {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -125,12 +132,13 @@ html, body {
 /* === GRID === */
 
 .observatory-grid {
+    flex: 1;
+    min-height: 0;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     gap: var(--gap);
-    padding: 10px 20px;
-    height: calc(100vh - 102px - 42px);  /* header + footer */
+    padding: 10px 20px 52px;  /* bottom padding clears fixed footer */
 }
 
 /* === PANELS === */
@@ -319,6 +327,9 @@ html, body {
 .panel-plant {
     grid-column: 3;
     grid-row: 1 / 3;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
 }
 
 .plant-layout {
@@ -326,12 +337,12 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: var(--gap);
-    min-height: 0;
+    overflow: hidden;
 }
 
 .plant-camera-stage {
     position: relative;
-    flex: 0 0 58%;
+    flex: 1 1 auto;
     min-height: 0;
     padding-top: 28px;
 }
@@ -355,7 +366,7 @@ html, body {
 
 .panel-camera {
     flex: 1;
-    min-height: 240px;
+    min-height: 160px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -643,6 +654,7 @@ html, body {
 
 /* --- Alert history timeline --- */
 .alert-timeline-strip {
+    flex-shrink: 0;
     padding: 4px 16px 0;
 }
 .alert-timeline-header {

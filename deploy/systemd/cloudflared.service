@@ -1,0 +1,15 @@
+[Unit]
+Description=Cloudflare Tunnel for GROWLAB
+After=network-online.target growlab-dashboard.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jared
+ExecStart=/usr/bin/cloudflared tunnel --config /home/jared/.cloudflared/config.yml run
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

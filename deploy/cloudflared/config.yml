@@ -1,0 +1,19 @@
+# Cloudflare Tunnel configuration for GROWLAB
+# Place this file at: /home/jared/.cloudflared/config.yml on the Pi
+#
+# Before using:
+#   1. Run `cloudflared tunnel login` to authenticate
+#   2. Run `cloudflared tunnel create growlab` to create the tunnel
+#   3. Copy the tunnel UUID into this file
+#   4. Run `cloudflared tunnel route dns growlab grow.aaand.space`
+
+tunnel: REPLACE_WITH_TUNNEL_UUID
+credentials-file: /home/jared/.cloudflared/REPLACE_WITH_TUNNEL_UUID.json
+
+ingress:
+  # Grow lab dashboard
+  - hostname: grow.aaand.space
+    service: http://localhost:8000
+
+  # Catch-all (required by cloudflared)
+  - service: http_status:404
