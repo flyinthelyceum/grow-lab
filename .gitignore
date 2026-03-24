@@ -23,6 +23,7 @@ config.toml
 
 # OS
 .DS_Store
+._*
 Thumbs.db
 
 # Captures (downloaded from Pi)
