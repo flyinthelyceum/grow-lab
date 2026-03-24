@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-03-24
+
+### Added
+- **TSL2591 light sensor driver** (`pi/drivers/tsl2591.py`) — high-dynamic-range I2C lux sensor (188 µLux to 88k Lux, address 0x29). Calculates lux from visible+IR channels using datasheet coefficients. Returns `tsl2591_lux` and `tsl2591_ir` readings. 12 unit tests.
+- **TSL2591 config & registry** — sensor entry in `config.example.toml` (disabled by default), I2C address map, auto-registration in `build_registry()`.
+- **Lighting PWM logging** — `LightingScheduler._log_reading()` saves PWM values as `light_pwm` sensor readings on transitions, enabling dashboard chart history.
+- **ESP32 reconnect & self-healing** — `ESP32Serial.reconnect()` method. `LightingScheduler` tracks consecutive failures and auto-reconnects after 3, preventing silent light-off on serial port loss.
+- **systemd service for main process** (`deploy/systemd/growlab.service`) — `Type=notify` with `WatchdogSec=300`, start limits, dependency ordering with dashboard service.
+- **Systemd watchdog heartbeat** in `pi/main.py` — sends `READY=1` on startup, `WATCHDOG=1` every 120s via `NOTIFY_SOCKET`.
+- **Decoupled lighting scheduler** — creates independent ESP32 serial connection when pump uses GPIO relay, preventing serial port conflicts.
+
+### Fixed
+- **Dashboard LIGHT panel** — now displays live PWM data from `light_pwm` sensor readings (was showing stale/nonexistent data). Dynamic unit label (`lx` vs `PWM`) in HTML template. Cache-busting `?v=2` on `observatory.js`.
+- **Light chart** — auto-detects TSL2591 lux vs PWM data: smooth CatmullRom curve for lux, StepAfter for PWM. Dynamic Y-axis scaling and hover tooltips.
+- **Lighting failure handling** — `_set_pwm` no longer updates `_current_pwm` on failure, forcing retry on next scheduler tick instead of silently accepting the failure.
+- **Dashboard service hardening** — added `After=growlab.service`, `Restart=always`, start limits.
+
+### Docs
+- TSL2591 added to BOM, SENSOR_STACK I2C address table, and WIRING_&_BUSES I2C device list.
+
 ## 2026-03-20
 
 ### Added

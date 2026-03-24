@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import signal
 from pathlib import Path
 
@@ -22,6 +23,26 @@ from pi.services.irrigation import IrrigationService
 from pi.services.polling import PollingService
 
 logger = logging.getLogger(__name__)
+
+
+def _get_sd_notify():
+    """Return a systemd notify function, or a no-op if unavailable."""
+    try:
+        import socket
+        addr = os.environ.get("NOTIFY_SOCKET")
+        if addr:
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            if addr.startswith("@"):
+                addr = "\0" + addr[1:]
+            def _notify(msg: str) -> None:
+                try:
+                    sock.sendto(msg.encode(), addr)
+                except OSError:
+                    pass
+            return _notify
+    except Exception:
+        pass
+    return lambda msg: None
 
 
 def _build_pump_controller(config: AppConfig):
@@ -188,13 +209,28 @@ async def run(config: AppConfig) -> None:
 
     # Start lighting scheduler (requires ESP32 for LED PWM)
     lighting_svc = None
-    if pump is not None and config.irrigation.pump_controller == "esp32":
+    esp32_lighting = None
+    if config.lighting.on_hour != config.lighting.off_hour:
+        from pi.drivers.esp32_serial import ESP32Serial
         from pi.services.lighting import LightingScheduler
 
-        lighting_svc = LightingScheduler(pump, repo, config.lighting)
-        await lighting_svc.start()
-    elif config.lighting.on_hour != config.lighting.off_hour:
-        logger.info("Lighting scheduler inactive — ESP32 not connected")
+        # Reuse the pump ESP32 connection if pump_controller is esp32,
+        # otherwise open a dedicated connection for lighting.
+        if pump is not None and config.irrigation.pump_controller == "esp32":
+            esp32_lighting = pump
+        else:
+            esp32_lighting = ESP32Serial(
+                port=config.serial.port,
+                baud=config.serial.baud,
+                timeout=config.serial.timeout,
+            )
+            if not esp32_lighting.connect():
+                logger.warning("Lighting scheduler disabled — ESP32 not available on %s", config.serial.port)
+                esp32_lighting = None
+
+        if esp32_lighting is not None:
+            lighting_svc = LightingScheduler(esp32_lighting, repo, config.lighting)
+            await lighting_svc.start()
 
     # Set up graceful shutdown
     shutdown_event = asyncio.Event()
@@ -209,13 +245,22 @@ async def run(config: AppConfig) -> None:
 
     logger.info("System running. Press Ctrl+C to stop.")
 
-    # Wait for shutdown
-    await shutdown_event.wait()
+    # Notify systemd watchdog periodically while waiting for shutdown
+    sd_notify = _get_sd_notify()
+    sd_notify("READY=1")
+    while not shutdown_event.is_set():
+        sd_notify("WATCHDOG=1")
+        try:
+            await asyncio.wait_for(shutdown_event.wait(), timeout=120)
+        except asyncio.TimeoutError:
+            pass  # Loop back to send next watchdog ping
 
     # Clean shutdown
     logger.info("Shutting down...")
     if lighting_svc is not None:
         await lighting_svc.stop()
+    if esp32_lighting is not None and esp32_lighting is not pump:
+        esp32_lighting.close()
     if fan_svc is not None:
         await fan_svc.stop()
     await alert_svc.stop()

@@ -1,0 +1,21 @@
+[Unit]
+Description=GROWLAB Main (polling, irrigation, display, alerts, lighting)
+After=network-online.target
+Wants=network-online.target
+Before=growlab-dashboard.service
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=notify
+NotifyAccess=all
+User=jared
+WorkingDirectory=/home/jared/grow-lab
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/bin/bash -lc 'source /home/jared/grow-lab/.venv/bin/activate && growlab start'
+Restart=always
+RestartSec=10
+WatchdogSec=300
+
+[Install]
+WantedBy=multi-user.target

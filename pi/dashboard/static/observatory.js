@@ -41,7 +41,7 @@
 
     // --- Sensor ID mapping ---
     const SENSOR_MAP = {
-        light: ["bme280_light", "light_pwm"],
+        light: ["tsl2591_lux", "light_pwm"],
         air_temp: ["bme280_temperature"],
         air_humidity: ["bme280_humidity"],
         air_pressure: ["bme280_pressure"],
@@ -237,12 +237,24 @@
     function updateValues(readings) {
         // readings is an array of {sensor_id, value, unit}
         readings.forEach(function (r) {
-            if (r.sensor_id === "light_pwm" || r.sensor_id === "bme280_light") {
-                var rounded = Math.round(r.value);
-                setText("light-value", rounded);
-                setText("light-mode", isLightOn(rounded) ? "Photoperiod active" : "Lights idle");
-                setText("light-schedule", isLightOn(rounded) ? "Canopy output holding steady" : "Awaiting next cycle");
-                setText("light-note", isLightOn(rounded) ? "Active growth window" : "Dark interval in effect");
+            if (r.sensor_id === "tsl2591_lux") {
+                var lux = Math.round(r.value);
+                setText("light-value", lux);
+                setText("light-unit", "lx");
+                setText("light-mode", lux > 50 ? "Photoperiod active" : "Lights idle");
+                setText("light-schedule", lux > 50 ? "Canopy receiving light" : "Awaiting next cycle");
+                setText("light-note", lux > 50 ? "Active growth window" : "Dark interval in effect");
+            } else if (r.sensor_id === "light_pwm") {
+                var pwm = Math.round(r.value);
+                // Only update if no lux sensor is providing data
+                var unitEl = document.getElementById("light-unit");
+                if (!unitEl || unitEl.textContent !== "lx") {
+                    setText("light-value", pwm);
+                    setText("light-unit", "PWM");
+                    setText("light-mode", isLightOn(pwm) ? "Photoperiod active" : "Lights idle");
+                    setText("light-schedule", isLightOn(pwm) ? "Driver command active" : "Awaiting next cycle");
+                    setText("light-note", isLightOn(pwm) ? "Active growth window (no lux sensor)" : "Dark interval in effect");
+                }
             }
             if (r.sensor_id === "bme280_temperature") {
                 var tempF = cToF(r.value);

@@ -63,10 +63,18 @@ class ESP32Serial:
             self._serial = None
             return False
 
+    def reconnect(self) -> bool:
+        """Close and reopen the serial connection. Returns True on success."""
+        self.close()
+        return self.connect()
+
     def close(self) -> None:
         """Close the serial connection."""
         if self._serial is not None:
-            self._serial.close()
+            try:
+                self._serial.close()
+            except Exception:
+                pass
             self._serial = None
 
     def send_command(self, command: str) -> ESP32Response:

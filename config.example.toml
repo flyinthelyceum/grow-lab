@@ -39,6 +39,11 @@ address = 0x48             # ADS1115 ADC address (reads DFRobot SEN0308 analog o
 interval_seconds = 300
 enabled = true
 
+[sensors.tsl2591]
+address = 0x29
+interval_seconds = 120
+enabled = false
+
 [sensors]
 soil_moisture_channel = 0  # ADS1115 channel (0-3) for SEN0308
 

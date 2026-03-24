@@ -61,6 +61,9 @@ class SensorsConfig:
         default_factory=lambda: SensorEntry(address=0x48, interval_seconds=300)
     )
     soil_moisture_channel: int = 0  # ADS1115 channel (0-3) for SEN0308
+    tsl2591: SensorEntry = field(
+        default_factory=lambda: SensorEntry(address=0x29, interval_seconds=120)
+    )
 
 
 @dataclass(frozen=True)

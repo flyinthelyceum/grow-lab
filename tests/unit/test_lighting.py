@@ -200,4 +200,4 @@ class TestLightingScheduler:
         )
 
         await scheduler._set_pwm(128)
-        assert scheduler._current_pwm == 128  # Still updates tracking
+        assert scheduler._current_pwm == -1  # Not updated on failure — forces retry

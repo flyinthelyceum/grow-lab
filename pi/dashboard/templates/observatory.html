@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GROWLAB</title>
-    <link rel="stylesheet" href="/static/style.css?v=2">
+    <link rel="stylesheet" href="/static/style.css?v=4">
     <!-- Fonts: gracefully degrade to system fonts when offline on Pi -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -15,6 +15,10 @@
             <h1 class="observatory-title">GROWLAB</h1>
             <div class="observatory-subtitle">Environmental observatory</div>
         </div>
+        <nav class="mobile-nav">
+            <a href="/art" class="mobile-nav-link">ART</a>
+            <a href="/dream" class="mobile-nav-link">DREAM</a>
+        </nav>
         <div class="time-controls">
             <button class="time-btn" data-window="1h">1H</button>
             <button class="time-btn active" data-window="24h">24H</button>
@@ -42,7 +46,7 @@
             <div class="panel-header">
                 <span class="panel-label">LIGHT</span>
                 <span class="panel-value" id="light-value">--</span>
-                <span class="panel-unit">PWM</span>
+                <span class="panel-unit" id="light-unit">PWM</span>
             </div>
             <div class="panel-note" id="light-note">Photoperiod telemetry live</div>
             <div class="panel-chart" id="chart-light"></div>
@@ -161,6 +165,6 @@
     <script src="/static/charts/air-chart.js"></script>
     <script src="/static/charts/root-chart.js"></script>
     <script src="/static/charts/alert-timeline.js"></script>
-    <script src="/static/observatory.js"></script>
+    <script src="/static/observatory.js?v=2"></script>
 </body>
 </html>

@@ -187,11 +187,27 @@ Cable management for separating wet systems and electrical components
 
 ---
 
+# Light Measurement
+
+Ambient Light / Lux
+
+Adafruit TSL2591 High Dynamic Range Digital Light Sensor (Product 1980)
+I2C interface (address 0x29)
+Very high dynamic range: 188 µLux to 88,000 Lux
+Separate visible + IR channels (enables approximate PPFD estimation)
+3.3–5V
+~$7
+
+Mount at canopy height, facing the grow light. Provides closed-loop verification
+that the LED is on, at the expected intensity, and not degrading over time.
+
+---
+
 # Future Hardware (Not Required for V0)
 
 Light measurement
 
-PAR meter
+Quantum PAR sensor (Apogee SQ-520 or similar) for true µmol/m²/s PPFD
 
 Environmental control
 

@@ -63,6 +63,9 @@ window.GrowLab.createLightChart = function (containerId) {
         });
     }
 
+    // Track whether we're showing lux or PWM for axis formatting
+    var isLux = false;
+
     function update(data) {
         if (!data || data.length === 0) {
             svg.select(".light-line").attr("d", null);
@@ -73,25 +76,30 @@ window.GrowLab.createLightChart = function (containerId) {
 
         noDataText.attr("opacity", 0);
 
+        // Detect data source from sensor_id
+        isLux = data[0] && data[0].sensor_id === "tsl2591_lux";
+
         var parsed = data.map(function (d) {
             return { time: new Date(d.timestamp), value: d.value };
         });
 
         x.domain(d3.extent(parsed, function (d) { return d.time; }));
-        var yMax = d3.max(parsed, function (d) { return d.value; }) || 255;
+        var yMax = d3.max(parsed, function (d) { return d.value; }) || (isLux ? 1000 : 255);
         y.domain([0, Math.max(yMax * 1.1, 10)]);
 
-        // Step curve for discrete on/off transitions
+        // Lux: smooth curve. PWM: discrete step transitions.
+        var curveType = isLux ? d3.curveCatmullRom : d3.curveStepAfter;
+
         var line = d3.line()
             .x(function (d) { return x(d.time); })
             .y(function (d) { return y(d.value); })
-            .curve(d3.curveStepAfter);
+            .curve(curveType);
 
         var area = d3.area()
             .x(function (d) { return x(d.time); })
             .y0(height)
             .y1(function (d) { return y(d.value); })
-            .curve(d3.curveStepAfter);
+            .curve(curveType);
 
         svg.select(".light-line")
             .datum(parsed)
@@ -118,9 +126,12 @@ window.GrowLab.createLightChart = function (containerId) {
 
         if (hover) {
             hover.update([{
-                data: parsed, yScale: y, label: "Light",
+                data: parsed, yScale: y,
+                label: isLux ? "Lux" : "PWM",
                 color: "var(--accent-amber)",
-                format: function (v) { return Math.round(v); }
+                format: isLux
+                    ? function (v) { return Math.round(v) + " lx"; }
+                    : function (v) { return Math.round(v); }
             }]);
         }
     }

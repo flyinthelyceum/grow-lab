@@ -139,6 +139,7 @@ Devices on the bus:
 • SSD1306 OLED display (128x64) — 0x3C
 • Atlas EZO‑pH — 0x63 (Phase 3)
 • Atlas EZO‑EC — 0x64 (Phase 3)
+• TSL2591 light sensor (canopy lux) — 0x29
 • STEMMA Soil Sensor (media moisture) — 0x36 (Phase 3)
 
 Raspberry Pi pins:

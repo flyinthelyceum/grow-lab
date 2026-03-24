@@ -12,7 +12,7 @@ import logging
 from datetime import datetime, time, timezone
 
 from pi.config.schema import LightingConfig
-from pi.data.models import SystemEvent
+from pi.data.models import SensorReading, SystemEvent
 from pi.data.repository import SensorRepository
 from pi.drivers.esp32_serial import ESP32Serial
 
@@ -91,6 +91,8 @@ def compute_ramp_intensity(
 class LightingScheduler:
     """Manages the photoperiod schedule and sends commands to ESP32."""
 
+    MAX_CONSECUTIVE_FAILURES = 3
+
     def __init__(
         self,
         esp32: ESP32Serial,
@@ -103,6 +105,7 @@ class LightingScheduler:
         self._task: asyncio.Task | None = None
         self._running = False
         self._current_pwm: int = -1  # Track to avoid redundant commands
+        self._consecutive_failures: int = 0
 
     @property
     def is_running(self) -> bool:
@@ -164,17 +167,48 @@ class LightingScheduler:
             raise
 
     async def _set_pwm(self, pwm: int) -> None:
-        """Send a LIGHT command to the ESP32."""
+        """Send a LIGHT command to the ESP32, reconnecting on failure."""
         response = self._esp32.set_light(pwm)
         old_pwm = self._current_pwm
-        self._current_pwm = pwm
 
         if response.ok:
-            logger.debug("Light PWM: %d -> %d", old_pwm, pwm)
-        else:
-            logger.warning(
-                "Light command failed (PWM %d): %s", pwm, response.error
+            self._current_pwm = pwm
+            self._consecutive_failures = 0
+            if old_pwm != pwm:
+                logger.info("Light PWM: %d -> %d", old_pwm, pwm)
+                await self._log_reading(pwm)
+            return
+
+        # Command failed — don't update _current_pwm so we retry next tick
+        self._consecutive_failures += 1
+        logger.warning(
+            "Light command failed (PWM %d, attempt %d): %s",
+            pwm, self._consecutive_failures, response.error,
+        )
+
+        if self._consecutive_failures >= self.MAX_CONSECUTIVE_FAILURES:
+            logger.warning("ESP32 unresponsive — attempting reconnect")
+            if self._esp32.reconnect():
+                logger.info("ESP32 reconnected, retrying light command")
+                retry = self._esp32.set_light(pwm)
+                if retry.ok:
+                    self._current_pwm = pwm
+                    self._consecutive_failures = 0
+                    logger.info("Light PWM recovered: %d", pwm)
+                    await self._log_reading(pwm)
+                    return
+            self._consecutive_failures = 0  # Reset counter, will retry next tick
+
+    async def _log_reading(self, pwm: int) -> None:
+        """Save the current PWM level as a sensor reading."""
+        await self._repository.save_reading(
+            SensorReading(
+                timestamp=datetime.now(timezone.utc),
+                sensor_id="light_pwm",
+                value=float(pwm),
+                unit="PWM",
             )
+        )
 
     async def _log_event(self, description: str) -> None:
         """Log a lighting event to the database."""

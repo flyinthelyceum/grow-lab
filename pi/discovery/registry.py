@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Known I²C address -> sensor name mapping
 I2C_ADDRESS_MAP: dict[int, str] = {
+    0x29: "tsl2591",
     0x76: "bme280",
     0x77: "bme280",  # alternate address
     0x63: "ezo_ph",
@@ -231,6 +232,36 @@ def build_registry(config: AppConfig, scan: ScanResult) -> SensorRegistry:
             statuses.append(
                 SensorStatus(
                     "soil_moisture",
+                    False,
+                    None,
+                    f"not found at 0x{addr:02X}",
+                )
+            )
+
+    # TSL2591 Light Sensor
+    if config.sensors.tsl2591.enabled:
+        addr = config.sensors.tsl2591.address
+        device = _find_i2c_device(addr, scan)
+        if device is not None:
+            try:
+                from pi.drivers.tsl2591 import TSL2591Driver
+
+                driver = TSL2591Driver(
+                    bus_number=config.i2c.bus, address=addr
+                )
+                statuses.append(
+                    SensorStatus("tsl2591", True, driver, "detected")
+                )
+                logger.info("TSL2591 registered at 0x%02X", addr)
+            except Exception as exc:
+                statuses.append(
+                    SensorStatus("tsl2591", False, None, f"init failed: {exc}")
+                )
+                logger.error("TSL2591 init failed: %s", exc)
+        else:
+            statuses.append(
+                SensorStatus(
+                    "tsl2591",
                     False,
                     None,
                     f"not found at 0x{addr:02X}",
