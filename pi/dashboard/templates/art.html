@@ -95,6 +95,41 @@
         .art-readout-value {
             color: rgba(255,255,255,0.88);
         }
+
+        @media (max-width: 600px) {
+            .art-label {
+                top: 12px;
+                left: 12px;
+                font-size: 12px;
+            }
+            .art-sublabel {
+                display: none;
+            }
+            .art-readout {
+                top: auto;
+                bottom: 12px;
+                right: 12px;
+                left: 12px;
+                min-width: 0;
+                padding: 10px 12px;
+            }
+            .art-nav {
+                top: 10px;
+                bottom: auto;
+                left: auto;
+                right: 12px;
+            }
+            .art-nav a {
+                font-size: 12px;
+                padding: 6px 0;
+            }
+            .pressure-readout {
+                bottom: auto;
+                top: 40px;
+                right: 12px;
+                left: auto;
+            }
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 </head>

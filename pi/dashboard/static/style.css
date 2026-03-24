@@ -537,6 +537,24 @@ body {
     color: var(--accent-red);
 }
 
+/* Mobile nav in header — hidden on desktop */
+.mobile-nav {
+    display: none;
+}
+
+.mobile-nav-link {
+    font-family: var(--font-data);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-decoration: none;
+    color: var(--text-dim);
+    transition: color 0.3s;
+}
+
+.mobile-nav-link:hover {
+    color: var(--text-secondary);
+}
+
 .status-art-link {
     margin-left: auto;
     font-size: 11px;
@@ -553,9 +571,15 @@ body {
 /* === RESPONSIVE === */
 
 @media (max-width: 900px) {
+    body {
+        overflow-y: auto;
+        height: auto;
+    }
+
     .observatory-grid {
         grid-template-columns: 1fr 1fr;
         grid-template-rows: auto;
+        padding-bottom: 16px;
     }
 
     .panel-plant {
@@ -563,20 +587,99 @@ body {
         grid-row: auto;
     }
 
+    .plant-layout {
+        overflow: visible;
+    }
+
     .plant-camera-stage {
         flex-basis: auto;
+    }
+
+    .observatory-footer {
+        position: static;
     }
 }
 
 @media (max-width: 600px) {
-    .observatory-grid {
-        grid-template-columns: 1fr;
+    /* Header: compact single row */
+    .observatory-header {
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        gap: 8px;
     }
 
-    .observatory-header {
-        flex-direction: column;
-        align-items: flex-start;
+    .observatory-subtitle {
+        display: none;
+    }
+
+    /* Show nav links in header, hide in footer */
+    .mobile-nav {
+        display: flex;
+        gap: 16px;
+    }
+
+    .status-art-link {
+        display: none;
+    }
+
+    .system-clock {
+        min-width: 0;
+        font-size: 12px;
+    }
+
+    /* Hide alert timeline on phones */
+    .alert-timeline-strip {
+        display: none;
+    }
+
+    /* Grid: single column, natural height */
+    .observatory-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        padding: 8px 8px 16px;
         gap: 8px;
+    }
+
+    /* Panels: tighter padding */
+    .panel {
+        padding: 12px;
+    }
+
+    /* Scale down big numbers */
+    .panel-value {
+        font-size: clamp(28px, 8vw, 36px);
+    }
+
+    .panel-light .panel-value,
+    .panel-water .panel-value {
+        font-size: clamp(24px, 7vw, 32px);
+    }
+
+    .panel-air .panel-value,
+    .panel-root .panel-value,
+    .panel-plant .panel-value {
+        font-size: clamp(32px, 10vw, 48px);
+    }
+
+    /* Shorter charts */
+    .panel-light .panel-chart,
+    .panel-water .panel-chart {
+        min-height: 100px;
+    }
+
+    /* Camera: shorter minimum */
+    .panel-camera {
+        min-height: 120px;
+    }
+
+    .plant-camera-stage {
+        padding-top: 24px;
+    }
+
+    /* Smaller gauge */
+    .plant-gauge {
+        min-height: 100px;
+        min-width: 100px;
     }
 
     .plant-instrument-row {
@@ -591,6 +694,33 @@ body {
     .telemetry-block-compact {
         min-width: 0;
         text-align: left;
+    }
+
+    /* Bigger touch targets */
+    .time-btn {
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+
+    /* Footer: in flow, not fixed */
+    .observatory-footer {
+        position: static;
+    }
+
+    .status-bar {
+        padding: 10px 12px;
+        font-size: 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .status-art-link {
+        margin-left: 0;
+    }
+
+    /* Smaller meta text */
+    .meta-item {
+        font-size: 11px;
     }
 }
 
