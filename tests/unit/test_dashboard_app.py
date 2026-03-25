@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 import pytest
 from fastapi import FastAPI
 
-from pi.dashboard.app import create_app
+from pi.dashboard.app import build_static_asset_url, create_app
 
 
 @pytest.fixture
@@ -45,3 +45,13 @@ class TestCreateApp:
     def test_repo_stored_in_state(self, mock_repo):
         app = create_app(mock_repo)
         assert app.state.repo is mock_repo
+
+    def test_registers_static_asset_helper(self, mock_repo):
+        app = create_app(mock_repo)
+        helper = app.state.templates.env.globals["static_asset"]
+        url = helper("art.js")
+        assert url.startswith("/static/art.js?v=")
+
+
+def test_build_static_asset_url_ignores_missing_files():
+    assert build_static_asset_url("missing.js") == "/static/missing.js"

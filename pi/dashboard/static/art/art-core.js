@@ -148,6 +148,78 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         return 0.05 + Math.max(0, Math.min(1, (humPct - 20) / 70)) * 0.35;
     }
 
+    // -------------------------------------------------------
+    // Color scales — 3-zone pH gradient (litmus: green → violet)
+    // -------------------------------------------------------
+
+    // pH → RGB: bright green (acidic) → yellow-green → soft violet → deep purple (alkaline)
+    // Domain 4.0–9.0
+    function phToRGB(ph) {
+        var t = Math.max(0, Math.min(1, (ph - 4.0) / 5.0));
+        var r, g, b;
+        if (t < 0.3) {
+            // 4.0–5.5: bright green → yellow-green
+            var s = t / 0.3;
+            r = 80 + s * 60;
+            g = 220 - s * 20;
+            b = 100 - s * 20;
+        } else if (t < 0.6) {
+            // 5.5–7.0: yellow-green → soft violet
+            var s = (t - 0.3) / 0.3;
+            r = 140 + s * 20;
+            g = 200 - s * 80;
+            b = 80 + s * 140;
+        } else {
+            // 7.0–9.0: soft violet → deep purple
+            var s = (t - 0.6) / 0.4;
+            r = 160 - s * 40;
+            g = 120 - s * 60;
+            b = 220 - s * 40;
+        }
+        return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
+    }
+
+    function phColorRGBA(ph, alpha) {
+        var c = phToRGB(ph);
+        return "rgba(" + c.r + "," + c.g + "," + c.b + "," + alpha + ")";
+    }
+
+    // -------------------------------------------------------
+    // Color scales — 3-zone EC gradient (gold → electric blue)
+    // -------------------------------------------------------
+
+    // EC (µS/cm) → RGB: muted gold (dilute) → teal-blue → electric blue (concentrated)
+    // Domain 0–3000
+    function ecToRGB(ec) {
+        var t = Math.max(0, Math.min(1, ec / 3000));
+        var r, g, b;
+        if (t < 0.267) {
+            // 0–800: muted gold → bright gold
+            var s = t / 0.267;
+            r = 180 + s * 40;
+            g = 160 + s * 30;
+            b = 60 - s * 20;
+        } else if (t < 0.6) {
+            // 800–1800: bright gold → teal-blue
+            var s = (t - 0.267) / 0.333;
+            r = 220 - s * 140;
+            g = 190 - s * 20;
+            b = 40 + s * 180;
+        } else {
+            // 1800–3000: teal-blue → electric blue
+            var s = (t - 0.6) / 0.4;
+            r = 80 - s * 20;
+            g = 170 - s * 30;
+            b = 220 + s * 35;
+        }
+        return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
+    }
+
+    function ecColorRGBA(ec, alpha) {
+        var c = ecToRGB(ec);
+        return "rgba(" + c.r + "," + c.g + "," + c.b + "," + alpha + ")";
+    }
+
     // °C → °F
     function cToF(c) {
         return c * 9 / 5 + 32;
@@ -163,6 +235,10 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
     window.GrowLab.ArtMode.temperatureColor = temperatureColor;
     window.GrowLab.ArtMode.temperatureColorRGBA = temperatureColorRGBA;
     window.GrowLab.ArtMode.humidityOpacity = humidityOpacity;
+    window.GrowLab.ArtMode.phToRGB = phToRGB;
+    window.GrowLab.ArtMode.phColorRGBA = phColorRGBA;
+    window.GrowLab.ArtMode.ecToRGB = ecToRGB;
+    window.GrowLab.ArtMode.ecColorRGBA = ecColorRGBA;
     window.GrowLab.ArtMode.cToF = cToF;
 
 })();

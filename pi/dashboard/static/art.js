@@ -2,21 +2,23 @@
  * GROWLAB — Art Mode Controller
  *
  * Full-screen generative visualization driven by live sensor data.
- * Renders all environmental layers:
+ * Renders all environmental + reservoir layers:
  *   - Pressure atmosphere (background)
  *   - Radial thermal ring (temperature)
  *   - Humidity breathing ring (outer)
+ *   - pH ring (reservoir chemistry — inner)
+ *   - EC ring (reservoir conductivity — innermost)
  *   - Water pulse markers (irrigation events)
  *   - Ambient particles (living field)
  *
  * Data pipeline:
- *   1. Fetch 24h downsampled history on load (temp + humidity)
+ *   1. Fetch 24h downsampled history on load (temp + humidity + pH + EC)
  *   2. Fetch irrigation events
  *   3. WebSocket for live value updates
  *   4. Re-fetch history every 5 minutes
  *
  * Center disc shows context-sensitive info:
- *   Priority: water event > humidity > temperature (default)
+ *   Priority: water event > pH > EC > humidity > temperature (default)
  */
 
 (function () {
@@ -31,6 +33,8 @@
     var waterPulses = null;
     var pressureField = null;
     var particles = null;
+    var phRing = null;
+    var ecRing = null;
     var ws = null;
     var wsIntervalId = null;
     var canvas = null;
@@ -75,6 +79,14 @@
         return fetchJSON("/api/readings/bme280_humidity/downsampled?window=24h");
     }
 
+    function fetchPhHistory() {
+        return fetchJSON("/api/readings/ezo_ph/downsampled?window=24h");
+    }
+
+    function fetchEcHistory() {
+        return fetchJSON("/api/readings/ezo_ec/downsampled?window=24h");
+    }
+
     function fetchIrrigationEvents() {
         return fetchJSON("/api/events?limit=50").then(function (events) {
             return events.filter(function (e) {
@@ -110,6 +122,26 @@
             })
             .catch(function (err) {
                 console.error("Art: failed to fetch humidity history", err);
+            });
+
+        fetchPhHistory()
+            .then(function (readings) {
+                if (!readings || readings.length === 0) return;
+                phRing.update(readings);
+                setReadout("art-live-ph", readings[readings.length - 1].value.toFixed(2));
+            })
+            .catch(function (err) {
+                console.error("Art: failed to fetch pH history", err);
+            });
+
+        fetchEcHistory()
+            .then(function (readings) {
+                if (!readings || readings.length === 0) return;
+                ecRing.update(readings);
+                setReadout("art-live-ec", readings[readings.length - 1].value.toFixed(0) + " \u00b5S");
+            })
+            .catch(function (err) {
+                console.error("Art: failed to fetch EC history", err);
             });
 
         fetchIrrigationEvents()
@@ -150,6 +182,14 @@
                         if (r.sensor_id === "bme280_pressure") {
                             pressureField.setLiveValue(r.value);
                             setReadout("pressure-readout", "PRESSURE " + r.value.toFixed(0) + " HPA");
+                        }
+                        if (r.sensor_id === "ezo_ph") {
+                            phRing.setLiveValue(r.value);
+                            setReadout("art-live-ph", r.value.toFixed(2));
+                        }
+                        if (r.sensor_id === "ezo_ec") {
+                            ecRing.setLiveValue(r.value);
+                            setReadout("art-live-ec", r.value.toFixed(0) + " \u00b5S");
                         }
                     });
                 }
@@ -218,13 +258,21 @@
             ring.getHoverAngle, ring.getMouseDist);
         pressureField = Art.createPressureField(sharedCtx, getCx, getCy, getMaxR);
         particles = Art.createAmbientParticles(sharedCtx, getCx, getCy, getMaxR);
+        phRing = Art.createPhRing(sharedCtx, getCx, getCy, getMaxR,
+            function () { return ring.getMinRadius(); },
+            ring.getHoverAngle, ring.getMouseDist);
+        ecRing = Art.createEcRing(sharedCtx, getCx, getCy, getMaxR,
+            function () { return ring.getMinRadius(); },
+            ring.getHoverAngle, ring.getMouseDist);
 
         // Start animation loop
         loop = new Art.AnimationLoop();
         loop.register(function (dt, now) {
             // Route hover info to center disc
-            // Priority: water markers > distance-based (temp vs humidity) > none
+            // Priority: water > pH > EC > humidity vs temperature > none
             var waterHover = waterPulses.getHoverEvent();
+            var phHover = phRing.getHoverPh();
+            var ecHover = ecRing.getHoverEc();
             var humHover = humRing.getHoverHum();
             var tempHover = ring.getHoverPoint();
             var mouseDist = ring.getMouseDist();
@@ -236,6 +284,22 @@
                     label: "IRRIGATION",
                     color: "rgba(30,210,255,0.9)",
                     labelColor: "rgba(30,210,255,0.3)"
+                });
+            } else if (phHover) {
+                ring.setCenterOverride({
+                    value: phHover.ph.toFixed(2),
+                    unit: "pH",
+                    label: phHover.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+                    color: Art.phColorRGBA(phHover.ph, 0.9),
+                    labelColor: Art.phColorRGBA(phHover.ph, 0.4)
+                });
+            } else if (ecHover) {
+                ring.setCenterOverride({
+                    value: ecHover.ec.toFixed(0),
+                    unit: "\u00b5S/cm",
+                    label: ecHover.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+                    color: Art.ecColorRGBA(ecHover.ec, 0.9),
+                    labelColor: Art.ecColorRGBA(ecHover.ec, 0.4)
                 });
             } else if (tempHover && humHover) {
                 // Both rings active — pick based on mouse distance
@@ -264,10 +328,12 @@
                 ring.setCenterOverride(null);
             }
 
-            // Render order: pressure → ring → humidity → water → particles
+            // Render order: pressure → ring → humidity → pH → EC → water → particles
             pressureField.render(dt);
             ring.render(dt, now);
             humRing.render(dt);
+            phRing.render(dt);
+            ecRing.render(dt);
             waterPulses.render(dt);
             particles.render(dt);
         });

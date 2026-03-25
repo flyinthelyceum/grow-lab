@@ -135,11 +135,13 @@
 </head>
 <body>
     <div class="art-label">GROWLAB</div>
-    <div class="art-sublabel">ENVIRONMENTAL ATMOSPHERE — 24H RADIAL</div>
+    <div class="art-sublabel">ENVIRONMENTAL + RESERVOIR — 24H RADIAL</div>
     <div class="art-readout" id="art-readout">
         <div class="art-readout-row"><span>TEMP</span><span class="art-readout-value" id="art-live-temp">--</span></div>
         <div class="art-readout-row"><span>HUMIDITY</span><span class="art-readout-value" id="art-live-humidity">--</span></div>
         <div class="art-readout-row"><span>LAST WATER</span><span class="art-readout-value" id="art-live-water">--</span></div>
+        <div class="art-readout-row" style="margin-top:12px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)"><span>pH</span><span class="art-readout-value" id="art-live-ph">--</span></div>
+        <div class="art-readout-row"><span>EC</span><span class="art-readout-value" id="art-live-ec">--</span></div>
     </div>
     <canvas id="art-canvas"></canvas>
     <div class="pressure-readout" id="pressure-readout"></div>
@@ -148,13 +150,15 @@
         <a href="/dream" style="margin-left:20px">DREAM</a>
     </nav>
 
-    <script src="/static/vendor/d3.v7.min.js"></script>
-    <script src="/static/art/art-core.js"></script>
-    <script src="/static/art/radial-ring.js"></script>
-    <script src="/static/art/humidity-ring.js"></script>
-    <script src="/static/art/water-pulses.js"></script>
-    <script src="/static/art/pressure-field.js"></script>
-    <script src="/static/art/ambient-particles.js"></script>
-    <script src="/static/art.js"></script>
+    <script src="{{ static_asset('vendor/d3.v7.min.js') }}"></script>
+    <script src="{{ static_asset('art/art-core.js') }}"></script>
+    <script src="{{ static_asset('art/radial-ring.js') }}"></script>
+    <script src="{{ static_asset('art/humidity-ring.js') }}"></script>
+    <script src="{{ static_asset('art/water-pulses.js') }}"></script>
+    <script src="{{ static_asset('art/pressure-field.js') }}"></script>
+    <script src="{{ static_asset('art/ambient-particles.js') }}"></script>
+    <script src="{{ static_asset('art/ph-ring.js') }}"></script>
+    <script src="{{ static_asset('art/ec-ring.js') }}"></script>
+    <script src="{{ static_asset('art.js') }}"></script>
 </body>
 </html>

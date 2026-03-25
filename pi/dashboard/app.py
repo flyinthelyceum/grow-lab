@@ -7,6 +7,7 @@ templates, static file serving, and API/WebSocket routes.
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.parse import urlencode
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -22,6 +23,23 @@ from pi.data.repository import SensorRepository
 DASHBOARD_DIR = Path(__file__).parent
 TEMPLATES_DIR = DASHBOARD_DIR / "templates"
 STATIC_DIR = DASHBOARD_DIR / "static"
+
+
+def build_static_asset_url(path: str) -> str:
+    """Return a cache-busted static asset URL for a dashboard file."""
+    normalized = path.lstrip("/")
+    asset_path = (STATIC_DIR / normalized).resolve()
+
+    try:
+        asset_path.relative_to(STATIC_DIR.resolve())
+    except ValueError:
+        return f"/static/{normalized}"
+
+    if not asset_path.exists():
+        return f"/static/{normalized}"
+
+    version = int(asset_path.stat().st_mtime_ns)
+    return f"/static/{normalized}?{urlencode({'v': version})}"
 
 
 def create_app(
@@ -49,6 +67,7 @@ def create_app(
     app.state.fan_service = fan_service
     app.state.connection_manager = connection_manager or ConnectionManager()
     app.state.templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+    app.state.templates.env.globals["static_asset"] = build_static_asset_url
 
     # Mount static files
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

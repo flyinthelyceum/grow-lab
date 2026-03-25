@@ -18,7 +18,7 @@ Actuators: GPIO relay pump, fan relay, ESP32 LED dimmer.
 FastAPI serves two views at `http://<pi-ip>:8000`:
 
 - **Observatory** (`/`) — 5-panel layout (LIGHT, WATER, AIR, ROOT, PLANT) with D3.js charts backed by downsampled history, live WebSocket values, time window selection (1H / 24H / 7D), and per-subsystem range indicators.
-- **Art Mode** (`/art`) — full-screen generative visualization. 24h environmental data rendered as a radial composition: thermal ring, humidity breathing ring, water pulse markers, pressure atmosphere, and ambient particle field. Hover reveals context-sensitive detail in the center disc.
+- **Art Mode** (`/art`) — full-screen generative visualization. 24h environmental and reservoir data rendered as a radial composition: thermal ring, humidity breathing ring, pH ring, EC ring, water pulse markers, pressure atmosphere, and ambient particle field. Hover reveals context-sensitive detail in the center disc.
 
 Data stored in SQLite on the Pi. Observatory and art mode both query downsampled history via REST API and receive live values over WebSocket.
 
@@ -51,6 +51,19 @@ sudo cp deploy/systemd/growlab-dashboard.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now growlab-dashboard
 sudo systemctl status growlab-dashboard
+```
+
+Push dashboard-only changes from your Mac and restart the Pi services:
+
+```bash
+./deploy/push-dashboard.sh
+```
+
+Recover the dashboard stack directly on the Pi:
+
+```bash
+./deploy/recover-dashboard.sh
+./deploy/recover-dashboard.sh --quick
 ```
 
 ## Working Away From Hardware
