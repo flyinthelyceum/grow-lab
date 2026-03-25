@@ -1,6 +1,6 @@
 """Tests for the sensor registry."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from pi.config.schema import AppConfig, SensorEntry, SensorsConfig
 from pi.discovery.registry import SensorRegistry, SensorStatus, build_registry
@@ -99,6 +99,27 @@ class TestBuildRegistry:
         assert statuses_by_id["ezo_ec"].reason == "detected"
         assert statuses_by_id["soil_moisture"].available
         assert statuses_by_id["soil_moisture"].reason == "detected"
+
+    def test_as7341_detected(self):
+        scan = _make_scan(0x39)
+        config = AppConfig(
+            sensors=SensorsConfig(
+                as7341=SensorEntry(address=0x39, enabled=True),
+            )
+        )
+
+        with patch("pi.drivers.as7341.AS7341Driver") as MockDriver:
+            mock_instance = MagicMock()
+            MockDriver.return_value = mock_instance
+            registry = build_registry(config, scan)
+
+        assert registry.is_available("as7341")
+        MockDriver.assert_called_once_with(
+            bus_number=1,
+            address=0x39,
+            ppfd_estimator=None,
+            node_id="growlab-node",
+        )
 
     def test_bme280_init_failure(self):
         scan = _make_scan(0x76)

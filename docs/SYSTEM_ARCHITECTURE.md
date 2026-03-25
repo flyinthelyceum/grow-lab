@@ -29,6 +29,7 @@ Sensors → Raspberry Pi → SQLite → Dashboard / Art Mode
 
 - Sensor drivers poll hardware on configurable intervals (1–15 min)
 - Readings stored in SQLite with timestamps
+- AS7341 runtime path may emit both raw spectral channels and fixture-specific `estimated_ppfd`
 - REST API serves downsampled history (`/api/readings/<sensor>/downsampled?window=24h`) to both dashboard views
 - WebSocket (`/ws/updates`) pushes live values to connected clients (poll-response) and server-push alert events via ConnectionManager broadcast
 

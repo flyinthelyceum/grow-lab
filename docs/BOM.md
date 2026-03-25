@@ -191,15 +191,16 @@ Cable management for separating wet systems and electrical components
 
 Ambient Light / Lux
 
-Adafruit TSL2591 High Dynamic Range Digital Light Sensor (Product 1980)
-I2C interface (address 0x29)
-Very high dynamic range: 188 µLux to 88,000 Lux
-Separate visible + IR channels (enables approximate PPFD estimation)
+Adafruit AS7341 10-Channel Light / Color Sensor Breakout
+I2C interface (address 0x39)
+Eight visible spectral bands plus clear and NIR channels
+Useful for relative canopy spectral/intensity monitoring
 3.3–5V
-~$7
+~$15
 
 Mount at canopy height, facing the grow light. Provides closed-loop verification
-that the LED is on, at the expected intensity, and not degrading over time.
+that the LED is on, how canopy light shifts over time, and whether spectral
+output is drifting as the fixture ages.
 
 ---
 

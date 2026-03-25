@@ -36,6 +36,14 @@ class SerialConfig:
 
 
 @dataclass(frozen=True)
+class InstallationConfig:
+    node_id: str = "growlab-node"
+    fixture_id: str = ""
+    fixture_model: str = ""
+    sensor_board_id: str = ""
+
+
+@dataclass(frozen=True)
 class SensorEntry:
     address: int = 0
     gpio: int = 0
@@ -61,8 +69,8 @@ class SensorsConfig:
         default_factory=lambda: SensorEntry(address=0x48, interval_seconds=300)
     )
     soil_moisture_channel: int = 0  # ADS1115 channel (0-3) for SEN0308
-    tsl2591: SensorEntry = field(
-        default_factory=lambda: SensorEntry(address=0x29, interval_seconds=120)
+    as7341: SensorEntry = field(
+        default_factory=lambda: SensorEntry(address=0x39, interval_seconds=120)
     )
 
 
@@ -127,6 +135,13 @@ class DisplayConfig:
 
 
 @dataclass(frozen=True)
+class CalibrationConfig:
+    enabled: bool = False
+    profile_dir: Path = field(default_factory=lambda: Path("config") / "calibration")
+    active_profile: str = ""
+
+
+@dataclass(frozen=True)
 class WebhookConfig:
     enabled: bool = False
     url: str = ""
@@ -167,10 +182,12 @@ class AppConfig:
     system: SystemConfig = field(default_factory=SystemConfig)
     i2c: I2CConfig = field(default_factory=I2CConfig)
     serial: SerialConfig = field(default_factory=SerialConfig)
+    installation: InstallationConfig = field(default_factory=InstallationConfig)
     sensors: SensorsConfig = field(default_factory=SensorsConfig)
     camera: CameraConfig = field(default_factory=CameraConfig)
     lighting: LightingConfig = field(default_factory=LightingConfig)
     irrigation: IrrigationConfig = field(default_factory=IrrigationConfig)
     fan: FanConfig = field(default_factory=FanConfig)
     display: DisplayConfig = field(default_factory=DisplayConfig)
+    calibration: CalibrationConfig = field(default_factory=CalibrationConfig)
     notifications: NotificationConfig = field(default_factory=NotificationConfig)

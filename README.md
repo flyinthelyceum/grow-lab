@@ -93,6 +93,7 @@ pytest tests/browser/test_browser_dashboard.py -v
 - [System Architecture](docs/SYSTEM_ARCHITECTURE.md)
 - [Data Architecture](docs/DATA_ARCHITECTURE.md)
 - [Sensor Stack](docs/SENSOR_STACK.md)
+- [AS7341 Calibration Protocol](docs/AS7341_CALIBRATION_PROTOCOL.md)
 - [Wiring & Buses](docs/WIRING_&_BUSES.md)
 - [Irrigation System](docs/IRRIGATION_SYSTEM.md)
 - [Lighting System](docs/LIGHTING_SYSTEM.md)

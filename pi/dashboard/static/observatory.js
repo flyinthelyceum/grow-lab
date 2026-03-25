@@ -41,7 +41,7 @@
 
     // --- Sensor ID mapping ---
     const SENSOR_MAP = {
-        light: ["tsl2591_lux", "light_pwm"],
+        light: ["as7341_lux", "light_pwm"],
         air_temp: ["bme280_temperature"],
         air_humidity: ["bme280_humidity"],
         air_pressure: ["bme280_pressure"],
@@ -237,7 +237,7 @@
     function updateValues(readings) {
         // readings is an array of {sensor_id, value, unit}
         readings.forEach(function (r) {
-            if (r.sensor_id === "tsl2591_lux") {
+            if (r.sensor_id === "as7341_lux") {
                 var lux = Math.round(r.value);
                 setText("light-value", lux);
                 setText("light-unit", "lx");

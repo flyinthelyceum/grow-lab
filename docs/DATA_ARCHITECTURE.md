@@ -66,11 +66,12 @@ Variables logged:
 
 • light_pwm_level  
 • light_schedule_state (on/off)  
-• estimated_ppfd (future expansion)
+• as7341 raw spectral channels  
+• estimated_ppfd
 
 Source:
 
-ESP32 dimming controller.
+ESP32 dimming controller plus installed AS7341 sensor.
 
 Typical logging:
 
@@ -78,7 +79,8 @@ on state change and periodic interval.
 
 Purpose:
 
-Correlate plant growth and environmental response with light intensity.
+Correlate plant growth and environmental response with both commanded light
+level and fixture-specific estimated PPFD.
 
 ---
 
@@ -258,6 +260,7 @@ Over time the dataset becomes a record of the interaction between biological lif
 Later versions of the system may incorporate:
 
 • light intensity sensors (PAR / PPFD)  
+• per-node calibration drift checks for installed AS7341 commissioning profiles
 • CO₂ monitoring  
 • machine learning analysis  
 • automated control loops based on sensor feedback

@@ -193,6 +193,12 @@ class TestLookupSensor:
         assert unit == "F"
         assert convert is not None
 
+    def test_as7341_light_label(self):
+        label, unit, convert = _lookup_sensor("as7341_lux")
+        assert label == "Light"
+        assert unit == "lx"
+        assert convert is None
+
     def test_prefix_match_ds18b20(self):
         label, unit, convert = _lookup_sensor("ds18b20_abc123")
         assert label == "H2O Temp"

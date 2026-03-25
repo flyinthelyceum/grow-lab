@@ -77,7 +77,7 @@ window.GrowLab.createLightChart = function (containerId) {
         noDataText.attr("opacity", 0);
 
         // Detect data source from sensor_id
-        isLux = data[0] && data[0].sensor_id === "tsl2591_lux";
+        isLux = data[0] && data[0].sensor_id === "as7341_lux";
 
         var parsed = data.map(function (d) {
             return { time: new Date(d.timestamp), value: d.value };

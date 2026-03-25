@@ -1,0 +1,60 @@
+{
+  "profile_id": "growlab-v0-example-20260324T220000Z",
+  "created_at": "2026-03-24T22:00:00+00:00",
+  "calibration_version": "1",
+  "node_id": "growlab-v0",
+  "fixture_id": "bench-fixture-a",
+  "fixture_model": "Samsung LM301H strip",
+  "sensor_board_id": "as7341-demo-01",
+  "operator": "Example Operator",
+  "sensor_settings": {
+    "gain": 7,
+    "integration_time": 29,
+    "astep": 599
+  },
+  "mount_assumptions": {
+    "orientation": "upward-facing",
+    "geometry": "fixed per node",
+    "diffuser_bound_to_calibration": true,
+    "shroud_bound_to_calibration": true
+  },
+  "regression_type": "linear",
+  "feature_names": [
+    "as7341_415nm",
+    "as7341_445nm",
+    "as7341_480nm",
+    "as7341_515nm",
+    "as7341_555nm",
+    "as7341_590nm",
+    "as7341_630nm",
+    "as7341_680nm",
+    "as7341_clear",
+    "as7341_nir"
+  ],
+  "intercept": 2.75,
+  "coefficients": [
+    0.0048,
+    0.0061,
+    0.0087,
+    0.0104,
+    0.0126,
+    0.0108,
+    0.0071,
+    0.0042,
+    0.0039,
+    -0.0017
+  ],
+  "training_sample_count": 18,
+  "validation_sample_count": 6,
+  "metrics": {
+    "rmse": 14.8,
+    "mae": 11.6,
+    "median_abs_error": 10.9,
+    "r2": 0.9821,
+    "residual_min": -18.2,
+    "residual_max": 17.3,
+    "residual_mean": 0.8
+  },
+  "calibration_status": "commissioned",
+  "notes": "Example profile only. Replace with node-specific commissioning data."
+}

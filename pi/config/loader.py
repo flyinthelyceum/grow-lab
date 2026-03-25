@@ -13,10 +13,12 @@ from typing import Any
 from pi.config.schema import (
     AppConfig,
     CameraConfig,
+    CalibrationConfig,
     DisplayConfig,
     EmailConfig,
     FanConfig,
     I2CConfig,
+    InstallationConfig,
     IrrigationConfig,
     IrrigationScheduleEntry,
     LightingConfig,
@@ -67,6 +69,17 @@ def _build_sensor_entry(data: dict[str, Any]) -> SensorEntry:
     )
 
 
+def _build_installation(raw: dict[str, Any]) -> InstallationConfig:
+    data = raw.get("installation", {})
+    defaults = InstallationConfig()
+    return InstallationConfig(
+        node_id=data.get("node_id", defaults.node_id),
+        fixture_id=data.get("fixture_id", defaults.fixture_id),
+        fixture_model=data.get("fixture_model", defaults.fixture_model),
+        sensor_board_id=data.get("sensor_board_id", defaults.sensor_board_id),
+    )
+
+
 def _build_sensors(raw: dict[str, Any]) -> SensorsConfig:
     sensors = raw.get("sensors", {})
     defaults = SensorsConfig()
@@ -86,6 +99,9 @@ def _build_sensors(raw: dict[str, Any]) -> SensorsConfig:
         soil_moisture=_build_sensor_entry(sensors.get("soil_moisture", {}))
         if "soil_moisture" in sensors
         else defaults.soil_moisture,
+        as7341=_build_sensor_entry(sensors.get("as7341", {}))
+        if "as7341" in sensors
+        else defaults.as7341,
         soil_moisture_channel=sensors.get("soil_moisture_channel", 0),
     )
 
@@ -161,6 +177,16 @@ def _build_notifications(raw: dict[str, Any]) -> NotificationConfig:
     )
 
 
+def _build_calibration(raw: dict[str, Any]) -> CalibrationConfig:
+    data = raw.get("calibration", {})
+    defaults = CalibrationConfig()
+    return CalibrationConfig(
+        enabled=data.get("enabled", defaults.enabled),
+        profile_dir=_to_path(data.get("profile_dir", defaults.profile_dir)),
+        active_profile=data.get("active_profile", defaults.active_profile),
+    )
+
+
 def _validate_config(config: AppConfig) -> None:
     """Validate config values are within acceptable ranges."""
     lc = config.lighting
@@ -212,6 +238,7 @@ def load_config(path: Path | None = None) -> AppConfig:
             baud=serial_data.get("baud", 115200),
             timeout=serial_data.get("timeout", 2.0),
         ),
+        installation=_build_installation(raw),
         sensors=_build_sensors(raw),
         camera=_build_camera(raw),
         lighting=LightingConfig(
@@ -237,6 +264,7 @@ def load_config(path: Path | None = None) -> AppConfig:
             address=display_data.get("address", 0x3C),
             controller=display_data.get("controller", "sh1106"),
         ),
+        calibration=_build_calibration(raw),
         notifications=_build_notifications(raw),
     )
 

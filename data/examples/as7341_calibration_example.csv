@@ -1,0 +1,7 @@
+timestamp,node_id,fixture_id,fixture_model,calibration_profile_id,operator,sensor_board_id,gain,integration_time,astep,led_pwm_percent,fixture_distance_cm,lateral_offset_cm,reference_ppfd,split,notes,as7341_415nm,as7341_445nm,as7341_480nm,as7341_515nm,as7341_555nm,as7341_590nm,as7341_630nm,as7341_680nm,as7341_clear,as7341_nir
+2026-03-24T21:00:00+00:00,growlab-v0,bench-fixture-a,Samsung LM301H strip,,Example Operator,as7341-demo-01,7,29,599,20,25,0,112,train,center low,140,210,330,410,520,470,280,170,620,95
+2026-03-24T21:03:00+00:00,growlab-v0,bench-fixture-a,Samsung LM301H strip,,Example Operator,as7341-demo-01,7,29,599,35,25,0,186,train,center low,210,320,500,620,790,710,430,250,930,140
+2026-03-24T21:06:00+00:00,growlab-v0,bench-fixture-a,Samsung LM301H strip,,Example Operator,as7341-demo-01,7,29,599,50,25,0,262,train,center low,280,430,680,840,1060,950,590,340,1240,185
+2026-03-24T21:09:00+00:00,growlab-v0,bench-fixture-a,Samsung LM301H strip,,Example Operator,as7341-demo-01,7,29,599,65,25,0,336,train,center low,360,540,850,1050,1320,1180,730,430,1550,230
+2026-03-24T21:12:00+00:00,growlab-v0,bench-fixture-a,Samsung LM301H strip,,Example Operator,as7341-demo-01,7,29,599,80,25,0,418,train,center low,440,660,1040,1280,1600,1420,890,510,1880,280
+2026-03-24T21:15:00+00:00,growlab-v0,bench-fixture-a,Samsung LM301H strip,,Example Operator,as7341-demo-01,7,29,599,100,25,0,505,validate,center low,520,790,1240,1520,1910,1700,1060,620,2240,330

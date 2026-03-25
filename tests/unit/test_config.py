@@ -28,6 +28,7 @@ class TestAppConfigDefaults:
         assert config.sensors.ezo_ec.address == 0x64
         assert config.sensors.ds18b20.gpio == 4
         assert config.sensors.soil_moisture.address == 0x48
+        assert config.sensors.as7341.address == 0x39
         assert config.sensors.soil_moisture_channel == 0
 
     def test_irrigation_defaults(self):
@@ -78,6 +79,7 @@ enabled = false
         assert config.sensors.bme280.enabled is False
         # Other sensors should keep defaults
         assert config.sensors.ezo_ph.address == 0x63
+        assert config.sensors.as7341.address == 0x39
 
     def test_partial_config_keeps_defaults(self, tmp_path: Path):
         toml_path = tmp_path / "config.toml"

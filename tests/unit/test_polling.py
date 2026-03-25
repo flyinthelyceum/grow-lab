@@ -144,6 +144,32 @@ class TestPollingService:
         count = await repo.count_readings()
         assert count == 0
 
+    async def test_as7341_multi_reading_payload_is_persisted(self, repo: SensorRepository):
+        now = datetime.now(timezone.utc)
+        driver = _make_mock_driver("as7341", [
+            SensorReading(timestamp=now, sensor_id="as7341_lux", value=123.4, unit="lux"),
+            SensorReading(timestamp=now, sensor_id="as7341_415nm", value=10.0, unit="raw"),
+            SensorReading(timestamp=now, sensor_id="as7341_445nm", value=20.0, unit="raw"),
+            SensorReading(timestamp=now, sensor_id="as7341_clear", value=30.0, unit="raw"),
+            SensorReading(timestamp=now, sensor_id="as7341_nir", value=40.0, unit="raw"),
+        ])
+        registry = _make_registry(driver)
+        config = AppConfig()
+
+        poller = PollingService(registry, repo, config)
+        await poller.start()
+        await asyncio.sleep(0.1)
+        await poller.stop()
+
+        sensor_ids = set(await repo.get_sensor_ids())
+        assert {
+            "as7341_lux",
+            "as7341_415nm",
+            "as7341_445nm",
+            "as7341_clear",
+            "as7341_nir",
+        }.issubset(sensor_ids)
+
     async def test_double_start_warns(self, repo: SensorRepository):
         driver = _make_mock_driver("bme280")
         registry = _make_registry(driver)

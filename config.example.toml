@@ -14,6 +14,12 @@ port = "/dev/ttyACM0"  # ESP32-S3 native USB CDC; classic ESP32 uses /dev/ttyUSB
 baud = 115200
 timeout = 2.0
 
+[installation]
+node_id = "growlab-v0"
+fixture_id = "bench-fixture-a"
+fixture_model = "Samsung LM301H strip"
+sensor_board_id = ""
+
 [sensors.bme280]
 address = 0x76
 interval_seconds = 120
@@ -39,8 +45,8 @@ address = 0x48             # ADS1115 ADC address (reads DFRobot SEN0308 analog o
 interval_seconds = 300
 enabled = true
 
-[sensors.tsl2591]
-address = 0x29
+[sensors.as7341]
+address = 0x39
 interval_seconds = 120
 enabled = false
 
@@ -84,6 +90,11 @@ relay_gpio = 17
 [display]
 enabled = false
 address = 0x3C
+
+[calibration]
+enabled = false
+profile_dir = "./config/calibration"
+active_profile = ""
 
 [notifications]
 cooldown_seconds = 300  # Per-sensor cooldown between repeated notifications

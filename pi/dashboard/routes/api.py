@@ -34,6 +34,7 @@ def _reading_to_dict(r) -> dict:
         "sensor_id": r.sensor_id,
         "value": r.value,
         "unit": r.unit,
+        "metadata": r.metadata,
     }
 
 

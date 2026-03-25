@@ -341,7 +341,7 @@ Devices, addresses, and strap conditions:
 | BME280 | 0x76 | SDO→GND. SDO→VCC for 0x77 | Air temp + humidity + pressure |
 | Atlas EZO-pH | 0x63 (99 decimal) | Set via `I2C,99` command during mode switch | Reservoir pH |
 | Atlas EZO-EC | 0x64 (100 decimal) | Set via `I2C,100` command during mode switch | Reservoir EC |
-| TSL2591 | 0x29 | Fixed (not configurable) | Canopy light / lux |
+| AS7341 | 0x39 | Fixed (not configurable) | Canopy spectral light |
 | ADS1115 (if used) | 0x48 | ADDR→GND. See datasheet for 0x49–0x4B | ADC for analog sensors |
 
 No address conflicts in this configuration.
@@ -388,7 +388,7 @@ This reduces noise and extends sensor lifespan.
 
 Possible additions in later system versions:
 
-• ~~Light measurement (PAR / PPFD sensors)~~ → TSL2591 lux sensor added (V0)
+• ~~Light measurement (PAR / PPFD sensors)~~ → AS7341 spectral sensor added (V0)
 • CO₂ concentration
 • Leaf temperature
 • Reservoir level sensing

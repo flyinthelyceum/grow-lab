@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import click
 
+from pi.cli.calibration_cmd import calibration_group
 from pi.cli.camera_control import camera_group
 from pi.cli.dashboard_cmd import dashboard_cmd
 from pi.cli.db_tools import db_group
@@ -47,6 +48,7 @@ def start(ctx: click.Context) -> None:
 
 
 cli.add_command(camera_group, name="camera")
+cli.add_command(calibration_group, name="calibration")
 cli.add_command(dashboard_cmd, name="dashboard")
 cli.add_command(db_group, name="db")
 cli.add_command(display_group, name="display")

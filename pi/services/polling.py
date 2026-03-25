@@ -86,6 +86,7 @@ class PollingService:
             "ezo_ec": self._config.sensors.ezo_ec,
             "ds18b20": self._config.sensors.ds18b20,
             "soil_moisture": self._config.sensors.soil_moisture,
+            "as7341": self._config.sensors.as7341,
         }
         entry = sensor_configs.get(sensor_id)
         if entry is not None:

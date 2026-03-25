@@ -10,16 +10,36 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 from pi.config.schema import AppConfig
+from pi.calibration.runtime_estimator import AS7341RuntimeEstimator
 from pi.discovery.scanner import I2CDevice, ScanResult
 from pi.drivers.base import SensorDriver
 
 logger = logging.getLogger(__name__)
 
+
+def _load_as7341_estimator(config: AppConfig) -> AS7341RuntimeEstimator | None:
+    if not config.calibration.enabled or not config.calibration.active_profile:
+        return None
+
+    profile_path = Path(config.calibration.active_profile)
+    if not profile_path.is_absolute():
+        profile_path = config.calibration.profile_dir / profile_path
+    if not profile_path.exists():
+        logger.warning("Calibration profile not found: %s", profile_path)
+        return None
+
+    try:
+        return AS7341RuntimeEstimator.from_path(profile_path)
+    except Exception as exc:
+        logger.error("Failed to load calibration profile %s: %s", profile_path, exc)
+        return None
+
 # Known I²C address -> sensor name mapping
 I2C_ADDRESS_MAP: dict[int, str] = {
-    0x29: "tsl2591",
+    0x39: "as7341",
     0x76: "bme280",
     0x77: "bme280",  # alternate address
     0x63: "ezo_ph",
@@ -238,30 +258,33 @@ def build_registry(config: AppConfig, scan: ScanResult) -> SensorRegistry:
                 )
             )
 
-    # TSL2591 Light Sensor
-    if config.sensors.tsl2591.enabled:
-        addr = config.sensors.tsl2591.address
+    # AS7341 Spectral Light Sensor
+    if config.sensors.as7341.enabled:
+        addr = config.sensors.as7341.address
         device = _find_i2c_device(addr, scan)
         if device is not None:
             try:
-                from pi.drivers.tsl2591 import TSL2591Driver
+                from pi.drivers.as7341 import AS7341Driver
 
-                driver = TSL2591Driver(
-                    bus_number=config.i2c.bus, address=addr
+                driver = AS7341Driver(
+                    bus_number=config.i2c.bus,
+                    address=addr,
+                    ppfd_estimator=_load_as7341_estimator(config),
+                    node_id=config.installation.node_id,
                 )
                 statuses.append(
-                    SensorStatus("tsl2591", True, driver, "detected")
+                    SensorStatus("as7341", True, driver, "detected")
                 )
-                logger.info("TSL2591 registered at 0x%02X", addr)
+                logger.info("AS7341 registered at 0x%02X", addr)
             except Exception as exc:
                 statuses.append(
-                    SensorStatus("tsl2591", False, None, f"init failed: {exc}")
+                    SensorStatus("as7341", False, None, f"init failed: {exc}")
                 )
-                logger.error("TSL2591 init failed: %s", exc)
+                logger.error("AS7341 init failed: %s", exc)
         else:
             statuses.append(
                 SensorStatus(
-                    "tsl2591",
+                    "as7341",
                     False,
                     None,
                     f"not found at 0x{addr:02X}",

@@ -128,6 +128,11 @@ Flowering plants
 
 Exact intensity values may be adjusted experimentally.
 
+For installed GrowLab nodes, the runtime software can estimate PPFD from the
+fixed-position AS7341 using a fixture-specific commissioning profile. This is
+intended for repeatable operation and education, not as a universal research
+instrument.
+
 ---
 
 # Mounting and Thermal Management

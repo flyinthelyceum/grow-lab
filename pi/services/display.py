@@ -26,7 +26,7 @@ SENSOR_DISPLAY = {
     "bme280_pressure": ("Pressure", "hPa", None),
     "ezo_ph": ("pH", "", None),
     "ezo_ec": ("EC", "uS", None),
-    "tsl2591_lux": ("Light", "lx", None),
+    "as7341_lux": ("Light", "lx", None),
 }
 
 # Prefix-based fallback for sensors with serial numbers in their ID
