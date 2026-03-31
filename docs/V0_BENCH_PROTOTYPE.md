@@ -313,7 +313,7 @@ Monitor for sensor stability, leaks, LED heat, and service reliability.
 ### Phase 2 Exit Criteria
 
 - [x] BME280 detected and stable.
-- [ ] ESP32 controls LED PWM smoothly. *(blocked — waiting on LED strips and Mean Well driver)*
+- [x] ESP32 controls LED PWM smoothly. *(LED strip + Mean Well driver installed week of March 23)*
 - [x] OLED reachable and renders test screen.
 - [x] Camera captures valid images.
 - [ ] Full 24-hour no-plant soak completes cleanly. *(soak #2 running overnight — check March 15)*
