@@ -138,6 +138,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         var segments = [];
         var animTime = 0;
         var hoverHum = null;
+        var hoverDistance = Infinity;
         var gapThresholdMs = 20 * 60 * 1000;
 
         var radiusScale = d3.scaleLinear().domain([0, 100]);
@@ -203,6 +204,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
             // Check hover
             hoverHum = null;
+            hoverDistance = Infinity;
             var hoverAngle = getHoverAngle ? getHoverAngle() : null;
             var mouseDist = getMouseDist ? getMouseDist() : Infinity;
             var hoverIdx = -1;
@@ -217,7 +219,13 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                     if (diff < bestDist) { bestDist = diff; hoverIdx = i; }
                 }
                 if (bestDist < 0.05 && hoverIdx >= 0) {
-                    hoverHum = data[hoverIdx];
+                    var candidate = data[hoverIdx];
+                    var radialDistance = Math.abs(mouseDist - candidate.radius);
+                    var hoverThreshold = Math.max(14, (candidate.radius - ringMin) * 0.65);
+                    if (radialDistance <= hoverThreshold) {
+                        hoverHum = candidate;
+                        hoverDistance = radialDistance;
+                    }
                 }
             }
 
@@ -327,6 +335,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             setLiveValue: setLiveValue,
             render: render,
             getHoverHum: function () { return hoverHum; },
+            getHoverDistance: function () { return hoverDistance; },
         };
     }
 

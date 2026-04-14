@@ -18,6 +18,8 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
     // Bright cyan pulse color
     var PULSE_COLOR = { r: 30, g: 210, b: 255 };
+    var HOVER_ANGLE_THRESHOLD = 0.045;
+    var HOVER_RADIAL_THRESHOLD = 16;
 
     function pulseRGBA(alpha) {
         return "rgba(" + PULSE_COLOR.r + "," + PULSE_COLOR.g + "," + PULSE_COLOR.b + "," + alpha + ")";
@@ -99,14 +101,19 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             if (hoverAngle !== null) {
                 var markerR = maxR * 0.78;
                 var mNorm = normAngle(hoverAngle);
+                var bestScore = Infinity;
                 for (var gi = 0; gi < ghostRings.length; gi++) {
                     var g = ghostRings[gi];
                     var gNorm = normAngle(g.angle);
                     var diff = Math.abs(gNorm - mNorm);
                     if (diff > Math.PI) diff = Math.PI * 2 - diff;
-                    if (diff < 0.08 && Math.abs(mouseDist - markerR) < 30) {
-                        hoverEvent = g;
-                        break;
+                    var radialDiff = Math.abs(mouseDist - markerR);
+                    if (diff < HOVER_ANGLE_THRESHOLD && radialDiff < HOVER_RADIAL_THRESHOLD) {
+                        var score = diff * markerR + radialDiff;
+                        if (score < bestScore) {
+                            bestScore = score;
+                            hoverEvent = g;
+                        }
                     }
                 }
             }

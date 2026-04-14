@@ -38,6 +38,7 @@
     var ws = null;
     var wsIntervalId = null;
     var canvas = null;
+    var activeHoverLayer = null;
 
     // Shared canvas state (getter functions for overlay layers)
     var sharedCtx = null;
@@ -64,6 +65,75 @@
     function setReadout(id, text) {
         var el = document.getElementById(id);
         if (el) el.textContent = text;
+    }
+
+    function buildHoverOverride(layer) {
+        if (!layer) return null;
+
+        if (layer.type === "ph") {
+            return {
+                value: layer.data.ph.toFixed(2),
+                unit: "pH",
+                label: layer.data.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+                color: Art.phColorRGBA(layer.data.ph, 0.9),
+                labelColor: Art.phColorRGBA(layer.data.ph, 0.4)
+            };
+        }
+
+        if (layer.type === "ec") {
+            return {
+                value: layer.data.ec.toFixed(0),
+                unit: "\u00b5S/cm",
+                label: layer.data.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+                color: Art.ecColorRGBA(layer.data.ec, 0.9),
+                labelColor: Art.ecColorRGBA(layer.data.ec, 0.4)
+            };
+        }
+
+        if (layer.type === "hum") {
+            return {
+                value: layer.data.hum.toFixed(0),
+                unit: "%  RH",
+                label: layer.data.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+                color: "rgba(0,200,220,0.9)",
+                labelColor: "rgba(0,200,220,0.4)"
+            };
+        }
+
+        return null;
+    }
+
+    function pickActiveHoverLayer(candidates) {
+        if (!candidates.length) {
+            activeHoverLayer = null;
+            return null;
+        }
+
+        var HYSTERESIS_PX = 10;
+        var chosen = candidates[0];
+
+        for (var i = 1; i < candidates.length; i++) {
+            if (candidates[i].distance < chosen.distance) {
+                chosen = candidates[i];
+            }
+        }
+
+        if (activeHoverLayer) {
+            var current = null;
+            for (var j = 0; j < candidates.length; j++) {
+                if (candidates[j].type === activeHoverLayer) {
+                    current = candidates[j];
+                    break;
+                }
+            }
+            if (current && chosen.type !== activeHoverLayer &&
+                chosen.distance >= current.distance - HYSTERESIS_PX) {
+                chosen = current;
+            }
+        }
+
+        activeHoverLayer = chosen.type;
+        return chosen;
     }
 
     // --- API ---
@@ -268,66 +338,6 @@
         // Start animation loop
         loop = new Art.AnimationLoop();
         loop.register(function (dt, now) {
-            // Route hover info to center disc
-            // Priority: water > pH > EC > humidity vs temperature > none
-            var waterHover = waterPulses.getHoverEvent();
-            var phHover = phRing.getHoverPh();
-            var ecHover = ecRing.getHoverEc();
-            var humHover = humRing.getHoverHum();
-            var tempHover = ring.getHoverPoint();
-            var mouseDist = ring.getMouseDist();
-
-            if (waterHover) {
-                ring.setCenterOverride({
-                    value: angleToTimeStr(waterHover.angle),
-                    unit: waterHover.ageMin + "m ago",
-                    label: "IRRIGATION",
-                    color: "rgba(30,210,255,0.9)",
-                    labelColor: "rgba(30,210,255,0.3)"
-                });
-            } else if (phHover) {
-                ring.setCenterOverride({
-                    value: phHover.ph.toFixed(2),
-                    unit: "pH",
-                    label: phHover.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-                    color: Art.phColorRGBA(phHover.ph, 0.9),
-                    labelColor: Art.phColorRGBA(phHover.ph, 0.4)
-                });
-            } else if (ecHover) {
-                ring.setCenterOverride({
-                    value: ecHover.ec.toFixed(0),
-                    unit: "\u00b5S/cm",
-                    label: ecHover.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-                    color: Art.ecColorRGBA(ecHover.ec, 0.9),
-                    labelColor: Art.ecColorRGBA(ecHover.ec, 0.4)
-                });
-            } else if (tempHover && humHover) {
-                // Both rings active — pick based on mouse distance
-                var tempMid = (ring.getMinRadius() + ring.getMaxRadius()) / 2;
-                var humMid = ring.getMaxRadius() * 0.97;
-                if (Math.abs(mouseDist - tempMid) <= Math.abs(mouseDist - humMid)) {
-                    ring.setCenterOverride(null); // let temp ring show its own hover
-                } else {
-                    ring.setCenterOverride({
-                        value: humHover.hum.toFixed(0),
-                        unit: "%  RH",
-                        label: humHover.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-                        color: "rgba(0,200,220,0.9)",
-                        labelColor: "rgba(0,200,220,0.4)"
-                    });
-                }
-            } else if (humHover) {
-                ring.setCenterOverride({
-                    value: humHover.hum.toFixed(0),
-                    unit: "%  RH",
-                    label: humHover.time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-                    color: "rgba(0,200,220,0.9)",
-                    labelColor: "rgba(0,200,220,0.4)"
-                });
-            } else {
-                ring.setCenterOverride(null);
-            }
-
             // Render order: pressure → ring → humidity → pH → EC → water → particles
             pressureField.render(dt);
             ring.render(dt, now);
@@ -336,6 +346,47 @@
             ecRing.render(dt);
             waterPulses.render(dt);
             particles.render(dt);
+
+            // Route hover info to center disc after layers refresh their hit tests.
+            var waterHover = waterPulses.getHoverEvent();
+            var phHover = phRing.getHoverPh();
+            var ecHover = ecRing.getHoverEc();
+            var humHover = humRing.getHoverHum();
+            var tempHover = ring.getHoverPoint();
+
+            if (waterHover) {
+                activeHoverLayer = "water";
+                ring.setCenterOverride({
+                    value: angleToTimeStr(waterHover.angle),
+                    unit: waterHover.ageMin + "m ago",
+                    label: "IRRIGATION",
+                    color: "rgba(30,210,255,0.9)",
+                    labelColor: "rgba(30,210,255,0.3)"
+                });
+                return;
+            }
+
+            var candidates = [];
+            if (phHover) {
+                candidates.push({ type: "ph", data: phHover, distance: phRing.getHoverDistance() });
+            }
+            if (ecHover) {
+                candidates.push({ type: "ec", data: ecHover, distance: ecRing.getHoverDistance() });
+            }
+            if (humHover) {
+                candidates.push({ type: "hum", data: humHover, distance: humRing.getHoverDistance() });
+            }
+            if (tempHover) {
+                candidates.push({ type: "temp", data: tempHover, distance: ring.getHoverDistance() });
+            }
+
+            var activeLayer = pickActiveHoverLayer(candidates);
+            if (!activeLayer || activeLayer.type === "temp") {
+                ring.setCenterOverride(null);
+                return;
+            }
+
+            ring.setCenterOverride(buildHoverOverride(activeLayer));
         });
 
         // Load initial data

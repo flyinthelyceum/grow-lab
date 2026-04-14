@@ -164,6 +164,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         var gapThresholdMs = 20 * 60 * 1000;
 
         var hoverPoint = null;
+        var hoverDistance = Infinity;
         var mouseInCanvas = false;
         var mouseX = 0, mouseY = 0;
 
@@ -189,7 +190,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             mouseInCanvas = true;
             mouseX = e.clientX;
             mouseY = e.clientY;
-            if (!data || data.length < 2) { hoverPoint = null; return; }
+            if (!data || data.length < 2) { hoverPoint = null; hoverDistance = Infinity; return; }
 
             var mx = e.clientX - cx;
             var my = e.clientY - cy;
@@ -197,6 +198,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
             if (dist < minRadius * 0.5 || dist > maxRadius * 1.3) {
                 hoverPoint = null;
+                hoverDistance = Infinity;
                 return;
             }
 
@@ -212,15 +214,24 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
             var d = data[bestIdx];
             var r = d.radius || radiusScale(d.tempF);
+            var radialDistance = Math.abs(dist - r);
+            var hoverThreshold = Math.max(18, (maxRadius - minRadius) * 0.08);
+            if (radialDistance > hoverThreshold) {
+                hoverPoint = null;
+                hoverDistance = Infinity;
+                return;
+            }
             hoverPoint = {
                 angle: d.clockAngle, tempF: d.tempF, time: d.time,
                 x: Math.cos(d.angle) * r, y: Math.sin(d.angle) * r, r: r
             };
+            hoverDistance = radialDistance;
         });
 
         canvas.addEventListener("mouseleave", function () {
             mouseInCanvas = false;
             hoverPoint = null;
+            hoverDistance = Infinity;
         });
 
         function getHoverAngle() {
@@ -652,6 +663,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             getHoverAngle: getHoverAngle,
             getMouseDist: getMouseDist,
             getHoverPoint: function () { return hoverPoint; },
+            getHoverDistance: function () { return hoverDistance; },
             getMinRadius: function () { return minRadius; },
             getMaxRadius: function () { return maxRadius; },
         };

@@ -143,6 +143,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
         var segments = [];
         var animTime = 0;
         var hoverPh = null;
+        var hoverDistance = Infinity;
         var liveValue = null;
         var gapThresholdMs = 20 * 60 * 1000;
 
@@ -210,6 +211,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
             // Check hover
             hoverPh = null;
+            hoverDistance = Infinity;
             var hoverAngle = getHoverAngle ? getHoverAngle() : null;
             var mouseDist = getMouseDist ? getMouseDist() : Infinity;
             var hoverIdx = -1;
@@ -224,7 +226,13 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
                     if (diff < bestDist) { bestDist = diff; hoverIdx = i; }
                 }
                 if (bestDist < 0.05 && hoverIdx >= 0) {
-                    hoverPh = data[hoverIdx];
+                    var candidate = data[hoverIdx];
+                    var radialDistance = Math.abs(mouseDist - candidate.radius);
+                    var hoverThreshold = Math.max(12, (outerR - innerR) * 0.6);
+                    if (radialDistance <= hoverThreshold) {
+                        hoverPh = candidate;
+                        hoverDistance = radialDistance;
+                    }
                 }
             }
 
@@ -364,6 +372,7 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
             setLiveValue: setLiveValue,
             render: render,
             getHoverPh: function () { return hoverPh; },
+            getHoverDistance: function () { return hoverDistance; },
         };
     }
 
