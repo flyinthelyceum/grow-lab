@@ -140,7 +140,7 @@ Devices on the bus:
 • Atlas EZO‑pH — 0x63 (Phase 3)
 • Atlas EZO‑EC — 0x64 (Phase 3)
 • AS7341 spectral light sensor (canopy light) — 0x39
-• STEMMA Soil Sensor (media moisture) — 0x36 (Phase 3)
+• ADS1115 + DFRobot SEN0308 (media moisture) — 0x48
 
 Raspberry Pi pins:
 
@@ -154,14 +154,18 @@ Topology:
 Pi SDA
 → BME280
 → OLED
-→ EZO‑pH (Phase 3)
-→ EZO‑EC (Phase 3)
+→ EZO‑pH
+→ EZO‑EC
+→ ADS1115 (SEN0308)
+→ AS7341
 
 Pi SCL
 → BME280
 → OLED
-→ EZO‑pH (Phase 3)
-→ EZO‑EC (Phase 3)
+→ EZO‑pH
+→ EZO‑EC
+→ ADS1115 (SEN0308)
+→ AS7341
 
 All devices share a common ground.
 
@@ -383,7 +387,7 @@ All Pi GPIO connections route through the RSP-GPIO-8 breakout board (screw termi
 
 | Pin | GPIO | Function | Device |
 |-----|------|----------|--------|
-| 1 | — | 3.3V | DS18B20 VCC, BME280 VCC, OLED VCC |
+| 1 | — | 3.3V | DS18B20 VCC, BME280 VCC, OLED VCC, ADS1115 VDD |
 | 2 | — | 5V | Pump relay VCC |
 | 3 | GPIO2 | I²C SDA | BME280 + OLED (shared bus) |
 | 4 | — | 5V | 12V fan relay VCC |

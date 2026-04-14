@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-04-14
+
+### Added
+- **Soil moisture sensor online** — DFRobot SEN0308 (IP65 capacitive) via ADS1115 16-bit ADC. Polling every 300s, emits `soil_moisture` reading in %. Driver maps ADS1115 raw voltage linearly: ~3.0V → 0%, ~1.1V → 100%. Registered at I²C 0x48 (ADS1115, ADDR→GND), SEN0308 analog output on A0.
+
+### Fixed
+- **Pi `config.toml`** — corrected `[sensors.soil_moisture]` address from `0x36` (stale STEMMA reference) to `0x48`, and set `enabled = true`.
+
+### Docs
+- `SENSOR_STACK.md` — replaced STEMMA Soil Sensor (0x36) with DFRobot SEN0308 + ADS1115 (0x48) as the active media moisture sensor. Updated I²C address table and summary.
+- `WIRING_&_BUSES.md` — updated I²C device list, bus topology, and Pi pin map to reflect ADS1115 + SEN0308.
+
 ## 2026-03-24
 
 ### Added

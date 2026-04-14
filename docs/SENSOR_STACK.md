@@ -178,9 +178,9 @@ Probe submerged in reservoir water but not touching pump or container walls.
 
 # Media Moisture
 
-## Adafruit STEMMA Soil Sensor (Primary)
+## DFRobot SEN0308 + ADS1115 ADC
 
-Product: Adafruit STEMMA Soil Sensor (Product 4026)
+Product: DFRobot SEN0308 Capacitive Soil Moisture Sensor (IP65) + ADS1115 16-bit ADC
 
 Purpose:
 
@@ -192,37 +192,28 @@ Capacitive — measures dielectric permittivity of surrounding media. No DC curr
 
 Specifications:
 
-• Interface: I²C (Seesaw protocol)
-• Default I²C address: 0x36 (configurable: 0x36–0x39 via solder jumpers)
-• Voltage: 3.3–5V
-• Output range: ~200 (dry air) to ~2000 (submerged), practical range in media ~300–500
-• Onboard MCU: ATSAMD10
-• Bonus: built-in temperature sensor (~+/-2°C accuracy)
-• Price: ~$7.50
+• SEN0308: IP65 waterproof, analog voltage output, 3.3–5V, ~$14.50
+• ADS1115: 16-bit I²C ADC, 4 channels, I²C address 0x48 (ADDR→GND), ~$3–10
+• Output voltage range: ~3.0V dry air → ~1.1V fully submerged
+• Driver maps voltage linearly to 0–100% moisture
+• Total cost: ~$25 per channel
 
-Known issues and mitigations:
+Wiring (SEN0308 → ADS1115):
 
-• Reading saturation at ~1016–1017 — use relative thresholds (wet/dry), not absolute values
-• Noisy signal — add 200ms minimum delay between reads, average multiple samples
-• No waterproofing on electronics — apply conformal coating (MG Chemicals 422B or equivalent)
-• Not specifically tested for soilless media — calibrate for your coco+perlite ratio
+• Red → VDD
+• Black (bundled) → GND
+• Yellow → A0
+• Black (separate/shield) → GND
+
+ADS1115 → Pi: VDD→3.3V, GND→GND, SDA→GPIO2, SCL→GPIO3, ADDR→GND
 
 Communication:
 
-I²C. Connects to the Pi's existing I²C bus (GPIO 2 SDA, GPIO 3 SCL) alongside BME280 and Atlas EZO sensors. No address conflicts.
+I²C via ADS1115 at 0x48. Connects to the Pi's existing I²C bus alongside BME280 and Atlas EZO sensors. No address conflicts.
 
 Sampling frequency:
 
-5–15 minutes.
-
-## Alternative: DFRobot SEN0308 (IP65 Waterproof) + ADS1115
-
-Choose this if long-term durability is the top priority.
-
-• DFRobot SEN0308: IP65 waterproof, analog output, ~$14.50
-• ADS1115 ADC: I²C at 0x48, 16-bit, 4 channels, ~$3–10
-• Total: ~$25 per channel
-• Better long-term reliability but requires an extra component (ADC)
+5 minutes (300s interval).
 
 ## Calibration for Coco Coir + Perlite
 
@@ -336,7 +327,7 @@ Devices, addresses, and strap conditions:
 
 | Device | I²C Address | Address Selection | Function |
 |--------|-------------|-------------------|----------|
-| STEMMA Soil Sensor | 0x36 | Default. A0/A1 solder jumpers for 0x37–0x39 | Media moisture |
+| ADS1115 (SEN0308 ADC) | 0x48 | ADDR→GND. ADDR→VDD/SDA/SCL for 0x49–0x4B | Media moisture (analog input) |
 | SSD1306 OLED (optional) | 0x3C | SA0→GND. SA0→VCC for 0x3D | Physical status display |
 | BME280 | 0x76 | SDO→GND. SDO→VCC for 0x77 | Air temp + humidity + pressure |
 | Atlas EZO-pH | 0x63 (99 decimal) | Set via `I2C,99` command during mode switch | Reservoir pH |
@@ -448,7 +439,7 @@ The V0 sensor stack provides reliable monitoring of the variables most important
 • nutrient solution pH (Atlas EZO-pH)
 • nutrient concentration EC (Atlas EZO-EC)
 • reservoir temperature (DS18B20)
-• media moisture (STEMMA Soil Sensor)
+• media moisture (DFRobot SEN0308 + ADS1115)
 • visual growth record (Pi Camera Module 3)
 
 These measurements allow GROWLAB to function not just as a grow platform, but as a **biological instrumentation system** capable of recording and analyzing the interaction between plants and their engineered environment.
