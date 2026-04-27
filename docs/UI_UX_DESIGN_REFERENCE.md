@@ -115,23 +115,36 @@ Historical context reveals environmental patterns.
 
 ## 3. Visual Inspiration
 
-### Refik Anadol — Data as Living System
+### Hans Haacke — Real-Time Systems with Stakes
 
-Refik Anadol treats data as **dynamic material**.
+Haacke's *Condensation Cube* (1963), *Grass Grows* (1969), and *Rhine Water Purification Plant* (1972) proposed that a biological or physical process, made visible through real-time monitoring, can be the work itself rather than a representation of it.
 
 Lessons:
 
-- data should flow
-- patterns should breathe
-- information should feel alive
+- the apparatus and the process are continuous; the system is the artwork, not its illustration
+- meaning is structural, not aesthetic
+- the data is the biography of what is being kept alive, not material to render beautiful
+- if the work has stakes, those stakes are inseparable from the cycles being measured
 
-Use environmental data to create visual rhythms.
+Use environmental data as the actual record of sustained care.
 
 Examples:
 
-- humidity oscillations
-- irrigation pulses
-- light cycles
+- humidity oscillations as the trace of breathing
+- irrigation pulses as the rhythm of attention
+- light cycles as the geometry of presence
+
+---
+
+### Newton & Helen Mayer Harrison — Ecological Feedback as Form
+
+The Harrison Studio's *Making Earth* and adjacent projects from the early 1970s onward used data collection and life-support systems for living ecologies as primary artistic material, decades before the technology was practical.
+
+Lessons:
+
+- life support apparatus is form, not infrastructure to hide
+- the work runs across time scales the viewer cannot compress
+- caring for the system over months is the medium
 
 ---
 
@@ -357,7 +370,8 @@ Single information surface with priority-based hover routing:
 
 Designed for gallery viewing, projection, and installation display. Applies principles from:
 
-- **Refik Anadol**: data flows, breathes, feels alive
+- **Hans Haacke**: real-time systems where the apparatus and the biological process are the work
+- **Harrison Studio**: ecological feedback loops as form, life support as medium
 - **Giorgia Lupi**: data can be poetic and expressive
 - **CERN/NASA**: thin luminous lines, signal clarity, dark backgrounds
 - **Leica**: numbers as objects of importance
