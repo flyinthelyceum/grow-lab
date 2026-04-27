@@ -101,18 +101,18 @@ Design references: [UI_UX_DESIGN_REFERENCE.md](UI_UX_DESIGN_REFERENCE.md)
 
 ## Dream Mode (`/dream`)
 
-Anadol-inspired 3D particle visualization driven by live sensor data via Three.js WebGL:
+3D particle visualization driven by live sensor data via Three.js WebGL. Currently Phase A: the live-data ancestor of dream mode's eventual self-referential form, in which the system metabolizes its own biography across accumulated sensor history without live input.
 
 - **50K point sprites** — additive-blended with soft circle texture, auto-downscales on weaker GPUs
 - **3D curl noise flow field** — simplex noise derivatives create divergence-free velocity field; two octaves for fine turbulence over macro flow
 - **Sensor mapping** — temperature→particle color (blue→teal→amber) + noise scale, humidity→particle density, pressure→flow amplitude, irrigation→cyan burst events
-- **UnrealBloomPass** — post-processing glow for Anadol-style ethereal aesthetic
+- **UnrealBloomPass** — post-processing glow for atmospheric depth
 - **Auto-orbit camera** — slow perspective rotation around particle field
 - **HUD overlay** — live sensor readouts (temp, humidity, pressure, particle count)
 
 Keyboard: Space=pause, D=debug HUD, F=fullscreen.
 
-Future phases: VAE trained on sensor time-series (Phase B), learned environmental pattern visualization (Phase C), and generative "dreaming" mode replaying historical states (Phase D).
+Future phases: VAE trained on sensor time-series (Phase B), learned pattern visualization across the plant's biography (Phase C), and a self-referential dream mode where the system metabolizes its own historical states without live sensor input (Phase D).
 
 ## Embedded OLED Display
 
