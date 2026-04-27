@@ -37,7 +37,7 @@ All notable changes to this project are documented in this file.
 ## 2026-03-20
 
 ### Added
-- **Dream Mode** (`/dream`) — Anadol-inspired WebGL particle visualization using Three.js. 50K additive-blended point sprites driven by a 3D curl noise flow field. Sensor data modulates visuals in real time: temperature→particle color (blue→teal→amber), humidity→particle density, pressure→flow amplitude, irrigation→cyan burst events. UnrealBloomPass post-processing for glow. Auto-orbit perspective camera. 60fps animation loop with visibility pause. Auto-downscales particle count on weaker GPUs.
+- **Dream Mode** (`/dream`) — WebGL particle visualization using Three.js. Phase A live-data ancestor of dream mode's eventual self-referential form (where the system metabolizes its own biography across accumulated sensor history). 50K additive-blended point sprites driven by a 3D curl noise flow field. Sensor data modulates visuals in real time: temperature→particle color (blue→teal→amber), humidity→particle density, pressure→flow amplitude, irrigation→cyan burst events. UnrealBloomPass post-processing for atmospheric depth. Auto-orbit perspective camera. 60fps animation loop with visibility pause. Auto-downscales particle count on weaker GPUs.
 - `/dream` route added to dashboard. Nav links from Observatory and Art views.
 - 7 new e2e tests for Dream Mode page.
 
