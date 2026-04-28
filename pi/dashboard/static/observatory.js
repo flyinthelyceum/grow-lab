@@ -625,16 +625,14 @@
         if (!container) return;
         var img = container.querySelector("img");
         if (!img) {
-            // No static image yet (camera standby); inject one for the stream.
             img = document.createElement("img");
             img.alt = "Live feed";
-            container.appendChild(img);
+            container.insertBefore(img, container.firstChild);
         }
         liveState.previousSrc = img.src;
-        // Cache-bust param so the browser opens a fresh streaming connection.
-        img.src = "/api/stream/live?t=" + Date.now();
         liveState.active = true;
         liveState.endsAt = Date.now() + 30000;
+        liveState.lastBlobUrl = null;
 
         var btn = document.getElementById("camera-live-toggle");
         if (btn) {
@@ -643,6 +641,42 @@
         }
         showLiveBadge();
         liveState.countdownTimer = setInterval(updateCountdown, 250);
+
+        // Poll the snapshot endpoint instead of using multipart/x-mixed-replace,
+        // which WebKit (iOS Safari and iOS Chrome) refuses to render in <img>.
+        // Polling works everywhere. ~10 fps target.
+        pollSnapshot(img);
+    }
+
+    function pollSnapshot(img) {
+        if (!liveState.active) return;
+        fetch("/api/stream/snapshot", { cache: "no-store" })
+            .then(function (resp) {
+                if (!resp.ok) {
+                    if (resp.status === 410) {
+                        stopLive("expired");
+                    } else {
+                        // Transient error — keep trying until local timer expires.
+                        setTimeout(function () { pollSnapshot(img); }, 250);
+                    }
+                    return null;
+                }
+                return resp.blob();
+            })
+            .then(function (blob) {
+                if (!blob || !liveState.active) return;
+                var url = URL.createObjectURL(blob);
+                var prior = liveState.lastBlobUrl;
+                img.src = url;
+                liveState.lastBlobUrl = url;
+                if (prior) URL.revokeObjectURL(prior);
+                setTimeout(function () { pollSnapshot(img); }, 100);
+            })
+            .catch(function () {
+                if (liveState.active) {
+                    setTimeout(function () { pollSnapshot(img); }, 250);
+                }
+            });
     }
 
     function stopLive(reason) {
@@ -658,6 +692,10 @@
             if (img && liveState.previousSrc) {
                 img.src = liveState.previousSrc;
             }
+        }
+        if (liveState.lastBlobUrl) {
+            URL.revokeObjectURL(liveState.lastBlobUrl);
+            liveState.lastBlobUrl = null;
         }
         liveState.previousSrc = null;
         var btn = document.getElementById("camera-live-toggle");

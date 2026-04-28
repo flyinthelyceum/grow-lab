@@ -469,6 +469,46 @@ async def get_system_status(request: Request) -> dict:
     }
 
 
+@router.get("/stream/snapshot")
+async def stream_snapshot():
+    """Single JPEG frame from the active live session (iOS-friendly).
+
+    Polled by clients that can't render multipart/x-mixed-replace in
+    <img> (notably iOS WebKit / iOS Chrome). First call starts a session
+    if none is active; subsequent calls during the session return the
+    latest frame. Returns 410 Gone after session expiry so the client
+    knows to stop polling.
+    """
+    from fastapi import Response
+
+    queue, expires_at = await _stream_hub.join()
+    if time.time() >= expires_at:
+        _stream_hub.leave(queue)
+        raise HTTPException(status_code=410, detail="Session expired")
+    try:
+        frame = await asyncio.wait_for(queue.get(), timeout=1.5)
+        if frame is None:
+            raise HTTPException(status_code=410, detail="Session ended")
+        return Response(
+            content=frame,
+            media_type="image/jpeg",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "X-Stream-Expires-At": str(int(expires_at)),
+                "X-Stream-Remaining-Seconds": str(
+                    max(0, int(expires_at - time.time()))
+                ),
+                "Access-Control-Expose-Headers": (
+                    "X-Stream-Expires-At, X-Stream-Remaining-Seconds"
+                ),
+            },
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=503, detail="Frame timeout")
+    finally:
+        _stream_hub.leave(queue)
+
+
 @router.get("/stream/live")
 async def stream_live() -> StreamingResponse:
     """Public MJPEG live feed with multi-viewer fan-out.
