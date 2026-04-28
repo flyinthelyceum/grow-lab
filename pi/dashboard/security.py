@@ -32,11 +32,12 @@ _LOG_SKIP_PREFIXES: tuple[str, ...] = ("/static/", "/ws/", "/ws")
 # revisit once style.css is fully externalised.
 _CSP = (
     "default-src 'self'; "
-    "script-src 'self'; "
+    "script-src 'self' https://static.cloudflareinsights.com; "
+    "script-src-elem 'self' https://static.cloudflareinsights.com; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "font-src 'self' https://fonts.gstatic.com; "
     "img-src 'self' data: blob:; "
-    "connect-src 'self' ws: wss:; "
+    "connect-src 'self' ws: wss: https://cloudflareinsights.com; "
     "frame-ancestors 'none'; "
     "base-uri 'self'; "
     "form-action 'self'"
