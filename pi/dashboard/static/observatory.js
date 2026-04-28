@@ -308,13 +308,25 @@
         }
     }
 
+    // Remove img and .camera-placeholder from #camera-feed, preserving
+    // controls like the live-stream toggle button and LIVE badge.
+    function clearCameraContent(container) {
+        var nodes = Array.prototype.slice.call(container.childNodes);
+        for (var i = 0; i < nodes.length; i++) {
+            var node = nodes[i];
+            if (node.nodeType !== 1) continue;
+            if (node.tagName === "IMG" ||
+                (node.classList && node.classList.contains("camera-placeholder"))) {
+                container.removeChild(node);
+            }
+        }
+    }
+
     function renderCameraPlaceholder(title, detail) {
         var container = document.getElementById("camera-feed");
         if (!container) return;
 
-        while (container.firstChild) {
-            container.removeChild(container.firstChild);
-        }
+        clearCameraContent(container);
 
         var wrap = document.createElement("div");
         wrap.className = "camera-placeholder";
@@ -496,9 +508,7 @@
 
             var container = document.getElementById("camera-feed");
             if (container) {
-                while (container.firstChild) {
-                    container.removeChild(container.firstChild);
-                }
+                clearCameraContent(container);
                 var img = document.createElement("img");
                 img.src = data.url;
                 img.alt = "Latest capture";
@@ -506,7 +516,9 @@
                 img.addEventListener("click", function () {
                     openLightbox(data.url, data.filename, data.timestamp);
                 });
-                container.appendChild(img);
+                // Insert image as the first child so toggle button + badge
+                // (positioned: absolute) stay layered on top.
+                container.insertBefore(img, container.firstChild);
             }
         }).catch(function () {});
     }
