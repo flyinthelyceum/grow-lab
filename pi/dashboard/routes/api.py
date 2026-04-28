@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path as FsPath, PurePosixPath
@@ -26,13 +27,141 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api")
 
-# Stage 2: live webcam streaming.
-# rpicam-vid produces concatenated JPEGs; we re-emit each as a multipart
-# x-mixed-replace frame so browsers render it natively in <img>. Single
-# concurrent stream enforced via asyncio.Lock; second caller gets 409.
+# Stage 2: live webcam streaming with multi-viewer fan-out.
+# Single rpicam-vid subprocess emits MJPEG; many HTTP response generators
+# subscribe to a shared frame fan-out. Each session is hard-capped at
+# 30 seconds via the rpicam-vid -t flag. Late joiners share the in-flight
+# session (their countdown may end before local 30s if they joined mid-way).
 _STREAM_DURATION_SECONDS = 30
 _STREAM_BOUNDARY = "growlabframe"
-_stream_lock = asyncio.Lock()
+
+
+class _LiveStreamHub:
+    """Fan-out broker: one rpicam-vid subprocess, many HTTP viewers.
+
+    Concurrency model: the first viewer starts a session (spawns
+    rpicam-vid, kicks off a broadcaster task that splits MJPEG frames
+    and pushes each into every subscriber's per-viewer queue). Subsequent
+    viewers join the active session and receive frames from the same
+    source. Sessions end when rpicam-vid exits (-t timeout, ~30s) or
+    the broadcaster errors. New click after a session ends starts a
+    fresh session.
+    """
+
+    def __init__(self) -> None:
+        self._proc: asyncio.subprocess.Process | None = None
+        self._broadcaster: asyncio.Task | None = None
+        self._subscribers: list[asyncio.Queue] = []
+        self._start_lock = asyncio.Lock()
+        self._session_end_at: float = 0.0
+
+    async def join(self) -> tuple[asyncio.Queue, float]:
+        """Join the current session (or start a fresh one).
+
+        Returns (queue, expires_at_unix). The queue receives raw JPEG
+        bytes for each frame, then None when the session ends.
+        """
+        async with self._start_lock:
+            now = time.time()
+            if (
+                self._proc is None
+                or self._proc.returncode is not None
+                or now >= self._session_end_at
+            ):
+                await self._start_new_session()
+            queue: asyncio.Queue = asyncio.Queue(maxsize=4)
+            self._subscribers.append(queue)
+            return queue, self._session_end_at
+
+    async def _start_new_session(self) -> None:
+        # Notify any stragglers from a prior session and reset.
+        self._notify_end()
+        self._subscribers = []
+
+        # Clean shutdown of any prior subprocess.
+        if self._proc is not None and self._proc.returncode is None:
+            self._proc.terminate()
+            try:
+                await asyncio.wait_for(self._proc.wait(), timeout=1.0)
+            except asyncio.TimeoutError:
+                self._proc.kill()
+                await self._proc.wait()
+
+        self._proc = await asyncio.create_subprocess_exec(
+            "rpicam-vid",
+            "--codec", "mjpeg",
+            "-t", str(_STREAM_DURATION_SECONDS * 1000),
+            "--width", "1280",
+            "--height", "720",
+            "--framerate", "10",
+            "-n",
+            "-o", "-",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        self._session_end_at = time.time() + _STREAM_DURATION_SECONDS
+        self._broadcaster = asyncio.create_task(
+            self._broadcast(self._proc), name="livehub-broadcast"
+        )
+        logger.info(
+            "[stream] new session started; ends in %ds",
+            _STREAM_DURATION_SECONDS,
+        )
+
+    async def _broadcast(self, proc: asyncio.subprocess.Process) -> None:
+        """Read JPEG frames from rpicam-vid; push each to all subscribers."""
+        buffer = b""
+        try:
+            while True:
+                chunk = await proc.stdout.read(8192)
+                if not chunk:
+                    break
+                buffer += chunk
+                while True:
+                    soi = buffer.find(b"\xff\xd8")
+                    if soi < 0:
+                        break
+                    eoi = buffer.find(b"\xff\xd9", soi + 2)
+                    if eoi < 0:
+                        break
+                    eoi_end = eoi + 2
+                    frame = buffer[soi:eoi_end]
+                    buffer = buffer[eoi_end:]
+                    for queue in self._subscribers[:]:
+                        try:
+                            queue.put_nowait(frame)
+                        except asyncio.QueueFull:
+                            # Slow consumer: drop the frame for them.
+                            pass
+        except Exception as exc:
+            logger.warning("[stream] broadcaster error: %r", exc)
+        finally:
+            self._notify_end()
+            if proc.returncode is None:
+                proc.terminate()
+                try:
+                    await asyncio.wait_for(proc.wait(), timeout=1.0)
+                except asyncio.TimeoutError:
+                    proc.kill()
+                    await proc.wait()
+            logger.info(
+                "[stream] session ended; subscribers=%d",
+                len(self._subscribers),
+            )
+
+    def _notify_end(self) -> None:
+        for queue in self._subscribers[:]:
+            try:
+                queue.put_nowait(None)
+            except asyncio.QueueFull:
+                pass
+
+    def leave(self, queue: asyncio.Queue) -> None:
+        if queue in self._subscribers:
+            self._subscribers.remove(queue)
+
+
+_stream_hub = _LiveStreamHub()
 
 class TimeWindow(str, Enum):
     one_hour = "1h"
@@ -342,78 +471,52 @@ async def get_system_status(request: Request) -> dict:
 
 @router.get("/stream/live")
 async def stream_live() -> StreamingResponse:
-    """30-second public MJPEG live feed (camera look-in for visitors).
+    """Public MJPEG live feed with multi-viewer fan-out.
 
-    Public-readable: this is an art-piece-on-IG installation; visibility
-    is the feature. Defended by asyncio.Lock (single concurrent stream
-    across all visitors; second caller gets 409), 30-second hard cap
-    (rpicam-vid -t flag enforces), and the global slowapi rate limit
-    (60 req/min/IP via SlowAPIMiddleware in app.py).
-
-    Spawns rpicam-vid (libcamera) as a subprocess emitting MJPEG to stdout,
-    parses JPEG frame boundaries (FFD8 / FFD9), wraps each frame in
-    multipart/x-mixed-replace so browsers render it as a live <img src=...>
-    feed. Hard-capped at 30 seconds; subprocess auto-exits via -t flag and
-    is also terminated on client disconnect. Single concurrent stream;
-    second caller gets 409.
+    Up to N concurrent viewers share a single 30-second rpicam-vid session.
+    First click starts a session; later joiners receive frames from the
+    in-flight session for whatever seconds remain. The next click after a
+    session ends starts a fresh one. The X-Stream-Expires-At and
+    X-Stream-Remaining-Seconds response headers let clients sync local
+    countdown to actual session end (relevant for late joiners).
     """
-    if _stream_lock.locked():
-        raise HTTPException(status_code=409, detail="Stream already in progress")
+    queue, expires_at = await _stream_hub.join()
+    now = time.time()
+    remaining = max(0, int(expires_at - now))
 
     async def frame_stream():
-        async with _stream_lock:
-            duration_ms = _STREAM_DURATION_SECONDS * 1000
-            proc = await asyncio.create_subprocess_exec(
-                "rpicam-vid",
-                "--codec", "mjpeg",
-                "-t", str(duration_ms),
-                "--width", "1280",
-                "--height", "720",
-                "--framerate", "10",
-                "-n",
-                "-o", "-",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.DEVNULL,
-            )
-            buffer = b""
-            try:
-                while True:
-                    chunk = await proc.stdout.read(8192)
-                    if not chunk:
+        try:
+            while True:
+                try:
+                    frame = await asyncio.wait_for(queue.get(), timeout=2.0)
+                except asyncio.TimeoutError:
+                    if time.time() >= expires_at:
                         break
-                    buffer += chunk
-                    while True:
-                        soi = buffer.find(b"\xff\xd8")
-                        if soi < 0:
-                            break
-                        eoi = buffer.find(b"\xff\xd9", soi + 2)
-                        if eoi < 0:
-                            break
-                        eoi_end = eoi + 2
-                        frame = buffer[soi:eoi_end]
-                        buffer = buffer[eoi_end:]
-                        yield (
-                            f"--{_STREAM_BOUNDARY}\r\n"
-                            f"Content-Type: image/jpeg\r\n"
-                            f"Content-Length: {len(frame)}\r\n\r\n"
-                        ).encode("ascii")
-                        yield frame
-                        yield b"\r\n"
-            except asyncio.CancelledError:
-                logger.info("[stream] client disconnected")
-                raise
-            finally:
-                if proc.returncode is None:
-                    proc.terminate()
-                    try:
-                        await asyncio.wait_for(proc.wait(), timeout=2.0)
-                    except asyncio.TimeoutError:
-                        proc.kill()
-                        await proc.wait()
-                logger.info("[stream] session ended")
+                    continue
+                if frame is None:  # session-ended sentinel
+                    break
+                yield (
+                    f"--{_STREAM_BOUNDARY}\r\n"
+                    f"Content-Type: image/jpeg\r\n"
+                    f"Content-Length: {len(frame)}\r\n\r\n"
+                ).encode("ascii")
+                yield frame
+                yield b"\r\n"
+        except asyncio.CancelledError:
+            logger.info("[stream] viewer disconnected")
+            raise
+        finally:
+            _stream_hub.leave(queue)
 
     return StreamingResponse(
         frame_stream(),
         media_type=f"multipart/x-mixed-replace; boundary={_STREAM_BOUNDARY}",
-        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "X-Stream-Expires-At": str(int(expires_at)),
+            "X-Stream-Remaining-Seconds": str(remaining),
+            "Access-Control-Expose-Headers": (
+                "X-Stream-Expires-At, X-Stream-Remaining-Seconds"
+            ),
+        },
     )
