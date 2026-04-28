@@ -94,6 +94,9 @@ async def admin_visitors(request: Request) -> HTMLResponse:
     distinct_uas_today = await repo.access_distinct_uas_since(today_iso)
     top_paths = await repo.access_top_paths_since(today_iso, limit=10)
     recent = await repo.access_recent(limit=50)
+    # 24-hour hourly bucket series for the traffic chart.
+    chart_start = (now - timedelta(hours=24)).isoformat()
+    hourly = await repo.access_hourly_buckets(chart_start, hours=24)
 
     # Peak hour today: bucket recent-today rows by hour of timestamp.
     hour_counts: Counter[int] = Counter()
@@ -123,5 +126,6 @@ async def admin_visitors(request: Request) -> HTMLResponse:
             "peak_hour": peak_hour,
             "top_paths": top_paths,
             "recent": recent,
+            "hourly": hourly,
         },
     )

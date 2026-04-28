@@ -304,6 +304,33 @@ class SensorRepository:
         rows = await cursor.fetchall()
         return [(r[0], int(r[1])) for r in rows]
 
+    async def access_hourly_buckets(
+        self, since_iso: str, hours: int = 24
+    ) -> list[dict]:
+        """Return [{hour: 'YYYY-MM-DDTHH', count: N}, ...] for the visitor chart.
+
+        Buckets by hour of timestamp (UTC). Includes empty hours so the chart
+        renders a continuous bar series even during quiet windows.
+        """
+        cursor = await self.db.execute(
+            "SELECT substr(timestamp, 1, 13) AS hour, COUNT(*) AS n"
+            " FROM access_log WHERE timestamp >= ?"
+            " GROUP BY hour ORDER BY hour ASC",
+            (since_iso,),
+        )
+        rows = await cursor.fetchall()
+        # Normalize to a dense series keyed by ISO hour string.
+        from datetime import datetime, timedelta, timezone
+
+        observed = {r[0]: int(r[1]) for r in rows}
+        end = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+        result = []
+        for i in range(hours - 1, -1, -1):
+            hour_dt = end - timedelta(hours=i)
+            key = hour_dt.strftime("%Y-%m-%dT%H")
+            result.append({"hour": key, "count": observed.get(key, 0)})
+        return result
+
     async def access_recent(self, limit: int = 50) -> list[dict]:
         """Return the most recent N access_log rows as dicts."""
         cursor = await self.db.execute(

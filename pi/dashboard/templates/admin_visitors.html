@@ -94,11 +94,69 @@
         td.num { text-align: right; color: #d8d8d8; }
         td.path { color: #b8d4c2; word-break: break-all; }
         td.dim { color: #6a6a6a; }
+        td.hash { color: #6a6a6a; font-size: 11px; }
         tr:hover td { background: rgba(255,255,255,0.02); }
         .status-2xx { color: #8acaa1; }
         .status-3xx { color: #c8b76a; }
         .status-4xx { color: #d99a6a; }
         .status-5xx { color: #d97a7a; }
+        .dur-fast { color: #8acaa1; }
+        .dur-mid { color: #c8b76a; }
+        .dur-slow { color: #d99a6a; }
+        .dur-cold { color: #d97a7a; }
+
+        /* 24-hour traffic bar chart */
+        .chart-wrap {
+            margin-bottom: 32px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(20,20,20,0.7);
+            padding: 16px 18px;
+        }
+        .chart-svg {
+            width: 100%;
+            height: 110px;
+            display: block;
+        }
+        .chart-bar { fill: #4a8c5a; }
+        .chart-bar-zero { fill: rgba(255,255,255,0.04); }
+        .chart-axis { fill: #6a6a6a; font-size: 9px; font-family: 'Space Mono', monospace; }
+        .chart-grid { stroke: rgba(255,255,255,0.05); stroke-width: 1; }
+        .chart-label-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+        }
+        .chart-label-row span {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            color: #6a6a6a;
+            letter-spacing: 0.1em;
+        }
+
+        /* Relative-time helper: cells render absolute timestamps; the JS
+           in the body adds a "Xm ago" suffix and keeps the absolute as title. */
+        .ts-cell { white-space: nowrap; }
+        .ts-rel { color: #4a8c5a; margin-left: 6px; font-size: 11px; }
+
+        /* Mobile: stack stat cards, allow horizontal scroll on tables, drop
+           the heaviest table columns at narrow widths. */
+        @media (max-width: 640px) {
+            body { padding: 16px 12px; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-value { font-size: 22px; }
+            .visitors-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            table { font-size: 11px; }
+            .col-ua { display: none; }
+            .col-ms { display: none; }
+            th, td { padding: 6px 8px; }
+        }
+        @media (max-width: 420px) {
+            .col-ip { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -133,6 +191,37 @@
         </div>
     </section>
 
+    {% if hourly and hourly | length > 0 %}
+    {% set hourly_max = (hourly | map(attribute='count') | list | max) or 1 %}
+    <section class="chart-wrap" aria-label="Traffic last 24 hours">
+        <h2 class="section-title">Traffic · last 24h ({{ hourly | sum(attribute='count') }} reqs)</h2>
+        <svg class="chart-svg" viewBox="0 0 720 110" preserveAspectRatio="none" role="img">
+            <!-- horizontal grid lines at 25/50/75/100% -->
+            {% for frac in [0.25, 0.5, 0.75, 1.0] %}
+            <line class="chart-grid" x1="0" x2="720" y1="{{ (100 - frac * 90) | round(2) }}" y2="{{ (100 - frac * 90) | round(2) }}" />
+            {% endfor %}
+            {% for bucket in hourly %}
+            {% set bw = (720 / (hourly | length)) %}
+            {% set bx = loop.index0 * bw %}
+            {% set bh = (bucket.count / hourly_max * 90) if bucket.count > 0 else 2 %}
+            {% set by = 100 - bh %}
+            <rect class="{{ 'chart-bar' if bucket.count > 0 else 'chart-bar-zero' }}"
+                  x="{{ bx + 1 | round(2) }}" y="{{ by | round(2) }}"
+                  width="{{ (bw - 2) | round(2) }}" height="{{ bh | round(2) }}">
+                <title>{{ bucket.hour }}:00 UTC — {{ bucket.count }} req{{ '' if bucket.count == 1 else 's' }}</title>
+            </rect>
+            {% endfor %}
+            <!-- axis: peak count at top, 0 at bottom -->
+            <text class="chart-axis" x="2" y="10">{{ hourly_max }}</text>
+            <text class="chart-axis" x="2" y="100">0</text>
+        </svg>
+        <div class="chart-label-row">
+            <span>{{ hourly[0].hour }}:00 UTC</span>
+            <span>now</span>
+        </div>
+    </section>
+    {% endif %}
+
     <h2 class="section-title">Top paths · today</h2>
     <table aria-label="Top paths today">
         <thead>
@@ -158,15 +247,15 @@
                 <th>Method</th>
                 <th>Path</th>
                 <th class="num">Status</th>
-                <th class="num">ms</th>
-                <th>IP</th>
-                <th>UA</th>
+                <th class="num col-ms">ms</th>
+                <th class="col-ip">IP</th>
+                <th class="col-ua">UA</th>
             </tr>
         </thead>
         <tbody>
             {% for row in recent %}
             <tr>
-                <td class="dim">{{ row.timestamp }}</td>
+                <td class="dim ts-cell" data-ts="{{ row.timestamp }}" title="{{ row.timestamp }}">{{ row.timestamp }}</td>
                 <td>{{ row.method }}</td>
                 <td class="path">{{ row.path }}</td>
                 {% set sc = row.status_code or 0 %}
@@ -179,14 +268,47 @@
                 {% else %}
                 <td class="num status-2xx">{{ sc }}</td>
                 {% endif %}
-                <td class="num">{{ row.duration_ms }}</td>
-                <td class="dim">{{ row.ip_hash }}</td>
-                <td class="dim">{{ row.user_agent_hash }}</td>
+                {% set dur = row.duration_ms or 0 %}
+                {% if dur >= 2000 %}
+                <td class="num col-ms dur-cold">{{ dur }}</td>
+                {% elif dur >= 500 %}
+                <td class="num col-ms dur-slow">{{ dur }}</td>
+                {% elif dur >= 100 %}
+                <td class="num col-ms dur-mid">{{ dur }}</td>
+                {% else %}
+                <td class="num col-ms dur-fast">{{ dur }}</td>
+                {% endif %}
+                <td class="hash col-ip" title="{{ row.ip_hash }}">{{ row.ip_hash[:8] }}</td>
+                <td class="hash col-ua" title="{{ row.user_agent_hash }}">{{ row.user_agent_hash[:8] }}</td>
             </tr>
             {% else %}
             <tr><td colspan="7" class="dim">No requests yet.</td></tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <script>
+        // Replace ISO timestamps with "Xm ago" relative time (absolute kept as tooltip).
+        (function () {
+            function rel(iso) {
+                const d = new Date(iso);
+                if (isNaN(d.getTime())) return iso;
+                const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+                if (sec < 60) return sec + 's ago';
+                if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+                if (sec < 86400) return Math.floor(sec / 3600) + 'h ago';
+                return Math.floor(sec / 86400) + 'd ago';
+            }
+            for (const el of document.querySelectorAll('.ts-cell[data-ts]')) {
+                el.textContent = rel(el.dataset.ts);
+            }
+            // Refresh every 30 sec so relative times stay current.
+            setInterval(function () {
+                for (const el of document.querySelectorAll('.ts-cell[data-ts]')) {
+                    el.textContent = rel(el.dataset.ts);
+                }
+            }, 30000);
+        })();
+    </script>
 </body>
 </html>
