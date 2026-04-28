@@ -340,12 +340,15 @@ async def get_system_status(request: Request) -> dict:
     }
 
 
-@router.get(
-    "/stream/live",
-    dependencies=[Depends(require_admin)],
-)
+@router.get("/stream/live")
 async def stream_live() -> StreamingResponse:
-    """30-second admin-only MJPEG live feed.
+    """30-second public MJPEG live feed (camera look-in for visitors).
+
+    Public-readable: this is an art-piece-on-IG installation; visibility
+    is the feature. Defended by asyncio.Lock (single concurrent stream
+    across all visitors; second caller gets 409), 30-second hard cap
+    (rpicam-vid -t flag enforces), and the global slowapi rate limit
+    (60 req/min/IP via SlowAPIMiddleware in app.py).
 
     Spawns rpicam-vid (libcamera) as a subprocess emitting MJPEG to stdout,
     parses JPEG frame boundaries (FFD8 / FFD9), wraps each frame in

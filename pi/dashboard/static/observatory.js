@@ -606,7 +606,8 @@
     }
 
     function initLiveToggle() {
-        if (!isAdminFlag()) return;
+        // Public visitors get this too — the endpoint is rate-limited and
+        // single-concurrency (see /api/stream/live).
         var btn = document.getElementById("camera-live-toggle");
         if (!btn) return;
         btn.addEventListener("click", function () {
