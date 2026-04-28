@@ -502,6 +502,10 @@
                 var img = document.createElement("img");
                 img.src = data.url;
                 img.alt = "Latest capture";
+                img.title = "Click to enlarge";
+                img.addEventListener("click", function () {
+                    openLightbox(data.url, data.filename, data.timestamp);
+                });
                 container.appendChild(img);
             }
         }).catch(function () {});
