@@ -24,7 +24,7 @@ def dashboard_cmd(ctx: click.Context, host: str, port: int) -> None:
         repo = SensorRepository(config.system.db_path)
         await repo.connect()
 
-        app = create_app(repo, fan_config=config.fan)
+        app = create_app(repo, fan_config=config.fan, security_config=config.security)
 
         server_config = uvicorn.Config(
             app,

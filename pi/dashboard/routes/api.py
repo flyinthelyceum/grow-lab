@@ -2,6 +2,10 @@
 
 All endpoints return JSON. Time-windowed queries support
 window parameter: 1h, 24h, 7d.
+
+Stage 1 security: POST /fan/override is gated by `require_admin` and
+limited via slowapi at security.rate_limit_admin. All other routes
+remain public (read-only).
 """
 
 from __future__ import annotations
@@ -10,9 +14,11 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path as FsPath, PurePosixPath
 
-from fastapi import APIRouter, Body, HTTPException, Path, Query, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
+
+from pi.dashboard.security import require_admin
 
 router = APIRouter(prefix="/api")
 
@@ -264,9 +270,35 @@ class FanOverrideRequest(BaseModel):
     mode: str | None = Field(default=None, pattern=r"^auto$")
 
 
-@router.post("/fan/override")
+def _admin_rate_limit():
+    """Return a slowapi limit decorator pinned to security.rate_limit_admin.
+
+    Resolved at request time so it reflects the live SecurityConfig on
+    app.state. Falls back to "10/minute" if state is missing.
+    """
+
+    def _decorator(func):
+        # Wrap with a closure that defers limiter binding until call time.
+        async def _wrapped(request: Request, *args, **kwargs):
+            limiter = getattr(request.app.state, "limiter", None)
+            sec = getattr(request.app.state, "security_config", None)
+            limit_str = sec.rate_limit_admin if sec else "10/minute"
+            if limiter is not None:
+                # Apply limit via slowapi's `limit` decorator dynamically.
+                limited = limiter.limit(limit_str)(func)
+                return await limited(request, *args, **kwargs)
+            return await func(request, *args, **kwargs)
+
+        _wrapped.__name__ = func.__name__
+        _wrapped.__doc__ = func.__doc__
+        return _wrapped
+
+    return _decorator
+
+
+@router.post("/fan/override", dependencies=[Depends(require_admin)])
 async def set_fan_override(request: Request, body: FanOverrideRequest) -> dict:
-    """Set a manual fan duty cycle or return to auto mode."""
+    """Set a manual fan duty cycle or return to auto mode (admin only)."""
     fan_svc = getattr(request.app.state, "fan_service", None)
     if fan_svc is None:
         raise HTTPException(status_code=503, detail="Fan service not available")

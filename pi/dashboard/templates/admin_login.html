@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GROWLAB · Admin</title>
+    <link rel="stylesheet" href="{{ static_asset('style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <style>
+        .login-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 20px;
+            background: #0a0a0a;
+            color: #e8e8e8;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 380px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(20,20,20,0.85);
+            padding: 32px 28px;
+        }
+        .login-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #b8b8b8;
+            margin: 0 0 4px;
+        }
+        .login-subtitle {
+            font-size: 12px;
+            color: #6a6a6a;
+            margin: 0 0 24px;
+        }
+        .login-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .login-field label {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #8a8a8a;
+        }
+        .login-field input {
+            background: #050505;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #f4f4f4;
+            font-family: 'Space Mono', monospace;
+            font-size: 14px;
+            padding: 10px 12px;
+            outline: none;
+        }
+        .login-field input:focus {
+            border-color: #4a8c5a;
+        }
+        .login-submit {
+            width: 100%;
+            background: #1f3a26;
+            border: 1px solid #4a8c5a;
+            color: #d8f0d8;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            padding: 11px 14px;
+            cursor: pointer;
+        }
+        .login-submit:hover { background: #265230; }
+        .login-error {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            color: #d97a7a;
+            margin-bottom: 16px;
+            border-left: 2px solid #d97a7a;
+            padding: 6px 10px;
+            background: rgba(217,122,122,0.08);
+        }
+        .login-back {
+            margin-top: 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            color: #6a6a6a;
+            text-align: center;
+        }
+        .login-back a { color: #8a8a8a; text-decoration: none; }
+        .login-back a:hover { color: #d8d8d8; }
+    </style>
+</head>
+<body>
+    <main class="login-shell">
+        <section class="login-card" aria-labelledby="login-heading">
+            <h1 class="login-title" id="login-heading">GROWLAB · Admin</h1>
+            <p class="login-subtitle">Restricted access. Password required.</p>
+            {% if error %}
+            <div class="login-error" role="alert">{{ error }}</div>
+            {% endif %}
+            <form method="post" action="/admin/login" novalidate>
+                <div class="login-field">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        autocomplete="current-password"
+                        autofocus
+                        required
+                    >
+                </div>
+                <button type="submit" class="login-submit">Authenticate</button>
+            </form>
+            <div class="login-back">
+                <a href="/">← Return to dashboard</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GROWLAB · Visitors</title>
+    <link rel="stylesheet" href="{{ static_asset('style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #e8e8e8;
+            font-family: 'Inter', system-ui, sans-serif;
+            margin: 0;
+            padding: 32px 24px;
+        }
+        .visitors-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+        .visitors-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #b8b8b8;
+            margin: 0;
+        }
+        .visitors-nav a {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            color: #8a8a8a;
+            text-decoration: none;
+            margin-left: 16px;
+        }
+        .visitors-nav a:hover { color: #d8d8d8; }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(20,20,20,0.7);
+            padding: 16px 18px;
+        }
+        .stat-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: #6a6a6a;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 26px;
+            color: #f4f4f4;
+        }
+
+        .section-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #8a8a8a;
+            margin: 0 0 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            margin-bottom: 28px;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        th {
+            color: #6a6a6a;
+            font-weight: 400;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+        td.num { text-align: right; color: #d8d8d8; }
+        td.path { color: #b8d4c2; word-break: break-all; }
+        td.dim { color: #6a6a6a; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .status-2xx { color: #8acaa1; }
+        .status-3xx { color: #c8b76a; }
+        .status-4xx { color: #d99a6a; }
+        .status-5xx { color: #d97a7a; }
+    </style>
+</head>
+<body>
+    <header class="visitors-header">
+        <h1 class="visitors-title">GROWLAB · Visitors</h1>
+        <nav class="visitors-nav">
+            <a href="/">Dashboard</a>
+            <a href="/admin/logout">Logout</a>
+        </nav>
+    </header>
+
+    <section class="stat-grid" aria-label="Today summary">
+        <div class="stat-card">
+            <div class="stat-label">Requests today</div>
+            <div class="stat-value">{{ total_today }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Requests · 7 days</div>
+            <div class="stat-value">{{ total_week }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Distinct IPs today</div>
+            <div class="stat-value">{{ distinct_ips_today }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Distinct UAs today</div>
+            <div class="stat-value">{{ distinct_uas_today }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Peak hour today</div>
+            <div class="stat-value">{{ peak_hour }}</div>
+        </div>
+    </section>
+
+    <h2 class="section-title">Top paths · today</h2>
+    <table aria-label="Top paths today">
+        <thead>
+            <tr><th>Path</th><th class="num">Count</th></tr>
+        </thead>
+        <tbody>
+            {% for path, count in top_paths %}
+            <tr>
+                <td class="path">{{ path }}</td>
+                <td class="num">{{ count }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="2" class="dim">No traffic logged yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 class="section-title">Recent · last 50</h2>
+    <table aria-label="Recent requests">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Method</th>
+                <th>Path</th>
+                <th class="num">Status</th>
+                <th class="num">ms</th>
+                <th>IP</th>
+                <th>UA</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in recent %}
+            <tr>
+                <td class="dim">{{ row.timestamp }}</td>
+                <td>{{ row.method }}</td>
+                <td class="path">{{ row.path }}</td>
+                {% set sc = row.status_code or 0 %}
+                {% if sc >= 500 %}
+                <td class="num status-5xx">{{ sc }}</td>
+                {% elif sc >= 400 %}
+                <td class="num status-4xx">{{ sc }}</td>
+                {% elif sc >= 300 %}
+                <td class="num status-3xx">{{ sc }}</td>
+                {% else %}
+                <td class="num status-2xx">{{ sc }}</td>
+                {% endif %}
+                <td class="num">{{ row.duration_ms }}</td>
+                <td class="dim">{{ row.ip_hash }}</td>
+                <td class="dim">{{ row.user_agent_hash }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="dim">No requests yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

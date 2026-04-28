@@ -178,6 +178,40 @@ class NotificationConfig:
 
 
 @dataclass(frozen=True)
+class SecurityConfig:
+    """Stage 1 security baseline for the public dashboard.
+
+    Auth, rate limits, and request logging knobs. The admin password is
+    stored as a hex sha256 of the plaintext (never the plaintext itself).
+    Empty admin_password_sha256 disables auth and emits a WARN at startup
+    (useful for local dev only).
+    """
+
+    enabled: bool = True
+    admin_password_sha256: str = ""
+    session_secret_key: str = ""
+    session_max_age_seconds: int = 86400 * 7  # 1 week
+    rate_limit_default: str = "60/minute"
+    rate_limit_admin: str = "10/minute"
+    log_requests: bool = True
+    log_user_agents: bool = True
+
+    def __repr__(self) -> str:
+        masked_pw = "***" if self.admin_password_sha256 else ""
+        masked_sk = "***" if self.session_secret_key else ""
+        return (
+            f"SecurityConfig(enabled={self.enabled!r}, "
+            f"admin_password_sha256={masked_pw!r}, "
+            f"session_secret_key={masked_sk!r}, "
+            f"session_max_age_seconds={self.session_max_age_seconds!r}, "
+            f"rate_limit_default={self.rate_limit_default!r}, "
+            f"rate_limit_admin={self.rate_limit_admin!r}, "
+            f"log_requests={self.log_requests!r}, "
+            f"log_user_agents={self.log_user_agents!r})"
+        )
+
+
+@dataclass(frozen=True)
 class AppConfig:
     system: SystemConfig = field(default_factory=SystemConfig)
     i2c: I2CConfig = field(default_factory=I2CConfig)
@@ -191,3 +225,4 @@ class AppConfig:
     display: DisplayConfig = field(default_factory=DisplayConfig)
     calibration: CalibrationConfig = field(default_factory=CalibrationConfig)
     notifications: NotificationConfig = field(default_factory=NotificationConfig)
+    security: SecurityConfig = field(default_factory=SecurityConfig)

@@ -223,3 +223,105 @@ class SensorRepository:
             row = await cursor.fetchone()
             info[table] = row[0] if row else 0
         return info
+
+    # --- Stage 1 security baseline: privacy-preserving access log ---
+
+    async def log_access(
+        self,
+        *,
+        timestamp: str,
+        method: str,
+        path: str,
+        status_code: int,
+        duration_ms: int,
+        ip_hash: str,
+        ua_hash: str,
+        referrer: str,
+    ) -> None:
+        """Insert one row into access_log.
+
+        Called by RequestLoggerMiddleware. All identifying fields
+        (ip_hash, ua_hash) are pre-hashed by the caller; this method
+        does no hashing itself.
+        """
+        await self.db.execute(
+            "INSERT INTO access_log("
+            "timestamp, method, path, status_code, duration_ms,"
+            " ip_hash, user_agent_hash, referrer"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                timestamp,
+                method,
+                path,
+                status_code,
+                duration_ms,
+                ip_hash,
+                ua_hash,
+                referrer,
+            ),
+        )
+        await self.db.commit()
+
+    async def access_count_since(self, since_iso: str) -> int:
+        """Count total access_log rows since `since_iso` (inclusive)."""
+        cursor = await self.db.execute(
+            "SELECT COUNT(*) FROM access_log WHERE timestamp >= ?",
+            (since_iso,),
+        )
+        row = await cursor.fetchone()
+        return int(row[0]) if row else 0
+
+    async def access_distinct_ips_since(self, since_iso: str) -> int:
+        """Count distinct ip_hash values since `since_iso`."""
+        cursor = await self.db.execute(
+            "SELECT COUNT(DISTINCT ip_hash) FROM access_log"
+            " WHERE timestamp >= ? AND ip_hash != ''",
+            (since_iso,),
+        )
+        row = await cursor.fetchone()
+        return int(row[0]) if row else 0
+
+    async def access_distinct_uas_since(self, since_iso: str) -> int:
+        """Count distinct user_agent_hash values since `since_iso`."""
+        cursor = await self.db.execute(
+            "SELECT COUNT(DISTINCT user_agent_hash) FROM access_log"
+            " WHERE timestamp >= ? AND user_agent_hash != ''",
+            (since_iso,),
+        )
+        row = await cursor.fetchone()
+        return int(row[0]) if row else 0
+
+    async def access_top_paths_since(
+        self, since_iso: str, limit: int = 10
+    ) -> list[tuple[str, int]]:
+        """Return [(path, count), ...] descending since `since_iso`."""
+        cursor = await self.db.execute(
+            "SELECT path, COUNT(*) AS n FROM access_log"
+            " WHERE timestamp >= ?"
+            " GROUP BY path ORDER BY n DESC LIMIT ?",
+            (since_iso, limit),
+        )
+        rows = await cursor.fetchall()
+        return [(r[0], int(r[1])) for r in rows]
+
+    async def access_recent(self, limit: int = 50) -> list[dict]:
+        """Return the most recent N access_log rows as dicts."""
+        cursor = await self.db.execute(
+            "SELECT timestamp, method, path, status_code, duration_ms,"
+            " ip_hash, user_agent_hash"
+            " FROM access_log ORDER BY id DESC LIMIT ?",
+            (limit,),
+        )
+        rows = await cursor.fetchall()
+        return [
+            {
+                "timestamp": r[0],
+                "method": r[1],
+                "path": r[2],
+                "status_code": r[3],
+                "duration_ms": r[4],
+                "ip_hash": r[5],
+                "user_agent_hash": r[6],
+            }
+            for r in rows
+        ]

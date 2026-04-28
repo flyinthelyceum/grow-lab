@@ -12,7 +12,7 @@ import aiosqlite
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -52,6 +52,25 @@ CREATE TABLE IF NOT EXISTS camera_captures (
     filesize_bytes INTEGER,
     created_at TEXT DEFAULT (datetime('now'))
 );
+
+-- V2: privacy-preserving HTTP access log (Stage 1 security baseline, 2026-04-28).
+CREATE TABLE IF NOT EXISTS access_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    method TEXT NOT NULL,
+    path TEXT NOT NULL,
+    status_code INTEGER,
+    duration_ms INTEGER,
+    ip_hash TEXT,
+    user_agent_hash TEXT,
+    referrer TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_access_log_timestamp
+    ON access_log(timestamp);
+
+CREATE INDEX IF NOT EXISTS idx_access_log_ip_hash
+    ON access_log(ip_hash);
 """
 
 

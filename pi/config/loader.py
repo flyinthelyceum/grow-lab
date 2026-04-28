@@ -7,6 +7,7 @@ missing section or key.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,7 @@ from pi.config.schema import (
     SensorEntry,
     SensorsConfig,
     SerialConfig,
+    SecurityConfig,
     SystemConfig,
     WebhookConfig,
 )
@@ -211,6 +213,30 @@ def _validate_config(config: AppConfig) -> None:
             raise ValueError(f"irrigation schedule minute must be 0-59, got {entry.minute}")
 
 
+def _build_security(raw: dict[str, Any]) -> SecurityConfig:
+    """Build SecurityConfig from raw TOML, with env-var overrides for secrets."""
+    data = raw.get("security", {})
+    defaults = SecurityConfig()
+    pw_hash = (
+        os.environ.get("GROWLAB_ADMIN_PASSWORD_SHA256")
+        or data.get("admin_password_sha256", defaults.admin_password_sha256)
+    )
+    secret_key = (
+        os.environ.get("GROWLAB_SESSION_SECRET_KEY")
+        or data.get("session_secret_key", defaults.session_secret_key)
+    )
+    return SecurityConfig(
+        enabled=data.get("enabled", defaults.enabled),
+        admin_password_sha256=pw_hash,
+        session_secret_key=secret_key,
+        session_max_age_seconds=data.get("session_max_age_seconds", defaults.session_max_age_seconds),
+        rate_limit_default=data.get("rate_limit_default", defaults.rate_limit_default),
+        rate_limit_admin=data.get("rate_limit_admin", defaults.rate_limit_admin),
+        log_requests=data.get("log_requests", defaults.log_requests),
+        log_user_agents=data.get("log_user_agents", defaults.log_user_agents),
+    )
+
+
 def load_config(path: Path | None = None) -> AppConfig:
     """Load config from a TOML file. Returns defaults if file not found."""
     if path is None:
@@ -266,6 +292,7 @@ def load_config(path: Path | None = None) -> AppConfig:
         ),
         calibration=_build_calibration(raw),
         notifications=_build_notifications(raw),
+        security=_build_security(raw),
     )
 
     _validate_config(config)
