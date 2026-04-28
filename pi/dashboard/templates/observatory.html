@@ -18,6 +18,10 @@
         <nav class="mobile-nav">
             <a href="/art" class="mobile-nav-link">ART</a>
             <a href="/dream" class="mobile-nav-link">DREAM</a>
+            {% if is_admin %}
+            <a href="/admin/visitors" class="mobile-nav-link mobile-nav-admin">VISITORS</a>
+            <a href="/admin/logout" class="mobile-nav-link mobile-nav-admin">LOGOUT</a>
+            {% endif %}
         </nav>
         <div class="time-controls">
             <button class="time-btn" data-window="1h">1H</button>
@@ -117,6 +121,10 @@
                             <div class="camera-placeholder-title">CAMERA STANDBY</div>
                             <div class="camera-placeholder-detail">Waiting for the next logged capture.</div>
                         </div>
+                        {% if is_admin %}
+                        <button class="camera-live-toggle" id="camera-live-toggle" type="button" title="Toggle 30-second live look-in">GO LIVE</button>
+                        <div class="camera-live-badge" id="camera-live-badge" hidden></div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="plant-telemetry-rail">
@@ -154,9 +162,14 @@
             <span class="status-db" id="db-readings">0 readings</span>
             <a href="/art" class="status-art-link">ART</a>
             <a href="/dream" class="status-art-link" style="margin-left:12px">DREAM</a>
+            {% if is_admin %}
+            <a href="/admin/visitors" class="status-art-link" style="margin-left:12px">VISITORS</a>
+            <a href="/admin/logout" class="status-art-link" style="margin-left:12px">LOGOUT</a>
+            {% endif %}
         </div>
     </footer>
 
+    <script>window.__isAdmin = {{ is_admin | tojson }};</script>
     <script src="{{ static_asset('vendor/d3.v7.min.js') }}"></script>
     <script src="{{ static_asset('charts/chart-hover.js') }}"></script>
     <script src="{{ static_asset('charts/soil-gauge.js') }}"></script>

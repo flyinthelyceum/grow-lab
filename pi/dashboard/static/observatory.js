@@ -581,6 +581,106 @@
         }, 3000);
     }
 
+    // --- Live webcam toggle (admin only) ---
+    var liveState = {
+        active: false,
+        endsAt: null,
+        countdownTimer: null,
+        previousSrc: null,
+    };
+
+    function initLiveToggle() {
+        if (!window.__isAdmin) return;
+        var btn = document.getElementById("camera-live-toggle");
+        if (!btn) return;
+        btn.addEventListener("click", function () {
+            if (liveState.active) {
+                stopLive("user_stopped");
+            } else {
+                startLive();
+            }
+        });
+    }
+
+    function startLive() {
+        if (liveState.active) return;
+        var container = document.getElementById("camera-feed");
+        if (!container) return;
+        var img = container.querySelector("img");
+        if (!img) {
+            // No static image yet (camera standby); inject one for the stream.
+            img = document.createElement("img");
+            img.alt = "Live feed";
+            container.appendChild(img);
+        }
+        liveState.previousSrc = img.src;
+        // Cache-bust param so the browser opens a fresh streaming connection.
+        img.src = "/api/stream/live?t=" + Date.now();
+        liveState.active = true;
+        liveState.endsAt = Date.now() + 30000;
+
+        var btn = document.getElementById("camera-live-toggle");
+        if (btn) {
+            btn.classList.add("camera-live-toggle-active");
+            btn.textContent = "STOP";
+        }
+        showLiveBadge();
+        liveState.countdownTimer = setInterval(updateCountdown, 250);
+    }
+
+    function stopLive(reason) {
+        if (!liveState.active) return;
+        liveState.active = false;
+        if (liveState.countdownTimer) {
+            clearInterval(liveState.countdownTimer);
+            liveState.countdownTimer = null;
+        }
+        var container = document.getElementById("camera-feed");
+        if (container) {
+            var img = container.querySelector("img");
+            if (img && liveState.previousSrc) {
+                img.src = liveState.previousSrc;
+            }
+        }
+        liveState.previousSrc = null;
+        var btn = document.getElementById("camera-live-toggle");
+        if (btn) {
+            btn.classList.remove("camera-live-toggle-active");
+            btn.textContent = "GO LIVE";
+        }
+        hideLiveBadge();
+        // After expiry, refresh latest capture (reason=="expired" or "user_stopped").
+        if (reason !== "user_stopped") {
+            setTimeout(refreshImage, 200);
+        }
+    }
+
+    function showLiveBadge() {
+        var badge = document.getElementById("camera-live-badge");
+        if (!badge) return;
+        badge.hidden = false;
+        updateCountdown();
+    }
+
+    function hideLiveBadge() {
+        var badge = document.getElementById("camera-live-badge");
+        if (!badge) return;
+        badge.hidden = true;
+        badge.textContent = "";
+    }
+
+    function updateCountdown() {
+        var remaining = Math.max(0, liveState.endsAt - Date.now());
+        var seconds = Math.ceil(remaining / 1000);
+        var badge = document.getElementById("camera-live-badge");
+        if (badge) {
+            badge.textContent = "● LIVE — " + seconds + "s";
+        }
+        if (remaining <= 0) {
+            stopLive("expired");
+        }
+    }
+
     // --- Init ---
     document.addEventListener("DOMContentLoaded", function () {
         initCharts();
@@ -603,5 +703,6 @@
         refreshAlertTimeline();
         connectWS();
         startPolling();
+        initLiveToggle();
     });
 })();

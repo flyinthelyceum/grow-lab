@@ -10,17 +10,29 @@ remain public (read-only).
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path as FsPath, PurePosixPath
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from pi.dashboard.security import require_admin
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api")
+
+# Stage 2: live webcam streaming.
+# rpicam-vid produces concatenated JPEGs; we re-emit each as a multipart
+# x-mixed-replace frame so browsers render it natively in <img>. Single
+# concurrent stream enforced via asyncio.Lock; second caller gets 409.
+_STREAM_DURATION_SECONDS = 30
+_STREAM_BOUNDARY = "growlabframe"
+_stream_lock = asyncio.Lock()
 
 class TimeWindow(str, Enum):
     one_hour = "1h"
@@ -326,3 +338,79 @@ async def get_system_status(request: Request) -> dict:
         "db": db_info,
         "sensors": sensor_ids,
     }
+
+
+@router.get(
+    "/stream/live",
+    dependencies=[Depends(require_admin)],
+)
+async def stream_live() -> StreamingResponse:
+    """30-second admin-only MJPEG live feed.
+
+    Spawns rpicam-vid (libcamera) as a subprocess emitting MJPEG to stdout,
+    parses JPEG frame boundaries (FFD8 / FFD9), wraps each frame in
+    multipart/x-mixed-replace so browsers render it as a live <img src=...>
+    feed. Hard-capped at 30 seconds; subprocess auto-exits via -t flag and
+    is also terminated on client disconnect. Single concurrent stream;
+    second caller gets 409.
+    """
+    if _stream_lock.locked():
+        raise HTTPException(status_code=409, detail="Stream already in progress")
+
+    async def frame_stream():
+        async with _stream_lock:
+            duration_ms = _STREAM_DURATION_SECONDS * 1000
+            proc = await asyncio.create_subprocess_exec(
+                "rpicam-vid",
+                "--codec", "mjpeg",
+                "-t", str(duration_ms),
+                "--width", "1280",
+                "--height", "720",
+                "--framerate", "10",
+                "-n",
+                "-o", "-",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            buffer = b""
+            try:
+                while True:
+                    chunk = await proc.stdout.read(8192)
+                    if not chunk:
+                        break
+                    buffer += chunk
+                    while True:
+                        soi = buffer.find(b"\xff\xd8")
+                        if soi < 0:
+                            break
+                        eoi = buffer.find(b"\xff\xd9", soi + 2)
+                        if eoi < 0:
+                            break
+                        eoi_end = eoi + 2
+                        frame = buffer[soi:eoi_end]
+                        buffer = buffer[eoi_end:]
+                        yield (
+                            f"--{_STREAM_BOUNDARY}\r\n"
+                            f"Content-Type: image/jpeg\r\n"
+                            f"Content-Length: {len(frame)}\r\n\r\n"
+                        ).encode("ascii")
+                        yield frame
+                        yield b"\r\n"
+            except asyncio.CancelledError:
+                logger.info("[stream] client disconnected")
+                raise
+            finally:
+                if proc.returncode is None:
+                    proc.terminate()
+                    try:
+                        await asyncio.wait_for(proc.wait(), timeout=2.0)
+                    except asyncio.TimeoutError:
+                        proc.kill()
+                        await proc.wait()
+                logger.info("[stream] session ended")
+
+    return StreamingResponse(
+        frame_stream(),
+        media_type=f"multipart/x-mixed-replace; boundary={_STREAM_BOUNDARY}",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
