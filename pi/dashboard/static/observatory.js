@@ -601,8 +601,12 @@
         previousSrc: null,
     };
 
+    function isAdminFlag() {
+        return document.body && document.body.dataset.isAdmin === "true";
+    }
+
     function initLiveToggle() {
-        if (!window.__isAdmin) return;
+        if (!isAdminFlag()) return;
         var btn = document.getElementById("camera-live-toggle");
         if (!btn) return;
         btn.addEventListener("click", function () {
@@ -716,5 +720,15 @@
         connectWS();
         startPolling();
         initLiveToggle();
+
+        // CSP-safe alert-dismiss binding (was an inline onclick attribute,
+        // blocked by script-src 'self').
+        var alertDismiss = document.getElementById("alert-dismiss");
+        if (alertDismiss) {
+            alertDismiss.addEventListener("click", function () {
+                var banner = document.getElementById("alert-banner");
+                if (banner) banner.style.display = "none";
+            });
+        }
     });
 })();

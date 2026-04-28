@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 </head>
-<body>
+<body data-is-admin="{{ is_admin | tojson }}">
     <header class="observatory-header">
         <div class="observatory-brand">
             <h1 class="observatory-title">GROWLAB</h1>
@@ -34,7 +34,7 @@
     <div class="alert-banner" id="alert-banner" style="display:none">
         <span class="alert-icon">!</span>
         <span class="alert-text" id="alert-text"></span>
-        <button class="alert-dismiss" onclick="document.getElementById('alert-banner').style.display='none'">dismiss</button>
+        <button class="alert-dismiss" id="alert-dismiss" type="button">dismiss</button>
     </div>
 
     <section class="alert-timeline-strip" id="alert-timeline-section">
@@ -169,7 +169,6 @@
         </div>
     </footer>
 
-    <script>window.__isAdmin = {{ is_admin | tojson }};</script>
     <script src="{{ static_asset('vendor/d3.v7.min.js') }}"></script>
     <script src="{{ static_asset('charts/chart-hover.js') }}"></script>
     <script src="{{ static_asset('charts/soil-gauge.js') }}"></script>
