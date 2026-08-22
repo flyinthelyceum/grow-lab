@@ -273,3 +273,42 @@ class TestNtfyFormat:
         await svc._send_webhook(_alert_event())
 
         assert client.post.call_args[1]["json"]["event_type"] == "alert_warning"
+
+
+class TestNtfyHeaderEncoding:
+    """Headers must survive non-ASCII sensor labels; the body must keep them.
+
+    A "µ" or em dash in a header raises UnicodeEncodeError inside httpx and
+    the notification is silently lost — found live, not in the unit tests.
+    """
+
+    async def test_non_ascii_metadata_does_not_break_headers(self):
+        svc = NotificationService(
+            NotificationConfig(
+                webhook=WebhookConfig(
+                    enabled=True, url="https://ntfy.sh/t", format="ntfy"
+                ),
+                email=EmailConfig(enabled=False),
+            )
+        )
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status = MagicMock()
+        client = AsyncMock()
+        client.post = AsyncMock(return_value=mock_response)
+        client.is_closed = False
+        svc._http_client = client
+
+        await svc._send_webhook(
+            _alert_event(
+                event_type="alert_critical",
+                description="EC critical: 28460.0 µS/cm — check reservoir",
+                metadata="ezo_ec — µ",
+            )
+        )
+
+        headers = client.post.call_args[1]["headers"]
+        for key, value in headers.items():
+            value.encode("ascii")  # must not raise
+        # the body keeps full UTF-8
+        assert "µS/cm" in client.post.call_args[1]["content"].decode("utf-8")

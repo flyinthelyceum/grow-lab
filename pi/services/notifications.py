@@ -31,12 +31,26 @@ _NTFY_TITLES = {
 _NTFY_DEFAULT = ("GROWLAB", "default", "seedling")
 
 
+def _ascii_header(value: str) -> str:
+    """Coerce a header value to ASCII.
+
+    HTTP headers are latin-1 at best; a stray em dash or "µ" from a sensor
+    label raises UnicodeEncodeError and the whole notification is lost.
+    The message body is separately UTF-8 encoded and keeps its symbols.
+    """
+    return value.encode("ascii", "replace").decode("ascii")
+
+
 def _ntfy_headers(event: SystemEvent) -> dict[str, str]:
     """Map an event onto ntfy's Title/Priority/Tags headers."""
     title, priority, tags = _NTFY_TITLES.get(event.event_type, _NTFY_DEFAULT)
     if event.metadata:
-        title = f"{title} — {event.metadata}"
-    return {"Title": title, "Priority": priority, "Tags": tags}
+        title = f"{title} - {event.metadata}"
+    return {
+        "Title": _ascii_header(title),
+        "Priority": priority,
+        "Tags": tags,
+    }
 
 
 
