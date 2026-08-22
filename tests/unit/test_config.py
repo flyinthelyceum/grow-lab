@@ -184,3 +184,31 @@ output_dir = "/home/pi/grow-lab-data/images"
         assert config.system.data_dir == expected_data_dir
         assert config.system.db_path == expected_data_dir / "growlab.db"
         assert config.camera.output_dir == expected_data_dir / "images"
+
+
+class TestWebhookFormat:
+    """notifications.webhook.format selects the delivery shape."""
+
+    def _write(self, tmp_path, body: str):
+        cfg = tmp_path / "config.toml"
+        cfg.write_text(body)
+        return cfg
+
+    def test_defaults_to_raw(self, tmp_path):
+        cfg = self._write(tmp_path, "[notifications.webhook]\nenabled = true\nurl = 'https://x/y'\n")
+        assert load_config(cfg).notifications.webhook.format == "raw"
+
+    def test_ntfy_is_accepted(self, tmp_path):
+        cfg = self._write(
+            tmp_path,
+            "[notifications.webhook]\nenabled = true\nurl = 'https://ntfy.sh/t'\nformat = 'ntfy'\n",
+        )
+        assert load_config(cfg).notifications.webhook.format == "ntfy"
+
+    def test_unknown_format_is_rejected(self, tmp_path):
+        cfg = self._write(
+            tmp_path,
+            "[notifications.webhook]\nenabled = true\nurl = 'https://x/y'\nformat = 'carrier-pigeon'\n",
+        )
+        with pytest.raises(ValueError, match="webhook.format"):
+            load_config(cfg)

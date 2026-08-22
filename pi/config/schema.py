@@ -143,9 +143,18 @@ class CalibrationConfig:
 
 @dataclass(frozen=True)
 class WebhookConfig:
+    """Outbound alert delivery.
+
+    format="raw" POSTs the event as JSON, for a generic receiver.
+    format="ntfy" POSTs a human-readable line to an ntfy topic URL
+    (https://ntfy.sh/<topic>), with title and priority as headers, so
+    alerts arrive as a legible push notification on a phone.
+    """
+
     enabled: bool = False
     url: str = ""
     timeout_seconds: float = 10.0
+    format: str = "raw"
 
 
 @dataclass(frozen=True)

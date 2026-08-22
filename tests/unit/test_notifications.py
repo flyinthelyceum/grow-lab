@@ -200,3 +200,76 @@ class TestEmailChannel:
             mock_email.side_effect = Exception("SMTP failed")
             # Should not raise
             await svc.dispatch(event)
+
+
+class TestNtfyFormat:
+    """format="ntfy" must produce a legible phone push, not a JSON blob."""
+
+    def _svc(self):
+        return NotificationService(
+            NotificationConfig(
+                webhook=WebhookConfig(
+                    enabled=True,
+                    url="https://ntfy.sh/growlab-test-topic",
+                    format="ntfy",
+                ),
+                email=EmailConfig(enabled=False),
+            )
+        )
+
+    def _mock_client(self, svc):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status = MagicMock()
+        client = AsyncMock()
+        client.post = AsyncMock(return_value=mock_response)
+        client.is_closed = False
+        svc._http_client = client
+        return client
+
+    async def test_body_is_plain_text_not_json(self):
+        svc = self._svc()
+        client = self._mock_client(svc)
+
+        await svc._send_webhook(_alert_event(description="pH critical: 8.7"))
+
+        kwargs = client.post.call_args[1]
+        assert "json" not in kwargs, "ntfy must receive a plain body, not JSON"
+        assert kwargs["content"] == b"pH critical: 8.7"
+
+    async def test_critical_maps_to_urgent_priority(self):
+        svc = self._svc()
+        client = self._mock_client(svc)
+
+        await svc._send_webhook(
+            _alert_event(event_type="alert_critical", metadata="ezo_ph")
+        )
+
+        headers = client.post.call_args[1]["headers"]
+        assert headers["Priority"] == "urgent"
+        assert "critical" in headers["Title"].lower()
+        assert "ezo_ph" in headers["Title"]
+
+    async def test_unknown_event_type_still_sends(self):
+        svc = self._svc()
+        client = self._mock_client(svc)
+
+        await svc._send_webhook(_alert_event(event_type="something_new"))
+
+        headers = client.post.call_args[1]["headers"]
+        assert headers["Title"].startswith("GROWLAB")
+        assert headers["Priority"] == "default"
+
+    async def test_raw_format_is_unchanged(self):
+        """The default must keep posting JSON for generic receivers."""
+        svc = NotificationService(
+            NotificationConfig(
+                webhook=WebhookConfig(enabled=True, url="https://example.com/hook"),
+                email=EmailConfig(enabled=False),
+            )
+        )
+        client = self._mock_client(svc)
+
+        await svc._send_webhook(_alert_event())
+
+        assert client.post.call_args[1]["json"]["event_type"] == "alert_warning"

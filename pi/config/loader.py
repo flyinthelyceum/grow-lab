@@ -40,6 +40,19 @@ except ModuleNotFoundError:
     import tomli as tomllib  # type: ignore[no-redef]
 
 
+WEBHOOK_FORMATS = ("raw", "ntfy")
+
+
+def _webhook_format(value: Any) -> str:
+    """Validate notifications.webhook.format at the config boundary."""
+    if value not in WEBHOOK_FORMATS:
+        raise ValueError(
+            f"notifications.webhook.format must be one of "
+            f"{', '.join(WEBHOOK_FORMATS)}, got {value!r}"
+        )
+    return value
+
+
 def _to_path(value: Any) -> Path:
     """Convert config path values and expand ~ for user-home paths."""
     path = Path(str(value)).expanduser()
@@ -164,6 +177,7 @@ def _build_notifications(raw: dict[str, Any]) -> NotificationConfig:
             enabled=wh.get("enabled", False),
             url=wh.get("url", ""),
             timeout_seconds=wh.get("timeout_seconds", 10.0),
+            format=_webhook_format(wh.get("format", "raw")),
         ),
         email=EmailConfig(
             enabled=em.get("enabled", False),

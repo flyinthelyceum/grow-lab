@@ -101,8 +101,14 @@ cooldown_seconds = 300  # Per-sensor cooldown between repeated notifications
 
 [notifications.webhook]
 enabled = false
-url = ""                    # POST JSON payload to this URL on alert
+url = ""                    # Where to POST on alert
 timeout_seconds = 10.0
+format = "raw"              # "raw"  -> POST JSON {event_type, description, timestamp, sensor_id}
+                            # "ntfy" -> POST a plain-text line to an ntfy topic URL
+                            #           (https://ntfy.sh/<your-topic>), with the title and
+                            #           urgency as headers, so it lands as a readable phone
+                            #           push. The topic name is the only secret: pick a long
+                            #           random one, and anyone who knows it can read alerts.
 
 [notifications.email]
 enabled = false

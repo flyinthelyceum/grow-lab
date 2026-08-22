@@ -20,6 +20,25 @@ from pi.data.models import SystemEvent
 
 logger = logging.getLogger(__name__)
 
+NTFY_FORMAT = "ntfy"
+
+# ntfy renders these headers as the notification title, urgency and icon.
+_NTFY_TITLES = {
+    "alert_critical": ("GROWLAB critical", "urgent", "rotating_light"),
+    "alert_warning": ("GROWLAB warning", "high", "warning"),
+    "watchdog": ("GROWLAB recovered", "high", "wrench"),
+}
+_NTFY_DEFAULT = ("GROWLAB", "default", "seedling")
+
+
+def _ntfy_headers(event: SystemEvent) -> dict[str, str]:
+    """Map an event onto ntfy's Title/Priority/Tags headers."""
+    title, priority, tags = _NTFY_TITLES.get(event.event_type, _NTFY_DEFAULT)
+    if event.metadata:
+        title = f"{title} — {event.metadata}"
+    return {"Title": title, "Priority": priority, "Tags": tags}
+
+
 
 class NotificationService:
     """Dispatches alert notifications via configured channels."""
@@ -74,20 +93,28 @@ class NotificationService:
                 logger.warning("Email notification failed: %s", exc)
 
     async def _send_webhook(self, event: SystemEvent) -> None:
-        """POST alert as JSON to the configured webhook URL."""
-        payload = {
-            "event_type": event.event_type,
-            "description": event.description,
-            "timestamp": event.iso_timestamp,
-            "sensor_id": event.metadata,
-        }
-
+        """POST the alert to the configured webhook URL."""
         client = await self._get_http_client()
-        response = await client.post(
-            self._config.webhook.url,
-            json=payload,
-            timeout=self._config.webhook.timeout_seconds,
-        )
+
+        if self._config.webhook.format == NTFY_FORMAT:
+            response = await client.post(
+                self._config.webhook.url,
+                content=event.description.encode("utf-8"),
+                headers=_ntfy_headers(event),
+                timeout=self._config.webhook.timeout_seconds,
+            )
+        else:
+            payload = {
+                "event_type": event.event_type,
+                "description": event.description,
+                "timestamp": event.iso_timestamp,
+                "sensor_id": event.metadata,
+            }
+            response = await client.post(
+                self._config.webhook.url,
+                json=payload,
+                timeout=self._config.webhook.timeout_seconds,
+            )
         response.raise_for_status()
         logger.info(
             "Webhook sent (%d): %s", response.status_code, event.description
