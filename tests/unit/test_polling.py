@@ -1,6 +1,8 @@
 """Tests for the async polling service."""
 
 import asyncio
+import logging
+import sqlite3
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -226,3 +228,66 @@ class TestPollOnce:
         poller = PollingService(registry, repo, config)
         result = await poller._poll_once(driver)
         assert result == []
+
+
+class TestPollLoopSurvivesRepositoryFailure:
+    """Regression cover for the July/August 2026 silent-collector outages.
+
+    A transient `database is locked` from save_reading escaped _poll_loop's
+    only handler (asyncio.CancelledError) and killed the task. The process
+    stayed alive and kept feeding the systemd watchdog, so the collector was
+    dead for weeks with no failure signal anywhere.
+    """
+
+    async def test_write_failure_does_not_kill_the_loop(
+        self, repo: SensorRepository
+    ):
+        driver = _make_mock_driver("bme280")
+        registry = _make_registry(driver)
+
+        saved: list[SensorReading] = []
+        calls = {"n": 0}
+
+        async def flaky_save(reading: SensorReading) -> None:
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise sqlite3.OperationalError("database is locked")
+            saved.append(reading)
+
+        repo.save_reading = flaky_save  # type: ignore[method-assign]
+
+        poller = PollingService(registry, repo, AppConfig())
+        with patch.object(PollingService, "_get_interval", return_value=0):
+            await poller.start()
+            for _ in range(50):
+                await asyncio.sleep(0)
+                if saved:
+                    break
+            task_alive = [t for t in poller._tasks if not t.done()]
+            await poller.stop()
+
+        assert calls["n"] >= 2, "loop stopped calling save_reading after the failure"
+        assert saved, "loop never recovered to save a reading"
+        assert task_alive, "poll task died on a repository write failure"
+
+    async def test_write_failure_is_logged(self, repo: SensorRepository, caplog):
+        driver = _make_mock_driver("bme280")
+        registry = _make_registry(driver)
+
+        async def always_fails(reading: SensorReading) -> None:
+            raise sqlite3.OperationalError("database is locked")
+
+        repo.save_reading = always_fails  # type: ignore[method-assign]
+
+        poller = PollingService(registry, repo, AppConfig())
+        with caplog.at_level(logging.ERROR):
+            with patch.object(PollingService, "_get_interval", return_value=0):
+                await poller.start()
+                for _ in range(20):
+                    await asyncio.sleep(0)
+                await poller.stop()
+
+        assert any(
+            "database is locked" in r.message or "database is locked" in str(r.args)
+            for r in caplog.records
+        ), "write failure was swallowed without an ERROR log"

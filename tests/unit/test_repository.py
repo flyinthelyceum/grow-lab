@@ -126,3 +126,16 @@ class TestConnectionLifecycle:
         info = await repo.get_db_info()
         assert info["sensor_readings"] == 0
         await repo.close()
+
+
+async def test_busy_timeout_is_set(repo: SensorRepository):
+    """Overlapping writes must wait, not raise 'database is locked' instantly.
+
+    The collector and dashboard both write to this database; a bare
+    default timeout is what surfaced the lock error that killed polling.
+    """
+    from pi.data.repository import BUSY_TIMEOUT_MS
+
+    cursor = await repo.db.execute("PRAGMA busy_timeout")
+    row = await cursor.fetchone()
+    assert row[0] == BUSY_TIMEOUT_MS

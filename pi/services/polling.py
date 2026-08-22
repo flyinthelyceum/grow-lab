@@ -1,8 +1,9 @@
 """Async polling loop — one task per sensor, each on its own interval.
 
 Each tick: read sensor -> construct SensorReading -> write to repository.
-Errors are caught, logged, and counted. A single sensor failure does
-not affect others. The loop never crashes.
+Errors are caught, logged, and counted — read failures and repository
+write failures alike. A single sensor failure does not affect others,
+and no error inside a poll cycle can terminate the task.
 """
 
 from __future__ import annotations
@@ -134,31 +135,51 @@ class PollingService:
 
         try:
             while self._running:
-                if pre_poll is not None:
-                    try:
-                        await pre_poll()
-                    except Exception as exc:
-                        logger.warning("Pre-poll hook failed for %s: %s", driver.sensor_id, exc)
+                # Nothing inside a cycle may escape: an unhandled exception here
+                # ends the task while the process stays alive and keeps feeding
+                # the systemd watchdog, so the collector goes silently dead with
+                # no failure signal anywhere. That is exactly how this system
+                # lost 15 days in July and 20 days in August 2026, both times
+                # triggered by a transient "database is locked" on the write.
+                # CancelledError derives from BaseException and still propagates.
+                try:
+                    if pre_poll is not None:
+                        try:
+                            await pre_poll()
+                        except Exception as exc:
+                            logger.warning(
+                                "Pre-poll hook failed for %s: %s",
+                                driver.sensor_id,
+                                exc,
+                            )
 
-                readings = await self._poll_once(driver)
+                    readings = await self._poll_once(driver)
 
-                if readings:
-                    for reading in readings:
-                        await self._repository.save_reading(reading)
-                    consecutive_failures = 0
-                    logger.debug(
-                        "Saved %d reading(s) from %s",
-                        len(readings),
-                        driver.sensor_id,
-                    )
-                else:
-                    consecutive_failures += 1
-                    if consecutive_failures == FAILURE_WARNING_THRESHOLD:
-                        logger.warning(
-                            "%s has failed %d consecutive reads",
+                    if readings:
+                        for reading in readings:
+                            await self._repository.save_reading(reading)
+                        consecutive_failures = 0
+                        logger.debug(
+                            "Saved %d reading(s) from %s",
+                            len(readings),
                             driver.sensor_id,
-                            consecutive_failures,
                         )
+                    else:
+                        consecutive_failures += 1
+                        if consecutive_failures == FAILURE_WARNING_THRESHOLD:
+                            logger.warning(
+                                "%s has failed %d consecutive reads",
+                                driver.sensor_id,
+                                consecutive_failures,
+                            )
+                except Exception as exc:
+                    consecutive_failures += 1
+                    logger.error(
+                        "Poll cycle failed for %s (continuing): %s",
+                        driver.sensor_id,
+                        exc,
+                        exc_info=True,
+                    )
 
                 await asyncio.sleep(interval)
 

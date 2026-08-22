@@ -17,6 +17,9 @@ from pi.data.models import CameraCapture, SensorReading, SystemEvent
 
 logger = logging.getLogger(__name__)
 
+# How long a write waits for a competing writer before giving up.
+BUSY_TIMEOUT_MS = 30_000
+
 
 def _parse_dt(iso_str: str) -> datetime:
     return datetime.fromisoformat(iso_str)
@@ -33,6 +36,10 @@ class SensorRepository:
         """Open the database and apply migrations."""
         self._db = await aiosqlite.connect(self._db_path)
         await self._db.execute("PRAGMA journal_mode=WAL")
+        # The collector and the dashboard both write (readings, access_log).
+        # Without a busy timeout SQLite raises "database is locked" the moment
+        # two writes overlap, which used to kill the polling task outright.
+        await self._db.execute(f"PRAGMA busy_timeout={BUSY_TIMEOUT_MS}")
         await apply_migrations(self._db)
         logger.info("Database connected: %s", self._db_path)
 
