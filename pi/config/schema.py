@@ -181,9 +181,18 @@ class EmailConfig:
 
 @dataclass(frozen=True)
 class NotificationConfig:
+    """Outbound alerting.
+
+    muted_sensors suppresses *delivery* for the named sensor ids while
+    still recording the alert, so a bench rig whose probes sit in a mug
+    does not train you to ignore your own notifications. The dashboard
+    and system_events still show the out-of-range state.
+    """
+
     webhook: WebhookConfig = field(default_factory=WebhookConfig)
     email: EmailConfig = field(default_factory=EmailConfig)
     cooldown_seconds: int = 300
+    muted_sensors: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

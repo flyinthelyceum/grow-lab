@@ -312,3 +312,49 @@ class TestNtfyHeaderEncoding:
             value.encode("ascii")  # must not raise
         # the body keeps full UTF-8
         assert "µS/cm" in client.post.call_args[1]["content"].decode("utf-8")
+
+
+class TestMutedSensors:
+    """A bench rig must not train the operator to ignore real alerts."""
+
+    def _svc(self, muted):
+        return NotificationService(
+            NotificationConfig(
+                webhook=WebhookConfig(
+                    enabled=True, url="https://ntfy.sh/t", format="ntfy"
+                ),
+                email=EmailConfig(enabled=False),
+                muted_sensors=muted,
+            )
+        )
+
+    def _client(self, svc):
+        response = MagicMock()
+        response.status_code = 200
+        response.raise_for_status = MagicMock()
+        client = AsyncMock()
+        client.post = AsyncMock(return_value=response)
+        client.is_closed = False
+        svc._http_client = client
+        return client
+
+    async def test_muted_sensor_is_not_delivered(self):
+        svc = self._svc(("ezo_ph", "ezo_ec"))
+        client = self._client(svc)
+        await svc.dispatch(_alert_event(event_type="alert_critical", metadata="ezo_ph"))
+        client.post.assert_not_called()
+
+    async def test_unmuted_sensor_still_delivered(self):
+        svc = self._svc(("ezo_ph",))
+        client = self._client(svc)
+        await svc.dispatch(
+            _alert_event(event_type="alert_critical", metadata="bme280_temperature")
+        )
+        client.post.assert_called_once()
+
+    async def test_event_without_sensor_id_is_never_muted(self):
+        """Collector-death events carry no sensor id and must always land."""
+        svc = self._svc(("ezo_ph",))
+        client = self._client(svc)
+        await svc.dispatch(_alert_event(event_type="watchdog", metadata=None))
+        client.post.assert_called_once()

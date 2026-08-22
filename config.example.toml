@@ -98,6 +98,11 @@ active_profile = ""
 
 [notifications]
 cooldown_seconds = 300  # Per-sensor cooldown between repeated notifications
+muted_sensors = []      # Sensor ids whose alerts are recorded but NOT delivered.
+                        # Use while bench-testing: probes sitting in a mug will sit
+                        # permanently "critical" against reservoir thresholds, and a
+                        # channel that cries wolf is a channel you stop reading.
+                        # Empty this when the real build goes live.
 
 [notifications.webhook]
 enabled = false

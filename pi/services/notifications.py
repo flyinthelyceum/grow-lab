@@ -87,6 +87,10 @@ class NotificationService:
 
     async def dispatch(self, event: SystemEvent) -> None:
         """Send notifications for an alert event, respecting cooldown."""
+        if event.metadata and event.metadata in self._config.muted_sensors:
+            logger.debug("Notification muted for %s: %s", event.metadata, event.description)
+            return
+
         if not self._is_cooled_down(event):
             logger.debug("Notification suppressed (cooldown): %s", event.description)
             return

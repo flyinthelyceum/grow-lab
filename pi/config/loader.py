@@ -172,7 +172,14 @@ def _build_notifications(raw: dict[str, Any]) -> NotificationConfig:
     if isinstance(to_addrs, list):
         to_addrs = tuple(to_addrs)
 
+    muted = data.get("muted_sensors", ())
+    if isinstance(muted, str):
+        raise ValueError(
+            f"notifications.muted_sensors must be a list of sensor ids, got {muted!r}"
+        )
+
     return NotificationConfig(
+        muted_sensors=tuple(muted),
         webhook=WebhookConfig(
             enabled=wh.get("enabled", False),
             url=wh.get("url", ""),
