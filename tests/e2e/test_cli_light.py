@@ -69,6 +69,9 @@ class TestLightSet:
         mock_repo.connect = MagicMock(return_value=_async_none())
         mock_repo.close = MagicMock(return_value=_async_none())
         mock_repo.save_event = MagicMock(return_value=_async_none())
+        # set_manual -> _set_pwm -> _log_reading persists the PWM level as a
+        # sensor reading, so this stub is required as well as save_event.
+        mock_repo.save_reading = MagicMock(return_value=_async_none())
 
         with patch("pi.drivers.esp32_serial.ESP32Serial", return_value=mock_esp):
             with patch("pi.data.repository.SensorRepository", return_value=mock_repo):
