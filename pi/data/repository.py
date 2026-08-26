@@ -10,6 +10,8 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+import sqlite3
+
 import aiosqlite
 
 from pi.data.migrations import apply_migrations
@@ -34,7 +36,14 @@ class SensorRepository:
 
     async def connect(self) -> None:
         """Open the database and apply migrations."""
-        self._db = await aiosqlite.connect(self._db_path)
+        # isolation_level=None -> autocommit. Every statement commits on its
+        # own, so no transaction can ever span an await. Without this, a write
+        # that raises (e.g. "database is locked") leaves an implicit
+        # transaction open on this long-lived connection: reads stay pinned to
+        # that moment's snapshot, WAL checkpointing stops, and further writes
+        # fail forever. That is what froze the dashboard for 33 hours on
+        # 2026-08-25 and what grew the WAL to 8.7 GB before that.
+        self._db = await aiosqlite.connect(self._db_path, isolation_level=None)
         await self._db.execute("PRAGMA journal_mode=WAL")
         # The collector and the dashboard both write (readings, access_log).
         # Without a busy timeout SQLite raises "database is locked" the moment
@@ -268,6 +277,17 @@ class SensorRepository:
             ),
         )
         await self.db.commit()
+
+    async def rollback_quietly(self) -> None:
+        """Best-effort rollback, for callers that swallow write errors.
+
+        Redundant under autocommit, but keeps the invariant local to the
+        connection if the isolation level is ever changed back.
+        """
+        try:
+            await self.db.rollback()
+        except sqlite3.Error as exc:
+            logger.warning("rollback after failed write did not succeed: %s", exc)
 
     async def access_count_since(self, since_iso: str) -> int:
         """Count total access_log rows since `since_iso` (inclusive)."""

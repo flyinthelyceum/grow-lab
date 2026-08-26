@@ -1,5 +1,6 @@
 """Tests for the SQLite repository."""
 
+import sqlite3
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -139,3 +140,54 @@ async def test_busy_timeout_is_set(repo: SensorRepository):
     cursor = await repo.db.execute("PRAGMA busy_timeout")
     row = await cursor.fetchone()
     assert row[0] == BUSY_TIMEOUT_MS
+
+
+class TestConnectionCannotGetStuck:
+    """Regression cover for the 2026-08-25 frozen-dashboard incident.
+
+    One access_log INSERT lost a race and raised "database is locked".
+    The middleware caught it but nothing rolled back, so the implicit
+    transaction stayed open on the dashboard's long-lived connection.
+    That pinned its read snapshot for 33 hours -- every panel served
+    data from the moment of the failure -- blocked WAL checkpointing,
+    and left the connection permanently unable to write.
+    """
+
+    async def test_connection_is_autocommit(self, repo: SensorRepository):
+        """No transaction may span an await, so none can be stranded."""
+        assert repo.db.isolation_level is None
+
+    async def test_failed_write_leaves_connection_usable(
+        self, repo: SensorRepository
+    ):
+        """After a write error the connection must still see fresh data."""
+        with pytest.raises(sqlite3.Error):
+            await repo.db.execute("INSERT INTO access_log (nope) VALUES (1)")
+
+        reading = SensorReading(
+            timestamp=datetime.now(timezone.utc),
+            sensor_id="canary",
+            value=42.0,
+            unit="x",
+        )
+        await repo.save_reading(reading)
+        latest = await repo.get_latest("canary")
+        assert latest is not None and latest.value == 42.0
+
+    async def test_reads_are_not_pinned_to_a_stale_snapshot(
+        self, repo: SensorRepository
+    ):
+        """A long-lived connection must observe writes made after a failure."""
+        with pytest.raises(sqlite3.Error):
+            await repo.db.execute("SELECT * FROM does_not_exist")
+
+        before = await repo.count_readings()
+        await repo.save_reading(
+            SensorReading(
+                timestamp=datetime.now(timezone.utc),
+                sensor_id="canary2",
+                value=1.0,
+                unit="x",
+            )
+        )
+        assert await repo.count_readings() == before + 1

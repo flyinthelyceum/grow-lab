@@ -126,6 +126,13 @@ class RequestLoggerMiddleware(BaseHTTPMiddleware):
             try:
                 await self._record(request, path, status_code, duration_ms)
             except Exception as exc:  # pragma: no cover - defensive
+                # Swallowing the error is fine; leaving connection state behind
+                # is not. An un-rolled-back transaction here pinned the read
+                # snapshot for 33 hours on 2026-08-25 and stopped every
+                # subsequent write.
+                repo = getattr(request.app.state, "repo", None)
+                if repo is not None and hasattr(repo, "rollback_quietly"):
+                    await repo.rollback_quietly()
                 print(
                     f"[access-log] failed to persist: {exc!r}",
                     file=sys.stderr,
