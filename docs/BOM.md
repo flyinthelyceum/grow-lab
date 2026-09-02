@@ -308,3 +308,16 @@ Pimoroni Inky Impression 7.3" (7-colour) — already in the standards; slow unla
 - Op-amp current-driver stage for the raw DC meters (scale sensor → meter full-scale).
 - Which two "vitals" the meters show (default: pH + moisture — confirm with Jared).
 - Panel material/finish + engraving (Material Non-Artifice, Transparent light register).
+
+## Meter driver stage (drives the two vitals meters)
+
+Signal path: Pi → I²C DAC → op-amp voltage-to-current (meter in feedback) → meter. Needle current = V_DAC / R_sense, coil-independent. Schematic artifact: https://claude.ai/code/artifact/c26c99e8-57c9-4675-a6e6-072a2d88ecf5
+
+- **DAC:** Microchip MCP4728, quad 12-bit I²C (Adafruit #4470 breakout, ~$8, or bare SOIC). Addr 0x60 — no conflict with EZO 0x63/0x64, ADS1115 0x48, lux 0x39, OLED 0x3c. 2 channels used (A=pH, B=moisture), 2 spare (future 3rd meter / R+B light).
+- **Op-amp:** Microchip MCP6004 quad, rail-to-rail, single +5V (~$0.50; DIP-14 or SOIC). 2 of 4 used.
+- **R_sense (×2):** precision metal-film sized to the Simpson movement's full-scale current — ~2.05kΩ for 1mA FS, ~41kΩ for 50µA FS (finalize when the meter is chosen). Put part of it as a **multiturn cermet trimmer** (Bourns 3296, ~$1.50 ea) for full-scale calibration against a known input.
+- **Dial backlight (×2):** warm-white LED behind each meter dial + series resistor, steady on +5V. Not dimmed, not an effect.
+- **Decoupling:** 0.1µF ceramic per IC; optional small cap across the meter to slow needle settle if desired.
+- **Software:** Pi maps pH 4.0–9.0 → 0–FS and moisture 0–100% → 0–FS, writes MCP4728 over I²C. Print the dial scales to match the mapping.
+
+All RESEARCHED LEADS — verify listings/values before buying; R_sense value pending the meter full-scale spec.
