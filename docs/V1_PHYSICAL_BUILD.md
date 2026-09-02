@@ -94,3 +94,33 @@ To buy:
 - Two-board 120W budget check (may need reduced current or a second driver).
 - Red/blue supplement channels — concept-alignment decision, deferred.
 - Enclosure design — its own print/laser task.
+
+---
+
+## v1 revisions — 2026-09-02 (supersede the "Water loop" and fan/power notes above)
+
+**Irrigation: runoff-to-tray, NO recirculation in v1** — matches the locked canon in
+IRRIGATION_SYSTEM.md. Recirculation deferred to a later version for simpler failure modes (a recirc
+leak or pump death kills the plant; the piece exists to keep the wolves at bay, so v1 is robust).
+- Feed: reservoir (2.5 gal) → SICCE Micra Plus at LOWEST flow → inline filter → **bypass tee returns
+  excess UNUSED solution to the reservoir** → main line → **2 pressure-compensating drip emitters
+  (~1 GPH each)** into the media. The bypass sheds the pump's overflow — 158 GPH vs the ~2 GPH two
+  emitters need is 79× too much. Bypassing unused feed is NOT recirculating runoff.
+- **Pump runs in short timed pulses.**
+- Drainage: media runoff → **catch tray**, discarded / manually managed, NOT returned to reservoir.
+- Pump-GPH note: pressure-compensating emitters deliver rated flow regardless of pump pressure;
+  lowest-flow setting + bypass + short pulses tame the SICCE. Fallback if it still over-feeds:
+  right-size to a small pump (doc target 200–400 L/hr).
+
+**Fan: Noctua NF-A12x25 PWM chromax.black.swap (120mm, 4-pin PWM, 12V, ~0.06A).**
+- Driven by **25 kHz PWM** (ESP32 PWM channel, or Pi GPIO18) — NOT a relay. Resolves the doc
+  conflict (WIRING GPIO6 relay vs SYSTEM_ARCHITECTURE GPIO18 PWM) in favor of PWM.
+- Adds a **12V rail** (small buck from 24V, or a 12V PSU). Power domains become:
+  mains / 24V (LED only) / 12V (fan) / 5V (logic) / 3.3V (sensors). Optional tach wire for RPM.
+
+**Constraints surfaced from the doc scan (honor in the build):**
+- pH/EC probes must NOT touch reservoir walls or sit in pump turbulence — place in still water.
+- LED strip MUST mount to an aluminum heatsink with free airflow (thermal, LED-life critical).
+- Atlas EZO boards ship in UART mode — switch to I²C before bus use.
+- Inky e-ink likely carries an EEPROM ~0x50 (free in the current I²C map) — verify on the bus.
+- Lighting: confirm ×2 LM301H + PWM-120-24 part numbers (Jared believes specced correctly, 2026-09-02).

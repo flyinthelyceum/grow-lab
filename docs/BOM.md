@@ -321,3 +321,12 @@ Signal path: Pi → I²C DAC → op-amp voltage-to-current (meter in feedback) �
 - **Software:** Pi maps pH 4.0–9.0 → 0–FS and moisture 0–100% → 0–FS, writes MCP4728 over I²C. Print the dial scales to match the mapping.
 
 All RESEARCHED LEADS — verify listings/values before buying; R_sense value pending the meter full-scale spec.
+
+## v1 irrigation + fan revisions (2026-09-02)
+
+- **Emitters:** pressure-compensating drip emitters ×2 (~1 GPH) — deliver rated flow regardless of pump pressure; tames the oversized pump.
+- **Bypass tee + throttle/ball valve** — sheds SICCE excess flow back to the reservoir (unused feed, not runoff).
+- **Catch tray / drip tray** — runoff collection. Runoff-to-tray, NO recirculation in v1 (recirc pump-return loop DEFERRED to a later version).
+- **Fan:** Noctua NF-A12x25 PWM chromax.black.swap (120mm, 4-pin PWM, 12V, ~0.06A) — driven at 25 kHz PWM (ESP32 or Pi GPIO18), not a relay.
+- **12V rail** for the fan (small buck from 24V, or a 12V PSU). Adds a 4th LV domain.
+- Reservoir note: keep pH/EC probes off the walls and out of pump turbulence (still water).
