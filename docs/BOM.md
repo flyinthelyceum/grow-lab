@@ -147,16 +147,22 @@ Small volume swings pH/EC faster and needs frequent top-off — acceptable for o
 
 Pump
 
-**SICCE Micra Plus Compact — 158 GPH, submersible (fresh/salt)**  
-Flow far exceeds two emitters (~2 GPH needed, ~79× oversized). Tame it: run at the
-**lowest flow setting**, add a **bypass tee + throttle/ball valve** that returns excess
-*unused* solution to the reservoir (not runoff — this is not recirculation), pulse the
-pump briefly, and let pressure-compensating emitters fix the dose. Fallback if it still
-over-feeds: right-size to a small pump (200–400 L/hr).
+**SICCE Micra Plus Compact — submersible (fresh/salt)**  
+Curve, not headline: **158 GPH at zero head, 0 GPH at 2.8 ft shutoff** — high flow, low
+pressure, like most aquarium pumps. Two consequences: **2.8 ft is a hard ceiling on
+manifold height**, and against two small orifices the pump sits near shutoff at ~1.2 PSI.
+Has a built-in intake sponge filter (first-stage filtration, keep it clean).
+A **bypass tee + throttle valve** stops it deadheading; open it only as far as needed,
+since bled pressure is pressure the emitters lose. Delivery rate is empirical — measure it
+(build procedure Stage 0.2). Fallback if flow proves unusable: raise the reservoir to cut
+the lift, or fit a higher-head pump.
 
 Filter
 
-Inline filter on the lift side, before the emitters (reservoir feed carries particulates that clog drippers)
+**120–155 mesh, physically oversized**, on the **emitter branch after the bypass tee** —
+it then passes only the trickle headed to the emitters, so its pressure drop is negligible.
+Choose for low restriction over fine filtration; pressure is the scarce resource here.
+The pump's intake sponge is already stage one.
 
 Tubing
 
@@ -164,8 +170,11 @@ Tubing
 
 Emitters
 
-**Pressure-compensating drip emitters, ~1 GPH ×2** — one per CMU core. Deliver rated
-flow regardless of pump pressure, which is what makes the oversized SICCE usable.
+**~1 GPH drip emitters ×2** — one per CMU core. On hand as pressure-compensating, but
+**they will not compensate here**: PC emitters need 7.25–10 PSI and only ~1.2 PSI is
+available, so they behave as fixed orifices. Harmless at this scale — compensation evens
+out many emitters across differing elevations, and these are two side by side at equal
+height. **Symmetric plumbing** (equal run lengths and heights) is what splits flow evenly.
 
 Drainage
 

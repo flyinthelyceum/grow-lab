@@ -85,16 +85,24 @@ its current limit. At ~90% driver efficiency, 120 W out is about 133 W at the wa
 
 ### 0.2 Emitter dose calibration — **read this before setting any schedule**
 
-**This is the biggest behavioural change in the rebuild.** Pressure-compensating emitters
-hold ~1 GPH each *regardless of pump pressure*. That is the point of them, and it cuts
-delivery to the plant by ~158× versus the unrestricted SICCE.
+**This is the biggest behavioural change in the rebuild, and it must be measured rather
+than derived.** The old rig ran one emitter on an unrestricted line; V1 runs two small
+emitters on a pump with almost no pressure. Delivery drops by a large but *unknown* factor.
 
-| Path | Flow to the media |
-|---|---|
-| SICCE 158 GPH, unrestricted (old rig) | ~166 mL/s |
-| 1 GPH pressure-compensating emitter (V1) | ~1.05 mL/s per core |
+Do not compute it from the spec sheet. The pump's 158 GPH is free-flow at zero head; its
+shutoff is 2.8 ft (~1.2 PSI). Against two small orifices it operates near shutoff, and no
+datasheet gives you the delivered rate at your geometry. An earlier version of this doc
+divided the free-flow rating by the emitter rating to get a "158× reduction" — that
+compared two numbers that are never true at the same operating point. Ignore it; measure.
 
-Per-core dose by pulse length, at 1 GPH:
+**Pressure compensation will not happen here.** PC emitters need 7.25–10 PSI to regulate
+and ~1.2 PSI is available, so they act as fixed orifices passing an unknown rate. This is
+fine at two emitters side by side at equal height — compensation exists to even out many
+emitters across differing elevations and distances. **Symmetric plumbing** does that job
+here, so keep the run lengths and heights equal and verify the split in step 3 below.
+
+For reference, *if* an emitter did hold its 1 GPH rating, per-core dose by pulse length
+would be:
 
 | Pulse | Dose per core |
 |---|---|
@@ -109,13 +117,19 @@ Per-core dose by pulse length, at 1 GPH:
 so with the cap at 30 s no schedule change alone can dose more than ~32 mL. Both the
 schedule and the cap must change, or the plant is not watered.
 
-**Calibrate rather than guess:**
+**Calibrate:**
 
-1. Assemble reservoir → pump (lowest setting) → filter → bypass tee → manifold → both
-   emitters, discharging into two measuring jugs.
-2. Open the bypass valve until the emitters are dripping steadily, not spraying.
-3. `growlab pump pulse 60`, then measure each jug. Expect ~60 mL per core; the two should
-   be within about 10 % of each other. A wide split means an emitter is partly blocked.
+0. **Measure the lift first** — reservoir water line to the highest point the tubing
+   reaches. Under ~1.5 ft is comfortable; approaching 2.8 ft flow falls off steeply; above
+   2.8 ft nothing flows at all. Since V1 does not recirculate, the reservoir no longer has
+   to sit below the vessel — **raising it is the cheapest fix** if this comes back tight.
+1. Assemble reservoir → pump (lowest setting) → bypass tee → filter → manifold → both
+   emitters, discharging into two measuring jugs. Keep both runs the same length and height.
+2. Open the bypass only as far as the pump needs to avoid deadheading. Every PSI bled is
+   one the emitters lose.
+3. Run the pump 5 minutes, then measure each jug. **Do not assume ~1 GPH** — the measured
+   figure is the real one. The two jugs should be within ~10 % of each other; a wider split
+   means asymmetric plumbing or a partly blocked emitter.
 4. Measure the lined core's usable media volume (fill the liner with water, pour into a jug).
 5. Target roughly 5–15 % of media volume per event, aiming for 10–20 % runoff.
 6. Pulse seconds = target mL ÷ your measured mL-per-second.
@@ -279,7 +293,7 @@ Watch it for 72 hours before calling V1 built.
 
 | Key | Bench value | V1 value | Why |
 |---|---|---|---|
-| `[[irrigation.schedules]] duration_seconds` | 10 | from 0.2, order of minutes | PC emitters cut flow ~158× |
+| `[[irrigation.schedules]] duration_seconds` | 10 | from the Stage 0.2 measurement | two low-pressure emitters deliver far less than the old single unrestricted one |
 | `[irrigation] max_runtime_seconds` | 30 | just above the largest pulse | silently clamps the dose otherwise |
 | `[irrigation] min_interval_minutes` | 60 | keep 60 unless events go closer | stuck-schedule guard |
 | `[fan] enabled` | absent | `true` | fan moves to GPIO18 PWM |

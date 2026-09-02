@@ -30,21 +30,34 @@ keeps the failure modes simple: a recirculation leak or a dead pump kills the pl
 and the piece exists to keep the wolves at bay, so v1 is robust. Recirculation is
 deferred to a later version.
 
-Reservoir sits **below** the vessel so one pump lifts feed; runoff falls to a tray.
+Runoff falls to a tray, so — unlike the old recirculating design — **the reservoir no
+longer has to sit below the vessel.** Nothing returns by gravity. Reservoir height is free,
+and raising it is the cheapest fix if the measured flow comes back marginal.
 
 1. **Source** — 2.5 gal bucket + lid. Holds solution, pump, and the pH / EC / water-temp
    probes. Small volume: pH/EC swing faster, top-off more often. Fine for one CMU.
    Probes sit in **still water** — off the walls and out of the pump's turbulence.
-2. **Lift** — SICCE Micra Plus, 158 GPH, submersible, set to its **lowest flow**.
-   Two emitters need ~2 GPH; the pump is ~79× oversized, so it has to be tamed.
+2. **Lift** — SICCE Micra Plus, submersible. Read its curve, not its headline: **158 GPH
+   at zero head, 0 GPH at 2.8 ft** (its shutoff). Like most aquarium pumps it is
+   high-flow / low-pressure — built to circulate inside a tank, not to lift.
+   **2.8 ft is a hard ceiling on the manifold height**; above that, nothing flows at all.
+   Against two small orifices the pump sits near shutoff and develops ~1.2 PSI.
 3. **Filter** — inline, on the lift side, before the emitters (reservoir feed carries
    particulates that clog drippers).
-4. **Tame** — bypass tee + small valve returns **excess unused solution** to the bucket.
-   Bypassing unused feed is not recirculating runoff; the solution never touches media.
-5. **Distribute** — main line up to an overhead manifold, split to two lines.
-6. **Deliver** — two **pressure-compensating drip emitters (~1 GPH each)**, one per core.
-   Pressure-compensating emitters deliver rated flow regardless of pump pressure, so
-   lowest-flow + bypass + emitters give a predictable dose.
+4. **Bypass** — tee + small valve returning **unused solution** to the bucket. Its job is
+   to stop the pump deadheading against two tiny orifices, not to "tame" flow — the
+   emitters already limit delivery. Bypassed feed never touches media, so this is not
+   recirculation. Open it only as far as the pump needs; every PSI bled is one you do not
+   have.
+5. **Distribute** — main line up to an overhead manifold, split to two lines. Keep the two
+   runs **symmetric** — same length, same height — since that, not pressure compensation,
+   is what splits the flow evenly here.
+6. **Deliver** — two **~1 GPH drip emitters**, one per core. Note these will **not**
+   pressure-compensate: PC emitters need 7.25–10 PSI to regulate and only ~1.2 PSI is
+   available, so they act as fixed orifices. That is fine at two emitters side by side at
+   equal height — compensation exists to even out many emitters across differing
+   elevations and distances, which this is not. Delivery rate is therefore **empirical**:
+   measure it (build procedure Stage 0.2) rather than assuming the rated figure.
 7. **Pulse** — the pump runs in **short timed pulses** (IrrigationService), not continuously.
 8. **Drain** — media runoff → **catch tray**. Discarded / manually managed. **Not**
    returned to the reservoir.
@@ -145,10 +158,13 @@ To buy:
 - 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;
   otherwise right-size the pump.
-- **Irrigation dose must be recalculated for pressure-compensating emitters.** They cut
-  delivery ~158x versus the unrestricted pump, so the bench schedule (10 s pulses, and
-  `max_runtime_seconds = 30`, which silently clamps) now waters almost nothing. Calibrate
-  per Stage 0.2 of the build procedure before planting.
+- **Irrigation dose must be measured, not derived.** Two small emitters on a low-pressure
+  pump deliver far less than the old unrestricted single-emitter rig, so the bench schedule
+  (10 s pulses under a `max_runtime_seconds = 30` cap that silently clamps) almost
+  certainly waters too little. How much less is an empirical question — calibrate per
+  Stage 0.2 before planting.
+- **Confirm the lift before plumbing.** Reservoir water line to the highest point of the
+  tubing must stay under the pump's 2.8 ft shutoff, and well under it for usable flow.
 - Reservoir cadence: runoff-to-tray returns nothing, so the 2.5 gal reservoir needs
   topping every ~3-10 days depending on dose. Consider a larger reservoir if it lands
   under about four days.
