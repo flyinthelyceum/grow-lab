@@ -87,6 +87,19 @@ max_runtime_seconds = 30
 min_interval_minutes = 60
 relay_gpio = 17
 
+[fan]
+# Noctua NF-A12x25 PWM canopy fan on Pi hardware PWM (GPIO18 / pin 12).
+# 4-pin PWM control, NOT a relay — see docs/WIRING_&_BUSES.md "Fan PWM Wiring".
+# Leave disabled until the fan is physically wired and the 12V rail is up.
+enabled = false
+gpio_pin = 18          # hardware PWM0
+frequency = 25000      # 25 kHz — the Intel/Noctua 4-pin PWM standard
+min_duty = 20          # below ~20% the fan stalls; 0 is off, 1-19 clamps up to 20
+max_duty = 100
+ramp_temp_low_f = 70.0   # below this the fan is off
+ramp_temp_high_f = 85.0  # at/above this the fan is at max_duty
+poll_interval_seconds = 30
+
 [display]
 enabled = false
 address = 0x3C
