@@ -7,6 +7,9 @@ vessel, a runoff-to-tray drip loop off a bucket reservoir, the full sensor stack
 online, lights on a photoperiod, camera pointed. Get something growing, then refine
 and align with the final concept.
 
+Build order and bench tests: [V1_STATION_BUILD_PROCEDURE.md](V1_STATION_BUILD_PROCEDURE.md).
+This doc is the specification; that one is the sequence.
+
 Visual companion (layout, harness, plumbing): the build-map artifact —
 `https://claude.ai/code/artifact/cffe52dc-dda8-4a47-ba48-083386d48a31`
 
@@ -124,7 +127,7 @@ To buy:
 - [ ] Pressure-compensating drip emitters, ~1 GPH (×2)
 - [ ] Bypass tee + small throttle/ball valve
 - [ ] Inline filter
-- [ ] Catch tray (fits under the CMU, holds a full pulse's runoff)
+- [ ] Catch tray — **≥3 L**, fits under the CMU (must hold a full `max_runtime_seconds` pulse; see the build procedure, Stage 0.2)
 - [ ] Aluminum heatsink stock for the LED boards
 - [ ] 12V buck module (24V → 12V) or small 12V PSU
 - [ ] Atlas EZO inline voltage isolators (×2) — pH + EC
@@ -142,6 +145,13 @@ To buy:
 - 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;
   otherwise right-size the pump.
+- **Irrigation dose must be recalculated for pressure-compensating emitters.** They cut
+  delivery ~158x versus the unrestricted pump, so the bench schedule (10 s pulses, and
+  `max_runtime_seconds = 30`, which silently clamps) now waters almost nothing. Calibrate
+  per Stage 0.2 of the build procedure before planting.
+- Reservoir cadence: runoff-to-tray returns nothing, so the 2.5 gal reservoir needs
+  topping every ~3-10 days depending on dose. Consider a larger reservoir if it lands
+  under about four days.
 
 ## Revision log
 

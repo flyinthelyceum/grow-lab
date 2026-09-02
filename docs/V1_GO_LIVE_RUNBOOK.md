@@ -1,5 +1,14 @@
 # V1 Go-Live Runbook
 
+> **Status: historical.** This runbook covered the April 1, 2026 go-live — first plant,
+> nursery pot, single emitter — and its system has been running since. It is kept as the
+> record of that milestone; the state below is a snapshot of March 31, 2026, not current.
+>
+> For the rebuild into the CMU station (runoff-to-tray, pressure-compensating emitters,
+> PWM fan on a 12V rail), see
+> [V1_STATION_BUILD_PROCEDURE.md](V1_STATION_BUILD_PROCEDURE.md), which supersedes the
+> plumbing and fan steps here.
+
 ## Objective
 
 Transition from bench prototype to a working grow station with a live plant. All sensors online, irrigation plumbed to a planted container, lighting on photoperiod, and the system running unattended.

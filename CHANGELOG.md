@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 ## 2026-09-02
 
+### Added
+- **`growlab fan` CLI** (`pi/cli/fan_control.py`) — `set`, `sweep`, and `status` subcommands for canopy-fan bring-up at the bench. `sweep` steps 0/20/40/60/80/100% with a configurable dwell to verify PWM control and find the per-unit stall floor, then returns to 0 and releases the pin. Fills the gap where the fan was the only actuator with no CLI. 8 e2e tests.
+- **`[fan]` section in `config.example.toml`** — the fan stack (config, driver, service, API, tests) existed end to end but the example config never carried the block, so a Pi provisioned from it got no fan control. Values match the `FanConfig` defaults (GPIO18, 25 kHz), left `enabled = false` per the rule of not enabling a device before it is wired.
+- **`docs/V1_STATION_BUILD_PROCEDURE.md`** — build order for the CMU station: bench-resolve the open specs (LED two-board budget, emitter dose calibration), 12V rail and fan PWM bring-up, vessel prep, 24h plumbing dry run, a single migration window, then enclosure and soak. Records that pressure-compensating emitters cut delivery ~158x, so the bench schedule (10 s pulses under a 30 s `max_runtime_seconds` cap that silently clamps) must be recalculated before planting, and sizes the catch tray and reservoir cadence off that.
+
+### Fixed
+- **Dashboard app route tests** — Starlette >=1.6 keeps included routers in `app.routes` as opaque `_IncludedRouter` entries instead of flattening their `Route` objects, so `[route.path for route in app.routes]` raised `AttributeError` and three tests failed on a fresh install. The app is unaffected (all 20 routes register and serve); the tests now assert served behaviour — OpenAPI paths, a `TestClient` GET on `/`, and a real websocket connect on `/ws/updates`.
+
 ### Docs
 - **V1 irrigation locked as runoff-to-tray** — no recirculation in V1 (deferred). SICCE Micra Plus tamed with lowest-flow setting, bypass tee returning unused feed, short pulses, and pressure-compensating ~1 GPH emitters ×2. Folded into `V1_PHYSICAL_BUILD.md`, `BOM.md`, and `IRRIGATION_SYSTEM.md`.
 - **Fan moves from relay to PWM** — Noctua NF-A12x25 PWM on Pi GPIO18 at 25 kHz (matches `FanService` / `fan_pwm.py`), fed from a new 12V rail (buck off 24V or 12V PSU). `WIRING_&_BUSES.md` fan-relay section, power domains, and pin map rewritten; GPIO6 relay retired. Resolves the WIRING (GPIO6 relay) vs SYSTEM_ARCHITECTURE (GPIO18 PWM) conflict.
