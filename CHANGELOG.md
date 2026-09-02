@@ -4,6 +4,9 @@ All notable changes to this project are documented in this file.
 
 ## 2026-09-02
 
+### Docs
+- **Build procedure Stage 0.1** — spelled out the DC-current measurement (series insertion, A-jack/COM, the Fluke 11x AC-default gotcha, returning the lead to VΩ) and dropped the "let it settle 60 s" instruction, which assumed a meter without a duty-cycle limit on its high-current range. Records the bench meter as a Fluke 115 (10 A continuous, so no time limit at the ~2 A expected), notes that an AC-only clamp cannot make this measurement at all, and adds a wall-wattmeter fallback that answers the same question comparatively.
+
 ### Added
 - **`growlab fan` CLI** (`pi/cli/fan_control.py`) — `set`, `sweep`, and `status` subcommands for canopy-fan bring-up at the bench. `sweep` steps 0/20/40/60/80/100% with a configurable dwell to verify PWM control and find the per-unit stall floor, then returns to 0 and releases the pin. Fills the gap where the fan was the only actuator with no CLI. 8 e2e tests.
 - **`[fan]` section in `config.example.toml`** — the fan stack (config, driver, service, API, tests) existed end to end but the example config never carried the block, so a Pi provisioned from it got no fan control. Values match the `FanConfig` defaults (GPIO18, 25 kHz), left `enabled = false` per the rule of not enabling a device before it is wired.
