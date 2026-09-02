@@ -11,7 +11,7 @@ This project explores how biological systems and engineered systems coexist — 
 
 Sensors: BME280 (air temp, humidity, pressure), DS18B20 (reservoir temp), Atlas EZO-pH, Atlas EZO-EC, ADS1115 + capacitive soil moisture, Pi Camera Module 3.
 
-Actuators: GPIO relay pump, fan relay, ESP32 LED dimmer.
+Actuators: GPIO relay pump, GPIO18 PWM canopy fan, ESP32 LED dimmer.
 
 ## Web Dashboard
 

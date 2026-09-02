@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-02
+
+### Docs
+- **V1 irrigation locked as runoff-to-tray** — no recirculation in V1 (deferred). SICCE Micra Plus tamed with lowest-flow setting, bypass tee returning unused feed, short pulses, and pressure-compensating ~1 GPH emitters ×2. Folded into `V1_PHYSICAL_BUILD.md`, `BOM.md`, and `IRRIGATION_SYSTEM.md`.
+- **Fan moves from relay to PWM** — Noctua NF-A12x25 PWM on Pi GPIO18 at 25 kHz (matches `FanService` / `fan_pwm.py`), fed from a new 12V rail (buck off 24V or 12V PSU). `WIRING_&_BUSES.md` fan-relay section, power domains, and pin map rewritten; GPIO6 relay retired. Resolves the WIRING (GPIO6 relay) vs SYSTEM_ARCHITECTURE (GPIO18 PWM) conflict.
+- Build constraints from the doc scan recorded in the build doc: pH/EC probes in still water off the reservoir walls, LED boards on an aluminum heatsink, EZO boards switched UART→I²C before bus use, Inky e-ink EEPROM likely at 0x50.
+
 ## 2026-04-14
 
 ### Added

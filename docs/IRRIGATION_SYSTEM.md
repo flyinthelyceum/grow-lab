@@ -93,6 +93,11 @@ Reasons for moderate flow rate:
 • prevents excessive turbulence  
 • compatible with small reservoirs
 
+**V1 actual:** the on-hand pump is a SICCE Micra Plus at 158 GPH (~600 L/hr), well above
+this spec. It is tamed by running at its lowest flow setting, a bypass tee that returns
+excess *unused* solution to the reservoir, short pump pulses, and pressure-compensating
+emitters. If it still over-feeds, right-size to a pump in the range above.
+
 Pump operation is controlled via a **relay module connected to the Raspberry Pi**.
 
 This allows irrigation pulses to be scheduled programmatically.
@@ -123,9 +128,9 @@ Emitters regulate the rate at which water enters the plant media.
 
 Recommended type:
 
-1 GPH drip emitter  
-or  
-adjustable drip stake.
+**Pressure-compensating 1 GPH drip emitter** (V1: one per CMU core, 2 total).
+Pressure-compensating emitters deliver their rated flow regardless of pump pressure,
+which is what makes an oversized pump usable.
 
 Purpose:
 
@@ -163,7 +168,14 @@ V0 configuration:
 • nursery pot placed in plant tray  
 • runoff collected in tray
 
-Future versions may return runoff to the reservoir.
+V1 configuration (locked, 2026-09-02):
+
+• lined CMU cores drain through mesh-screened holes into a catch tray  
+• runoff is discarded / manually managed — **no recirculation**  
+• the bypass tee returns only unused feed to the reservoir, never runoff
+
+Recirculation is deferred to a later version: a return-loop leak or a dead pump kills the
+plant, and V1 is built for robustness first.
 
 However, for early testing it is acceptable to discard runoff to reduce contamination risk.
 

@@ -135,12 +135,15 @@ Small volume swings pH/EC faster and needs frequent top-off — acceptable for o
 Pump
 
 **SICCE Micra Plus Compact — 158 GPH, submersible (fresh/salt)**  
-Flow far exceeds two emitters; run a **bypass tee back to the reservoir** to bleed
-excess and leave a gentle drip. Pump adjustable as well.
+Flow far exceeds two emitters (~2 GPH needed, ~79× oversized). Tame it: run at the
+**lowest flow setting**, add a **bypass tee + throttle/ball valve** that returns excess
+*unused* solution to the reservoir (not runoff — this is not recirculation), pulse the
+pump briefly, and let pressure-compensating emitters fix the dose. Fallback if it still
+over-feeds: right-size to a small pump (200–400 L/hr).
 
 Filter
 
-Inline filter on the lift side, before the emitters (recirculating feed clogs drippers)
+Inline filter on the lift side, before the emitters (reservoir feed carries particulates that clog drippers)
 
 Tubing
 
@@ -148,11 +151,14 @@ Tubing
 
 Emitters
 
-Drip stakes — one per CMU core (2 total)
+**Pressure-compensating drip emitters, ~1 GPH ×2** — one per CMU core. Deliver rated
+flow regardless of pump pressure, which is what makes the oversized SICCE usable.
 
-Drainage / Return
+Drainage
 
-Drain hole per core → gravity return to reservoir, with an air gap at the return
+Drain hole + mesh screen per core → **catch / drip tray** beneath the vessel.
+Runoff-to-tray, **no recirculation in v1** — runoff is discarded / manually managed.
+A pump-return loop is deferred to a later version.
 
 Control
 
@@ -187,7 +193,7 @@ Drain hole + mesh screen per core
 - Cable glands on every penetration; drip loops on all external cables
 - Mains and DC/signal wiring separated inside
 - Ventilation for PSU + LED-driver heat, drawn away from the wet zone
-- Houses: Raspberry Pi, ESP32, relay board, PSU (5V), PWM-120-24 driver, OLED on the face
+- Houses: Raspberry Pi, ESP32, relay board, PSU (5V), 12V buck (fan rail), PWM-120-24 driver, meter driver, front panel on the door
 
 Design lives with the physical-build doc; fabricate via the print/laser pipeline.
 
@@ -197,12 +203,18 @@ Design lives with the physical-build doc; fabricate via the print/laser pipeline
 
 Fan
 
-Small circulation fan  
-USB or 12V powered
+**Noctua NF-A12x25 PWM chromax.black.swap** — 120mm, 4-pin PWM, 12V, ~0.06A  
+Driven at **25 kHz PWM from Pi GPIO18** (FanService temperature ramp) — not a relay  
+Optional tach wire for RPM
+
+12V rail
+
+**Small buck module (24V → 12V)** off the LED driver, or a dedicated 12V PSU  
+Adds a fourth low-voltage domain: 24V (LED only) / 12V (fan) / 5V (logic) / 3.3V (sensors)
 
 Purpose
 
-prevent stagnant canopy air
+prevent stagnant canopy air; pull heat off the LED heatsink
 
 ---
 
@@ -321,12 +333,3 @@ Signal path: Pi → I²C DAC → op-amp voltage-to-current (meter in feedback) �
 - **Software:** Pi maps pH 4.0–9.0 → 0–FS and moisture 0–100% → 0–FS, writes MCP4728 over I²C. Print the dial scales to match the mapping.
 
 All RESEARCHED LEADS — verify listings/values before buying; R_sense value pending the meter full-scale spec.
-
-## v1 irrigation + fan revisions (2026-09-02)
-
-- **Emitters:** pressure-compensating drip emitters ×2 (~1 GPH) — deliver rated flow regardless of pump pressure; tames the oversized pump.
-- **Bypass tee + throttle/ball valve** — sheds SICCE excess flow back to the reservoir (unused feed, not runoff).
-- **Catch tray / drip tray** — runoff collection. Runoff-to-tray, NO recirculation in v1 (recirc pump-return loop DEFERRED to a later version).
-- **Fan:** Noctua NF-A12x25 PWM chromax.black.swap (120mm, 4-pin PWM, 12V, ~0.06A) — driven at 25 kHz PWM (ESP32 or Pi GPIO18), not a relay.
-- **12V rail** for the fan (small buck from 24V, or a 12V PSU). Adds a 4th LV domain.
-- Reservoir note: keep pH/EC probes off the walls and out of pump turbulence (still water).
