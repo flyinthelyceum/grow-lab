@@ -32,12 +32,13 @@ AC Mains
 → LED Driver  
 → Raspberry Pi Power Supply  
 → Pump Power Supply  
-→ Fan Power Supply  
+→ 12V fan rail (buck from the 24V LED supply, or a 12V PSU)  
 
 Raspberry Pi  
 → I²C Bus (BME280 + Atlas sensors)  
 → 1‑Wire Bus (DS18B20 temperature probe)  
 → GPIO Pump Relay  
+→ GPIO18 hardware PWM → canopy fan  
 → Serial / WiFi communication with ESP32  
 
 ESP32  
@@ -47,7 +48,7 @@ ESP32
 
 # Power Domains
 
-The system has three distinct power domains.
+The system has four distinct power domains: mains, 24V lighting, 12V fan, and low-voltage logic.
 
 ## 1. AC Mains
 
@@ -55,8 +56,8 @@ Used for:
 
 • LED driver input  
 • Raspberry Pi power supply  
-• fan adapter  
 • pump power supply  
+• 12V fan PSU (only if the fan rail is not bucked from 24V)  
 
 Guidelines:
 
@@ -96,6 +97,24 @@ Typical voltages:
 3.3V – sensors / ESP32 logic
 
 Keep these wires separate from pump and lighting wiring.
+
+---
+
+## 4. 12V Fan Rail
+
+The Noctua canopy fan is a 12V, 4-pin PWM part (~0.06A).
+
+Power path (preferred):
+
+24V (PWM-120-24 output) → small buck module → 12V → fan +12V / GND
+
+Alternative: a dedicated 12V wall PSU.
+
+Guidelines:
+
+• the buck taps the LED driver's 24V output only; it must not back-feed the dimming input  
+• fan GND must share a common ground with the Pi so the PWM signal has a reference  
+• the fan's PWM input is a 3.3V-tolerant logic line — do not put 12V on it  
 
 ---
 
@@ -309,29 +328,28 @@ Guidelines:
 
 ---
 
-# Fan Relay Wiring
+# Fan PWM Wiring
 
-The 12V canopy fan (Noctua NF-A12x25) is controlled via a relay module.
+The 12V canopy fan (Noctua NF-A12x25 PWM, 4-pin) is speed-controlled by **25 kHz hardware PWM from the Pi** — not a relay. This is what `FanService` / `pi/drivers/fan_pwm.py` drive (`[fan] gpio_pin = 18`, `frequency = 25000`).
 
 Recommended Pi GPIO:
 
-GPIO6 (Pin 31)
+GPIO18 (Pin 12, hardware PWM0)
 
-Logic wiring:
+Fan connector (4-pin, Intel PWM pinout):
 
-Pi GPIO6 → Relay IN
-5V → Relay VCC
-GND → Relay GND
-
-Power wiring:
-
-12V fan power is routed through the relay switch.
+Pin 1 — GND → common ground
+Pin 2 — +12V → 12V fan rail
+Pin 3 — TACH → optional, any free Pi GPIO with pull-up (RPM sense)
+Pin 4 — PWM → Pi GPIO18
 
 Control path:
 
-Pi GPIO6 → Relay → 12V Fan Power
+Pi GPIO18 (25 kHz, 0–100 % duty) → fan PWM input
 
-For V0 the fan runs continuously. Software can energize the relay at startup and leave it on. Future versions may add scheduled or temperature-triggered fan control.
+The fan accepts a 3.3V PWM signal directly; no level shifter or transistor is needed. Duty is set by the temperature ramp in `config.toml` (`ramp_temp_low_f` / `ramp_temp_high_f`) or by manual override via `/api/fan/`.
+
+**V0 note:** the bench prototype ran this fan always-on through a relay on GPIO6. V1 retires that relay; GPIO6 is free.
 
 ## 5V Pi Fan
 
@@ -390,12 +408,11 @@ All Pi GPIO connections route through the RSP-GPIO-8 breakout board (screw termi
 | 1 | — | 3.3V | DS18B20 VCC, BME280 VCC, OLED VCC, ADS1115 VDD |
 | 2 | — | 5V | Pump relay VCC |
 | 3 | GPIO2 | I²C SDA | BME280 + OLED (shared bus) |
-| 4 | — | 5V | 12V fan relay VCC |
 | 5 | GPIO3 | I²C SCL | BME280 + OLED (shared bus) |
 | 6 | — | GND | Common ground (all devices) |
 | 7 | GPIO4 | 1-Wire Data | DS18B20 (+ 4.7kΩ pull-up to 3.3V) |
 | 11 | GPIO17 | Relay IN | Pump relay signal |
-| 31 | GPIO6 | Relay IN | 12V fan relay signal |
+| 12 | GPIO18 | PWM0 | Noctua fan PWM (25 kHz) |
 | CSI | — | Ribbon cable | Pi Camera Module 3 |
 | USB-A | — | Serial | ESP32-S3 (/dev/ttyACM0) |
 
@@ -418,7 +435,8 @@ Recommended order for first system power‑up:
 6. power ESP32 and test PWM output  
 7. connect LED driver dimming  
 8. add pump relay  
-9. test irrigation cycle
+9. test irrigation cycle  
+10. bring up the 12V rail and sweep the fan PWM 0 → 100 %
 
 This staged process makes debugging much easier.
 

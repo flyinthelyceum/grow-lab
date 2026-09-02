@@ -3,7 +3,7 @@
 ## Objective
 
 Move the working bench prototype into a real, planted object: one cinder-block
-vessel, a recirculating drip loop off a bucket reservoir, the full sensor stack
+vessel, a runoff-to-tray drip loop off a bucket reservoir, the full sensor stack
 online, lights on a photoperiod, camera pointed. Get something growing, then refine
 and align with the final concept.
 
@@ -20,24 +20,41 @@ Visual companion (layout, harness, plumbing): the build-map artifact —
   block stays honest.
 - **Media:** coco coir + perlite. Mesh screen over each drain hole.
 
-## Water loop (recirculating drip)
+## Water loop (runoff-to-tray, no recirculation)
 
-Reservoir sits **below** the vessel so one pump lifts feed and gravity returns it —
-no siphon, no second pump.
+V1 does **not** recirculate. This matches the locked canon in IRRIGATION_SYSTEM.md and
+keeps the failure modes simple: a recirculation leak or a dead pump kills the plant,
+and the piece exists to keep the wolves at bay, so v1 is robust. Recirculation is
+deferred to a later version.
+
+Reservoir sits **below** the vessel so one pump lifts feed; runoff falls to a tray.
 
 1. **Source** — 2.5 gal bucket + lid. Holds solution, pump, and the pH / EC / water-temp
    probes. Small volume: pH/EC swing faster, top-off more often. Fine for one CMU.
-2. **Lift** — SICCE Micra Plus, 158 GPH, submersible. Flow far exceeds two emitters.
-3. **Tame** — bypass tee back to the bucket bleeds excess flow for a gentle drip.
-4. **Filter** — inline, on the lift side, before the emitters (recirculating feed clogs drippers).
-5. **Distribute** — main line up to an overhead manifold, split to two spaghetti emitters.
-6. **Deliver** — one drip stake per core.
-7. **Return** — drain hole per core → gravity back to the bucket, air gap at the return.
+   Probes sit in **still water** — off the walls and out of the pump's turbulence.
+2. **Lift** — SICCE Micra Plus, 158 GPH, submersible, set to its **lowest flow**.
+   Two emitters need ~2 GPH; the pump is ~79× oversized, so it has to be tamed.
+3. **Filter** — inline, on the lift side, before the emitters (reservoir feed carries
+   particulates that clog drippers).
+4. **Tame** — bypass tee + small valve returns **excess unused solution** to the bucket.
+   Bypassing unused feed is not recirculating runoff; the solution never touches media.
+5. **Distribute** — main line up to an overhead manifold, split to two lines.
+6. **Deliver** — two **pressure-compensating drip emitters (~1 GPH each)**, one per core.
+   Pressure-compensating emitters deliver rated flow regardless of pump pressure, so
+   lowest-flow + bypass + emitters give a predictable dose.
+7. **Pulse** — the pump runs in **short timed pulses** (IrrigationService), not continuously.
+8. **Drain** — media runoff → **catch tray**. Discarded / manually managed. **Not**
+   returned to the reservoir.
+
+Fallback if the SICCE still over-feeds after the above: right-size to a small pump
+(IRRIGATION_SYSTEM.md target 200–400 L/hr).
 
 ## Lighting decision
 
 - **V1 runs the two white LM301H boards** (via the Meanwell PWM-120-24, ESP32-dimmed).
   LM301H white full-spectrum is an excellent grow light; the plant will thrive.
+- **The LED boards mount to an aluminum heatsink with free airflow.** Thermal is
+  LED-life critical; no bare-board mounting.
 - **The red/blue color-register has no hardware and is deferred.** The concept
   (blue = dormancy/moon, amber = flowering/fire) can't be expressed by a fixed white
   board — it's dimmable, not tunable in hue.
@@ -46,7 +63,29 @@ no siphon, no second pump.
   carries the temporal/emotional register. This gives the canon real hardware without
   compromising the grow.
 - **Open spec:** confirm two 96-LED boards fit the PWM-120-24's 120W budget before
-  wiring both in parallel.
+  wiring both in parallel. Confirm the ×2 LM301H and PWM-120-24 part numbers (Jared
+  believes they are specced correctly, 2026-09-02).
+
+## Airflow
+
+- **Noctua NF-A12x25 PWM chromax.black.swap** — 120mm, 4-pin PWM, 12V, ~0.06A.
+- Driven by **25 kHz PWM on Pi GPIO18** (FanService, temperature-triggered ramp) —
+  **not a relay**. The V0 bench ran the fan always-on through a relay on GPIO6; V1
+  retires that relay. WIRING_&_BUSES.md and SYSTEM_ARCHITECTURE.md now agree on PWM.
+- Optional tach wire back to a Pi GPIO for RPM.
+
+## Power domains
+
+Adding the fan adds a **12V rail** — a small buck off the 24V LED supply, or a
+dedicated 12V PSU. The domains are:
+
+| Domain | Source | Loads |
+|--------|--------|-------|
+| Mains | GFCI outlet | PWM-120-24, 5V PSU (and 12V PSU if not bucked) |
+| 24V | PWM-120-24 | LED boards **only** |
+| 12V | buck from 24V, or 12V PSU | Noctua fan |
+| 5V | Pi PSU | Pi, ESP32, relay board logic |
+| 3.3V | Pi / ESP32 regulators | sensors |
 
 ## Enclosure
 
@@ -56,19 +95,23 @@ Dry electronics box, custom — to be designed and 3D-printed / laser-cut in acr
 - **Cable glands** on every penetration; drip loops on all external cables.
 - **Mains and DC/signal separated** inside; keep EZO isolator leads clean.
 - **Ventilation** for PSU + LED-driver heat, drawn away from the wet zone.
-- Houses: Raspberry Pi, ESP32, relay board, PSU (5V), PWM-120-24 driver, OLED on the face.
+- Houses: Raspberry Pi, ESP32, relay board, PSU (5V), 12V buck, PWM-120-24 driver,
+  meter driver, front panel on the door.
 
 ## Electrical constraints
 
 - **Isolate the EZO probes.** Inline voltage isolator on each of pH and EC — the EC
   circuit corrupts pH in shared water. Pump/solenoid grounds off the sensor path.
+- **Atlas EZO boards ship in UART mode** — switch to I²C before putting them on the bus.
+- **Inky e-ink likely carries an EEPROM at ~0x50** (free in the current I²C map) —
+  verify on the bus before assigning that address to anything else.
 - **GFCI** on mains.
 - **Drip loops** on every cable into the wet zone.
 
 ## Sourcing checklist
 
 On hand: 2× LM301H boards, PWM-120-24 driver, SICCE Micra Plus pump, Pi, ESP32,
-BME280, EZO-pH, EZO-EC, DS18B20, SEN0308+ADS1115, camera, OLED.
+BME280, EZO-pH, EZO-EC, DS18B20, SEN0308+ADS1115, camera, OLED, Noctua NF-A12x25.
 
 To buy:
 
@@ -78,14 +121,16 @@ To buy:
 - [ ] Mesh screen (drain holes)
 - [ ] 2.5 gal bucket + lid
 - [ ] 1/4" drip tubing + main line
-- [ ] Drip stakes / emitters (×2)
-- [ ] Bypass tee + small valve
+- [ ] Pressure-compensating drip emitters, ~1 GPH (×2)
+- [ ] Bypass tee + small throttle/ball valve
 - [ ] Inline filter
+- [ ] Catch tray (fits under the CMU, holds a full pulse's runoff)
+- [ ] Aluminum heatsink stock for the LED boards
+- [ ] 12V buck module (24V → 12V) or small 12V PSU
 - [ ] Atlas EZO inline voltage isolators (×2) — pH + EC
 - [ ] GFCI outlet / adapter
 - [ ] Cable glands (assorted)
 - [ ] TSL2591 lux breakout (if not already on hand)
-- [ ] Canopy circulation fan
 - [ ] Acrylic stock for the enclosure (fabricate in-house)
 - [ ] pH / EC calibration solutions
 
@@ -94,33 +139,13 @@ To buy:
 - Two-board 120W budget check (may need reduced current or a second driver).
 - Red/blue supplement channels — concept-alignment decision, deferred.
 - Enclosure design — its own print/laser task.
+- 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
+- Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;
+  otherwise right-size the pump.
 
----
+## Revision log
 
-## v1 revisions — 2026-09-02 (supersede the "Water loop" and fan/power notes above)
-
-**Irrigation: runoff-to-tray, NO recirculation in v1** — matches the locked canon in
-IRRIGATION_SYSTEM.md. Recirculation deferred to a later version for simpler failure modes (a recirc
-leak or pump death kills the plant; the piece exists to keep the wolves at bay, so v1 is robust).
-- Feed: reservoir (2.5 gal) → SICCE Micra Plus at LOWEST flow → inline filter → **bypass tee returns
-  excess UNUSED solution to the reservoir** → main line → **2 pressure-compensating drip emitters
-  (~1 GPH each)** into the media. The bypass sheds the pump's overflow — 158 GPH vs the ~2 GPH two
-  emitters need is 79× too much. Bypassing unused feed is NOT recirculating runoff.
-- **Pump runs in short timed pulses.**
-- Drainage: media runoff → **catch tray**, discarded / manually managed, NOT returned to reservoir.
-- Pump-GPH note: pressure-compensating emitters deliver rated flow regardless of pump pressure;
-  lowest-flow setting + bypass + short pulses tame the SICCE. Fallback if it still over-feeds:
-  right-size to a small pump (doc target 200–400 L/hr).
-
-**Fan: Noctua NF-A12x25 PWM chromax.black.swap (120mm, 4-pin PWM, 12V, ~0.06A).**
-- Driven by **25 kHz PWM** (ESP32 PWM channel, or Pi GPIO18) — NOT a relay. Resolves the doc
-  conflict (WIRING GPIO6 relay vs SYSTEM_ARCHITECTURE GPIO18 PWM) in favor of PWM.
-- Adds a **12V rail** (small buck from 24V, or a 12V PSU). Power domains become:
-  mains / 24V (LED only) / 12V (fan) / 5V (logic) / 3.3V (sensors). Optional tach wire for RPM.
-
-**Constraints surfaced from the doc scan (honor in the build):**
-- pH/EC probes must NOT touch reservoir walls or sit in pump turbulence — place in still water.
-- LED strip MUST mount to an aluminum heatsink with free airflow (thermal, LED-life critical).
-- Atlas EZO boards ship in UART mode — switch to I²C before bus use.
-- Inky e-ink likely carries an EEPROM ~0x50 (free in the current I²C map) — verify on the bus.
-- Lighting: confirm ×2 LM301H + PWM-120-24 part numbers (Jared believes specced correctly, 2026-09-02).
+- **2026-09-02** — v1 is runoff-to-tray (recirculation deferred). Pump tamed with
+  lowest-flow + bypass + pressure-compensating emitters + short pulses. Fan moves from
+  GPIO6 relay to GPIO18 25 kHz PWM on a new 12V rail. Doc-scan constraints (probe
+  placement, LED heatsink, EZO UART→I²C, e-ink EEPROM) folded into the sections above.
