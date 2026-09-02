@@ -260,3 +260,51 @@ Structural
 
 Custom aluminum frame  
 Integrated cable routing
+
+---
+
+# Aliveness / Front Panel (v1, non-color)
+
+The tube-amp soul of the piece: byproduct-of-function, intransitive, for the tender.
+All parts below are RESEARCHED LEADS (2026-09-01) — **verify listing, price, and stock before buying.**
+Shaft rule resolved: D-shaft pots/encoders take SET-SCREW knobs; true collet knobs need a plain-round-shaft pot + collet bushing. v1 uses D-shaft + set-screw to avoid the collet dependency.
+
+## Pilot lamp — "the fire is lit"
+
+Hero (one-off soul): NOS Dialco/Dialight 1" amber diamond-cut jewel + chrome ring — eBay, ~$15-30, 1" hole, incandescent. Real cut glass, facet depth no modern part matches. Stock rotates.
+Repeatable fallback: Amp Repair Parts amber jewel JL-115A + LH-124 chrome holder + #47 6.3V bulb (or LED-47 warm retrofit) — amprepairparts.com, ~$14, ~0.5" hole. The Fender jewel lineage.
+Secondary status: Bulgin 0067 amber filament, chrome bezel — Mouser/RS, ~$6-9, Ø12.7mm. True tungsten, warmest color temp, in production.
+
+## Amber "tend me" indicator
+
+VCC 1092 Series amber, polished bezel — Amazon/Mouser, ~$5-8, 0.5"/12.7mm, 12V. Semi-dome amber = attention without alarm-spectacle. Reserved solely for the tend-me state.
+
+## Analog VU meters — the vitals (×2: e.g. pH + moisture)
+
+Hero (buildable): Simpson Wide-Vue raw DC panel meter, order in µA/mA full-scale (e.g. 0-1mA) — rammeter.com, ~$70-140 ea by size (2.5"/3.5"/4.5"). Raw movement = drive directly with an op-amp scaler off sensor voltage. Add a warm LED behind the dial. Archetypal American instrument face.
+Soul upgrade (one-off): Weston NOS microammeter (Model 1/301/1921), 0-100µA/0-1mA — eBay, ~$50-150, ~3.5" cream Bakelite face, engraved serif scale. Pre-war patina no repro touches.
+Hi-fi look (audio-cal, backlit): Sifam Tinsley AL29WF Presentor — don-audio.com, ~$65, 46×40mm, built-in overhead LED. The Urei 1176 meter; order to a sensitivity or bypass the cal resistor to drive as DC.
+Each raw DC meter needs a small op-amp current-driver stage (design later).
+
+## Rotary controls — THE FEEL (v1 = 3 controls)
+
+Photoperiod hours (detented): Bourns PEC11H-4225F-S0024 — Mouser, ~$3-4, 6mm D-shaft, 24-pos endless encoder, HIGH-detent (~210 gf-cm, 3× the standard PEC11R). Crisp weighted snap every 15°, no mush; reads position (no wiper wear).
+  Splurge-feel alt (discrete positions): ELMA 04-series rotary switch — Newark, ~$27-58, steel shaft, 30° detent, up to 20 Ncm. A heavy mechanical "chunk," the boutique reference. True switch: each position needs its own wired contact.
+Setpoint trims (smooth ×2): ALPS RK27 "Blue Velvet" — theaudiocrafts/eBay, ~$15-25, 6mm knurled or D-shaft. The DIY-audio reference for buttery, scratch-free, medium-light glide.
+  Showpiece upgrade (one trim): TKD 2CP-601 — PartsConnexion, ~$100-160, 6mm round, conductive plastic. Heavier, viscous, damped — rated above Alps for tactile refinement.
+
+## Knobs (set-screw, to pair with D-shaft pots/encoders)
+
+Hero: ELMA K1 metal knob series — don-audio.com, ~$7-8, turned satin-anodized aluminum, SET-SCREW sized to 6mm/D. Real machined weight — the "expensive click" of high-end consoles.
+Tube-amp register: Davies Molding 1900H — Mouser, ~$2-4, phenolic skirted pointer, 6mm/¼" set-screw. The literal Fender/Marshall knob.
+Synth look: Rogan RB-67 — Amplified Parts, USA-made, spun-aluminum inlay in a dark skirt, ¼" set-screw. The Buchla knob.
+NOTE: true ELMA Classic Collet knobs are gorgeous but need a plain-round-shaft pot + collet bushing — NOT compatible with the D-shaft PEC11H/RK27 above. Choose collet-shaft pots if collet knobs become non-negotiable.
+
+## e-ink — the quiet face
+
+Pimoroni Inky Impression 7.3" (7-colour) — already in the standards; slow unlabeled state transitions, holds frame unpowered.
+
+## Still to design
+- Op-amp current-driver stage for the raw DC meters (scale sensor → meter full-scale).
+- Which two "vitals" the meters show (default: pH + moisture — confirm with Jared).
+- Panel material/finish + engraving (Material Non-Artifice, Transparent light register).
