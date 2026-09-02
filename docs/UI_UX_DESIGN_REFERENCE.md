@@ -1,6 +1,11 @@
-
 # UI_UX_DESIGN_REFERENCE.md
 GROWLAB — Data Visualization as Embodied Art
+
+> **Register update 2026-09-02:** Dark backgrounds are ABANDONED across every surface (screen,
+> e-ink, physical panel). The house register is the light **Transparent / Material Non-Artifice**
+> language (warm gray ground, ghosted glass, hairline strokes, one earned accent). **Art Mode is
+> RETIRED** to preserve the piece's intransitivity. See `V1_PHYSICAL_BUILD.md` and the fabrication
+> design-language canon. Where older text below said "dark," read "light" — corrected inline.
 
 ---
 
@@ -39,12 +44,14 @@ Avoid:
 - busy dashboards
 - bright colors
 - gamified UI
+- **dark-mode dashboards** (abandoned 2026-09-02)
 
 Preferred aesthetic:
 
 - scientific instrumentation
 - minimalist industrial design
 - calm data landscapes
+- **light, reflective-calm surfaces** (Transparent register)
 
 ---
 
@@ -63,6 +70,10 @@ Humidity: 48%
 Good:
 
 24-hour humidity waveform
+
+The **e-ink display carries the rhythm** (sparkline / waveform, phase, trend). The **analog VU
+meters express the same idea in a different register** — the live instrument reading as an object,
+the CERN/Leica "number as object." Instrument (now) + record (rhythm) together.
 
 ---
 
@@ -84,6 +95,8 @@ Each subsystem displays:
 - recent trend
 - event history
 
+The physical panel's two vitals map here: **pH = ROOT, moisture = PLANT.**
+
 ---
 
 ### Calm Interface
@@ -92,7 +105,7 @@ The dashboard must feel like a **scientific instrument**, not an app.
 
 Rules:
 
-- dark backgrounds
+- **light backgrounds** (warm gray, reflective-calm — NOT dark mode)
 - minimal color
 - large typography
 - slow movement
@@ -152,10 +165,9 @@ Lessons:
 
 These systems monitor **invisible physical processes**.
 
-Design lessons:
+Design lessons (structure kept; palette flipped to light):
 
-- dark backgrounds
-- thin luminous lines
+- **light backgrounds** with thin, precise ink lines (was: dark backgrounds, luminous lines)
 - multi-panel layouts
 - temporal graphs
 - subsystem organization
@@ -173,7 +185,7 @@ NASA interfaces emphasize:
 - signal clarity
 - alert visibility
 
-Colors used sparingly:
+Colors used sparingly (semantic, on light):
 
 - green = healthy
 - yellow = caution
@@ -196,7 +208,7 @@ Example:
 
 PH      6.14  
 EC      1.82  
-TEMP    22.7°C  
+TEMP    72.7°F  
 RH      48%
 
 ---
@@ -218,13 +230,13 @@ Applications:
 
 ---
 
-## 4. Dashboard Architecture (Implemented)
+## 4. Dashboard Architecture
 
-The web interface is served by FastAPI at `http://<pi-ip>:8000`.
+The web interface is served by FastAPI at `http://<pi-ip>:8000`. **Light theme** (dark abandoned).
 
 ### Observatory View (`/`)
 
-5-panel grid layout with header (title, time controls, system clock) and footer (WebSocket status, sensor count, ART link).
+5-panel grid layout with header (title, time controls, system clock) and footer (WebSocket status, sensor count).
 
 | Panel | Live Value | Chart | Meta |
 |-------|-----------|-------|------|
@@ -236,65 +248,35 @@ The web interface is served by FastAPI at `http://<pi-ip>:8000`.
 
 Time window selector: **1H / 24H / 7D**. Values update live via WebSocket at 3-second intervals.
 
-### Art Mode (`/art`)
-
-Full-screen generative visualization. See Section 8 for details.
+**Art Mode is retired — the footer ART link is removed.** (See Section 8.)
 
 ---
 
-## 5. Embedded OLED Interface
+## 5. Physical & Embedded Displays
 
-Small OLED display embedded in installation.
+### e-ink — the quiet face (primary)
 
-Purpose:
+Pimoroni **Inky Impression 7.3"** (7-colour e-paper), on the enclosure door. Reflective and light by
+nature — aligns with the abandoned-dark decision.
 
-make the system legible to observers
+Shows, slow and unlabeled (holds its frame unpowered):
 
-Hardware (implemented):
+- **temporal sparkline / waveform** (the rhythm — Data as Rhythm)
+- current phase (vigil / flowering / dormancy)
+- last-tended time, next event
+- ambient °F
 
-SH1106 OLED (GME12864)
-128x64
-I2C at 0x3C
+### Analog VU meters — the vitals (physical panel)
 
-Screen rotation (5-second cycle):
+Two moving-needle meters (Simpson Wide-Vue raw DC), driven off sensor data via the op-amp meter
+driver. The instantaneous instrument reading — "numbers as objects," the same idea as the e-ink
+rhythm in a different register. **pH (ROOT) + moisture (PLANT).**
 
-**Page 1 — Sensor Values:**
+### OLED (legacy / optional)
 
-GROWLAB
-
-Air      72.4°F
-Humidity  48%
-H2O Temp  67.6°F
-
-**Page 2 — System Overview:**
-
-Uptime, subsystem status
-
-**Page 3 — Irrigation Schedule:**
-
-Next/last pump events
-
-**Page 4 — Sparkline Trend Chart**
-
-Alternate screen:
-
-SYSTEM STATUS
-
-LIGHT   ████████  
-WATER   ████  
-AIR     █████  
-ROOT    █████
-
-Trend screen:
-
-PH TREND
-
-6.4 ─────  
-6.3 ────  
-6.2 ───  
-6.1 ──
-
-Use sparklines to represent trends.
+SH1106 128×64 at I2C 0x3C — from the bench build. Superseded by the e-ink for the art piece;
+keep only if useful for a compact status readout. If used, mirror the light register conceptually
+(OLED is emissive, so treat as a secondary readout, not the face).
 
 ---
 
@@ -309,7 +291,6 @@ Backend (implemented):
 Frontend (implemented):
 
 - D3.js v7 (all charts: StepAfter, CatmullRom, sparklines, arc gauge)
-- Canvas 2D (art mode: radial ring, humidity, water pulses, pressure, particles)
 - Vanilla JS (no framework)
 
 Live updates (implemented):
@@ -317,19 +298,13 @@ Live updates (implemented):
 - WebSocket at `/ws/updates` (3-second polling)
 - REST API at `/api/readings/<sensor>/downsampled?window=<window>`
 
+Note: the Canvas 2D art-mode renderer is retired (Section 8).
+
 ---
 
 ## 7. Timelapse Integration
 
-Recommended hardware:
-
-Raspberry Pi Camera Module v3
-
-Capture interval:
-
-10 minutes
-
-Images timestamped and correlated with sensor logs.
+Hardware: Raspberry Pi Camera Module 3. Capture interval: 10 minutes. Images timestamped and correlated with sensor logs.
 
 Example queries:
 
@@ -339,53 +314,27 @@ Example queries:
 
 ---
 
-## 8. Dashboard as Artwork
+## 8. Art Mode — RETIRED (2026-09-02)
 
-The system includes a dedicated **Art Mode** (`/art`) — a full-screen generative Canvas 2D visualization.
+The full-screen generative Canvas 2D visualization (radial rings, breathing bands, water-pulse
+markers, particle field) is **retired**. It read as gallery-projection data-spectacle — the
+Anadol-adjacent, transitive move the art canon explicitly rejects. The piece is **intransitive**:
+it does not perform for an audience.
 
-### Implemented Layers
-
-1. **Pressure atmosphere** — colored radial gradient shifting blue-purple (low) to warm (high), with 4 isobar rings.
-2. **Radial thermal ring** — 24h temperature data mapped to color-graded wedges (blue 60°F → teal 70°F → amber 80°F+). Radial gradient fills per wedge for depth. Glow line at outer edge.
-3. **Humidity breathing ring** — teal-cyan (0,200,220) band at 0.82–1.12× maxRadius. Sinusoidal opacity modulation (base 0.20 + amplitude 0.12).
-4. **Water pulse markers** — bright cyan (30,210,255) dots at irrigation event angles. Ghost markers with pulsing halos. Brightness decays with age.
-5. **Ambient particle field** — 120 particles spread across full canvas. Size 0.8–2.8px, alpha 0.04–0.16. Sine-wave drift wobble, lifecycle fade-in/out.
-
-### Center Disc
-
-Single information surface with priority-based hover routing:
-
-- **Water event** (highest priority): irrigation time, age in minutes, "IRRIGATION" label.
-- **Humidity**: value in %RH, timestamp.
-- **Temperature** (default): current °F value.
-
-### Data Pipeline
-
-- Fetches 24h downsampled temperature + humidity history on load.
-- Fetches irrigation events.
-- WebSocket for live temperature, pressure, and irrigation updates.
-- Re-fetches all history every 5 minutes.
-
-### Design Intent
-
-Designed for gallery viewing, projection, and installation display. Applies principles from:
-
-- **Hans Haacke**: real-time systems where the apparatus and the biological process are the work
-- **Harrison Studio**: ecological feedback loops as form, life support as medium
-- **Giorgia Lupi**: data can be poetic and expressive
-- **CERN/NASA**: thin luminous lines, signal clarity, dark backgrounds
-- **Leica**: numbers as objects of importance
+The Haacke / Harrison intent survives without the spectacle — through the **honest instrument**
+(the meters, the pilot lamp, the wiring shown not hidden) and **the record** (the e-ink rhythm,
+the sensor history as the biography of sustained care). The interface reveals rhythm; it is not a
+show. If a "look-in" ever returns, it must be derived from live state, unlabeled, and for the
+tender — not choreographed for viewers.
 
 ---
 
 ## 9. Typography
 
-Preferred fonts:
-
-- Inter
-- IBM Plex
-- Space Mono
-- Söhne
+- **Bricolage Grotesque** — display headings (the committed register's characterful face)
+- IBM Plex Sans — body / structure
+- IBM Plex Mono / Space Mono — the machine layer, numerics, engraved labels
+- Inter, Söhne — acceptable UI alternates
 
 Guidelines:
 
@@ -397,20 +346,21 @@ Guidelines:
 
 ## 10. Color System
 
-Primary palette:
+Primary palette (light):
 
-- black background
-- white text
+- **light background** (warm gray ~#ccd0cd, Transparent register)
+- dark ink text
 - soft grey grid lines
 
-Accent colors:
+Accent colors (used sparingly, semantic):
 
 - cyan = water
 - amber = light
 - green = plant health
 - red = alert
 
-Use color sparingly.
+Note: the **physical panel** stays monochrome + one warm accent (amber jewel / warm dial backlight);
+the **screen** may use the semantic accents on the light ground. Use color sparingly everywhere.
 
 ---
 
@@ -460,4 +410,4 @@ The interface should reveal:
 - cycles
 - patterns
 
-that would otherwise remain invisible.
+that would otherwise remain invisible — as an instrument, for the tender, not a show.
