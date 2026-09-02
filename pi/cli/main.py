@@ -12,6 +12,7 @@ from pi.cli.camera_control import camera_group
 from pi.cli.dashboard_cmd import dashboard_cmd
 from pi.cli.db_tools import db_group
 from pi.cli.display_cmd import display_group
+from pi.cli.fan_control import fan_group
 from pi.cli.light_control import light_group
 from pi.cli.pump_control import pump_group
 from pi.cli.sensor_test import sensor_group
@@ -52,6 +53,7 @@ cli.add_command(calibration_group, name="calibration")
 cli.add_command(dashboard_cmd, name="dashboard")
 cli.add_command(db_group, name="db")
 cli.add_command(display_group, name="display")
+cli.add_command(fan_group, name="fan")
 cli.add_command(light_group, name="light")
 cli.add_command(pump_group, name="pump")
 cli.add_command(sensor_group, name="sensor")
