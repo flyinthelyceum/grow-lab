@@ -32,7 +32,13 @@ happen weeks later while the station runs.
 
 Two open items gate the build. Both are answered by measurement, not by more reading.
 
-### 0.1 LED two-board budget
+### 0.1 LED two-board budget — **RESOLVED 2026-09-02**
+
+**Result:** one board draws **0.72 A at 24 V (~17 W)** warm at full PWM. Two boards ≈
+**1.4 A / 33 W** against 5 A / 120 W. Both fit in parallel, no derating. The conclusion is
+insensitive to whether the PWM was truly at 255 — even at a pessimistic 1 A per board the
+pair uses 40% of the driver. Procedure retained below for the record and for re-testing if
+the boards are ever changed.
 
 **Question:** do both LM301H boards fit the PWM-120-24's 120W / 5A budget in parallel?
 

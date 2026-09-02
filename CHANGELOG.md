@@ -4,6 +4,9 @@ All notable changes to this project are documented in this file.
 
 ## 2026-09-02
 
+### Validated (V1 bench)
+- **LED two-board budget closed** — one LM301H board measures **0.72 A at 24 V (~17 W)** warm at full PWM (Fluke 115, series DC). Two boards ≈ 1.4 A / 33 W against the PWM-120-24's 5 A / 120 W, so both wire in parallel with no derating and ~4x headroom. Cold draw was 0.69 A, rising as junction temperature climbed and forward voltage fell — expected on a constant-voltage rail, and it converged. Recorded in `BOM.md`; the open item is struck from `V1_PHYSICAL_BUILD.md`.
+
 ### Docs
 - **Build procedure Stage 0.1** — spelled out the DC-current measurement (series insertion, A-jack/COM, the Fluke 11x AC-default gotcha, returning the lead to VΩ) and dropped the "let it settle 60 s" instruction, which assumed a meter without a duty-cycle limit on its high-current range. Records the bench meter as a Fluke 115 (10 A continuous, so no time limit at the ~2 A expected), notes that an AC-only clamp cannot make this measurement at all, and adds a wall-wattmeter fallback that answers the same question comparatively.
 
