@@ -40,9 +40,27 @@ The PWM-120-24 is a **constant-voltage** 24V supply. Before applying it, confirm
 boards are the constant-voltage type with onboard current limiting. A constant-current
 board driven from a CV supply will run away and destroy itself.
 
-1. Wire **one** board to the driver. Nothing else on the rail.
-2. Meter DC current in series with the board's positive lead.
-3. `growlab light set 255` (full PWM), let it settle 60 s, read the current.
+**Instrument:** a DMM with a DC amps range — the bench meter is a **Fluke 115** (6 A range,
+1 mA resolution, 10 A *continuous*, so there is no time limit at the ~2 A expected here).
+A clamp meter is the wrong tool unless its jaw is explicitly AC **and** DC; an AC-only
+clamp reads nothing on this circuit, and a 200 A jaw has no useful resolution at 2 A.
+
+Wire with the power off at every step.
+
+1. Wire **one** board to the driver. Nothing else on the rail. Confirm it lights normally
+   with the meter out of circuit first.
+2. Power off. Break the board's **positive** lead and put the meter in series across the
+   gap: red lead in the **A** jack to the driver's + wire, black in **COM** to the board's
+   + terminal. Clip the probes in rather than holding them.
+3. Select DC amps — on a Fluke 11x the amps position comes up in **AC**, so press the
+   yellow button for DC. A near-zero reading on a lit board usually means this was missed.
+4. Power on, `growlab light set 255` (full PWM), let it settle, read the current.
+5. Power off before unclipping, then **move the red lead back to the VΩ jack**. In current
+   mode the meter is a near-short; touching it across the supply for a voltage reading is
+   what blows the fuse.
+
+**Abort if the current climbs and keeps climbing** rather than settling within a second or
+two — that is the constant-current-board case above, and it will not stop on its own.
 
 | One board draws | Verdict |
 |---|---|
@@ -52,6 +70,12 @@ board driven from a CV supply will run away and destroy itself.
 
 Record the measured figure in `BOM.md`. Also check heatsink temperature after 15 minutes
 at full power — the boards must be on aluminium with free airflow before this test.
+
+**No DC-amps meter to hand?** A plug-in wall wattmeter answers the same question without
+breaking into the circuit, and comparatively, so its absolute accuracy does not matter:
+read wall watts for one board at full PWM, then for both. Roughly double means the driver
+is keeping up; noticeably less than double (with visibly dimmer output) means it has hit
+its current limit. At ~90% driver efficiency, 120 W out is about 133 W at the wall.
 
 ### 0.2 Emitter dose calibration — **read this before setting any schedule**
 
