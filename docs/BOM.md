@@ -16,7 +16,13 @@ LED Strip
 Samsung LM301H based grow strip  
 400mm Sun Board strip  
 96 LEDs per board  
-**2 boards on hand (192 LEDs total)** — confirm both fit the driver's 120W budget before wiring in parallel
+**2 boards on hand (192 LEDs total)**
+
+**Measured 2026-09-02:** one board draws **0.72 A at 24 V (~17 W)** warm, at full PWM.
+Two boards ≈ **1.4 A / 33 W** against the driver's 5 A / 120 W — both fit in parallel with
+roughly 4x headroom. RESOLVED: wire both in parallel, no derating needed. (Cold draw was
+0.69 A, rising as the junction warmed and the forward voltage fell — expected on a
+constant-voltage rail, and it converged rather than running away.)
 
 Driver
 
@@ -25,10 +31,17 @@ Meanwell PWM-120-24 LED Driver
 120W  
 5A max output
 
+Note: at the measured 33 W for both boards the driver is ~4x oversized. Headroom is
+available if the lighting is ever expanded (more white boards, or the deferred red/blue
+supplement channels), though separate channels would need their own dimming control.
+
 Mounting
 
 Aluminum bar heatsink  
-thermal adhesive or screws
+thermal adhesive or screws  
+Thermal load is modest at the measured draw — ~17 W per 400mm board (~40 W/m), so a
+standard extruded LED channel/bar is sufficient. Still mandatory: LEDs must not run
+unheatsinked.
 
 Electrical
 

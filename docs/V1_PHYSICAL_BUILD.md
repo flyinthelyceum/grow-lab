@@ -65,9 +65,10 @@ Fallback if the SICCE still over-feeds after the above: right-size to a small pu
   450nm royal-blue supplement channels. White LM301H stays the growth workhorse; R/B
   carries the temporal/emotional register. This gives the canon real hardware without
   compromising the grow.
-- **Open spec:** confirm two 96-LED boards fit the PWM-120-24's 120W budget before
-  wiring both in parallel. Confirm the ×2 LM301H and PWM-120-24 part numbers (Jared
-  believes they are specced correctly, 2026-09-02).
+- **Budget check RESOLVED (2026-09-02):** one board measures 0.72 A at 24 V (~17 W) warm
+  at full PWM, so two boards draw ~1.4 A / 33 W against the driver's 5 A / 120 W. Wire
+  both in parallel; no derating needed. The driver is ~4x oversized, leaving headroom if
+  the lighting is expanded later.
 
 ## Airflow
 
@@ -139,7 +140,6 @@ To buy:
 
 ## Open items
 
-- Two-board 120W budget check (may need reduced current or a second driver).
 - Red/blue supplement channels — concept-alignment decision, deferred.
 - Enclosure design — its own print/laser task.
 - 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
@@ -155,6 +155,8 @@ To buy:
 
 ## Revision log
 
+- **2026-09-02** — LED two-board budget measured and closed: 0.72 A per board at 24 V,
+  ~33 W for the pair, comfortably inside the PWM-120-24.
 - **2026-09-02** — v1 is runoff-to-tray (recirculation deferred). Pump tamed with
   lowest-flow + bypass + pressure-compensating emitters + short pulses. Fan moves from
   GPIO6 relay to GPIO18 25 kHz PWM on a new 12V rail. Doc-scan constraints (probe
