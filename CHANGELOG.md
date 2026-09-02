@@ -4,6 +4,11 @@ All notable changes to this project are documented in this file.
 
 ## 2026-09-02
 
+### Changed
+- **Retracted the "pump is ~79x/158x oversized" reasoning.** It divided the SICCE's free-flow rating (158 GPH at zero head) by the emitters' rated draw — two figures that are never true at the same operating point. Replaced across `V1_PHYSICAL_BUILD.md`, `BOM.md`, `IRRIGATION_SYSTEM.md` and the build procedure with the pump's actual curve: 158 GPH at zero head, **0 GPH at 2.8 ft shutoff**, i.e. high-flow / low-pressure. Two real constraints follow, replacing the imaginary one: the manifold has a **hard 2.8 ft ceiling** above the reservoir water line, and at ~1.2 PSI **pressure-compensating emitters cannot reach their 7.25–10 PSI regulating range** — they act as fixed orifices. Harmless at two emitters of equal height, where symmetric run lengths do the same job, so the on-hand emitters stay. Delivery rate is now explicitly an empirical measurement (Stage 0.2), not a derived figure.
+- **Reservoir height is no longer constrained.** It sat below the vessel to allow gravity return; V1 does not recirculate, so nothing returns. Raising the reservoir is now the cheapest remedy if measured flow is marginal. Recorded in the build doc and as step 0 of the Stage 0.2 calibration.
+- **Inline filter spec revised** to 120–155 mesh, physically oversized, mounted on the emitter branch **after** the bypass tee rather than on the pump outlet — it then passes only the emitter trickle, so its pressure drop is negligible. Pressure, not filtration, is the scarce resource. Notes the pump's built-in intake sponge as first-stage.
+
 ### Validated (V1 bench)
 - **LED two-board budget closed** — one LM301H board measures **0.72 A at 24 V (~17 W)** warm at full PWM (Fluke 115, series DC). Two boards ≈ 1.4 A / 33 W against the PWM-120-24's 5 A / 120 W, so both wire in parallel with no derating and ~4x headroom. Cold draw was 0.69 A, rising as junction temperature climbed and forward voltage fell — expected on a constant-voltage rail, and it converged. Recorded in `BOM.md`; the open item is struck from `V1_PHYSICAL_BUILD.md`.
 

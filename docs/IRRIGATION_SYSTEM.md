@@ -93,10 +93,12 @@ Reasons for moderate flow rate:
 • prevents excessive turbulence  
 • compatible with small reservoirs
 
-**V1 actual:** the on-hand pump is a SICCE Micra Plus at 158 GPH (~600 L/hr), well above
-this spec. It is tamed by running at its lowest flow setting, a bypass tee that returns
-excess *unused* solution to the reservoir, short pump pulses, and pressure-compensating
-emitters. If it still over-feeds, right-size to a pump in the range above.
+**V1 actual:** the on-hand pump is a SICCE Micra Plus. Its 158 GPH headline is free-flow
+at zero head; its shutoff is **2.8 ft (~1.2 PSI)**. That is the number that governs here —
+it is a high-flow, low-pressure aquarium pump, so the flow spec above is the wrong axis to
+judge it on. Two practical limits follow: the manifold must sit well under 2.8 ft above the
+reservoir water line, and at ~1.2 PSI no pressure-compensating emitter will reach its
+regulating range. Delivery is set by measurement, not by emitter rating.
 
 Pump operation is controlled via a **relay module connected to the Raspberry Pi**.
 
@@ -128,9 +130,12 @@ Emitters regulate the rate at which water enters the plant media.
 
 Recommended type:
 
-**Pressure-compensating 1 GPH drip emitter** (V1: one per CMU core, 2 total).
-Pressure-compensating emitters deliver their rated flow regardless of pump pressure,
-which is what makes an oversized pump usable.
+~1 GPH drip emitter (V1: one per CMU core, 2 total).
+
+Note on pressure compensation: PC emitters regulate only above 7.25–10 PSI. A small
+submersible cannot reach that, so on this system they act as fixed orifices. Acceptable
+here because two emitters at equal height need no compensation — **symmetric run lengths**
+do the same job. On a larger manifold with varying elevations, this would not hold.
 
 Purpose:
 
