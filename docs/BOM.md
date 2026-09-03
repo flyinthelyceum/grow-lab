@@ -93,23 +93,65 @@ DS18B20 waterproof probe
 
 Electrical Conductivity (EC)
 
-Atlas Scientific EZO-EC probe + interface (I2C 0x64)  
+[Atlas Scientific Conductivity Probe K 1.0](https://atlas-scientific.com/probes/conductivity-probe-k-1-0/)
+— **ENV-40-EC-K1.0**, $139.99. Range 5 – 200,000 µS/cm.
+Paired with the [EZO-EC circuit](https://atlas-scientific.com/embedded-solutions/ezo-conductivity-circuit/) at I²C 0x64.
 **Inline voltage isolator required** — see Electrical Safety
 
 pH
 
-Atlas Scientific EZO-pH probe + interface (I2C 0x63)  
+[Atlas Scientific Lab Grade pH Probe](https://atlas-scientific.com/probes/ph-probe/)
+— **ENV-40-pH**, $99.99. Double junction, pH 7.00 isopotential point.
+Paired with the [EZO-pH circuit](https://atlas-scientific.com/embedded-solutions/ezo-ph-circuit/) at I²C 0x63.
 **Inline voltage isolator required** — see Electrical Safety
+
+> **The pH probe is a consumable, and it dies if it dries out.** One was
+> lost this way over summer 2026 — see *pH probe maintenance* below. Order a
+> storage solution with every probe, not after.
 
 Media Moisture
 
 **Active: DFRobot SEN0308 (IP65 capacitive) + ADS1115 16-bit ADC (I2C 0x48)**  
 Retired: Adafruit STEMMA Soil Sensor (0x36) — replaced 2026-04-14
 
-Calibration
+Calibration and storage solutions
 
-pH calibration solutions  
-EC calibration solution
+- [pH/ORP Probe Storage Solution](https://atlas-scientific.com/calibration-solutions/ph-storage-solution/) — 3M KCl. **Not optional.** The pH probe lives in this whenever it is out of the reservoir.
+- [pH/ORP Storage Solution, 3 pouches](https://atlas-scientific.com/calibration-solutions/ph-storage-3-pouches/) — spares.
+- [pH 4.00](https://atlas-scientific.com/calibration-solutions/ph-4-00-calibration-solution-chem-ph-4/) / [pH 7.00](https://atlas-scientific.com/calibration-solutions/ph-7-00-calibration-solution/) / pH 10.00 calibration solutions — three-point cal.
+- [Conductivity Calibration K 1.0 Set](https://atlas-scientific.com/calibration-solutions/conductivity-calibration-k-1-0-set/) — matched to the K 1.0 probe.
+- [pH Probe Reconditioning Kit](https://atlas-scientific.com/calibration-solutions/ph-probe-reconditioning-kit/) — $23.99. Three-bath chemical recovery for aged or dried-out probes. Bottle 3 is ammonium bifluoride: a strong acid that etches the glass bulb. Gloves and eye protection, work at a sink. Not a routine procedure — it thins the bulb every time.
+
+## pH probe maintenance
+
+The pH probe is the only sensor in this build that dies from neglect rather
+than use. The EC probe has no electrolyte to deplete and survives being
+ignored; the pH probe's glass bulb and reference junction do not.
+
+**Rules:**
+
+1. **Never store it dry, and never in plain, distilled or DI water.** Storage
+   solution, or pH 4.00 buffer at a pinch. Plain water leaches ions out of the
+   bulb and the junction. Atlas is explicit about this.
+2. **Slope is the health metric, not the reading.** `growlab sensor ph-slope`
+   reports the EZO-pH `Slope,?` figures: acid and base slope percentages plus
+   the zero-point offset in millivolts. Per the datasheet a new probe is
+   **>95% slope** with an offset within **±5 mV**; beyond **10 mV** it warns of
+   "noticeable performance issues".
+3. **Slope only updates on calibration.** Calibrate first, then read it.
+4. **A bad slope can mean bad solution.** Contaminated calibration fluid looks
+   identical to a dying probe. Fresh solution before condemning anything.
+
+**Known failure mode — a dead probe reads pH 7, not garbage.** A failed
+electrode outputs near 0 mV whatever it is immersed in, which the circuit
+converts to roughly the probe's isopotential point: pH 7.00 for the ENV-40-pH.
+So a dead probe returns a plausible mid-scale number indefinitely.
+
+This is exactly how the summer 2026 failure hid. The probe reported a flat
+8.69 for eight days and was read as a real measurement of a neglected
+reservoir. Moved into pH 4.00 buffer it settled at 6.7–6.8 and drifted upward
+— its isopotential point, not the buffer. **A stable, plausible pH reading is
+not evidence of a working probe.** Check the slope.
 
 ---
 
