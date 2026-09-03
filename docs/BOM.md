@@ -167,10 +167,13 @@ the lift, or fit a higher-head pump.
 
 Filter
 
-**120–155 mesh, physically oversized**, on the **emitter branch after the bypass tee** —
-it then passes only the trickle headed to the emitters, so its pressure drop is negligible.
-Choose for low restriction over fine filtration; pressure is the scarce resource here.
-The pump's intake sponge is already stage one.
+**DIG P11-200 — 3/4" MPT, 200 mesh stainless screen, flush cap.** Mounted on the
+**emitter branch after the bypass tee**, so it passes only the trickle headed to the
+emitters. 200 mesh rather than 120 because 1 GPH emitter orifices are small. Rated 13 GPM
+against a ~2 GPH need — enormously oversized on purpose: negligible pressure drop when
+clean, and a long interval before a clog can starve a system with only ~1.2 PSI to give.
+The flush cap clears trapped particles without disassembly. Needs adapters from 3/4" MPT
+down to the main line. The pump's intake sponge is stage one.
 
 Tubing
 
@@ -255,9 +258,13 @@ prevent stagnant canopy air; pull heat off the LED heatsink
 
 GFCI outlet on mains — required
 
-**Atlas EZO inline voltage isolators ×2** — one each on pH and EC.
-pH and EC share the same water; the EC circuit injects noise that corrupts pH
-readings without isolation. Pumps/solenoids bleed micro-voltage into the water too —
+**Isolation is already covered by the i3 InterLink — do not buy separate isolators.**
+The i3 carries two isolated EZO circuit slots (specified for EZO-pH / ORP / DO / EC) plus
+one non-isolated slot. pH and EC are exactly the two circuits that need it, so seat them
+in the isolated pair and the requirement is met. Verify seating before go-live.
+
+Isolation matters because pH and EC share the same water; the EC circuit injects noise that
+corrupts pH readings without it. Pumps/solenoids bleed micro-voltage into the water too —
 keep their grounds off the sensor path.
 
 Drip loops on all cables
