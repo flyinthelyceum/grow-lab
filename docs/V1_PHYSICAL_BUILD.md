@@ -211,29 +211,61 @@ Dry electronics box, custom — to be designed and 3D-printed / laser-cut in acr
 
 ## Sourcing checklist
 
-On hand: 2× LM301H boards, PWM-120-24 driver, SICCE Micra Plus pump, Pi, ESP32,
-BME280, EZO-pH, EZO-EC, DS18B20, SEN0308+ADS1115, camera, OLED, Noctua NF-A12x25.
+**On hand:** 2x LM301H boards, PWM-120-24 driver, SICCE Micra Plus pump, Pi, ESP32,
+i3 InterLink, BME280, EZO-pH, EZO-EC, DS18B20, SEN0308+ADS1115, camera, OLED,
+Noctua NF-A12x25, aluminium heatsinks, 1/4" drip tubing + main line, 1 GPH
+pressure-compensating emitters x2, bypass tee + throttle valve, measuring jugs.
 
-To buy:
+**Bought:** stainless half-size steam table pans x2 with lids (reservoir + mixing spare).
 
+**Fabricating in-house:** catch tray (304 stainless), cabinet / plinth, mast.
+
+### To buy
+
+- [ ] **Inline filter** — DIG P11-200, 3/4" MPT, **200 mesh stainless screen**, flush cap.
+      200 mesh (not 120) because 1 GPH emitter orifices are small. Rated 13 GPM against a
+      ~2 GPH need, so it is enormously oversized — which is the point: negligible pressure
+      drop when clean, and a long interval before a clog can starve a system that only has
+      ~1.2 PSI to give. Flush cap cleans it without disassembly. Needs adapters from
+      3/4" MPT down to the main line.
+- [ ] **Stainless mesh screen** for the core drain holes, ~20 mesh — coarse enough to drain
+      freely, fine enough to hold perlite; a layer of coarse perlite at the bottom of each
+      core does the real filtering. Stainless so it does not corrode in nutrient solution.
+- [ ] **Core liners x2** — see note below.
 - [ ] Standard CMU (cinder block)
-- [ ] Food-safe liner / planter inserts (×2 cores)
 - [ ] Coco coir + perlite
-- [ ] Mesh screen (drain holes)
-- [ ] 2.5 gal bucket + lid
-- [ ] 1/4" drip tubing + main line
-- [ ] Pressure-compensating drip emitters, ~1 GPH (×2)
-- [ ] Bypass tee + small throttle/ball valve
-- [ ] Inline filter
-- [ ] Catch tray — **≥3 L**, fits under the CMU (must hold a full `max_runtime_seconds` pulse; see the build procedure, Stage 0.2)
-- [ ] Aluminum heatsink stock for the LED boards
-- [ ] 12V buck module (24V → 12V) or small 12V PSU
-- [ ] Atlas EZO inline voltage isolators (×2) — pH + EC
 - [ ] GFCI outlet / adapter
-- [ ] Cable glands (assorted)
-- [ ] TSL2591 lux breakout (if not already on hand)
-- [ ] Acrylic stock for the enclosure (fabricate in-house)
-- [ ] pH / EC calibration solutions
+- [ ] Cable glands (size to actual cable OD)
+- [ ] **Fresh pH 4.00 / 7.00 / 10.00 buffers and EC 12,880 uS standard.** The probes were
+      calibrated in March; opened buffers drift (pH 10 especially, from CO2 absorption).
+      Re-calibrate before go-live rather than trusting six-month-old solution.
+
+### Struck from the list
+
+- ~~Atlas EZO inline voltage isolators x2~~ — **not needed.** The i3 InterLink already
+  carries **two isolated EZO circuit slots** plus one non-isolated, and the isolated pair
+  is specified for exactly EZO-pH / ORP / DO / EC. pH and EC are the two circuits that need
+  it. **Action instead: verify both are seated in the isolated slots, not the non-isolated
+  one.** That check replaces a ~$56 purchase.
+- ~~TSL2591 lux breakout~~ — the AS7341 already emits `as7341_lux`.
+- ~~12V buck module~~ — the fan already runs from a 12V adapter; a buck would only
+  consolidate mains cords inside the enclosure.
+- ~~Acrylic stock for the enclosure~~ — superseded by the fabricated cabinet.
+- ~~2.5 gal bucket + lid~~ — replaced by the stainless pans.
+
+### Note on core liners
+
+Nothing off-the-shelf fits a CMU core well (~5.6 x 5.6 in tapering, 7.6 in deep): nursery
+pots are either too wide or too short. Options, in order of preference:
+
+1. **Fabricate them in stainless** to match the tray and pans, with the drain hole and mesh
+   built in rather than improvised. Best result and one material through the whole wet
+   path — but a 5.6 x 5.6 x 7 in open box is deep and narrow, so check it against the
+   brake's throat before committing. A rolled sleeve with a welded base is the easier
+   variant.
+2. **Food-grade polyethylene sheet** (6 mil FDA) folded into each core. Cheap, conforms,
+   invisible below the media surface. The pragmatic v1 answer.
+3. Pond liner — workable, but most is fish-safe rather than food-grade certified.
 
 ## Deferred to v2
 

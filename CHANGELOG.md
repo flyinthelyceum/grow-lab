@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (BOM pass)
+
+### Changed
+- **Inline filter specced** — DIG P11-200, 3/4" MPT, 200 mesh stainless screen with flush cap, on the emitter branch after the bypass tee. 200 mesh rather than 120 because 1 GPH emitter orifices are small. Rated 13 GPM against a ~2 GPH need, deliberately oversized: negligible pressure drop when clean, and a long interval before a clog can starve a system with only ~1.2 PSI available.
+- **Sourcing checklist rewritten** to match reality — on-hand, bought, and in-house-fabricated items separated from what is actually left to buy. Several entries had gone stale as parts were acquired or superseded.
+- **Core liners** given options rather than a vague "food-safe liner": fabricate in stainless to match the tray and pans (best, but check the brake's throat against a 5.6 x 5.6 x 7 in box), food-grade 6 mil polyethylene as the pragmatic v1 answer, or pond liner with the caveat that most is fish-safe rather than food-grade.
+- **Calibration solutions** flagged for replacement rather than reuse — the probes were calibrated in March and opened buffers drift, pH 10 especially from CO2 absorption.
+
+### Removed
+- **Atlas EZO inline voltage isolators x2 — struck; they are not needed.** The i3 InterLink already carries two isolated EZO circuit slots (specified for EZO-pH / ORP / DO / EC) alongside one non-isolated slot, and pH and EC are exactly the two circuits requiring isolation. The action is to verify both are seated in the isolated pair, which replaces a ~$56 purchase the BOM had been carrying since before the i3 was in the build.
+- **TSL2591 lux breakout** — the AS7341 already emits `as7341_lux`.
+- **Acrylic stock for the enclosure** — superseded by the fabricated cabinet.
+
 ## 2026-09-03 (later)
 
 ### Changed
