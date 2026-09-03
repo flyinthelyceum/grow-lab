@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (enclosure)
+
+### Decided
+- **The electronics enclosure is integrated into the mast.** The mast is thin where it carries only a drip line and a sensor loom (2 x 3 in) and thickens into an instrument head where the apparatus lives — the same byproduct-of-function logic the front panel is already specced under. The head is 9 x 11.5 x 3.5 in because that is what a 174 x 123 mm Inky Impression 7.3" board and two meter movements measure, not because a size was picked. Fixture at 46 in hangs from the head's *underside* rather than off the shaft, so the cantilever's moment lands over the column instead of bending it. Panel centre at 52 in, overall height 57.5 in. Design study artifact linked from `BOM.md` and `V1_PHYSICAL_BUILD.md`.
+- **Split settled:** heavy, hot and mains stay in the plinth (PWM-120-24 driver, 5V PSU, relay board, GFCI); the instrument and its brains go in the head (panel, Pi + i3, ESP32, meter driver). 24V runs up the shaft. Keeps the cantilever light and line voltage far from the panel, and lets the head be only as deep as a meter movement.
+- **Panel composition:** meters on top (the instrument — *now*), e-ink beneath (the record — *rhythm*), control rail at the bottom with the jewel where a tube amp puts it. That pairing is what `UI_UX_DESIGN_REFERENCE.md` already asks for, in two registers.
+- **One earned accent:** the object is cool throughout — transparent body, hairline engraving, grey ground — and the single warm thing is the lit jewel. No amber in the e-ink palette, no warm wash on the acrylic, no competing second indicator.
+- **Lux sensor conflict resolved: AS7341**, on the rule that code takes precedence over docs because the bench version is already running. It has a driver, a config section and emits `as7341_lux`. TSL2591 has none of those and claims the same 0x39 address, so the two could never have shared the bus; the "TSL2591 active" line was aspirational and never implemented.
+
+### Open
+- The Inky Impression and the i3 InterLink both mount on the Pi's 40-pin header. Electrically they may coexist (Inky is SPI plus an I2C EEPROM, the i3 is I2C) but physically they collide — resolve with a stacking header or a ribbon extension, and confirm no pin conflict before committing to the head's internal depth.
+- Meter movement size drives the panel. Drawn at 2.5 in; going to 3.5 in pushes the meter row past the e-ink's width and the face needs re-proportioning. Pull exact bezel and cutout dimensions from the Simpson datasheet before cutting acrylic.
+- Verify the shaft in bending, vent the head, and plan the visible cable runs before assembly.
+
 ## 2026-09-03 (corrections)
 
 ### Fixed

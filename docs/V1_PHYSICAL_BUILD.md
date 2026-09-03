@@ -142,12 +142,30 @@ vented — an open reservoir in a sealed box makes a humid box.
   joint in a permanently wet salty seam would fail anyway.
 - Size for the worst case: a full `max_runtime_seconds` pulse, not a normal event.
 
-### Mast
+### Mast — thin shaft, instrument head
 
-Bolts to the **cabinet carcass** — not the tray, not the block — with the tray notched to
-clear. Hollow section so tubing and cable run inside. The fixture cantilevers ~10 in
-forward of the mast centreline, so the base wants a full-height rear panel in the carcass
-rather than a couple of screws.
+Study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b21b6`
+
+The electronics enclosure is **integrated into the mast** rather than sitting beside it. The
+mast is thin where it carries only the drip line and sensor loom, and thickens into the
+instrument head where the apparatus lives — dimension as a byproduct of contents.
+
+- **Shaft:** 2 x 3 in hollow section, plinth top to 46 in. Tubing and cable inside.
+- **Head:** 9 x 11.5 x 3.5 in acrylic, 46 to 57.5 in. Front panel on its face, panel centre
+  at 52 in — read standing, while tending.
+- **Fixture:** hangs from the **head's underside** at 46 in, cantilevered ~10 in forward to
+  centre over the block. Hanging it from the head rather than the shaft puts the moment over
+  the column instead of bending it.
+- Bolts to the **cabinet carcass** — not the tray, not the block — with the tray notched to
+  clear. The base wants a full-height rear panel in the carcass rather than a couple of
+  screws.
+- **Verify the shaft in bending.** Its section is sized by what it carries, not by structure,
+  and the head plus fixture is the whole cantilevered mass sitting at the top of it. A steel
+  core inside an acrylic skin suits the register if it needs stiffening.
+- **Vent the head** — the driver moved down to the plinth, but the Pi and meter backlights
+  still dissipate inside a closed transparent box. Make the vents part of the composition.
+- **Cable discipline is visible.** A transparent enclosure makes the loom part of the design;
+  plan runs and terminal-block layout before assembly, not after.
 
 ## Lighting decision
 
@@ -252,9 +270,10 @@ pressure-compensating emitters x2, bypass tee + throttle valve, measuring jugs.
   one.** That check replaces a ~$56 purchase.
 - ~~12V buck module~~ — the fan already runs from a 12V adapter; a buck would only
   consolidate mains cords inside the enclosure.
-- ~~TSL2591 lux breakout~~ — **strike retracted, see BOM.** The BOM calls TSL2591 the
-  active sensor while the code has only an AS7341 driver. That conflict is unresolved and
-  was papered over here; do not buy either until it is settled.
+- ~~TSL2591 lux breakout~~ — **resolved: AS7341 is the V1 sensor**, on the rule that code
+  takes precedence over docs because the bench version is already running. The AS7341 has a
+  driver, a config section and emits `as7341_lux`; TSL2591 has none of those and claims the
+  same 0x39 address.
 - ~~2.5 gal bucket + lid~~ — replaced by the stainless pans.
 
 ### Note on the cores — sealed, not lined
