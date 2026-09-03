@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (meters on the dashboard)
+
+### Added
+- **`GET /api/meters/status`** — what the two physical needles are pointing at, in JSON. Reports value, unit, reading age, deflection (-1.0 left, 0.0 on target, +1.0 right) and a fault flag for each movement, so the web view and the panel tell the same story.
+- **`meters_config` wired through `create_app`** and passed by `growlab dashboard`, so the endpoint sees the real `[meters]` block rather than defaults.
+- 9 endpoint tests, including one asserting the endpoint's deflection equals `pi.services.meters.normalise` so the two mappings cannot drift apart.
+
+### Notes
+- The dashboard and the orchestrator are separate systemd units — separate processes — sharing only the database. The dashboard therefore cannot hold a reference to the live `MeterService`. This endpoint sidesteps that by recomputing needle position from the same two inputs the service uses: the meter config and the latest reading. It is read-only by construction; commanding a needle from the web would need a channel between the processes that does not exist yet.
+- Stale readings read as faulted at centre here, matching how the service eases a stale needle home rather than freezing it.
+
 ## 2026-09-03 (meter driver)
 
 ### Added
