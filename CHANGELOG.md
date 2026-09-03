@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (meters sourced)
+
+### Changed
+- **Meters sourced: Weston 301 centre-zero milliammeters, 5-0-5 mA and 30-0-30 mA.** Not the end-zero microammeters the driver was drawn for. The needle rests mid-scale and cannot be converted to end-zero without rebuilding the movement — so the dials become **deviation-from-target** instruments. Centre means on target and drift reads as asymmetry, which is the better instrument for tending and settles the pH scale: centre is 6.0, span ±1.0 pH.
+- **Meter driver rewritten for bipolar drive.** The unipolar topology could only push current one way. The meter now floats between two op-amp outputs — one buffering a mid-reference, one driven by the DAC — giving signed current on a single 5V rail with no negative supply. The reference is taken from the MCP4728 itself (channel C at 1.024 V) so reference drift is common-mode and cancels; a separate divider would reintroduce it. Channel allocation A = pH, B = moisture, C = V_ref, D spare; 3 of 4 op-amp sections used.
+- **R_sense recalculated:** 204.8 Ω for the 5-0-5 mA movement, 34.1 Ω for the 30-0-30 mA, at |V_DAC − V_ref| = 1.024 V full scale.
+
+### Found
+- **The MCP6004 cannot drive the 30-0-30 meter to full scale.** From DS20001733L: output short-circuit current ≈25 mA at 5V, and the ±30 mA "Current at Output and Supply Pins" figure is an *Absolute Maximum Rating*, not an operating point. 30 mA full-scale deflection is above the former and at the latter. That channel needs a complementary emitter-follower inside the feedback loop (feedback taken after the buffer, so V_BE drops out); the 5-0-5 channel drives directly with 5× margin. Future meter purchases should prefer 1–5 mA or µA movements, which need no buffer.
+
 ## 2026-09-03 (plans)
 
 ### Added
