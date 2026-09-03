@@ -1,0 +1,198 @@
+name: Deploy to Pi
+
+# The Pi runs the installation. Nobody can shell into it from a Claude Code
+# session (no route to the LAN, and the Cloudflare tunnel publishes only HTTP),
+# so this workflow is how merged work actually reaches the hardware.
+#
+# Two jobs, in order:
+#   test    — GitHub-hosted. The gate.
+#   deploy  — the Pi's own self-hosted runner. Only ever runs on green tests.
+#
+# The deploy job does NOT check out into the runner's workspace. It advances
+# the *live* clone at GROWLAB_DIR, which is what the systemd units run from and
+# where the gitignored config.toml and .venv live. Checking out a fresh copy
+# would deploy a tree with no configuration.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag or SHA to deploy (default: main)"
+        required: false
+        default: "main"
+      skip_tests:
+        description: "Deploy without waiting for tests — emergencies only"
+        type: boolean
+        required: false
+        default: false
+
+# One deploy at a time. Two of these racing on one Pi would interleave a git
+# reset with a service restart.
+concurrency:
+  group: deploy-pi
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  GROWLAB_DIR: /home/jared/grow-lab
+  HEALTH_URL: http://127.0.0.1:8000/api/system/status
+  UNITS: "growlab growlab-dashboard"
+
+jobs:
+  test:
+    name: Tests
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_tests }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        # Not the `pi` extra: RPi.GPIO and picamera2 do not build off-Pi, and
+        # every driver that needs them imports lazily for exactly this reason.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Test
+        run: pytest -q
+
+  deploy:
+    name: Deploy
+    needs: [test]
+    # `always()` so an intentional skip_tests run still deploys, while a real
+    # test failure still blocks. Without it, skipping `test` skips this too.
+    if: ${{ always() && (needs.test.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.skip_tests)) }}
+    runs-on: [self-hosted, growlab]
+    timeout-minutes: 15
+
+    steps:
+      - name: Record the current revision
+        id: before
+        run: |
+          cd "$GROWLAB_DIR"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Currently deployed: $(git rev-parse --short HEAD) — $(git log -1 --pretty=%s)"
+
+      - name: Refuse to deploy over uncommitted work
+        # config.toml and .venv are gitignored so they never show here. Anything
+        # that does show is a hand edit made on the box, and clobbering it
+        # silently on a machine nobody can shell into is how you lose a fix
+        # made at 2am during a bring-up.
+        run: |
+          cd "$GROWLAB_DIR"
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Working tree at $GROWLAB_DIR is dirty. Commit, stash or discard on the Pi, then re-run."
+            git status --short
+            exit 1
+          fi
+
+      - name: Fetch and fast-forward
+        id: update
+        run: |
+          cd "$GROWLAB_DIR"
+          TARGET="${{ inputs.ref || 'main' }}"
+          git fetch --prune origin "$TARGET"
+          git checkout -q "$TARGET" 2>/dev/null || git checkout -q -B "$TARGET" "origin/$TARGET"
+          # ff-only, so a diverged local branch fails loudly instead of merging.
+          git merge --ff-only "origin/$TARGET"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Now at: $(git rev-parse --short HEAD) — $(git log -1 --pretty=%s)"
+
+      - name: Reinstall if dependencies changed
+        run: |
+          cd "$GROWLAB_DIR"
+          if git diff --name-only "${{ steps.before.outputs.sha }}" "${{ steps.update.outputs.sha }}" \
+              | grep -qE '^pyproject\.toml$'; then
+            echo "pyproject.toml changed — reinstalling"
+            . .venv/bin/activate
+            pip install -e . --quiet
+          else
+            echo "No dependency change; skipping install"
+          fi
+
+      - name: Restart services
+        # The sudoers rule installed by deploy/github-runner/setup.sh permits
+        # exactly these systemctl verbs on exactly these units, nothing else.
+        run: |
+          sudo systemctl restart $UNITS
+          sleep 3
+          for unit in $UNITS; do
+            systemctl is-active --quiet "$unit" || {
+              echo "::error::$unit failed to start"
+              sudo journalctl -u "$unit" -n 40 --no-pager
+              exit 1
+            }
+          done
+
+      - name: Health check
+        id: health
+        continue-on-error: true
+        run: |
+          # The dashboard opens the database and applies migrations on start,
+          # so give it real time before calling it dead.
+          #
+          # 429 counts as alive. The API is rate limited (60/min by default,
+          # possibly tighter in the Pi's own config.toml) and a rejected request
+          # still proves the server is up and answering. Treating it as failure
+          # would roll back a perfectly healthy deploy. Polling every 3s keeps
+          # this well under the limit anyway.
+          for i in $(seq 1 20); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$HEALTH_URL" || true)"
+            case "$code" in
+              2*)  echo "Healthy after $((i * 3))s (HTTP $code)"
+                   curl -s --max-time 5 "$HEALTH_URL"
+                   exit 0 ;;
+              429) echo "Healthy after $((i * 3))s (HTTP 429 — up, rate limited)"
+                   exit 0 ;;
+              *)   echo "  attempt $i: HTTP ${code:-no response}" ;;
+            esac
+            sleep 3
+          done
+          echo "::error::No healthy response from $HEALTH_URL after 60s"
+          exit 1
+
+      - name: Roll back on a failed health check
+        if: ${{ steps.health.outcome == 'failure' }}
+        run: |
+          cd "$GROWLAB_DIR"
+          echo "::warning::Health check failed — rolling back to ${{ steps.before.outputs.sha }}"
+          git reset --hard "${{ steps.before.outputs.sha }}"
+          . .venv/bin/activate
+          pip install -e . --quiet
+          sudo systemctl restart $UNITS
+          sleep 8
+          code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$HEALTH_URL" || true)"
+          case "$code" in
+            2*|429)
+              echo "::error::Deploy failed and was rolled back. The Pi is running the previous revision." ;;
+            *)
+              echo "::error::Deploy failed AND the rollback did not come up healthy. The Pi needs hands."
+              sudo journalctl -u growlab-dashboard -n 60 --no-pager ;;
+          esac
+          exit 1
+
+      - name: Summary
+        run: |
+          cd "$GROWLAB_DIR"
+          {
+            echo "### Deployed to the Pi"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Was | \`$(git rev-parse --short ${{ steps.before.outputs.sha }})\` |"
+            echo "| Now | \`$(git rev-parse --short HEAD)\` — $(git log -1 --pretty=%s) |"
+            echo "| Units | $UNITS |"
+            echo ""
+            echo "https://grow.aaand.space/"
+          } >> "$GITHUB_STEP_SUMMARY"
