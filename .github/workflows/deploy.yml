@@ -28,12 +28,6 @@ on:
         required: false
         default: false
 
-# One deploy at a time. Two of these racing on one Pi would interleave a git
-# reset with a service restart.
-concurrency:
-  group: deploy-pi
-  cancel-in-progress: false
-
 permissions:
   contents: read
 
@@ -70,6 +64,20 @@ jobs:
   deploy:
     name: Deploy
     needs: [test]
+    # One deploy at a time: two of these racing on one Pi would interleave a
+    # git reset with a service restart.
+    #
+    # This belongs on the job, NOT on the workflow. At workflow level it gates
+    # the whole run, so a deploy stuck in the queue — the runner offline, the
+    # Pi unplugged — blocks every later run outright, tests included. That is
+    # exactly what happened after #18 merged: the deploy job sat waiting for a
+    # runner that did not exist yet, and the next push produced a run that
+    # stayed `pending` with zero jobs created. CI silently stopped.
+    #
+    # Scoped to the job, tests always run and only deploys serialize.
+    concurrency:
+      group: deploy-pi
+      cancel-in-progress: false
     # `always()` so an intentional skip_tests run still deploys, while a real
     # test failure still blocks. Without it, skipping `test` skips this too.
     if: ${{ always() && (needs.test.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.skip_tests)) }}

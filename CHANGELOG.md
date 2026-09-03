@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (CI concurrency fix)
+
+### Fixed
+- **A queued deploy silently stopped CI.** `concurrency: deploy-pi` was declared at workflow level, which gates the whole run rather than just the deploy. After #18 merged, its deploy job sat queued waiting for a self-hosted runner that had not been registered yet — and the next push (#19) produced a run stuck at `pending` with **zero jobs created**, tests included. Nothing reported a failure; CI just stopped happening. Moved the concurrency group onto the `deploy` job, so tests always run and only deploys serialize. Documented in `docs/DEPLOYMENT.md` with a note not to move it back.
+
 ## 2026-09-03 (pH probe health, and the probe that died quietly)
 
 ### Added

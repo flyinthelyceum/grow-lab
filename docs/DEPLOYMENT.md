@@ -131,6 +131,22 @@ For when the box is down and the fix is obvious. Not a habit.
 **Check what is deployed** — the run summary reports the before and after SHA
 and the commit subject.
 
+## Concurrency is scoped to the deploy job, deliberately
+
+Only one deploy runs at a time — two racing on one Pi would interleave a git
+reset with a service restart. That guard lives on the **`deploy` job**, not on
+the workflow.
+
+At workflow level it gates the entire run. A deploy stuck in the queue — the
+runner offline, the Pi unplugged — then blocks every subsequent run outright,
+tests included. That is not theoretical: when the workflow first merged, its
+deploy job sat waiting for a runner that had not been registered yet, and the
+next push produced a run that stayed `pending` with zero jobs created. CI had
+silently stopped, and nothing said so.
+
+Scoped to the job, tests always run and only deploys serialize. Do not move it
+back up.
+
 ## If the runner goes offline
 
 It is a systemd service on the Pi:
@@ -141,5 +157,11 @@ sudo ./svc.sh status
 sudo ./svc.sh start
 ```
 
-Deploys queue while it is down and run when it returns. If the Pi has been
-rebuilt, re-run `setup.sh` with a fresh token.
+Deploys queue while it is down and run when it returns; tests keep running in
+the meantime (see the concurrency note above). If the Pi has been rebuilt,
+re-run `setup.sh` with a fresh token.
+
+A queued self-hosted job waits about 24 hours before GitHub abandons it, so a
+long outage leaves stale deploys in the queue. They are harmless — each is a
+fast-forward that no-ops on an already-current clone — but cancel them from the
+Actions tab if you would rather not have them fire all at once.
