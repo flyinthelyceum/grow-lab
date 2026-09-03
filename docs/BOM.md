@@ -433,70 +433,86 @@ Pimoroni Inky Impression 7.3" (7-colour) — already in the standards; slow unla
 
 ## Meter driver stage (drives the two vitals meters)
 
-**Revised 2026-09-03 for centre-zero movements.** The meters sourced are Weston 301
-**centre-zero milliammeters** (5-0-5 mA and 30-0-30 mA), not the end-zero microammeters this
-stage was first drawn for. The needle rests mid-scale and must deflect *both ways*, so the
-drive is now **bipolar** — which the original unipolar topology could not do.
+**Meters confirmed from the dials, 2026-09-03 — both MICROAMPERES D.C.:**
 
-Signal path: Pi → I²C DAC → **differential** op-amp voltage-to-current (meter in feedback) →
-meter. Needle current = **(V_DAC − V_ref) / R_sense**, signed, coil-independent.
-Earlier unipolar schematic (superseded):
-https://claude.ai/code/artifact/c26c99e8-57c9-4675-a6e6-072a2d88ecf5
+| Meter | Movement | Coil (Weston selector) | Reads |
+|---|---|---|---|
+| Weston 301 | **30-0-30 µA** centre-zero | ~5,500 Ω | pH |
+| Weston 301 | **100-0-100 µA** centre-zero | ~1,230 Ω | EC |
 
-### Bipolar drive on a single 5V rail
+Earlier purchase listings said "milliamperes" and were wrong; the printed dials say
+microamperes. A cross-check in this repo briefly propagated that listing error into a
+milliamp design — retracted. **Trust the lettering on the instrument, not the listing.**
 
-The meter floats between two op-amp outputs. One op-amp buffers a fixed mid-reference; the
-other is driven by the DAC through the current-feedback loop. Above the reference the needle
-goes right, below it goes left, and no negative supply is needed.
+### Direct differential DAC drive — no op-amp in the meter path
 
-- **Take the reference from the DAC itself.** The MCP4728 is a quad — allocate **A = pH drive,
-  B = moisture drive, C = V_ref at mid-scale (1.024 V), D spare.** Because drive and reference
-  come from the same chip and the same internal reference, reference drift is common-mode and
-  cancels: the needle stays centred even as the reference wanders. Do not use a separate
-  divider for V_ref; that reintroduces the drift this cancels.
-- **Op-amp budget:** one shared reference buffer + one driver per meter = **3 of 4** MCP6004
-  sections, one spare.
+At tens of microamps the MCP4728 drives each meter directly through fixed series resistors.
+The op-amp voltage-to-current stage this section once specified is **not needed** and is
+dropped from the meter path; the MCP6004 stays in the BOM only if some later stage wants it.
 
-### R_sense — recalculated for these movements
+Each meter sits between two DAC channels, one fixed resistor per leg:
 
-Full-scale deflection at maximum deviation, |V_DAC − V_ref| = 1.024 V:
+```
+DAC A/C ── R_LEFT ── movement ── R_RIGHT ── DAC B/D
+```
 
-| Meter | I at FS | R_sense |
-|---|---|---|
-| Weston 301, 5-0-5 mA | 5 mA | **204.8 Ω** |
-| Weston 301, 30-0-30 mA | 30 mA | **34.1 Ω** |
+Both channels rest at the same midpoint code, so differential voltage — and needle current —
+is zero at centre. One channel rises as the other falls to deflect right; reverse to go left.
+Running the DAC from 3.3 V with VDD as reference:
 
-Coil resistance still does not enter this (meter-in-feedback), only op-amp headroom. Weston's
-selector gives DC milliammeter coils from 27 Ω down to 0.2 Ω across the range, so the burden
-is a fraction of a volt either way. Keep part of R_sense as a **multiturn cermet trimmer**
-(Bourns 3296) and calibrate full scale onto the *printed* dial maximum.
+`I_max ≈ 3.3 V / (R_LEFT + R_RIGHT + R_coil)`
 
-### The 30-0-30 channel needs a current buffer — verified
+| Meter | R_LEFT | R_RIGHT | I at full opposite-rail fault |
+|---|---|---|---|
+| 30-0-30 µA | 56.2 kΩ | 56.2 kΩ | ~28.0 µA (with 5.5 kΩ coil) |
+| 100-0-100 µA | 16.9 kΩ | 16.9 kΩ | ~94.2 µA (with 1.23 kΩ coil) |
 
-From the MCP6001/2/4 datasheet (DS20001733L): **output short-circuit current ≈ 25 mA** at 5V,
-and **"Current at Output and Supply Pins ±30 mA" is an Absolute Maximum Rating** — a
-destructive limit, not an operating point.
+**These deliberately land just under full scale.** No DAC output state — including a firmware
+fault that slams one channel to each rail — can overdrive a historic movement. Prefer leaving
+a little unused mechanical arc to risking the meter. **Hardware limits the current; never rely
+on firmware alone, and never fit a trimmer that can be turned to zero series resistance.**
 
-So the MCP6004 **cannot drive the 30-0-30 meter to full scale.** 30 mA is above its
-short-circuit current and sits exactly at the absolute maximum.
+Coil resistance now enters the current equation (unlike a meter-in-feedback topology, where it
+cancels), but it is stable and absorbed by the five-point calibration below.
 
-- **5-0-5 mA channel:** drives directly. 5 mA against ~25 mA capability is 5× margin.
-- **30-0-30 mA channel:** add a **complementary emitter-follower inside the feedback loop**
-  (2N3904 / 2N3906 or BC337 / BC327, a few cents). Take feedback *after* the buffer so the
-  op-amp still sets the current precisely and the transistors' V_BE drops out of the equation.
-  Alternatively give that one channel an op-amp with real output drive.
-- **For any future meter purchase, prefer movements in the 1–5 mA or µA range** — they need no
-  buffer at all.
+**DAC channel allocation:** A/B = pH pair, C/D = EC pair. All four in use.
 
-### Software
+### Firmware behaviour
 
-The Pi computes the DAC word, so **the scale law is arbitrary** — see the dial-face section in
-`INSTRUMENT_HEAD_PLANS.md`. For centre-zero the natural mapping is *deviation from target*:
+- **Programme all four channels to the midpoint code in EEPROM** so both needles are centred
+  through boot, reset and power-down. Never let a needle slam an endpoint at power-up.
+- Confirm the breakout's `LDAC` behaviour and use synchronised updates where supported; if it
+  updates immediately, rate-limit so sequential I²C writes cannot produce a visible kick.
+- **Five-point calibration per meter**, stored independently: left endpoint, left mid, centre,
+  right mid, right endpoint, piecewise-linear between. The two movements share neither gain nor
+  linearity. Keep display calibration separate from Atlas probe calibration.
+- **Damped motion:** command at 20–50 Hz, easing to a median-then-EMA filtered value, 1.5–3 s
+  time constant, configurable. Alive, not twitching on the last digit.
+- **Faults ease the needle to centre** and light the amber indicator. Never signal error by
+  driving an endpoint.
+- **Service mode:** centre, 25/50/75/endpoint tests, per-meter polarity and span, five-point
+  linearisation, raw and filtered readings.
+- Validate under real pump, relay and grow-light switching, not on a quiet bench.
 
-- **pH:** centre = 6.0, span ±1.0 (5.0–7.0), putting the 5.8–6.2 band at ±20% of half-scale.
-- **EC:** centre = the real target, span sized to match. **Blocked — see below.**
+### Movement characterisation
 
-### Second meter reads EC, not moisture (2026-09-03)
+The handoff's method is right: a fixed resistor sets a fault floor, a pot starts at maximum
+resistance, a trustworthy microammeter sits in series, and you work down slowly while watching
+the needle. Its stated 220 kΩ fixed value reaches only ~6.8 µA, which cannot record the
+endpoint currents the procedure asks for, so size the fixed leg to approach full scale:
+
+`R_fixed ≈ 1.5 V / I_FS − R_coil`
+
+| Meter | R_fixed | Pot | Reaches |
+|---|---|---|---|
+| 30-0-30 µA | 47 kΩ | 1 MΩ | ~28.6 µA |
+| 100-0-100 µA | 15 kΩ | 1 MΩ | ~92.5 µA |
+
+Photograph everything before disassembly. Set mechanical zero with no connection, in the
+meter's final mounting orientation. Never put a DMM's continuity or diode mode across a
+movement, and never a bench supply directly.
+
+### Second meter reads EC, not moisture
 
 Changed on the strength of the Weston handoff spec. EC pairs with pH far better than soil
 moisture does: both are reservoir chemistry, both come from EZO circuits in the same water,
@@ -510,41 +526,15 @@ reach 0.8–1.2 mS/cm by adding salts to 1.53 mS/cm water. Either the target is 
 tap water or the build needs RO/distilled makeup water. **Resolve before printing an EC face**,
 because the resolved target *is* mechanical centre.
 
-Once resolved, centre on the target and span ±1.0 mS/cm so the band sits at ±20% of
+Once resolved, centre on the target and span so the working band sits at roughly ±20% of
 half-scale, matching pH. Do **not** centre at 2.0 mS/cm on an 0–4 face: with a ~1.0 target the
-needle would rest 40–60% left of centre in normal healthy operation, which defeats the entire
-point of a centre-zero instrument.
+needle would rest 40–60% left of centre in normal healthy operation, defeating the entire point
+of a centre-zero instrument.
 
-### Firmware behaviour (adopted from the Weston handoff)
+### Scale mapping
 
-- **Programme all DAC channels to the midpoint code in EEPROM** so both needles are centred
-  through controller boot, reset and power-down. Never let a needle slam an endpoint at power-up.
-- **Five-point calibration per meter**, stored independently: left endpoint, left mid, centre,
-  right mid, right endpoint, piecewise-linear between. The two movements will not share gain or
-  linearity. Keep display calibration separate from Atlas probe calibration.
-- **Damped motion:** command at 20–50 Hz, easing to a median-then-EMA filtered value, 1.5–3 s
-  time constant, configurable. Alive, not twitching on the last digit.
-- **Faults ease the needle to centre** and light the amber indicator. Never signal error by
-  driving an endpoint.
-- **Hardware limits current, never firmware alone.** No trimmer that can be turned to zero
-  series resistance — put the trimmer in series with a fixed minimum.
-- **Service mode:** centre, 25/50/75/endpoint tests, per-meter polarity and span, five-point
-  linearisation, raw and filtered readings.
-- Validate under real pump, relay and grow-light switching, not on a quiet bench.
-
-### Movement characterisation — size the rig to the meter
-
-The handoff's principle is right (a fixed resistor sets a fault floor that cannot exceed full
-scale) but its values are for µA movements and will not move a milliamp needle:
-
-| Meter | Fixed R | Pot | Current at pot max → min |
-|---|---|---|---|
-| 5-0-5 mA | 300 Ω | 5 kΩ | 0.28 mA → 5.0 mA |
-| 30-0-30 mA | 47 Ω | 1 kΩ | 1.4 mA → 32 mA |
-
-From a fresh 1.5 V cell, pot starting at maximum, a trustworthy meter in series, working down
-slowly. Record left endpoint current, centre behaviour, right endpoint current and the voltage
-across the movement; R_meter = V/I. Never put a DMM's continuity or diode mode across a
-movement, and never a bench supply directly.
+pH centres at 6.0, span ±1.0 (5.0–7.0), putting the 5.8–6.2 band at ±20% of half-scale. The
+scale law is arbitrary — the Pi computes the DAC code — so it can be expanded around centre if
+±1.0 proves coarse. See the dial-face section in `INSTRUMENT_HEAD_PLANS.md`.
 
 Movement data above is from the Simpson datasheet; R_sense is now fixed by it. Remaining leads (jewel, VCC indicator, Sifam, Weston) are still researched-not-verified — check listing, price and stock before buying.
