@@ -99,6 +99,19 @@ It will ask for a registration token from
 The script also installs a sudoers rule at `/etc/sudoers.d/growlab-runner`,
 validated with `visudo -c` before install.
 
+**Re-running is safe.** Each step checks for its own prior work: the sudoers
+rule is rewritten in place, an existing download is reused, and an
+already-registered runner is left alone.
+
+**If the releases API refuses you** — it rate-limits unauthenticated requests —
+pin a version instead:
+
+```bash
+RUNNER_VERSION=2.330.0 ./deploy/github-runner/setup.sh
+```
+
+Versions are at <https://github.com/actions/runner/releases>.
+
 ## Security
 
 A self-hosted runner executes whatever a workflow on this repo says. Its
