@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (runner setup script fix)
+
+### Fixed
+- **`setup.sh` died on its first real run.** Version detection was `curl ... | grep -m1`. `grep -m1` exits at its first match, closing the pipe while curl still has body in flight; curl fails with error 23 ("Failure writing output to destination, passed 1370 returned 1112") and `set -o pipefail` aborts the script. Same family as piping into `head -n1`. Now captures the response body first and parses it with no pipe from curl.
+- **Parses with `python3`, not a regex.** A greedy `sed` against single-line JSON can latch onto a `"tag_name"` quoted inside the release notes. This is a Python project, so a real JSON parser is always available; `sed` remains the fallback.
+- **`RUNNER_VERSION` can be pinned** — `RUNNER_VERSION=2.330.0 ./deploy/github-runner/setup.sh` — for when the unauthenticated releases API rate-limits.
+- **Download failures now say something useful**: an explicit message pointing at `df -h` for a full disk, and a size check that rejects a truncated transfer or an HTML error page before `tar` gets a confusing look at it.
+
 ## 2026-09-03 (CI concurrency fix)
 
 ### Fixed
