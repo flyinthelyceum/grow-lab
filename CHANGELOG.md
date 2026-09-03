@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (meter driver)
+
+### Added
+- **MCP4728 quad DAC driver** (`pi/drivers/mcp4728.py`). Fast Write for the animation path — one eight-byte transaction moves both needles — and Sequential Write for the EEPROM power-on defaults, so both needles centre through boot, reset and power-down rather than parking against a stop. Command formats taken from DS22187E section 5.6 rather than from memory. `differential_codes()` turns a normalised deflection into a channel pair, which is the whole of the centre-zero maths and is pure and testable.
+- **Meter service** (`pi/services/meters.py`). Reads pH and EC from the repository, maps each to deviation about its target, eases the needle with an exponential time constant at ~30 Hz, and writes both differential pairs together. Faults ease the needle home and raise a flag rather than driving it into a stop. Per-meter five-point piecewise-linear calibration, since the two movements share neither gain nor linearity.
+- **`growlab meter` CLI** — `centre`, `set`, `sweep`, `save-centre`, `status`. `sweep` walks the five calibration points so the actual dial readings can be recorded as the `calibration` table; `save-centre` is the one-time commissioning write of the EEPROM power-on state.
+- **`[meters]` config** with `[meters.ph]` and `[meters.ec]` blocks, wired through the loader and `main.py`. Disabled by default, per the rule of not enabling a device before it is wired. The EC block carries an inline warning that its `centre` is unresolved pending the target-versus-baseline question.
+- 39 unit tests across the driver and service: byte-level assertions on both command formats, the differential maths, calibration interpolation, easing, EC unit scaling, fault-to-centre, override, per-meter channel routing and invert.
+
 ## 2026-09-03 (meters verified from the dials)
 
 ### Fixed

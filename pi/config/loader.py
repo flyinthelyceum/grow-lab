@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from pi.config.schema import (
+    MeterChannelConfig,
+    MetersConfig,
     AppConfig,
     CameraConfig,
     CalibrationConfig,
@@ -118,6 +120,46 @@ def _build_sensors(raw: dict[str, Any]) -> SensorsConfig:
         if "as7341" in sensors
         else defaults.as7341,
         soil_moisture_channel=sensors.get("soil_moisture_channel", 0),
+    )
+
+
+def _build_meter_channel(data: dict[str, Any], default: MeterChannelConfig) -> MeterChannelConfig:
+    cal_raw = data.get("calibration", None)
+    calibration = default.calibration
+    if cal_raw:
+        calibration = tuple((float(p[0]), float(p[1])) for p in cal_raw)
+    return MeterChannelConfig(
+        sensor_id=data.get("sensor_id", default.sensor_id),
+        centre=data.get("centre", default.centre),
+        span=data.get("span", default.span),
+        scale=data.get("scale", default.scale),
+        dac_positive=data.get("dac_positive", default.dac_positive),
+        dac_negative=data.get("dac_negative", default.dac_negative),
+        midpoint_code=data.get("midpoint_code", default.midpoint_code),
+        span_counts=data.get("span_counts", default.span_counts),
+        invert=data.get("invert", default.invert),
+        calibration=calibration,
+    )
+
+
+def _build_meters(raw: dict[str, Any]) -> MetersConfig:
+    data = raw.get("meters", {})
+    defaults = MetersConfig()
+    return MetersConfig(
+        enabled=data.get("enabled", defaults.enabled),
+        i2c_address=data.get("i2c_address", defaults.i2c_address),
+        update_hz=data.get("update_hz", defaults.update_hz),
+        time_constant_seconds=data.get(
+            "time_constant_seconds", defaults.time_constant_seconds
+        ),
+        sample_interval_seconds=data.get(
+            "sample_interval_seconds", defaults.sample_interval_seconds
+        ),
+        fault_timeout_seconds=data.get(
+            "fault_timeout_seconds", defaults.fault_timeout_seconds
+        ),
+        ph=_build_meter_channel(data.get("ph", {}), defaults.ph),
+        ec=_build_meter_channel(data.get("ec", {}), defaults.ec),
     )
 
 
@@ -306,6 +348,7 @@ def load_config(path: Path | None = None) -> AppConfig:
             ramp_temp_high_f=fan_data.get("ramp_temp_high_f", 85.0),
             poll_interval_seconds=fan_data.get("poll_interval_seconds", 30),
         ),
+        meters=_build_meters(raw),
         display=DisplayConfig(
             enabled=display_data.get("enabled", False),
             address=display_data.get("address", 0x3C),
