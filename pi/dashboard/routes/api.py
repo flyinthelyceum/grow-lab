@@ -671,6 +671,102 @@ async def get_meters_status(request: Request) -> dict:
     }
 
 
+@router.get("/panel/geometry")
+async def get_panel_geometry(request: Request) -> dict:
+    """Candidate face layouts and the meter config, for the /panel emulator.
+
+    Geometry comes from `pi.dashboard.panel_geometry`, which is also the source
+    for the fabrication hole schedule, so the emulator cannot show an
+    arrangement the drawings do not describe.
+
+    The meter block is the live `[meters]` config, so the emulator's needle
+    mapping is the same mapping the hardware uses — not a plausible imitation
+    of it.
+    """
+    from pi.config.schema import MetersConfig
+    from pi.dashboard.panel_geometry import geometry_payload
+
+    config = getattr(request.app.state, "meters_config", None) or MetersConfig()
+    payload = geometry_payload()
+    payload["meters"] = {
+        "update_hz": config.update_hz,
+        "time_constant_seconds": config.time_constant_seconds,
+        "sample_interval_seconds": config.sample_interval_seconds,
+        "fault_timeout_seconds": config.fault_timeout_seconds,
+        "channels": {
+            name: {
+                "sensor_id": cc.sensor_id,
+                "centre": cc.centre,
+                "span": cc.span,
+                "scale": cc.scale,
+                "invert": cc.invert,
+                "calibration": [list(p) for p in cc.calibration],
+            }
+            for name, cc in (("ph", config.ph), ("ec", config.ec))
+        },
+    }
+    return payload
+
+
+@router.get("/panel/replay")
+async def get_panel_replay(
+    request: Request,
+    window: TimeWindow = Query(default=TimeWindow.twenty_four_hours),
+) -> dict:
+    """Paired pH and EC history for the emulator's scrub mode.
+
+    Replaying data that actually happened is the honest test of whether
+    deviation-about-centre is legible: synthetic drift can be made to look
+    however you like, while a week of real readings cannot.
+
+    Bucketed on the same grid for both channels so the two series share an
+    index and the needles stay in step as the scrubber moves. Buckets with no
+    reading for a channel carry null, which the emulator shows as a fault
+    easing home rather than as a value of zero.
+    """
+    from pi.config.schema import MetersConfig
+
+    config = getattr(request.app.state, "meters_config", None) or MetersConfig()
+    repo = request.app.state.repo
+
+    delta = WINDOW_MAP.get(window.value, timedelta(hours=24))
+    bucket_sec = _BUCKET_SECONDS.get(window.value, 300)
+    end = datetime.now(timezone.utc)
+    start = end - delta
+
+    async def _series(sensor_id: str) -> dict[int, float]:
+        cursor = await repo.db.execute(
+            "SELECT"
+            "    CAST(strftime('%s', replace(timestamp, '+00:00', 'Z')) AS INTEGER)"
+            "        / ? * ? AS bucket,"
+            "    AVG(value) AS avg_value"
+            " FROM sensor_readings"
+            " WHERE sensor_id = ? AND timestamp >= ? AND timestamp <= ?"
+            " GROUP BY bucket"
+            " ORDER BY bucket ASC",
+            (bucket_sec, bucket_sec, sensor_id, start.isoformat(), end.isoformat()),
+        )
+        return {int(row[0]): row[1] for row in await cursor.fetchall()}
+
+    ph_by_bucket = await _series(config.ph.sensor_id)
+    ec_by_bucket = await _series(config.ec.sensor_id)
+
+    buckets = sorted(set(ph_by_bucket) | set(ec_by_bucket))
+    return {
+        "window": window.value,
+        "bucket_seconds": bucket_sec,
+        "count": len(buckets),
+        "frames": [
+            {
+                "t": datetime.fromtimestamp(b, tz=timezone.utc).isoformat(),
+                "ph": ph_by_bucket.get(b),
+                "ec": ec_by_bucket.get(b),
+            }
+            for b in buckets
+        ],
+    }
+
+
 @router.get("/system/status")
 async def get_system_status(request: Request) -> dict:
     """Get system status: database stats and active sensors."""

@@ -7,7 +7,11 @@ Design study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b2
 
 - Units: inches unless marked mm. Origin: panel bottom-left, X right, Y up.
 - Material: 1/4 in **cast** acrylic throughout (not extruded — it crazes at solvent joints).
-- Meters: **Simpson Wide-Vue 3-1/2", Model 1327**, two.
+- Meters: **Weston 301, 3-1/2 in centre-zero**, two — 30-0-30 uA and 100-0-100 uA.
+  The Simpson Wide-Vue 1327 this schedule was drawn for is **not** what is being
+  built. Bezel OD 3.50 in is nominal for the size class; **the panel cut and stud
+  pattern below are Simpson figures and do not apply** — recut this schedule from
+  calipered bezels before drilling. See the emulator at `/panel`.
 - Head external: **9.50 W x 12.00 H x 3.50 D**. Clear inside: 3.00.
 - Height stack: head bottom at 46 in (fixture level), top at **58 in**; panel centre **52 in**.
 
@@ -15,10 +19,10 @@ Design study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b2
 
 | ID | X | Y | Cut | For |
 |---|---|---|---|---|
-| M1 | 2.750 | 9.500 | Ø 2.79 thru | Simpson 1327 — pH |
-| M1a–d | 1.625 / 3.875 | 8.375 / 10.625 | Ø 0.125 thru ×4 | M1 #4-40 studs, 2.25 sq |
-| M2 | 6.750 | 9.500 | Ø 2.79 thru | Simpson 1327 — moisture |
-| M2a–d | 5.625 / 7.875 | 8.375 / 10.625 | Ø 0.125 thru ×4 | M2 #4-40 studs, 2.25 sq |
+| M1 | 2.750 | 9.500 | Ø **pending calipers** (was Ø 2.79) | Weston 301 — pH |
+| M1a–d | *pending* | *pending* | Ø 0.125 thru ×4 | M1 studs — pattern was Simpson 2.25 sq |
+| M2 | 6.750 | 9.500 | Ø **pending calipers** (was Ø 2.79) | Weston 301 — EC |
+| M2a–d | *pending* | *pending* | Ø 0.125 thru ×4 | M2 studs — pattern was Simpson 2.25 sq |
 | W | 4.750 | 5.360 | 6.30 × 3.78 rect, r 0.02 | Inky Impression 7.3" active area (160 × 96 mm) |
 | J | 1.625 | 1.625 | Ø 1.00 thru | NOS Dialco 1" jewel pilot |
 | A | 2.750 | 1.625 | Ø 0.50 thru | VCC 1092 amber — tend-me |
@@ -58,9 +62,9 @@ and bottom between the sides (9.50 − 0.50). For tab-and-slot, keep external 9.
 
 | Zone | Element | Depth behind face |
 |---|---|---|
-| Upper | Simpson 1327: 1.22 body + 0.70 terminal studs | 1.92 |
+| Upper | Weston 301 body + terminal studs — **pending measurement** (Simpson 1327 was 1.22 + 0.70 = 1.92) | ? |
 | Middle | Inky (standoff 0.25 + board ~0.25) + i3 (~0.93) + Pi (~0.80) | ~2.2 |
-| Back panel | Meter driver (MCP4728 + MCP6004), ESP32, terminal block | on the back |
+| Back panel | Meter driver (MCP4728 only — the MCP6004 stage was dropped when the movements proved to be microamperes), ESP32, terminal block | on the back |
 
 Both fit inside 3.00 clear. Confirm the i3's 23.6 mm datasheet height includes its header; if
 not, add it and re-check.
@@ -81,20 +85,34 @@ same plate. The cantilever's moment goes steel-to-steel and never through the bo
 - One earned accent: no coloured acrylic, no warm interior LEDs. The lit jewel is the only
   warm thing.
 
-## Meters — order
+## Meters — sourced
 
-| Use | Model | Movement | Catalog | R_sense |
-|---|---|---|---|---|
-| pH, moisture | 1327 | 0-50 µA, 1800 Ω, self-shielding | **04380** | 40.96 kΩ |
-| alt, taut-band | 1327T | 0-50 µA, 960 Ω, no pivot friction | 04381 | 40.96 kΩ |
+Already purchased; this is no longer an order table.
 
-Two of either. R_sense = 2.048 V (MCP4728 internal ref) / 50 µA; coil resistance does not enter.
+| Use | Movement | Series resistor per leg |
+|---|---|---|
+| pH | Weston 301, 30-0-30 µA centre-zero | 56.2 kΩ |
+| EC | Weston 301, 100-0-100 µA centre-zero | 16.9 kΩ |
+
+**Caliper both bezels on arrival** and recut the face hole schedule from the measurement.
+Matched faces were the point of the hunt; the 100-0-100 ring reads chunkier in the seller's
+photos, so confirm the two are the same size before committing to a symmetric pair.
+
+The Simpson Wide-Vue 1327 order table this section used to hold (catalog 04380 / 04381,
+0-50 µA, 40.96 kΩ R_sense) is superseded and has been removed to stop it being ordered from.
+
+Two of either. At tens of microamperes the DAC drives each movement directly through a
+fixed series resistor per leg — 56.2 kΩ for the 30 µA movement, 16.9 kΩ for the 100 µA —
+landing just under full scale by design, so no DAC fault state can overdrive a historic
+movement. Coil resistance does not enter.
 Taut-band tracks a slowly drifting pH without stiction and is the better choice for an
 instrument that mostly sits still.
 
-## Dial faces — converting to pH and moisture
+## Dial faces — converting to pH and EC
 
-**The sourced meters are centre-zero** (Weston 301, 5-0-5 mA and 30-0-30 mA). The pointer
+**The sourced meters are centre-zero** (Weston 301, **30-0-30 µA and 100-0-100 µA** — the
+printed dials read MICROAMPERES; the purchase listings said milliamperes and were wrong).
+The pointer
 rests mid-scale and the movement's hairsprings are balanced for that; it cannot be converted
 to end-zero without rebuilding the movement, and should not be. Design the dials as
 **deviation-from-target** instruments: needle dead centre means on target, and drift reads as
@@ -107,8 +125,9 @@ unit), and you **replace the plate**.
 
 ### Two facts that make this easier than it looks
 
-**1. Hunt for matching faces, not matching movements.** Each channel has its own R_sense, so
-a 5 mA meter and a 30 mA meter sit side by side and read identically. Only the *faces* have
+**1. Hunt for matching faces, not matching movements.** Each channel has its own series
+resistor, so a 30 µA meter and a 100 µA meter sit side by side and read identically. Only
+the *faces* have
 to match — same diameter, same arc, same typographic character, similar patina. Two
 mismatched dials read as a flea market; two different movements behind matched dials read as
 an instrument. This widens the hunt considerably.
@@ -178,3 +197,27 @@ done it before.
 2. Have the boards in hand for standoff holes (face: Inky M2 ×4; back: driver, ESP32).
 3. Pump relay moves to GPIO23 the day the Inky goes on the Pi (BCM17 is its BUSY line).
 4. Confirm the i3 stack height against the 3.00 in clear.
+
+## Layout candidates
+
+The face is emulated at `/panel` on the dashboard, at true proportion and with the
+needles running the same maths and the same `[meters]` config as the hardware. Four
+arrangements are held in `pi/dashboard/panel_geometry.py`, which is the source this
+schedule should be regenerated from once a layout is chosen:
+
+| Layout | Dials | Argument |
+|---|---|---|
+| **Schedule** | 2.750 / 6.750 at Y 9.500 | This table. Tight matched pair reading as one instrument; every rail element on a meter-derived column |
+| Wide pair | 2.375 / 7.125 at Y 9.500 | Air between the movements, less at the margins; risks reading as two instruments |
+| Offset pair | 2.750 at 10.000, 6.750 at 9.000 | Asymmetry as intent rather than symmetry as default; risks reading as an error |
+| Inverted | Y 4.400, window above at 9.100 | Slow e-ink face reads first, needles second — the opposite of what this table asserts |
+
+A stacked column of both dials was drawn and discarded: 3.50 + 3.50 for the movements,
+3.78 for the window and roughly 1.5 of rail is 12.28 in against 12.00 in of face. It
+does not fit at any spacing. Asserted in `tests/unit/test_panel_geometry.py` so it
+cannot creep back in.
+
+**Dead space to decide.** In the Schedule layout the band between the window's lower
+edge (Y 3.470) and the rail (Y 1.625) is 1.845 in of empty acrylic — the largest void
+on the face. Visible in the emulator; either deliberate breathing room or an argument
+for the Inverted layout.

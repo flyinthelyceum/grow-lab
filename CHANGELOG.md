@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (instrument head emulator)
+
+### Added
+- **`/panel` — a digital twin of the instrument head's acrylic face.** True proportion, four candidate layouts, and needles that move the way the movements would. Built to answer two questions before anything is cut: does the arrangement read as an instrument, and is deviation-about-centre actually legible.
+- **The needles run the hardware's own maths.** `pi/dashboard/static/panel/meter-math.js` mirrors `normalise`, `apply_calibration`, `ease_alpha` and `differential_codes`, and `tests/unit/test_panel_math_parity.py` runs it under node against the Python across a sweep that includes the endpoints and the exact-half cases where `Math.round` disagrees with Python's round-half-to-even. Verified the test fails when the JS is deliberately drifted. Without that, the emulator would be a drawing — it would happily show a layout that reads well while the real panel read differently.
+- **Three sources.** Synthetic generators (drift, step, noise, pegged, dropout) for failure modes that have not happened yet; live from the bench; and **scrub**, which replays real history on a shared bucket grid so both needles move in step. Scrub is the honest test — invented drift can be made to look however you like.
+- **Live scale controls.** Centre and span per channel, changing the dial's engraved numbers as you drag. This is the tool for the open EC question: centre is mechanical zero, so where it goes decides where the needle rests in normal operation.
+- **`pi/dashboard/panel_geometry.py`** — the face as data, in inches, origin bottom-left, one source for the emulator and for regenerating the hole schedule. Every layout is asserted collision-free and inside the stock, so an unbuildable candidate cannot reach the screen.
+- **The Inky window renders**, 800 x 480 in its own reflective register, so a layout is judged as dials-plus-screen together rather than dials beside a grey rectangle.
+- 59 tests. Rendered the page in Chromium and fixed three defects found only by looking: a y-flip mirroring every arc and tick, an e-ink waveform sampling 96 frames at 60 Hz (1.6 seconds, so it read flat), and `display:flex` outranking the `[hidden]` attribute.
+
+### Fixed
+- **`docs/INSTRUMENT_HEAD_PLANS.md` and `UI_UX_DESIGN_REFERENCE.md` specified the wrong meters.** Both still said Simpson Wide-Vue 1327 and "pH + moisture"; the build uses Weston 301 centre-zero movements and reads pH + EC. The head plans also still carried the retracted milliamp figures (5-0-5 mA / 30-0-30 mA) and a Simpson order table it was possible to order from. Reconciled: correct movements, correct series resistors, op-amp stage gone, and the Simpson cut and stud pattern marked **pending calipers** rather than left standing as if they applied.
+
+### Notes
+- Dial cut diameter is deliberately absent from the geometry module rather than estimated. Bezel OD of 3.50 in is nominal for the size class and safe to draw; the cut is a fabrication number, and inventing one would have put a second wrong dimension into the drawings next to the Simpson figures.
+- Needle sweep angle is unmeasured too, so it is a control rather than a constant — 90 degrees is typical for the class and it visibly changes legibility.
+- A stacked-dial column does not fit the stock: 3.50 + 3.50 for the movements plus 3.78 for the window plus roughly 1.5 of rail is 12.28 in against 12.00 in of face. Drawn, discarded, and asserted in a test so it cannot creep back.
+- In the Schedule layout the band between the window's lower edge and the rail is 1.845 in of empty acrylic — the largest void on the face, and now visible.
+
 ## 2026-09-03 (cross-process control channel)
 
 ### Fixed
