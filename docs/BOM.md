@@ -250,11 +250,34 @@ just change the finish, it discards what the material was doing.
 - Houses: Raspberry Pi, ESP32, relay board, PSU (5V), PWM-120-24 driver, meter driver
 - **Front panel on its face** — NOS jewel pilot lamp, two analog meters, e-ink, knobs
 
-**Open: where it sits relative to the plinth.** The original composition (see the build-map
-artifact) had it as a distinct volume beside the growing column. Candidates: peers on a
-widened plinth top (vessel at one end, instrument at the other); integrated into the mast at
-eye level; or a separate object on its own stand. Unresolved — decide before fabricating
-the plinth, since option one changes its width.
+**RESOLVED 2026-09-03: integrated into the mast.** Design study:
+`https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b21b6`
+
+The mast is thin where it carries only a drip line and a sensor loom (2 x 3 in section) and
+thickens into an **instrument head** where the apparatus lives — the same
+byproduct-of-function logic the front panel is already specced under. The head is 9 x 11.5 x
+3.5 in because that is what a 174 x 123 mm e-ink board and two meter movements measure, not
+because a size was chosen.
+
+| Element | Height / size |
+|---|---|
+| Shaft section | 2 x 3 in |
+| LED fixture, hung from the head underside ~10 in forward | 46 in |
+| Head | 9 x 11.5 x 3.5 in |
+| Panel centre — read standing, while tending | 52 in |
+| Overall height | 57.5 in |
+
+The fixture hangs from the head's **underside**, not off the shaft, so the cantilever's
+moment lands over the column rather than bending it.
+
+**Split:** heavy, hot and mains stay in the plinth (PWM-120-24 driver, 5V PSU, relay board,
+GFCI); the instrument and its brains go in the head (panel, Pi + i3, ESP32, meter driver).
+24V runs up the shaft. Keeps the cantilever light and line voltage far from the panel.
+
+**One earned accent:** the object is cool throughout — transparent body, hairline engraving,
+grey ground. The single warm thing is the lit jewel. No amber in the e-ink palette, no warm
+wash on the acrylic, no second indicator competing. One point of fire reads; two is
+decoration.
 
 ---
 
@@ -300,13 +323,16 @@ Cable management separating wet systems from electrical components
 
 Ambient Light / Lux
 
-**UNRESOLVED — this doc and the code disagree.** This BOM says TSL2591 is active and the
-AS7341 disabled. The code says otherwise: `pi/drivers/as7341.py` exists and emits
-`as7341_lux`; there is no TSL2591 driver, and `config.example.toml` carries only
-`[sensors.as7341]`. Both claim I2C 0x39, so they cannot coexist on the bus anyway.
+**RESOLVED 2026-09-03 — AS7341, on the rule that code takes precedence over docs because
+the bench version is already running.**
 
-Decide which is the V1 sensor before buying anything. As it stands the AS7341 is the one
-that actually runs.
+**Active: Adafruit AS7341 10-channel spectral breakout (I2C 0x39)** — `pi/drivers/as7341.py`
+emits `as7341_lux` plus ten spectral channels; `config.example.toml` carries
+`[sensors.as7341]`. Mount at canopy height, facing the grow light.
+
+TSL2591 is struck: no driver, no config section, and it claims the same 0x39 address so the
+two could never share the bus. The earlier "TSL2591 active" line in this doc was aspirational
+and never implemented.
 
 Mount at canopy height, facing the grow light. Provides closed-loop verification
 that the LED is on, how canopy light shifts over time, and whether output is
