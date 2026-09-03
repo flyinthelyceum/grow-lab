@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GROWLAB — Instrument Head</title>
+    <link rel="stylesheet" href="{{ static_asset('panel/panel.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="masthead">
+    <h1>Instrument Head</h1>
+    <span class="sub">emulator — face not yet cut</span>
+    <a href="/">← observatory</a>
+</header>
+
+<div class="workspace">
+    <section class="stage">
+        <svg id="panel-svg" role="img" aria-label="Instrument head panel face"></svg>
+        <p class="stage-caption" id="stage-caption">loading…</p>
+    </section>
+
+    <section class="controls">
+        <div class="group">
+            <h2>Layout</h2>
+            <div class="seg" id="layout-seg"></div>
+            <div id="rationale"></div>
+        </div>
+
+        <div class="group">
+            <h2>Source</h2>
+            <div class="seg" id="source-seg">
+                <button type="button" data-value="synthetic" aria-pressed="true">Synthetic</button>
+                <button type="button" data-value="live" aria-pressed="false">Live</button>
+                <button type="button" data-value="scrub" aria-pressed="false">Scrub history</button>
+            </div>
+
+            <div class="seg" id="synthetic-seg" style="margin-top:8px">
+                <button type="button" data-value="drift" aria-pressed="true">Drift</button>
+                <button type="button" data-value="step" aria-pressed="false">Step</button>
+                <button type="button" data-value="noise" aria-pressed="false">Noise</button>
+                <button type="button" data-value="pegged" aria-pressed="false">Pegged</button>
+                <button type="button" data-value="dropout" aria-pressed="false">Dropout</button>
+            </div>
+
+            <div id="scrub-controls" hidden style="margin-top:10px">
+                <div class="seg">
+                    <select id="replay-window" aria-label="Replay window">
+                        <option value="1h">last hour</option>
+                        <option value="24h" selected>last 24 hours</option>
+                        <option value="7d">last 7 days</option>
+                    </select>
+                    <button type="button" id="replay-play" aria-pressed="false">Play</button>
+                </div>
+                <div class="field" style="margin-top:8px">
+                    <label for="scrub">Position</label>
+                    <output id="scrub-at">—</output>
+                    <input type="range" id="scrub" min="0" max="0" value="0" step="1">
+                </div>
+                <p class="stage-caption" id="replay-count" style="text-align:left"></p>
+            </div>
+        </div>
+
+        <div class="group">
+            <h2>Dial face</h2>
+            <div class="field">
+                <label for="sweep">Needle sweep</label>
+                <output id="sweep-out">90°</output>
+                <input type="range" id="sweep" min="60" max="140" step="2" value="90">
+            </div>
+            <div class="field">
+                <label for="band">Centre band</label>
+                <output id="band-out">25%</output>
+                <input type="range" id="band" min="0.05" max="0.6" step="0.05" value="0.25">
+            </div>
+            <div class="checkline">
+                <input type="checkbox" id="show-bands" checked>
+                <label for="show-bands">Engraved bands</label>
+            </div>
+            <div class="checkline">
+                <input type="checkbox" id="show-dims">
+                <label for="show-dims">Centre lines</label>
+            </div>
+        </div>
+
+        <div class="group">
+            <h2>Scale — pH</h2>
+            <div class="field">
+                <label for="ph-centre">Centre</label>
+                <output id="ph-centre-out">6.00</output>
+                <input type="range" id="ph-centre" min="4" max="9" step="0.05" value="6">
+            </div>
+            <div class="field">
+                <label for="ph-span">Span</label>
+                <output id="ph-span-out">±1.00</output>
+                <input type="range" id="ph-span" min="0.2" max="3" step="0.05" value="1">
+            </div>
+        </div>
+
+        <div class="group">
+            <h2>Scale — EC</h2>
+            <div class="field">
+                <label for="ec-centre">Centre</label>
+                <output id="ec-centre-out">1.00</output>
+                <input type="range" id="ec-centre" min="0.2" max="3" step="0.05" value="1">
+            </div>
+            <div class="field">
+                <label for="ec-span">Span</label>
+                <output id="ec-span-out">±1.00</output>
+                <input type="range" id="ec-span" min="0.2" max="3" step="0.05" value="1">
+            </div>
+            <p class="rationale">
+                Centre is mechanical zero, so where you put it decides where the
+                needle rests in normal operation. This is the control for the
+                open question: an 800–1,200&nbsp;µS/cm target against a
+                1,529&nbsp;µS/cm plain-water baseline.
+            </p>
+        </div>
+
+        <div class="group">
+            <h2>Readout</h2>
+            <table class="readout">
+                <thead>
+                    <tr><th>Meter</th><th>Value</th><th>Deflection</th><th>DAC ±</th><th>State</th></tr>
+                </thead>
+                <tbody>
+                    <tr id="row-ph">
+                        <td>pH</td>
+                        <td class="num" id="val-ph">—</td>
+                        <td class="num" id="def-ph">—</td>
+                        <td class="num" id="dac-ph">—</td>
+                        <td id="state-ph">—</td>
+                    </tr>
+                    <tr id="row-ec">
+                        <td>EC</td>
+                        <td class="num" id="val-ec">—</td>
+                        <td class="num" id="def-ec">—</td>
+                        <td class="num" id="dac-ec">—</td>
+                        <td id="state-ec">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="group">
+            <h2>Provisional</h2>
+            <ul class="notes" id="notes"></ul>
+            <div class="seg">
+                <button type="button" id="print">Print face 1:1</button>
+            </div>
+            <p class="rationale">
+                Printed at 1:1 the sheet is 9.50&nbsp;×&nbsp;12.00&nbsp;in — hold it
+                against the mast at 46&nbsp;in before cutting acrylic.
+            </p>
+        </div>
+    </section>
+</div>
+
+<script type="module" src="{{ static_asset('panel/panel.js') }}"></script>
+</body>
+</html>

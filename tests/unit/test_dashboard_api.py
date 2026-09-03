@@ -612,3 +612,72 @@ class TestMetersStatusEndpoint:
         assert data["meters"]["ph"]["deflection"] == round(
             normalise(5.4, 6.0, 1.0), 4
         )
+
+
+class TestPanelGeometryEndpoint:
+    """The emulator's geometry and the live meter config, in one payload."""
+
+    @pytest.fixture
+    def panel_app(self, mock_repo):
+        from pi.config.schema import MeterChannelConfig, MetersConfig
+
+        return create_app(
+            mock_repo,
+            meters_config=MetersConfig(
+                enabled=True,
+                time_constant_seconds=2.5,
+                ph=MeterChannelConfig(sensor_id="ezo_ph", centre=6.2, span=0.8),
+                ec=MeterChannelConfig(
+                    sensor_id="ezo_ec", centre=1.4, span=1.1, scale=0.001
+                ),
+            ),
+        )
+
+    @pytest.fixture
+    async def panel_client(self, panel_app):
+        transport = ASGITransport(app=panel_app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            yield c
+
+    async def test_returns_the_candidate_layouts(self, client):
+        response = await client.get("/api/panel/geometry")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["face"] == {"width": 9.5, "height": 12.0}
+        ids = [l["id"] for l in data["layouts"]]
+        assert "schedule" in ids
+        assert len(ids) >= 2
+
+    async def test_no_layout_is_unbuildable(self, client):
+        """A candidate that cannot be built must never reach the emulator."""
+        data = (await client.get("/api/panel/geometry")).json()
+        for layout in data["layouts"]:
+            assert layout["collisions"] == [], layout["id"]
+            assert layout["out_of_bounds"] == [], layout["id"]
+
+    async def test_carries_the_live_meter_config(self, panel_client):
+        """The emulator must map needles with the hardware's numbers."""
+        data = (await panel_client.get("/api/panel/geometry")).json()
+        assert data["meters"]["time_constant_seconds"] == 2.5
+        assert data["meters"]["channels"]["ph"]["centre"] == 6.2
+        assert data["meters"]["channels"]["ph"]["span"] == 0.8
+        assert data["meters"]["channels"]["ec"]["scale"] == 0.001
+
+    async def test_flags_the_pending_cut_diameter(self, client):
+        data = (await client.get("/api/panel/geometry")).json()
+        assert data["dial"]["cut_pending_calipers"] is True
+        assert data["dial"]["bezel_od"] == 3.5
+
+
+class TestPanelReplayEndpoint:
+    async def test_empty_history(self, client):
+        response = await client.get("/api/panel/replay")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 0
+        assert data["frames"] == []
+        assert data["window"] == "24h"
+
+    async def test_rejects_an_unknown_window(self, client):
+        response = await client.get("/api/panel/replay?window=99y")
+        assert response.status_code == 422

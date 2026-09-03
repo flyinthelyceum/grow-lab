@@ -268,9 +268,21 @@ Shows, slow and unlabeled (holds its frame unpowered):
 
 ### Analog VU meters — the vitals (physical panel)
 
-Two moving-needle meters (Simpson Wide-Vue raw DC), driven off sensor data via the op-amp meter
-driver. The instantaneous instrument reading — "numbers as objects," the same idea as the e-ink
-rhythm in a different register. **pH (ROOT) + moisture (PLANT).**
+Two **Weston 301 3-1/2 in centre-zero** movements (30-0-30 uA and 100-0-100 uA), driven
+directly from an MCP4728 quad DAC through fixed series resistors — one differential pair per
+meter. No op-amp stage: that was an answer to a milliamp problem these microampere movements
+do not have.
+
+**pH (ROOT) + EC (ROOT).** Not moisture — the sensors that exist are pH and EC.
+
+Centre means on target, so drift reads as asymmetry and the instrument is legible without
+reading numbers. A stale reading eases the needle home and raises a flag rather than freezing
+or slamming it. "Numbers as objects," the same idea as the e-ink rhythm in a different
+register.
+
+The face is emulated at `/panel` — true proportion, four candidate layouts, and the needles
+on the same maths and config as the hardware, so a layout and the encoding can both be judged
+before acrylic is cut. See [INSTRUMENT_HEAD_PLANS.md](INSTRUMENT_HEAD_PLANS.md).
 
 ### OLED (legacy / optional)
 

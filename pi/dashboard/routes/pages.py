@@ -38,3 +38,16 @@ async def dream_mode(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
         request, "dream.html", {"is_admin": is_admin(request)}
     )
+
+
+@router.get("/panel", response_class=HTMLResponse)
+async def panel_emulator(request: Request) -> HTMLResponse:
+    """Serve the instrument head panel emulator.
+
+    A digital twin of the mast's acrylic face, for judging a layout and the
+    needle encoding before anything is cut or mounted.
+    """
+    templates = request.app.state.templates
+    return templates.TemplateResponse(
+        request, "panel.html", {"is_admin": is_admin(request)}
+    )
