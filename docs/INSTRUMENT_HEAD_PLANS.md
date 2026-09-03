@@ -1,8 +1,9 @@
 # Instrument Head Plans — Rev A (2026-09-03)
 
 Fabrication schedules for the mast's instrument head. Drawings:
-`https://claude.ai/code/artifact/` (see CHANGELOG for the current link). **These tables are the
-authority; the drawings illustrate them.**
+`https://claude.ai/code/artifact/f1a197ae-7692-4219-a686-0100183e3f0b`
+Design study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b21b6`
+**These tables are the authority; the drawings illustrate them.**
 
 - Units: inches unless marked mm. Origin: panel bottom-left, X right, Y up.
 - Material: 1/4 in **cast** acrylic throughout (not extruded — it crazes at solvent joints).
