@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (CI and deploy to the Pi)
+
+### Added
+- **`.github/workflows/deploy.yml`** — the repo's first CI, and a path for merged work to reach the hardware. Tests run on a GitHub-hosted runner; deploy runs on a self-hosted runner on the Pi with `needs: [test]`, so the box only ever runs code whose tests passed. Triggers on push to `main` and on manual dispatch.
+- **`deploy/github-runner/setup.sh`** — one-time runner install, with a sudoers rule narrowed to restart/start/stop/journalctl on `growlab` and `growlab-dashboard` and nothing else, validated with `visudo -c` before it is installed. A self-hosted runner executes whatever a workflow says, so its privileges are the blast radius.
+- **`docs/DEPLOYMENT.md`** — how it works, how to operate it, and why the security choices are what they are.
+
+### Notes
+- The deploy job deliberately does not `actions/checkout`. It advances the live clone at `/home/jared/grow-lab`, which is what the systemd units run from and where the gitignored `config.toml` and `.venv` live; a fresh checkout would ship a tree with no configuration. Fast-forward only, so a diverged branch fails loudly.
+- It refuses to deploy over a dirty working tree. Anything showing in `git status` there is a hand edit made on the box, and discarding it silently on a machine nobody can shell into is how you lose a fix made during a bring-up.
+- Health check polls `/api/system/status`, which opens the database and reports migration state — the thing most likely to break on a schema change. **429 counts as alive**: the API is rate limited at 60/min and a rejected request still proves the server is up. Treating it as failure would have rolled back healthy deploys.
+- A failed health check resets to the previous SHA, reinstalls, restarts and fails loudly, so a bad deploy leaves the Pi on the last good revision rather than dark.
+- No `pull_request` trigger, by design: a fork PR against a self-hosted runner would execute attacker-authored code on the Pi, on the LAN, before any review.
+- Verified the test job passes from a clean venv with only the `[dev]` extras — 698 tests, no `pi` extra, since `RPi.GPIO` and `picamera2` do not build off-Pi and every driver that needs them imports lazily inside `connect()`.
+
 ## 2026-09-03 (instrument head emulator)
 
 ### Added
