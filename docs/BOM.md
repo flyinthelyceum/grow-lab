@@ -167,13 +167,20 @@ the lift, or fit a higher-head pump.
 
 Filter
 
-**DIG P11-200 — 3/4" MPT, 200 mesh stainless screen, flush cap.** Mounted on the
+**Rain Bird RBY075MPTX — 3/4" MPT x MPT inline Y filter, 200 mesh (75 micron) stainless
+element, o-ring sealed cap.** Rated 150 PSI, 0.20–12.0 GPM. Mounted on the
 **emitter branch after the bypass tee**, so it passes only the trickle headed to the
 emitters. 200 mesh rather than 120 because 1 GPH emitter orifices are small. Rated 13 GPM
 against a ~2 GPH need — enormously oversized on purpose: negligible pressure drop when
 clean, and a long interval before a clog can starve a system with only ~1.2 PSI to give.
-The flush cap clears trapped particles without disassembly. Needs adapters from 3/4" MPT
-down to the main line. The pump's intake sponge is stage one.
+The cap unthreads for cleaning. Needs adapters from 3/4" MPT down to the main line. The
+pump's intake sponge is stage one.
+
+**Note on the low-flow duty:** at ~2 GPH the system runs far below the filter's stated
+0.20 GPM minimum. That is fine for a passive screen — the rating describes its design
+envelope, not a failure threshold — but there is no scouring velocity, so debris will sit
+on the screen rather than sweeping to the cap. **Flush it manually on a schedule** instead
+of expecting it to self-clear.
 
 Tubing
 
@@ -223,15 +230,31 @@ Drain hole + mesh screen per core
 
 # Enclosure
 
-**Dry electronics enclosure — custom, to be 3D-printed / laser-cut acrylic**
+**The instrument enclosure and the plinth are two different objects. Do not merge them.**
 
-- One box, mounted above the water line and to the side — never over the reservoir
+The plinth is furniture: it holds the reservoir, hides what is ugly, and should recede.
+The enclosure is the instrument — it carries the front panel described under
+"Aliveness / Front Panel" below, and it should declare itself.
+
+**Dry electronics enclosure — custom, 3D-printed / laser-cut acrylic**
+
+Acrylic is not an arbitrary material here. A transparent or translucent body is the
+**Transparent / Material Non-Artifice** register made literal: the apparatus stays legible
+rather than being hidden inside painted casework. Substituting opaque cabinetry does not
+just change the finish, it discards what the material was doing.
+
+- Mounted above the water line and to the side — never over the reservoir
 - Cable glands on every penetration; drip loops on all external cables
 - Mains and DC/signal wiring separated inside
 - Ventilation for PSU + LED-driver heat, drawn away from the wet zone
-- Houses: Raspberry Pi, ESP32, relay board, PSU (5V), 12V buck (fan rail), PWM-120-24 driver, meter driver, front panel on the door
+- Houses: Raspberry Pi, ESP32, relay board, PSU (5V), PWM-120-24 driver, meter driver
+- **Front panel on its face** — NOS jewel pilot lamp, two analog meters, e-ink, knobs
 
-Design lives with the physical-build doc; fabricate via the print/laser pipeline.
+**Open: where it sits relative to the plinth.** The original composition (see the build-map
+artifact) had it as a distinct volume beside the growing column. Candidates: peers on a
+widened plinth top (vessel at one end, instrument at the other); integrated into the mast at
+eye level; or a separate object on its own stand. Unresolved — decide before fabricating
+the plinth, since option one changes its width.
 
 ---
 
@@ -277,8 +300,13 @@ Cable management separating wet systems from electrical components
 
 Ambient Light / Lux
 
-**Active: TSL2591 high-dynamic-range lux sensor (I2C 0x39)** — new driver, canopy height  
-Present but disabled: Adafruit AS7341 10-channel spectral breakout (I2C 0x39)
+**UNRESOLVED — this doc and the code disagree.** This BOM says TSL2591 is active and the
+AS7341 disabled. The code says otherwise: `pi/drivers/as7341.py` exists and emits
+`as7341_lux`; there is no TSL2591 driver, and `config.example.toml` carries only
+`[sensors.as7341]`. Both claim I2C 0x39, so they cannot coexist on the bus anyway.
+
+Decide which is the V1 sensor before buying anything. As it stands the AS7341 is the one
+that actually runs.
 
 Mount at canopy height, facing the grow light. Provides closed-loop verification
 that the LED is on, how canopy light shifts over time, and whether output is
