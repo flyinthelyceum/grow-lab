@@ -359,3 +359,109 @@ class TestSystemStatus:
         assert "db" in data
         assert "sensors" in data
         assert data["db"]["sensor_readings"] == 150
+
+
+class TestMetersStatusEndpoint:
+    """GET /api/meters/status — needle position derived from config + DB.
+
+    The dashboard process cannot see the orchestrator's MeterService, so
+    these assert the endpoint reproduces the service's own mapping.
+    """
+
+    @pytest.fixture
+    def meters_app(self, mock_repo):
+        from pi.config.schema import MeterChannelConfig, MetersConfig
+
+        return create_app(
+            mock_repo,
+            meters_config=MetersConfig(
+                enabled=True,
+                fault_timeout_seconds=900.0,
+                ph=MeterChannelConfig(
+                    sensor_id="ezo_ph", centre=6.0, span=1.0,
+                    dac_positive="A", dac_negative="B",
+                ),
+                ec=MeterChannelConfig(
+                    sensor_id="ezo_ec", centre=1.0, span=1.0, scale=0.001,
+                    dac_positive="C", dac_negative="D",
+                ),
+            ),
+        )
+
+    @pytest.fixture
+    async def meters_client(self, meters_app):
+        transport = ASGITransport(app=meters_app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            yield c
+
+    async def test_defaults_when_unconfigured(self, client):
+        response = await client.get("/api/meters/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["enabled"] is False
+        assert set(data["meters"]) == {"ph", "ec"}
+
+    async def test_no_reading_is_faulted_at_centre(self, meters_client, mock_repo):
+        mock_repo.get_latest.return_value = None
+        data = (await meters_client.get("/api/meters/status")).json()
+        for meter in data["meters"].values():
+            assert meter["deflection"] == 0.0
+            assert meter["faulted"] is True
+            assert meter["value"] is None
+
+    async def test_on_target_reads_centre(self, meters_client, mock_repo):
+        mock_repo.get_latest.return_value = _reading("ezo_ph", 6.0, "pH")
+        data = (await meters_client.get("/api/meters/status")).json()
+        assert data["meters"]["ph"]["deflection"] == 0.0
+        assert data["meters"]["ph"]["faulted"] is False
+
+    async def test_deviation_deflects(self, meters_client, mock_repo):
+        mock_repo.get_latest.return_value = _reading("ezo_ph", 6.5, "pH")
+        data = (await meters_client.get("/api/meters/status")).json()
+        assert data["meters"]["ph"]["deflection"] == 0.5
+
+    async def test_deflection_clamps_at_endpoint(self, meters_client, mock_repo):
+        mock_repo.get_latest.return_value = _reading("ezo_ph", 9.0, "pH")
+        data = (await meters_client.get("/api/meters/status")).json()
+        assert data["meters"]["ph"]["deflection"] == 1.0
+
+    async def test_ec_scale_applied(self, meters_client, mock_repo):
+        # 1500 uS/cm * 0.001 = 1.5 mS/cm, centre 1.0 span 1.0 -> +0.5
+        mock_repo.get_latest.return_value = _reading("ezo_ec", 1500.0, "uS/cm")
+        data = (await meters_client.get("/api/meters/status")).json()
+        assert data["meters"]["ec"]["value"] == 1.5
+        assert data["meters"]["ec"]["deflection"] == 0.5
+
+    async def test_stale_reading_faults_to_centre(self, meters_client, mock_repo):
+        stale = SensorReading(
+            timestamp=datetime.now(timezone.utc) - timedelta(hours=2),
+            sensor_id="ezo_ph",
+            value=6.5,
+            unit="pH",
+        )
+        mock_repo.get_latest.return_value = stale
+        data = (await meters_client.get("/api/meters/status")).json()
+        assert data["meters"]["ph"]["faulted"] is True
+        assert data["meters"]["ph"]["deflection"] == 0.0
+        assert data["meters"]["ph"]["age_seconds"] > 900
+
+    async def test_naive_timestamp_treated_as_utc(self, meters_client, mock_repo):
+        mock_repo.get_latest.return_value = SensorReading(
+            timestamp=datetime.now(timezone.utc).replace(tzinfo=None),
+            sensor_id="ezo_ph",
+            value=6.5,
+            unit="pH",
+        )
+        data = (await meters_client.get("/api/meters/status")).json()
+        assert data["meters"]["ph"]["faulted"] is False
+        assert data["meters"]["ph"]["deflection"] == 0.5
+
+    async def test_matches_service_normalise(self, meters_client, mock_repo):
+        """The endpoint and the service must not drift apart."""
+        from pi.services.meters import normalise
+
+        mock_repo.get_latest.return_value = _reading("ezo_ph", 5.4, "pH")
+        data = (await meters_client.get("/api/meters/status")).json()
+        assert data["meters"]["ph"]["deflection"] == round(
+            normalise(5.4, 6.0, 1.0), 4
+        )

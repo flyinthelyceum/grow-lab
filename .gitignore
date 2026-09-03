@@ -6,6 +6,10 @@ __pycache__/
 dist/
 build/
 .venv/
+# Any virtualenv, however it is named: .venv, .venv-check, venv, env
+.venv*/
+venv/
+env/
 .eggs/
 
 # Config (contains local paths)

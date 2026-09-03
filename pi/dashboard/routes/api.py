@@ -5,7 +5,7 @@ window parameter: 1h, 24h, 7d.
 
 Stage 1 security: POST /fan/override is gated by `require_admin` and
 limited via slowapi at security.rate_limit_admin. All other routes
-remain public (read-only).
+remain public (read-only), including /meters/status.
 """
 
 from __future__ import annotations
@@ -454,6 +454,73 @@ async def set_fan_override(request: Request, body: FanOverrideRequest) -> dict:
     return {
         "override_duty": fan_svc.override_duty,
         "mode": "auto" if fan_svc.override_duty is None else "manual",
+    }
+
+
+@router.get("/meters/status")
+async def get_meters_status(request: Request) -> dict:
+    """Where the two physical panel needles are pointing, and why.
+
+    The orchestrator (`growlab start`) owns the MCP4728 and eases the
+    needles; the dashboard runs in a separate process and cannot reach that
+    service object. So this endpoint recomputes the deflection from the same
+    two inputs the service uses — the meter config and the latest reading in
+    the database — which is what makes the web view and the panel agree
+    without a channel between the processes.
+
+    Deflection runs -1.0 (full left) through 0.0 (on target) to +1.0. A
+    reading older than `fault_timeout_seconds` reads as faulted at centre,
+    mirroring how the service eases a stale needle home.
+    """
+    from pi.config.schema import MetersConfig
+    from pi.services.meters import normalise
+
+    repo = request.app.state.repo
+    config = getattr(request.app.state, "meters_config", None) or MetersConfig()
+    now = datetime.now(timezone.utc)
+
+    meters = {}
+    for name, cc in (("ph", config.ph), ("ec", config.ec)):
+        reading = await repo.get_latest(cc.sensor_id)
+        entry = {
+            "sensor_id": cc.sensor_id,
+            "centre": cc.centre,
+            "span": cc.span,
+            "dac_positive": cc.dac_positive,
+            "dac_negative": cc.dac_negative,
+            "value": None,
+            "unit": None,
+            "timestamp": None,
+            "age_seconds": None,
+            "deflection": 0.0,
+            "faulted": True,
+        }
+
+        if reading is not None:
+            timestamp = reading.timestamp
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
+            age = (now - timestamp).total_seconds()
+            stale = age >= config.fault_timeout_seconds
+            value = reading.value * cc.scale
+            entry.update({
+                "value": round(value, 4),
+                "unit": reading.unit,
+                "timestamp": reading.iso_timestamp,
+                "age_seconds": round(age, 1),
+                "deflection": 0.0 if stale else round(
+                    normalise(value, cc.centre, cc.span), 4
+                ),
+                "faulted": stale,
+            })
+
+        meters[name] = entry
+
+    return {
+        "enabled": config.enabled,
+        "i2c_address": config.i2c_address,
+        "fault_timeout_seconds": config.fault_timeout_seconds,
+        "meters": meters,
     }
 
 
