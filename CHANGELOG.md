@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (meters verified from the dials)
+
+### Fixed
+- **Both meters are MICROAMPERES, confirmed from the printed dials: Weston 301 30-0-30 µA and 100-0-100 µA.** The purchase listings said "milliamperes" and were wrong. Yesterday's cross-check trusted those listing titles over the hardware and propagated the error into a milliamp design — retracting it. The Weston handoff spec was right about the units throughout, and its own instruction ("arrival verification is mandatory: read the lettering on the actual meter") is what caught this.
+- **Retracted: the claim that the handoff's resistor table was 1000× wrong.** 56.2 kΩ per leg for ±30 µA and 16.9 kΩ for ±100 µA are correct, and land just under full scale by design so no DAC fault state can overdrive a historic movement.
+- **Retracted: the claim that the MCP4728 cannot drive these meters.** That holds for milliamp movements; at tens of microamps the DAC drives each meter directly through fixed series resistors with enormous margin.
+- **Op-amp stage dropped from the meter path.** The MCP6004 voltage-to-current stage and the emitter-follower buffer were both answers to a milliamp problem that does not exist. Direct differential DAC drive is simpler and inherently fault-limited. Channel allocation returns to A/B = pH pair, C/D = EC pair, all four in use.
+- **Characterisation rig resized, in the other direction.** The handoff's method is right but its 220 kΩ fixed leg reaches only ~6.8 µA, too little to record the endpoint currents the procedure asks for. Sized to approach full scale: 47 kΩ + 1 MΩ pot for the 30 µA movement, 15 kΩ + 1 MΩ pot for the 100 µA.
+
+### Unaffected by the correction
+- Sensing stays on the Pi; the DAC is a display peripheral on its I²C bus. The ESP32 re-host would still break a working path and orphan the i3.
+- The i3 InterLink's two isolated EZO slots still make separate isolated carriers a redundant purchase.
+- The EC dial is still blocked on reconciling an 800–1,200 µS/cm target against a 1,529 µS/cm plain-water baseline, and centring at 2.0 mS/cm would still leave the needle resting well left of centre in normal operation.
+- The firmware practices adopted from the handoff stand: midpoint EEPROM startup, five-point per-meter calibration, damped motion, faults easing to centre, hardware current limiting, no trimmer reaching zero series resistance.
+
 ## 2026-09-03 (handoff reconciled)
 
 ### Changed
