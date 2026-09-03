@@ -167,6 +167,26 @@ instrument head where the apparatus lives — dimension as a byproduct of conten
 - **Cable discipline is visible.** A transparent enclosure makes the loom part of the design;
   plan runs and terminal-block layout before assembly, not after.
 
+**Head internals — checked against datasheets and the running code (2026-09-03):**
+
+- **i3 InterLink + Inky Impression stack cleanly.** The i3 datasheet: it uses only SCL, SDA,
+  GND and 3V3, and "all Raspberry Pi pins (including the ones used by i3 InterLink) are still
+  available" — it has a pass-through header. The Inky driver uses SPI0 (BCM 8/10/11) plus
+  BCM 17 (BUSY), 22 (DC), 27 (RESET), and buttons on 5/6/16/24 per Pimoroni's pinout. Zero
+  overlap with the i3. Stack the Inky on the i3's pass-through.
+- **The one real pin collision is with our own config, not the i3:** `relay_gpio = 17` drives
+  the pump relay, and the Inky hard-wires BCM17 as its BUSY input. **When the Inky is
+  installed, move the pump relay to a free GPIO** — GPIO23 (pin 16) is plain, unused, and
+  clear of PWM (12/13/18/19), SPI (8-11) and the Inky buttons. One config line; until then
+  the bench keeps running on 17 (code takes precedence; the Inky is not on the bench yet).
+- **Head depth holds at 3.5 in.** A 2-1/2" Simpson movement needs 1.85 in behind the panel
+  (1.15 body + 0.70 terminal studs); a 3-1/2" needs 1.92. Pi + stacked HATs ~1.5 in beside
+  them, not behind. 3.5 in is comfortable for either meter size.
+- **Meter size vs. panel width, with real bezels:** two 2-1/2" bezels (2.47 each) span
+  4.94 in + gap — well inside the e-ink's 6.85 in. Two 3-1/2" (3.25 each) span 6.50 + gap —
+  fits, tight. Two 4-1/2" (4.70 each) do not. So 2-1/2" or 3-1/2" both work on the 9 in
+  face; 4-1/2" would force a wider head.
+
 ## Lighting decision
 
 - **V1 runs the two white LM301H boards** (via the Meanwell PWM-120-24, ESP32-dimmed).
