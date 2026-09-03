@@ -191,3 +191,124 @@ class TestConnectionCannotGetStuck:
             )
         )
         assert await repo.count_readings() == before + 1
+
+
+class TestControlState:
+    """The cross-process control channel, against a real database.
+
+    These matter more than the mocked service tests: the whole point of the
+    table is that two separate processes agree through it, so the round-trip
+    has to hold in SQLite, not just in a mock.
+    """
+
+    async def test_unset_control_is_none(self, repo: SensorRepository):
+        assert await repo.get_control("fan.override_duty") is None
+
+    async def test_round_trip(self, repo: SensorRepository):
+        await repo.set_control("fan.override_duty", "60", updated_by="admin")
+        entry = await repo.get_control("fan.override_duty")
+        assert entry is not None
+        assert entry.value == "60"
+        assert entry.updated_by == "admin"
+        assert entry.expires_at is None
+
+    async def test_upsert_replaces_rather_than_queues(self, repo: SensorRepository):
+        """Desired state, not a command backlog."""
+        await repo.set_control("fan.override_duty", "60")
+        await repo.set_control("fan.override_duty", "80")
+        await repo.set_control("fan.override_duty", "20")
+        assert (await repo.get_control("fan.override_duty")).value == "20"
+        assert len(await repo.get_all_control()) == 1
+
+    async def test_ttl_sets_an_expiry_in_the_future(self, repo: SensorRepository):
+        entry = await repo.set_control("fan.override_duty", "0", ttl_seconds=600)
+        assert entry.expires_at is not None
+        assert entry.expires_at > entry.updated_at
+        stored = await repo.get_control("fan.override_duty")
+        assert stored.expires_at is not None
+        assert not stored.is_expired(datetime.now(timezone.utc))
+
+    async def test_expired_entry_reads_as_auto(self, repo: SensorRepository):
+        await repo.set_control("fan.override_duty", "0", ttl_seconds=1)
+        stored = await repo.get_control("fan.override_duty")
+        later = datetime.now(timezone.utc) + timedelta(seconds=5)
+        assert stored.is_expired(later)
+        assert stored.effective_value(later) is None
+
+    async def test_clear_keeps_the_row_and_drops_the_expiry(
+        self, repo: SensorRepository
+    ):
+        await repo.set_control("fan.override_duty", "60", ttl_seconds=600)
+        await repo.clear_control("fan.override_duty", updated_by="admin")
+        entry = await repo.get_control("fan.override_duty")
+        assert entry is not None  # row kept, so updated_at still records the change
+        assert entry.value is None
+        assert entry.expires_at is None
+
+    async def test_get_all_control(self, repo: SensorRepository):
+        await repo.set_control("fan.override_duty", "60")
+        await repo.set_control("meters.ph.override", "0.5")
+        rows = await repo.get_all_control()
+        assert set(rows) == {"fan.override_duty", "meters.ph.override"}
+        assert rows["meters.ph.override"].value == "0.5"
+
+    async def test_clearing_an_unset_control_is_fine(self, repo: SensorRepository):
+        entry = await repo.clear_control("meters.ec.override")
+        assert entry.value is None
+
+    async def test_survives_reconnect(self, repo: SensorRepository, test_config):
+        """A restart of either process must not lose the desired state."""
+        await repo.set_control("fan.override_duty", "45")
+        await repo.close()
+
+        fresh = SensorRepository(test_config.system.db_path)
+        await fresh.connect()
+        try:
+            assert (await fresh.get_control("fan.override_duty")).value == "45"
+        finally:
+            await fresh.close()
+        await repo.connect()  # restore for fixture teardown
+
+
+class TestSchemaUpgrade:
+    async def test_v2_database_gains_control_state_in_place(self, tmp_path):
+        """The Pi has a live v2 database — the upgrade must not disturb it."""
+        import sqlite3 as sync_sqlite3
+
+        from pi.data.migrations import SCHEMA_SQL, SCHEMA_VERSION
+
+        db_path = tmp_path / "v2.db"
+        v2_sql = SCHEMA_SQL.split("-- V3:")[0]
+
+        conn = sync_sqlite3.connect(db_path)
+        conn.executescript(v2_sql)
+        conn.execute("INSERT INTO schema_version (version) VALUES (2)")
+        conn.execute(
+            """INSERT INTO sensor_readings (timestamp, sensor_id, value, unit)
+               VALUES ('2026-09-01T00:00:00+00:00', 'ezo_ph', 6.4, 'pH')"""
+        )
+        conn.commit()
+        conn.close()
+
+        upgraded = SensorRepository(db_path)
+        await upgraded.connect()
+        try:
+            # Existing data survives.
+            reading = await upgraded.get_latest("ezo_ph")
+            assert reading is not None and reading.value == 6.4
+
+            # The new channel works.
+            await upgraded.set_control("fan.override_duty", "42")
+            assert (await upgraded.get_control("fan.override_duty")).value == "42"
+        finally:
+            await upgraded.close()
+
+        conn = sync_sqlite3.connect(db_path)
+        try:
+            versions = [
+                r[0]
+                for r in conn.execute("SELECT version FROM schema_version ORDER BY version")
+            ]
+            assert versions == [2, SCHEMA_VERSION]
+        finally:
+            conn.close()

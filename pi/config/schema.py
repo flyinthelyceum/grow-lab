@@ -269,6 +269,23 @@ class SecurityConfig:
 
 
 @dataclass(frozen=True)
+class ControlConfig:
+    """Cross-process control channel between the dashboard and orchestrator.
+
+    The two run as separate systemd units sharing only the database, so a
+    manual fan duty or a pinned needle set from the web is written as desired
+    state and reconciled here. `poll_interval_seconds` is how long a click
+    takes to reach the hardware; `override_ttl_seconds` is how long a manual
+    override survives before lapsing back to automatic, so one left on by
+    accident cannot hold the fan at 0% indefinitely.
+    """
+
+    enabled: bool = True
+    poll_interval_seconds: float = 2.0
+    override_ttl_seconds: float = 3600.0
+
+
+@dataclass(frozen=True)
 class AppConfig:
     system: SystemConfig = field(default_factory=SystemConfig)
     i2c: I2CConfig = field(default_factory=I2CConfig)
@@ -280,6 +297,7 @@ class AppConfig:
     irrigation: IrrigationConfig = field(default_factory=IrrigationConfig)
     fan: FanConfig = field(default_factory=FanConfig)
     meters: MetersConfig = field(default_factory=MetersConfig)
+    control: ControlConfig = field(default_factory=ControlConfig)
     display: DisplayConfig = field(default_factory=DisplayConfig)
     calibration: CalibrationConfig = field(default_factory=CalibrationConfig)
     notifications: NotificationConfig = field(default_factory=NotificationConfig)

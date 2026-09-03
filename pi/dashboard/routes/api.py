@@ -3,9 +3,14 @@
 All endpoints return JSON. Time-windowed queries support
 window parameter: 1h, 24h, 7d.
 
-Stage 1 security: POST /fan/override is gated by `require_admin` and
-limited via slowapi at security.rate_limit_admin. All other routes
-remain public (read-only), including /meters/status.
+Stage 1 security: POST /fan/override and POST /meters/override are gated
+by `require_admin` and limited via slowapi at security.rate_limit_admin.
+All other routes remain public (read-only), including /meters/status and
+/control.
+
+Both override endpoints write desired state to the `control_state` table
+rather than calling a service object. The dashboard and the orchestrator
+are separate processes; the table is the channel between them.
 """
 
 from __future__ import annotations
@@ -437,24 +442,148 @@ def _admin_rate_limit():
     return _decorator
 
 
+def _actor(request: Request) -> str | None:
+    """Who set a control. The session carries only an admin flag, no username,
+    so that flag is the whole of the identity available to record."""
+    try:
+        return "admin" if request.session.get("admin") else None
+    except (AssertionError, AttributeError):
+        # SessionMiddleware not installed (bare test app).
+        return None
+
+
+def _control_ttl(request: Request) -> float:
+    from pi.config.schema import ControlConfig
+
+    config = getattr(request.app.state, "control_config", None) or ControlConfig()
+    return config.override_ttl_seconds
+
+
+def _control_response(entry, *, value_key: str, parse) -> dict:
+    """Shape one control row for a JSON response."""
+    return {
+        value_key: parse(entry.value),
+        "mode": "auto" if entry.value is None else "manual",
+        "updated_at": entry.updated_at.isoformat(),
+        "expires_at": entry.expires_at.isoformat() if entry.expires_at else None,
+    }
+
+
 @router.post("/fan/override", dependencies=[Depends(require_admin)])
 async def set_fan_override(request: Request, body: FanOverrideRequest) -> dict:
-    """Set a manual fan duty cycle or return to auto mode (admin only)."""
-    fan_svc = getattr(request.app.state, "fan_service", None)
-    if fan_svc is None:
-        raise HTTPException(status_code=503, detail="Fan service not available")
+    """Set a manual fan duty cycle or return to auto mode (admin only).
+
+    Writes desired state to the control table rather than touching a service
+    object: the orchestrator owns the fan and runs in a different process. The
+    change reaches the hardware on that process's next control poll, within
+    `[control] poll_interval_seconds`.
+
+    A manual duty expires after `[control] override_ttl_seconds` so one left
+    on by accident lapses back to the temperature ramp.
+    """
+    from pi.services.control import FAN_OVERRIDE, parse_duty
+
+    repo = request.app.state.repo
+    actor = _actor(request)
 
     if body.mode == "auto":
-        fan_svc.clear_override()
+        entry = await repo.clear_control(FAN_OVERRIDE, updated_by=actor)
     elif body.duty is not None:
-        fan_svc.set_override(body.duty)
+        entry = await repo.set_control(
+            FAN_OVERRIDE,
+            str(body.duty),
+            ttl_seconds=_control_ttl(request),
+            updated_by=actor,
+        )
     else:
         raise HTTPException(status_code=422, detail="Provide 'duty' or 'mode: auto'")
 
-    return {
-        "override_duty": fan_svc.override_duty,
-        "mode": "auto" if fan_svc.override_duty is None else "manual",
-    }
+    return _control_response(entry, value_key="override_duty", parse=parse_duty)
+
+
+class MeterOverrideRequest(BaseModel):
+    meter: str = Field(pattern=r"^(ph|ec)$")
+    deflection: float | None = Field(default=None, ge=-1.0, le=1.0)
+    mode: str | None = Field(default=None, pattern=r"^auto$")
+
+
+@router.post("/meters/override", dependencies=[Depends(require_admin)])
+async def set_meter_override(request: Request, body: MeterOverrideRequest) -> dict:
+    """Pin one needle to a deflection, or return it to its sensor (admin only).
+
+    Same channel as the fan override: desired state in the control table, read
+    by the orchestrator that owns the DAC. Useful for checking a movement from
+    the web without stopping the service to run `growlab meter set`.
+    """
+    from pi.services.control import (
+        METER_EC_OVERRIDE,
+        METER_PH_OVERRIDE,
+        parse_deflection,
+    )
+
+    repo = request.app.state.repo
+    actor = _actor(request)
+    key = METER_PH_OVERRIDE if body.meter == "ph" else METER_EC_OVERRIDE
+
+    if body.mode == "auto":
+        entry = await repo.clear_control(key, updated_by=actor)
+    elif body.deflection is not None:
+        entry = await repo.set_control(
+            key,
+            str(body.deflection),
+            ttl_seconds=_control_ttl(request),
+            updated_by=actor,
+        )
+    else:
+        raise HTTPException(
+            status_code=422, detail="Provide 'deflection' or 'mode: auto'"
+        )
+
+    payload = _control_response(
+        entry, value_key="deflection", parse=parse_deflection
+    )
+    payload["meter"] = body.meter
+    return payload
+
+
+@router.get("/control")
+async def get_control_state(request: Request) -> dict:
+    """Every control and what it is currently asking the hardware to do.
+
+    Read-only, so it stays public alongside the other status endpoints. An
+    expired override reports `mode: auto` with `expired: true`, which is what
+    the orchestrator acts on — the stale value is shown for context only.
+    """
+    from pi.services.control import CONTROL_KEYS
+
+    repo = request.app.state.repo
+    rows = await repo.get_all_control()
+    now = datetime.now(timezone.utc)
+
+    controls = {}
+    for key in CONTROL_KEYS:
+        entry = rows.get(key)
+        if entry is None:
+            controls[key] = {
+                "value": None,
+                "mode": "auto",
+                "expired": False,
+                "updated_at": None,
+                "expires_at": None,
+                "updated_by": None,
+            }
+            continue
+        expired = entry.is_expired(now)
+        controls[key] = {
+            "value": entry.effective_value(now),
+            "mode": "auto" if entry.effective_value(now) is None else "manual",
+            "expired": expired,
+            "updated_at": entry.updated_at.isoformat(),
+            "expires_at": entry.expires_at.isoformat() if entry.expires_at else None,
+            "updated_by": entry.updated_by,
+        }
+
+    return {"controls": controls}
 
 
 @router.get("/meters/status")
@@ -473,14 +602,28 @@ async def get_meters_status(request: Request) -> dict:
     mirroring how the service eases a stale needle home.
     """
     from pi.config.schema import MetersConfig
+    from pi.services.control import (
+        METER_EC_OVERRIDE,
+        METER_PH_OVERRIDE,
+        parse_deflection,
+    )
     from pi.services.meters import normalise
 
     repo = request.app.state.repo
     config = getattr(request.app.state, "meters_config", None) or MetersConfig()
     now = datetime.now(timezone.utc)
 
+    # An override outranks the sensor, so report it or the panel and the page
+    # disagree about why a needle is where it is.
+    control = await repo.get_all_control()
+    override_keys = {"ph": METER_PH_OVERRIDE, "ec": METER_EC_OVERRIDE}
+
     meters = {}
     for name, cc in (("ph", config.ph), ("ec", config.ec)):
+        entry = control.get(override_keys[name])
+        override = (
+            parse_deflection(entry.effective_value(now)) if entry else None
+        )
         reading = await repo.get_latest(cc.sensor_id)
         entry = {
             "sensor_id": cc.sensor_id,
@@ -494,6 +637,7 @@ async def get_meters_status(request: Request) -> dict:
             "age_seconds": None,
             "deflection": 0.0,
             "faulted": True,
+            "override": override,
         }
 
         if reading is not None:
@@ -513,6 +657,9 @@ async def get_meters_status(request: Request) -> dict:
                 ),
                 "faulted": stale,
             })
+
+        if override is not None:
+            entry["deflection"] = override
 
         meters[name] = entry
 

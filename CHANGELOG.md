@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (cross-process control channel)
+
+### Fixed
+- **`POST /api/fan/override` now works.** It never has in production. `create_app` accepted a `fan_service`, but the only caller that builds the app — `growlab dashboard` — never passed one, and the orchestrator never builds an app at all, so `app.state.fan_service` was always None on the Pi and every real request returned 503. CI was green because the tests injected a mock. The endpoint now writes to the control table instead of reaching for a service object that was never there.
+
+### Added
+- **`control_state` table (schema v3)** — the channel between the two systemd units. Desired state, not a command queue: one row per control, overwritten in place, NULL meaning "follow the automatic behaviour". Idempotent, restart-safe, nothing to replay. Verified upgrading a populated v2 database in place, since the Pi has one.
+- **`ControlService`** (`pi/services/control.py`) — polls the table in the orchestrator and pushes changes into `FanService` and `MeterService`. Edge-triggered, so a steady row does not fight an override set at the bench with `growlab fan set`; change the row and the database wins again.
+- **Override expiry.** `[control] override_ttl_seconds` (default one hour) bounds a manual override. This is a safety bound, not a convenience: without it a fan set to 0% from a browser stays there through a hot afternoon. An expired row reads as auto everywhere — the reconciler, `/api/control`, and `/api/meters/status`.
+- **`POST /api/meters/override`** — pin a needle from the web, or release it. Admin-gated like the fan override. Lets a movement be checked without stopping the service to run `growlab meter set`.
+- **`GET /api/control`** — every control, its effective value, who set it and when it lapses. Read-only, so public alongside the other status endpoints.
+- **`[control]` config section**, and `/api/meters/status` now reports an active override so the page and the panel cannot disagree about why a needle is where it is.
+- 54 tests. The one that matters is `tests/e2e/test_control_channel.py`: a real FastAPI app holding no service objects, a real `ControlService` holding no web server, two separate repository connections to one database — asserting a click in the process that cannot see the hardware reaches the process that can.
+
 ## 2026-09-03 (meters on the dashboard)
 
 ### Added

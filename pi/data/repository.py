@@ -7,7 +7,7 @@ Business logic never constructs SQL directly — it goes through this module.
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import sqlite3
@@ -15,7 +15,7 @@ import sqlite3
 import aiosqlite
 
 from pi.data.migrations import apply_migrations
-from pi.data.models import CameraCapture, SensorReading, SystemEvent
+from pi.data.models import CameraCapture, ControlEntry, SensorReading, SystemEvent
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,16 @@ BUSY_TIMEOUT_MS = 30_000
 
 def _parse_dt(iso_str: str) -> datetime:
     return datetime.fromisoformat(iso_str)
+
+
+def _row_to_control(row) -> ControlEntry:
+    return ControlEntry(
+        key=row[0],
+        value=row[1],
+        updated_at=_parse_dt(row[2]),
+        expires_at=_parse_dt(row[3]) if row[3] else None,
+        updated_by=row[4],
+    )
 
 
 class SensorRepository:
@@ -277,6 +287,78 @@ class SensorRepository:
             ),
         )
         await self.db.commit()
+
+    # -- Control state (cross-process channel; see migrations.py V3) --
+
+    async def set_control(
+        self,
+        key: str,
+        value: str | None,
+        *,
+        ttl_seconds: float | None = None,
+        updated_by: str | None = None,
+    ) -> ControlEntry:
+        """Record the desired state of one control.
+
+        ``value=None`` returns the control to automatic. ``ttl_seconds`` bounds
+        an override so it lapses on its own; None leaves it open-ended.
+
+        Upserts, so writing the same key twice replaces rather than queues —
+        the table is desired state, not a backlog of commands.
+        """
+        now = datetime.now(timezone.utc)
+        expires_at = (
+            now + timedelta(seconds=ttl_seconds)
+            if ttl_seconds is not None and value is not None
+            else None
+        )
+        await self.db.execute(
+            """INSERT INTO control_state (key, value, updated_at, expires_at, updated_by)
+               VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT(key) DO UPDATE SET
+                   value = excluded.value,
+                   updated_at = excluded.updated_at,
+                   expires_at = excluded.expires_at,
+                   updated_by = excluded.updated_by""",
+            (
+                key,
+                value,
+                now.isoformat(),
+                expires_at.isoformat() if expires_at else None,
+                updated_by,
+            ),
+        )
+        await self.db.commit()
+        return ControlEntry(
+            key=key,
+            value=value,
+            updated_at=now,
+            expires_at=expires_at,
+            updated_by=updated_by,
+        )
+
+    async def clear_control(self, key: str, *, updated_by: str | None = None):
+        """Return one control to automatic, keeping its row for the timestamp."""
+        return await self.set_control(key, None, updated_by=updated_by)
+
+    async def get_control(self, key: str) -> ControlEntry | None:
+        """One control row, or None if it was never set."""
+        cursor = await self.db.execute(
+            """SELECT key, value, updated_at, expires_at, updated_by
+               FROM control_state WHERE key = ?""",
+            (key,),
+        )
+        row = await cursor.fetchone()
+        return _row_to_control(row) if row else None
+
+    async def get_all_control(self) -> dict[str, ControlEntry]:
+        """Every control row, keyed by control name."""
+        cursor = await self.db.execute(
+            """SELECT key, value, updated_at, expires_at, updated_by
+               FROM control_state"""
+        )
+        rows = await cursor.fetchall()
+        return {row[0]: _row_to_control(row) for row in rows}
 
     async def rollback_quietly(self) -> None:
         """Best-effort rollback, for callers that swallow write errors.

@@ -31,6 +31,10 @@ def mock_repo():
         "camera_captures": 0,
     })
     repo.count_readings = AsyncMock(return_value=0)
+    repo.get_all_control = AsyncMock(return_value={})
+    repo.get_control = AsyncMock(return_value=None)
+    repo.set_control = AsyncMock()
+    repo.clear_control = AsyncMock()
     return repo
 
 
@@ -291,57 +295,200 @@ async def _admin_client(app):
         yield client
 
 
+def _entry(key, value, *, expires_in=None, updated_by="admin"):
+    from pi.data.models import ControlEntry
+
+    now = datetime.now(timezone.utc)
+    return ControlEntry(
+        key=key,
+        value=value,
+        updated_at=now,
+        expires_at=now + timedelta(seconds=expires_in) if expires_in else None,
+        updated_by=updated_by,
+    )
+
+
 class TestFanOverrideEndpoint:
-    def _app(self, mock_repo, fan_service):
-        return create_app(
-            mock_repo,
-            fan_service=fan_service,
-            security_config=ADMIN_SECURITY_CONFIG,
+    """The override writes desired state to the control table.
+
+    The dashboard runs in a different process from the fan, so there is no
+    service object to call — these assert the row that gets written.
+    """
+
+    def _app(self, mock_repo):
+        return create_app(mock_repo, security_config=ADMIN_SECURITY_CONFIG)
+
+    async def test_set_manual_duty_writes_control_row(self, mock_repo):
+        from pi.services.control import FAN_OVERRIDE
+
+        mock_repo.set_control.return_value = _entry(
+            FAN_OVERRIDE, "60", expires_in=3600
         )
-
-    async def test_set_manual_duty(self, mock_repo):
-        from unittest.mock import MagicMock
-
-        fan_svc = MagicMock()
-        fan_svc.override_duty = None
-        async with _admin_client(self._app(mock_repo, fan_svc)) as client:
+        async with _admin_client(self._app(mock_repo)) as client:
             response = await client.post("/api/fan/override", json={"duty": 60})
+
         assert response.status_code == 200
-        fan_svc.set_override.assert_called_once_with(60)
+        assert response.json()["override_duty"] == 60
+        assert response.json()["mode"] == "manual"
+        assert mock_repo.set_control.await_args.args[0] == FAN_OVERRIDE
+        assert mock_repo.set_control.await_args.args[1] == "60"
 
-    async def test_set_auto_mode(self, mock_repo):
-        from unittest.mock import MagicMock
+    async def test_manual_duty_carries_an_expiry(self, mock_repo):
+        """An override left on must lapse, not hold the fan indefinitely."""
+        from pi.services.control import FAN_OVERRIDE
 
-        fan_svc = MagicMock()
-        fan_svc.override_duty = 60
-        async with _admin_client(self._app(mock_repo, fan_svc)) as client:
+        mock_repo.set_control.return_value = _entry(
+            FAN_OVERRIDE, "0", expires_in=3600
+        )
+        async with _admin_client(self._app(mock_repo)) as client:
+            response = await client.post("/api/fan/override", json={"duty": 0})
+
+        assert response.status_code == 200
+        assert response.json()["expires_at"] is not None
+        assert mock_repo.set_control.await_args.kwargs["ttl_seconds"] == 3600.0
+
+    async def test_set_auto_mode_clears_control_row(self, mock_repo):
+        from pi.services.control import FAN_OVERRIDE
+
+        mock_repo.clear_control.return_value = _entry(FAN_OVERRIDE, None)
+        async with _admin_client(self._app(mock_repo)) as client:
             response = await client.post("/api/fan/override", json={"mode": "auto"})
+
         assert response.status_code == 200
-        fan_svc.clear_override.assert_called_once()
+        assert response.json()["mode"] == "auto"
+        assert response.json()["override_duty"] is None
+        assert mock_repo.clear_control.await_args.args[0] == FAN_OVERRIDE
+
+    async def test_records_who_set_it(self, mock_repo):
+        from pi.services.control import FAN_OVERRIDE
+
+        mock_repo.set_control.return_value = _entry(FAN_OVERRIDE, "60")
+        async with _admin_client(self._app(mock_repo)) as client:
+            await client.post("/api/fan/override", json={"duty": 60})
+        assert mock_repo.set_control.await_args.kwargs["updated_by"] == "admin"
 
     async def test_invalid_duty_rejected(self, mock_repo):
-        from unittest.mock import MagicMock
-
-        async with _admin_client(self._app(mock_repo, MagicMock())) as client:
+        async with _admin_client(self._app(mock_repo)) as client:
             response = await client.post("/api/fan/override", json={"duty": 150})
         assert response.status_code == 422
+        mock_repo.set_control.assert_not_awaited()
 
-    async def test_no_fan_service_returns_503(self, mock_repo):
-        async with _admin_client(self._app(mock_repo, None)) as client:
-            response = await client.post("/api/fan/override", json={"duty": 50})
-        assert response.status_code == 503
+    async def test_empty_body_rejected(self, mock_repo):
+        async with _admin_client(self._app(mock_repo)) as client:
+            response = await client.post("/api/fan/override", json={})
+        assert response.status_code == 422
 
     async def test_unauthenticated_is_rejected(self, mock_repo):
         """The override must stay admin-only — it drives real hardware."""
-        from unittest.mock import MagicMock
-
-        fan_svc = MagicMock()
-        app = self._app(mock_repo, fan_svc)
+        app = self._app(mock_repo)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post("/api/fan/override", json={"duty": 60})
         assert response.status_code == 401
-        fan_svc.set_override.assert_not_called()
+        mock_repo.set_control.assert_not_awaited()
+
+
+class TestMeterOverrideEndpoint:
+    def _app(self, mock_repo):
+        return create_app(mock_repo, security_config=ADMIN_SECURITY_CONFIG)
+
+    async def test_pin_a_needle(self, mock_repo):
+        from pi.services.control import METER_PH_OVERRIDE
+
+        mock_repo.set_control.return_value = _entry(
+            METER_PH_OVERRIDE, "0.5", expires_in=3600
+        )
+        async with _admin_client(self._app(mock_repo)) as client:
+            response = await client.post(
+                "/api/meters/override", json={"meter": "ph", "deflection": 0.5}
+            )
+
+        assert response.status_code == 200
+        assert response.json()["deflection"] == 0.5
+        assert response.json()["meter"] == "ph"
+        assert mock_repo.set_control.await_args.args[0] == METER_PH_OVERRIDE
+
+    async def test_ec_routes_to_its_own_key(self, mock_repo):
+        from pi.services.control import METER_EC_OVERRIDE
+
+        mock_repo.set_control.return_value = _entry(METER_EC_OVERRIDE, "-1.0")
+        async with _admin_client(self._app(mock_repo)) as client:
+            await client.post(
+                "/api/meters/override", json={"meter": "ec", "deflection": -1.0}
+            )
+        assert mock_repo.set_control.await_args.args[0] == METER_EC_OVERRIDE
+
+    async def test_release_to_auto(self, mock_repo):
+        from pi.services.control import METER_PH_OVERRIDE
+
+        mock_repo.clear_control.return_value = _entry(METER_PH_OVERRIDE, None)
+        async with _admin_client(self._app(mock_repo)) as client:
+            response = await client.post(
+                "/api/meters/override", json={"meter": "ph", "mode": "auto"}
+            )
+        assert response.status_code == 200
+        assert response.json()["mode"] == "auto"
+        assert mock_repo.clear_control.await_args.args[0] == METER_PH_OVERRIDE
+
+    async def test_deflection_out_of_range_rejected(self, mock_repo):
+        async with _admin_client(self._app(mock_repo)) as client:
+            response = await client.post(
+                "/api/meters/override", json={"meter": "ph", "deflection": 2.0}
+            )
+        assert response.status_code == 422
+
+    async def test_unknown_meter_rejected(self, mock_repo):
+        async with _admin_client(self._app(mock_repo)) as client:
+            response = await client.post(
+                "/api/meters/override", json={"meter": "humidity", "deflection": 0.0}
+            )
+        assert response.status_code == 422
+
+    async def test_unauthenticated_is_rejected(self, mock_repo):
+        transport = ASGITransport(app=self._app(mock_repo))
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                "/api/meters/override", json={"meter": "ph", "deflection": 0.5}
+            )
+        assert response.status_code == 401
+        mock_repo.set_control.assert_not_awaited()
+
+
+class TestControlStateEndpoint:
+    async def test_unset_controls_read_auto(self, client):
+        response = await client.get("/api/control")
+        assert response.status_code == 200
+        controls = response.json()["controls"]
+        assert set(controls) == {
+            "fan.override_duty",
+            "meters.ph.override",
+            "meters.ec.override",
+        }
+        assert all(c["mode"] == "auto" for c in controls.values())
+
+    async def test_live_override_reads_manual(self, client, mock_repo):
+        from pi.services.control import FAN_OVERRIDE
+
+        mock_repo.get_all_control.return_value = {
+            FAN_OVERRIDE: _entry(FAN_OVERRIDE, "75", expires_in=600)
+        }
+        controls = (await client.get("/api/control")).json()["controls"]
+        assert controls[FAN_OVERRIDE]["mode"] == "manual"
+        assert controls[FAN_OVERRIDE]["value"] == "75"
+        assert controls[FAN_OVERRIDE]["expired"] is False
+        assert controls[FAN_OVERRIDE]["updated_by"] == "admin"
+
+    async def test_expired_override_reads_auto(self, client, mock_repo):
+        """An expired row must not read as still commanding the fan."""
+        from pi.services.control import FAN_OVERRIDE
+
+        mock_repo.get_all_control.return_value = {
+            FAN_OVERRIDE: _entry(FAN_OVERRIDE, "0", expires_in=-1)
+        }
+        controls = (await client.get("/api/control")).json()["controls"]
+        assert controls[FAN_OVERRIDE]["mode"] == "auto"
+        assert controls[FAN_OVERRIDE]["value"] is None
+        assert controls[FAN_OVERRIDE]["expired"] is True
 
 
 class TestSystemStatus:

@@ -100,6 +100,19 @@ ramp_temp_low_f = 70.0   # below this the fan is off
 ramp_temp_high_f = 85.0  # at/above this the fan is at max_duty
 poll_interval_seconds = 30
 
+[control]
+# Cross-process control channel. `growlab start` owns the hardware;
+# `growlab dashboard` is a separate systemd unit and cannot reach it, so a
+# manual fan duty or a pinned needle set from the web is written to the
+# control_state table and reconciled here.
+enabled = true
+# How long a click takes to reach the hardware, worst case.
+poll_interval_seconds = 2.0
+# How long a manual override survives before lapsing back to automatic. This
+# is a safety bound, not a convenience: without it a fan left at 0% from the
+# web stays there through a hot afternoon.
+override_ttl_seconds = 3600.0
+
 [meters]
 # Front-panel Weston 301 centre-zero movements on an MCP4728 quad DAC.
 # Each meter sits between two DAC channels with a fixed resistor per leg;

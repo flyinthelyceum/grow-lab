@@ -28,6 +28,7 @@ def dashboard_cmd(ctx: click.Context, host: str, port: int) -> None:
             repo,
             fan_config=config.fan,
             meters_config=config.meters,
+            control_config=config.control,
             security_config=config.security,
         )
 
