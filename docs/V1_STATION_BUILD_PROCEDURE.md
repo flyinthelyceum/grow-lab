@@ -119,10 +119,13 @@ schedule and the cap must change, or the plant is not watered.
 
 **Calibrate:**
 
-0. **Measure the lift first** — reservoir water line to the highest point the tubing
-   reaches. Under ~1.5 ft is comfortable; approaching 2.8 ft flow falls off steeply; above
-   2.8 ft nothing flows at all. Since V1 does not recirculate, the reservoir no longer has
-   to sit below the vessel — **raising it is the cheapest fix** if this comes back tight.
+0. **Measure the lift first** — reservoir **low** water line to the highest point the
+   tubing reaches (design for nearly-empty; the surface drops as it drains). Target
+   ≤ 1.4 ft; 1.4–1.9 ft is workable but sensitive; above 2.8 ft nothing flows at all.
+   The resolved geometry puts this at **17 in / 1.42 ft** — see "Station geometry" in
+   V1_PHYSICAL_BUILD.md. Since V1 does not recirculate, the reservoir does not sit below
+   the vessel; it sits on a shelf at 12 in. **Build that shelf adjustable** so this can be
+   tuned by an inch or two once measured.
 1. Assemble reservoir → pump (lowest setting) → bypass tee → filter → manifold → both
    emitters, discharging into two measuring jugs. Keep both runs the same length and height.
 2. Open the bypass only as far as the pump needs to avoid deadheading. Every PSI bled is
@@ -264,8 +267,12 @@ curl -s localhost:8000/api/fan/status
 
 The station runs without this. Do it once the plant is stable.
 
-- Fabricate the acrylic box; mount above the water line and to the side, never over the
-  reservoir.
+- Fabricate the plinth per "Station geometry" in V1_PHYSICAL_BUILD.md: 20 x 14 x 24 in,
+  wet bay and dry bay hard-divided, wet bay vented, reservoir on an adjustable shelf at
+  12 in.
+- Fabricate the tray in 304 stainless, 16 ga: bare bead-blast inside, white powder-coat on
+  the outer face only. Cutouts in the floor for load pads rising from the cabinet rail.
+- Electronics mount above the water line and to the side, never over the reservoir.
 - Cable glands on every penetration, drip loops on every cable into the wet zone.
 - Mains separated from DC and signal inside; EZO isolator leads kept clean.
 - GX16 bulkheads per run so the station can be disassembled without cutting wire.

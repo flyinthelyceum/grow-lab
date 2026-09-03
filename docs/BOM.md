@@ -142,7 +142,10 @@ physical status display on installation
 
 Reservoir
 
-**2.5 gallon bucket + lid** (below the vessel; holds solution, probes, pump)  
+**Shallow tub, ~14 x 10 x 6 in + lid, 2.5 gal** (on a shelf at 12 in; holds solution,
+probes, pump). **Not a tall bucket** — 2.5 gal is 577 in³, only 5.1 in deep in a 12 in
+bucket, so a tall vessel spends cabinet height on air and costs pump lift. A shallow tub
+also slides out of the cabinet instead of lifting overhead.  
 Small volume swings pH/EC faster and needs frequent top-off — acceptable for one CMU
 
 Pump
@@ -178,9 +181,12 @@ height. **Symmetric plumbing** (equal run lengths and heights) is what splits fl
 
 Drainage
 
-Drain hole + mesh screen per core → **catch / drip tray** beneath the vessel.
-Runoff-to-tray, **no recirculation in v1** — runoff is discarded / manually managed.
-A pump-return loop is deferred to a later version.
+Drain hole + mesh screen per core → **catch / drip tray**, 304 stainless, 16 ga, 2 in
+upstand, lift-out. Bare bead-blast inside; white powder-coat the outer face only (paint in
+permanent salt contact lifts). Floor cutouts pass load pads from the cabinet rail so the
+tray carries water, never the block's ~50 lb. No glued-on grate — the mesh inside each
+core retains the media. Runoff-to-tray, **no recirculation in v1** — runoff is discarded /
+manually managed. A pump-return loop is deferred to a later version.
 
 Control
 

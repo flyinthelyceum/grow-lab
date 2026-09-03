@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03
+
+### Added
+- **Station geometry resolved** — plinth at 24 in, CMU on 0.75 in pads in a lift-out tray, mast at the back, full height stack recorded in `V1_PHYSICAL_BUILD.md` with a dimensioned section drawing. Cabinet 20 x 14 in, depth set by the reservoir rather than the block.
+- **Pump lift budget** — shutoff (2.8 ft) is where flow reaches zero, not where it is usable. Design target ≤1.4 ft, workable to 1.9 ft, fragile beyond, **measured from the LOW water line** since the surface drops as the reservoir drains. The resolved geometry lands at 17 in / 1.42 ft.
+- **Tray and block interface spec** — 304 stainless (salts pit aluminium); bare inside, powder-coat the outer face only, since paint in permanent salt contact lifts; load pads rise from the cabinet rail through tray cutouts so the tray carries water and never the block's ~50 lb; block sits above its own runoff; **no glued-on grate**, as the mesh inside each core already retains media.
+
+### Changed
+- **Reservoir is a shallow tub, not a tall bucket.** 2.5 gal is 577 in³ — only 5.1 in deep in a 12 in bucket, so a tall vessel spends cabinet height on air and costs lift that is not available. A ~14 x 10 x 6 in tub of the same volume sits on a higher shelf and slides out rather than lifting overhead. This is the difference between a comfortable 1.42 ft lift and a marginal 1.75 ft one.
+- **Reservoir shelf must be adjustable** (slotted supports) — the lift figure is settled by the Stage 0.2 measurement, and tuning it should not mean rebuilding the cabinet.
+- **Drip line branches just above the media**, not at the fixture. Only the LED and its cable run to the top of the mast; carrying water that high spends lift for nothing.
+
 ## 2026-09-02
 
 ### Changed
