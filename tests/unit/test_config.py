@@ -212,3 +212,46 @@ class TestWebhookFormat:
         )
         with pytest.raises(ValueError, match="webhook.format"):
             load_config(cfg)
+
+
+class TestControlConfig:
+    def test_defaults(self):
+        from pi.config.schema import ControlConfig
+
+        config = ControlConfig()
+        assert config.enabled is True
+        assert config.poll_interval_seconds == 2.0
+        assert config.override_ttl_seconds == 3600.0
+
+    def test_loaded_from_toml(self, tmp_path):
+        from pi.config.loader import load_config
+
+        path = tmp_path / "config.toml"
+        path.write_text(
+            "[control]\n"
+            "enabled = false\n"
+            "poll_interval_seconds = 5.0\n"
+            "override_ttl_seconds = 300.0\n"
+        )
+        config = load_config(path)
+        assert config.control.enabled is False
+        assert config.control.poll_interval_seconds == 5.0
+        assert config.control.override_ttl_seconds == 300.0
+
+    def test_absent_section_uses_defaults(self, tmp_path):
+        from pi.config.loader import load_config
+
+        path = tmp_path / "config.toml"
+        path.write_text("[system]\n")
+        assert load_config(path).control.enabled is True
+
+    def test_example_config_parses(self):
+        """config.example.toml must stay loadable — it is the operator's copy."""
+        from pathlib import Path
+
+        from pi.config.loader import load_config
+
+        example = Path(__file__).resolve().parents[2] / "config.example.toml"
+        config = load_config(example)
+        assert config.control.poll_interval_seconds > 0
+        assert config.control.override_ttl_seconds > 0

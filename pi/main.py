@@ -217,6 +217,20 @@ async def run(config: AppConfig) -> None:
         meter_svc = MeterService(dac, repo, config.meters)
         await meter_svc.start()
 
+    # Start control reconciler — the dashboard's end of the cross-process
+    # channel. It runs here because this is the process that owns the hardware.
+    control_svc = None
+    if config.control.enabled and (fan_svc is not None or meter_svc is not None):
+        from pi.services.control import ControlService
+
+        control_svc = ControlService(
+            repo,
+            config.control,
+            fan_service=fan_svc,
+            meter_service=meter_svc,
+        )
+        await control_svc.start()
+
     # Start lighting scheduler (requires ESP32 for LED PWM)
     lighting_svc = None
     esp32_lighting = None
@@ -271,6 +285,8 @@ async def run(config: AppConfig) -> None:
         await lighting_svc.stop()
     if esp32_lighting is not None and esp32_lighting is not pump:
         esp32_lighting.close()
+    if control_svc is not None:
+        await control_svc.stop()
     if meter_svc is not None:
         await meter_svc.stop()
     if fan_svc is not None:

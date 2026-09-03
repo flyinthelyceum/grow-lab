@@ -54,12 +54,45 @@ All services run as async tasks within `growlab start` and shut down cleanly on 
 | IrrigationService | Pump available | 30s schedule check | Timed pump pulses with safety limits |
 | AlertService | Always | 60s | Threshold monitoring with deduplication; fires NotificationService on transitions |
 | NotificationService | Alert callback | On alert | Webhook POST + SMTP email dispatch with per-sensor cooldown |
-| FanService | `fan.enabled` | 30s | Temperature → PWM duty ramp (supports manual override via API) |
+| FanService | `fan.enabled` | 30s | Temperature → PWM duty ramp |
+| MeterService | `meters.enabled` | ~30 Hz | Eases the two centre-zero panel needles toward pH and EC deviation via the MCP4728 |
+| ControlService | `control.enabled` and a service to drive | 2s | Reconciles the fan and meters toward desired state written by the dashboard |
 | LightingScheduler | ESP32 connected | 30s | Photoperiod schedule with sunrise/sunset ramps |
 | DisplayService | `display.enabled` | 5s page rotation | OLED status pages |
 | CameraCaptureService | `camera.enabled` | On pump events | Captures during pump active window |
 
 Initial V0 system uses manual parameter tuning. Future versions may implement automated feedback loops.
+
+### The two-process split, and the control channel
+
+`growlab` and `growlab-dashboard` are **separate systemd units** — separate
+processes sharing only the SQLite file. The orchestrator owns every piece of
+hardware: the GPIO, the I²C bus, the DAC, the serial link. The dashboard owns
+none of it.
+
+That is a deliberate split — a crashed web server must not take the irrigation
+scheduler down with it — but it means the dashboard cannot call a method on a
+running service. An override clicked in a browser has to cross a process
+boundary, and the only thing both processes touch is the database.
+
+The `control_state` table is that crossing. It holds **desired state, not a
+command queue**: one row per control, overwritten in place, with NULL meaning
+"follow the automatic behaviour". `ControlService` polls it and pushes changes
+into the live services.
+
+Three properties follow from desired state rather than a queue:
+
+- **Idempotent.** Re-reading a row does nothing. A missed poll costs latency,
+  not correctness.
+- **Restart-safe.** Nothing accumulates while the orchestrator is down and
+  nothing replays twice when it returns; an override set before a restart is
+  simply still true after it.
+- **Edge-triggered.** A value is applied only when it changes, so a steady row
+  does not fight an override set at the bench with `growlab fan set`.
+
+Overrides carry an expiry (`[control] override_ttl_seconds`, default one hour)
+so a manual duty left on by accident lapses back to automatic instead of
+holding the fan at 0% through a hot afternoon.
 
 ---
 
@@ -147,7 +180,8 @@ This separation keeps timing-sensitive lighting control off the Raspberry Pi.
 ## Web Server: FastAPI
 
 - Dashboard routes (`/`, `/art`)
-- REST API (`/api/readings/`, `/api/events`, `/api/alerts`, `/api/fan/`)
+- REST API (`/api/readings/`, `/api/events`, `/api/alerts`, `/api/fan/`, `/api/meters/`, `/api/control`)
+- Override endpoints (`POST /api/fan/override`, `POST /api/meters/override`) write desired state to `control_state`; they never touch hardware directly, because this process cannot
 - WebSocket (`/ws/updates`) with ConnectionManager for server-push broadcasts
 - Static file serving (D3.js charts, art mode modules, CSS)
 

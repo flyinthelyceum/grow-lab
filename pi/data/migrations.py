@@ -12,7 +12,7 @@ import aiosqlite
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -71,6 +71,29 @@ CREATE INDEX IF NOT EXISTS idx_access_log_timestamp
 
 CREATE INDEX IF NOT EXISTS idx_access_log_ip_hash
     ON access_log(ip_hash);
+
+-- V3: cross-process control channel (2026-09-03).
+--
+-- The dashboard and the orchestrator are separate systemd units sharing only
+-- this database, so the dashboard cannot reach a live service object to set a
+-- fan duty or pin a needle. This table is the channel between them.
+--
+-- It holds *desired state*, not a command queue: one row per control, the
+-- orchestrator reconciles toward it, and re-reading a row is a no-op. That
+-- makes it idempotent across restarts, with no backlog to replay and no
+-- duplicate application if a poll is missed.
+--
+-- A NULL value means "no override — follow the automatic behaviour". Rows are
+-- kept rather than deleted so `updated_at` still records when a control was
+-- last touched. `expires_at` bounds a manual override so one left on by
+-- accident lapses instead of holding a fan at 0% through a heatwave.
+CREATE TABLE IF NOT EXISTS control_state (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at TEXT NOT NULL,
+    expires_at TEXT,
+    updated_by TEXT
+);
 """
 
 

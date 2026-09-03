@@ -17,6 +17,7 @@ from pi.config.schema import (
     AppConfig,
     CameraConfig,
     CalibrationConfig,
+    ControlConfig,
     DisplayConfig,
     EmailConfig,
     FanConfig,
@@ -160,6 +161,20 @@ def _build_meters(raw: dict[str, Any]) -> MetersConfig:
         ),
         ph=_build_meter_channel(data.get("ph", {}), defaults.ph),
         ec=_build_meter_channel(data.get("ec", {}), defaults.ec),
+    )
+
+
+def _build_control(raw: dict[str, Any]) -> ControlConfig:
+    data = raw.get("control", {})
+    defaults = ControlConfig()
+    return ControlConfig(
+        enabled=data.get("enabled", defaults.enabled),
+        poll_interval_seconds=data.get(
+            "poll_interval_seconds", defaults.poll_interval_seconds
+        ),
+        override_ttl_seconds=data.get(
+            "override_ttl_seconds", defaults.override_ttl_seconds
+        ),
     )
 
 
@@ -349,6 +364,7 @@ def load_config(path: Path | None = None) -> AppConfig:
             poll_interval_seconds=fan_data.get("poll_interval_seconds", 30),
         ),
         meters=_build_meters(raw),
+        control=_build_control(raw),
         display=DisplayConfig(
             enabled=display_data.get("enabled", False),
             address=display_data.get("address", 0x3C),
