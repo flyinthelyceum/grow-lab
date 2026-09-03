@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (plans)
+
+### Added
+- **`docs/INSTRUMENT_HEAD_PLANS.md` — Rev A fabrication schedules for the mast head.** Face hole schedule with laser coordinates (two Simpson 1327 cutouts and their stud holes, the 6.30 × 3.78 in e-ink window, jewel, indicator, two pots, four face fixings), panel schedule for a 9.50 × 12.00 × 3.50 in cast-acrylic box, depth stack, structure, material and finish, and the meter order. Everything on the face sits on the grid the meters set: the rail's jewel and outer knob on the meters' outer mounting-hole columns, indicator and inner knob on the meter centres.
+- **Structure:** the acrylic holds instruments, not loads. The shaft ends in a 1/4 in steel flange; the head's bottom panel bolts onto it and the fixture arm attaches to the same plate, so the cantilever's moment goes steel-to-steel and never through the box.
+
+### Decided
+- **Meters: Simpson Wide-Vue 3-1/2", Model 1327, 0-50 µA (catalog 04380; taut-band 04381 as the quieter alternative).** Two. Head grows to 9.5 × 12 × 3.5 in to give the 3.25 in bezels a 0.75 in gap and 1.125 in margins; overall height 58 in, panel centre still 52 in.
+- **Face: clear cast acrylic, reverse-engraved**, so labels read as frosted marks in glass and the apparatus stays visible through the front. Light-grey opaque as the fallback, decided on the test piece.
+
+### Before cutting
+- Test-cut the face in card and offer up the boards. The e-ink is off-centre on its board and its edge tolerance is unpublished; the window and the rail clearance both get confirmed on the test piece, not on paper. Inky standoff holes transfer from the board; they are not pre-cut.
+
 ## 2026-09-03 (verified)
 
 ### Resolved

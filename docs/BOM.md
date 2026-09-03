@@ -263,9 +263,11 @@ because a size was chosen.
 |---|---|
 | Shaft section | 2 x 3 in |
 | LED fixture, hung from the head underside ~10 in forward | 46 in |
-| Head | 9 x 11.5 x 3.5 in |
+| Head | **9.5 x 12 x 3.5 in** (Simpson 3-1/2" chosen) |
 | Panel centre — read standing, while tending | 52 in |
-| Overall height | 57.5 in |
+| Overall height | 58 in |
+
+Fabrication schedules: [INSTRUMENT_HEAD_PLANS.md](INSTRUMENT_HEAD_PLANS.md).
 
 The fixture hangs from the head's **underside**, not off the shaft, so the cantilever's
 moment lands over the column rather than bending it.
@@ -387,7 +389,7 @@ VCC 1092 Series amber, polished bezel — Amazon/Mouser, ~$5-8, 0.5"/12.7mm, 12V
 
 ## Analog VU meters — the vitals (×2: e.g. pH + moisture)
 
-Hero (buildable): Simpson Wide-Vue raw DC panel meter — rammeter.com, ~$70-140 ea by size. Raw movement = drive directly with an op-amp scaler off sensor voltage. Add a warm LED behind the dial. Archetypal American instrument face.
+**CHOSEN 2026-09-03: Simpson Wide-Vue 3-1/2", Model 1327, 0-50 µA — catalog 04380 (or taut-band 1327T, 04381). Two.** rammeter.com. Raw movement, driven by the meter driver stage below. Warm LED behind the dial. Archetypal American instrument face.
 
 **From the Simpson Wide-Vue datasheet (Rev. 10-25) — dimensions in inches:**
 

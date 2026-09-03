@@ -151,8 +151,9 @@ mast is thin where it carries only the drip line and sensor loom, and thickens i
 instrument head where the apparatus lives — dimension as a byproduct of contents.
 
 - **Shaft:** 2 x 3 in hollow section, plinth top to 46 in. Tubing and cable inside.
-- **Head:** 9 x 11.5 x 3.5 in acrylic, 46 to 57.5 in. Front panel on its face, panel centre
-  at 52 in — read standing, while tending.
+- **Head:** **9.5 x 12 x 3.5 in** acrylic, 46 to 58 in, sized around two Simpson 3-1/2"
+  movements and the 7.3" e-ink. Front panel on its face, panel centre at 52 in — read
+  standing, while tending. Fabrication schedules: INSTRUMENT_HEAD_PLANS.md.
 - **Fixture:** hangs from the **head's underside** at 46 in, cantilevered ~10 in forward to
   centre over the block. Hanging it from the head rather than the shaft puts the moment over
   the column instead of bending it.
@@ -182,10 +183,9 @@ instrument head where the apparatus lives — dimension as a byproduct of conten
 - **Head depth holds at 3.5 in.** A 2-1/2" Simpson movement needs 1.85 in behind the panel
   (1.15 body + 0.70 terminal studs); a 3-1/2" needs 1.92. Pi + stacked HATs ~1.5 in beside
   them, not behind. 3.5 in is comfortable for either meter size.
-- **Meter size vs. panel width, with real bezels:** two 2-1/2" bezels (2.47 each) span
-  4.94 in + gap — well inside the e-ink's 6.85 in. Two 3-1/2" (3.25 each) span 6.50 + gap —
-  fits, tight. Two 4-1/2" (4.70 each) do not. So 2-1/2" or 3-1/2" both work on the 9 in
-  face; 4-1/2" would force a wider head.
+- **Meter size settled: 3-1/2" (Model 1327).** Two 3.25 in bezels at a 0.75 in gap span
+  7.00 in; the face goes to 9.50 wide to give them 1.125 in margins, and the e-ink (6.85
+  board, 6.30 window) sits inside that span. Head height to 12.00 for the taller bezel row.
 
 ## Lighting decision
 
