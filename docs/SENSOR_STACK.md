@@ -80,8 +80,8 @@ These sensors are **shared across all plant bins**.
 
 Sensor system:
 
-Atlas Scientific **EZO-pH circuit**  
-Atlas Scientific **Lab Grade pH probe**
+Atlas Scientific **EZO-pH circuit** (I²C 0x63)
+Atlas Scientific **Lab Grade pH Probe** — [ENV-40-pH](https://atlas-scientific.com/probes/ph-probe/), $99.99
 
 Purpose:
 
@@ -105,7 +105,12 @@ Three-point calibration:
 
 Maintenance:
 
-Monthly recalibration recommended.
+Monthly recalibration recommended. **Between uses the probe lives in storage
+solution — never dry, never in plain or distilled water.** Check health with
+`growlab sensor ph-slope` after each calibration: >95% slope, offset within
+±5 mV. A dead electrode reads near its pH 7.00 isopotential point regardless
+of solution, so a plausible number is not proof of a working probe. See
+[BOM.md](BOM.md) → pH probe maintenance.
 
 Probe location:
 
@@ -123,8 +128,8 @@ Probe tips must:
 
 Sensor system:
 
-Atlas Scientific **EZO-EC circuit**  
-Atlas Scientific **K1.0 conductivity probe**
+Atlas Scientific **EZO-EC circuit** (I²C 0x64)
+Atlas Scientific **Conductivity Probe K 1.0** — [ENV-40-EC-K1.0](https://atlas-scientific.com/probes/conductivity-probe-k-1-0/), $139.99, range 5 – 200,000 µS/cm
 
 Purpose:
 

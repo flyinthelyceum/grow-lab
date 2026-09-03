@@ -37,6 +37,10 @@ STATUS_NO_DATA = 255
 # Default wait time for a read command (ms)
 READ_DELAY_MS = 900
 
+# Non-reading queries (Slope, Status, i) settle far faster than a
+# measurement. The datasheet specifies 300ms for Slope in I2C mode.
+QUERY_DELAY_MS = 300
+
 
 class EZOBase(ABC):
     """Base driver for Atlas EZO I²C sensors."""
@@ -109,6 +113,40 @@ class EZOBase(ABC):
         except Exception as exc:
             logger.error("%s read failed: %s", self.sensor_id, exc)
             return []
+
+    async def query(
+        self, command: str, delay_ms: int = QUERY_DELAY_MS
+    ) -> str | None:
+        """Send a non-reading command and return its ASCII response.
+
+        For queries like `Slope,?` and `Status` that return information about
+        the circuit or probe rather than a measurement. Returns None if the
+        device reports anything but success, so a caller cannot mistake a
+        syntax error for data.
+        """
+        try:
+
+            def _do_query():
+                self._send_command(command)
+                time.sleep(delay_ms / 1000.0)
+                return self._read_response()
+
+            status, data = await asyncio.to_thread(_do_query)
+
+            if status != STATUS_SUCCESS:
+                logger.warning(
+                    "%s query %r status %d (expected 1)",
+                    self.sensor_id,
+                    command,
+                    status,
+                )
+                return None
+
+            return data
+
+        except Exception as exc:
+            logger.error("%s query %r failed: %s", self.sensor_id, command, exc)
+            return None
 
     async def is_available(self) -> bool:
         """Check if the EZO device is responding on the I²C bus."""

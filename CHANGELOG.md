@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (pH probe health, and the probe that died quietly)
+
+### Added
+- **`growlab sensor ph-slope`** — reports the EZO-pH `Slope,?` figures: acid and base slope percentages plus the zero-point offset in millivolts, with a verdict. Thresholds are the datasheet's (V6.1, "Understanding pH slope", pp. 68–70), not our judgement: a new probe is >95% slope with an offset within ±5 mV, and past 10 mV it warns of "noticeable performance issues". Slope is the manufacturer's own end-of-life indicator, which makes "recondition or replace" a measurement rather than a guess.
+- **`EZOBase.query()`** — send a non-reading command (`Slope,?`, `Status`, `i`) and get its ASCII response, at the datasheet's 300 ms settle rather than the 900 ms a measurement needs. Returns None on any non-success status so a syntax error cannot be read as data.
+- **`ProbeSlope` and `parse_slope()`** in `pi/drivers/ezo_ph.py`, with the pre-calibration default (100, 100, 0) recognised as *uncalibrated* rather than as a flawless probe. 26 tests.
+- **Part numbers, prices and links** for every Atlas item in `BOM.md` and `SENSOR_STACK.md` — pH probe (ENV-40-pH), EC probe (ENV-40-EC-K1.0), both EZO circuits, storage and calibration solutions, reconditioning kit. Previously the docs named manufacturers but nothing was re-orderable without a search.
+- **A pH probe maintenance section** in `BOM.md`: never store dry or in plain/distilled water, slope is the health metric, slope only updates on calibration, and a bad slope can mean contaminated solution rather than a bad probe.
+
+### Recorded
+- **A dead pH electrode reads pH 7, not garbage.** A failed probe outputs near 0 mV whatever it is in, which the circuit converts to roughly its isopotential point — pH 7.00 for the ENV-40-pH. So it returns a plausible mid-scale number indefinitely. This is how the summer 2026 failure hid: a flat 8.69 for eight days, read as a real measurement of a neglected reservoir. Moved to pH 4.00 buffer it settled at 6.7–6.8 and drifted up, which is the isopotential point rather than the buffer. **A stable, plausible pH reading is not evidence of a working probe.**
+
 ## 2026-09-03 (CI and deploy to the Pi)
 
 ### Added

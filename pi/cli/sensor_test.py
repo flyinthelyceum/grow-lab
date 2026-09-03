@@ -138,6 +138,75 @@ def sensor_status(ctx: click.Context) -> None:
         click.echo(f"  [{indicator}] {status.sensor_id:20s} {status.reason}")
 
 
+@sensor_group.command(name="ph-slope")
+@click.pass_context
+def ph_slope(ctx: click.Context) -> None:
+    """Report pH probe health from the EZO-pH `Slope,?` command.
+
+    Slope is the manufacturer's own end-of-life indicator: how closely the
+    probe's calibrated response matched an ideal probe, plus how far its zero
+    point sits from 0 mV. It is the way to decide whether a probe is worth
+    reconditioning rather than reading a buffer and squinting at the number.
+
+    Two things to know before trusting the answer:
+
+    \b
+    - Slope only updates when you calibrate. It reports the probe as of its
+      last calibration, not as of now. Calibrate first, then read this.
+    - A bad number can mean contaminated calibration solution rather than a
+      bad probe. Use fresh solution before condemning anything.
+    """
+    from pi.drivers.ezo_ph import (
+        OFFSET_DEGRADED_MV,
+        OFFSET_HEALTHY_MV,
+        SLOPE_HEALTHY_PERCENT,
+        EZOPhDriver,
+    )
+
+    config: AppConfig = ctx.obj["config"]
+    driver = EZOPhDriver(bus_number=config.i2c.bus)
+
+    async def _go():
+        try:
+            if not await driver.is_available():
+                return None, "no EZO-pH responding on the bus"
+            return await driver.read_slope(), None
+        finally:
+            await driver.close()
+
+    slope, error = _run_async(_go())
+
+    if error:
+        click.echo(f"Error: {error}")
+        ctx.exit(1)
+    if slope is None:
+        click.echo("Error: no valid Slope response from the circuit")
+        ctx.exit(1)
+
+    click.echo(f"  acid slope   {slope.acid_percent:6.1f} %   "
+               f"(healthy >= {SLOPE_HEALTHY_PERCENT:g})")
+    click.echo(f"  base slope   {slope.base_percent:6.1f} %   "
+               f"(healthy >= {SLOPE_HEALTHY_PERCENT:g})")
+    click.echo(f"  zero offset  {slope.offset_mv:+6.2f} mV  "
+               f"(healthy within +/-{OFFSET_HEALTHY_MV:g}, "
+               f"degraded beyond +/-{OFFSET_DEGRADED_MV:g})")
+    click.echo()
+
+    verdict = slope.verdict
+    if verdict == "uncalibrated":
+        click.echo("  UNCALIBRATED — the circuit is reporting its pre-calibration")
+        click.echo("  default (100, 100, 0). Run a 3-point calibration, then re-read.")
+    elif verdict == "healthy":
+        click.echo("  HEALTHY — within the datasheet's new-probe figures.")
+    elif verdict == "marginal":
+        click.echo("  MARGINAL — slope holds but the zero point has drifted.")
+        click.echo("  Usable; watch it, and recalibrate more often.")
+    else:
+        click.echo("  FAILING — outside the datasheet's limits.")
+        click.echo("  Recondition or replace. Confirm with fresh calibration")
+        click.echo("  solution first: contaminated solution reads the same way.")
+
+
 @sensor_group.command(name="ezo-setup")
 @click.option(
     "--sensor",
