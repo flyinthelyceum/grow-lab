@@ -128,6 +128,45 @@ class FanConfig:
 
 
 @dataclass(frozen=True)
+class MeterChannelConfig:
+    """One centre-zero movement on a differential DAC pair."""
+
+    sensor_id: str = "ezo_ph"
+    centre: float = 6.0  # sensor value at mechanical centre
+    span: float = 1.0  # half-range: deflection reaching a full endpoint
+    scale: float = 1.0  # applied to the raw reading (e.g. uS/cm -> mS/cm)
+    dac_positive: str = "A"
+    dac_negative: str = "B"
+    midpoint_code: int = 2048
+    span_counts: int = 2048
+    invert: bool = False
+    # (commanded, actual) pairs, ascending — five-point linearisation.
+    calibration: tuple[tuple[float, float], ...] = ()
+
+
+@dataclass(frozen=True)
+class MetersConfig:
+    enabled: bool = False
+    i2c_address: int = 0x60
+    update_hz: int = 30
+    time_constant_seconds: float = 2.0
+    sample_interval_seconds: float = 10.0
+    fault_timeout_seconds: float = 900.0
+    ph: MeterChannelConfig = field(
+        default_factory=lambda: MeterChannelConfig(
+            sensor_id="ezo_ph", centre=6.0, span=1.0,
+            dac_positive="A", dac_negative="B",
+        )
+    )
+    ec: MeterChannelConfig = field(
+        default_factory=lambda: MeterChannelConfig(
+            sensor_id="ezo_ec", centre=1.0, span=1.0, scale=0.001,
+            dac_positive="C", dac_negative="D",
+        )
+    )
+
+
+@dataclass(frozen=True)
 class DisplayConfig:
     enabled: bool = False
     address: int = 0x3C
@@ -240,6 +279,7 @@ class AppConfig:
     lighting: LightingConfig = field(default_factory=LightingConfig)
     irrigation: IrrigationConfig = field(default_factory=IrrigationConfig)
     fan: FanConfig = field(default_factory=FanConfig)
+    meters: MetersConfig = field(default_factory=MetersConfig)
     display: DisplayConfig = field(default_factory=DisplayConfig)
     calibration: CalibrationConfig = field(default_factory=CalibrationConfig)
     notifications: NotificationConfig = field(default_factory=NotificationConfig)

@@ -100,6 +100,46 @@ ramp_temp_low_f = 70.0   # below this the fan is off
 ramp_temp_high_f = 85.0  # at/above this the fan is at max_duty
 poll_interval_seconds = 30
 
+[meters]
+# Front-panel Weston 301 centre-zero movements on an MCP4728 quad DAC.
+# Each meter sits between two DAC channels with a fixed resistor per leg;
+# both channels rest at midpoint_code, which is a centred needle.
+# Series resistors limit the current, not this file — see docs/BOM.md.
+enabled = false
+i2c_address = 0x60
+update_hz = 30                  # needle command rate
+time_constant_seconds = 2.0     # easing; higher is more languid
+sample_interval_seconds = 10.0  # how often to re-read the sensors
+fault_timeout_seconds = 900.0   # stale this long -> ease to centre, flag fault
+
+[meters.ph]
+# 30-0-30 uA movement. Centre is the target; span is the half-range.
+sensor_id = "ezo_ph"
+centre = 6.0
+span = 1.0                      # so 5.0 = full left, 7.0 = full right
+dac_positive = "A"
+dac_negative = "B"
+midpoint_code = 2048
+span_counts = 2048
+invert = false
+# Five-point linearisation, (commanded, actual) ascending. Empty = pass-through.
+# calibration = [[-1.0, -1.0], [-0.5, -0.5], [0.0, 0.0], [0.5, 0.5], [1.0, 1.0]]
+
+[meters.ec]
+# 100-0-100 uA movement. EZO-EC reports uS/cm; scale converts to mS/cm.
+# WARNING: `centre` is unresolved. The runbook targets 800-1,200 uS/cm but
+# records plain water at 1,529 uS/cm — already above target. Settle that
+# before printing a dial face; the resolved target IS mechanical centre.
+sensor_id = "ezo_ec"
+centre = 1.0
+span = 1.0
+scale = 0.001
+dac_positive = "C"
+dac_negative = "D"
+midpoint_code = 2048
+span_counts = 2048
+invert = false
+
 [display]
 enabled = false
 address = 0x3C

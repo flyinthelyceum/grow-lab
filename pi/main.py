@@ -207,6 +207,16 @@ async def run(config: AppConfig) -> None:
         fan_svc = FanService(fan_driver, repo, config.fan)
         await fan_svc.start()
 
+    # Start panel meter service (centre-zero Weston movements via MCP4728)
+    meter_svc = None
+    if config.meters.enabled:
+        from pi.drivers.mcp4728 import MCP4728
+        from pi.services.meters import MeterService
+
+        dac = MCP4728(bus_number=config.i2c.bus, address=config.meters.i2c_address)
+        meter_svc = MeterService(dac, repo, config.meters)
+        await meter_svc.start()
+
     # Start lighting scheduler (requires ESP32 for LED PWM)
     lighting_svc = None
     esp32_lighting = None
@@ -261,6 +271,8 @@ async def run(config: AppConfig) -> None:
         await lighting_svc.stop()
     if esp32_lighting is not None and esp32_lighting is not pump:
         esp32_lighting.close()
+    if meter_svc is not None:
+        await meter_svc.stop()
     if fan_svc is not None:
         await fan_svc.stop()
     await alert_svc.stop()
