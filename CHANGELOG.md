@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (verified)
+
+### Resolved
+- **i3 InterLink / Inky Impression: no conflict.** Read the i3 datasheet: it uses only SCL/SDA/GND/3V3 and passes every Pi pin through. The Inky driver uses SPI0 (BCM 8/10/11) plus 17/22/27 and buttons 5/6/16/24. Zero overlap — stack the Inky on the i3. The earlier "confirm no pin conflict" note was a question that should have been answered, not asked.
+- **The real collision is ours: `relay_gpio = 17` vs Inky BUSY on BCM17.** When the Inky is installed, move the pump relay to GPIO23. One config line. The bench keeps running on 17 until then — the Inky is not on it yet.
+- **Simpson Wide-Vue dimensions pulled from the Rev. 10-25 datasheet** and recorded in `BOM.md`: 2-1/2" Model 1227 is a 2.47 in bezel, Ø2.22 cutout, 1.85 in behind the panel; 3-1/2" Model 1327 is 3.25 / Ø2.79 / 1.92; 4-1/2" Model 1329 is 4.70 / Ø2.81 / 1.90. Catalog numbers for 0-50 µA (1800 Ω), 0-100 µA and 0-1 mA (43 Ω) movements, and the taut-band 0-50 µA (960 Ω).
+- **R_sense is now fixed by the movement data, not pending it:** 40.96 kΩ for 0-50 µA or 2.048 kΩ for 0-1 mA on the MCP4728's 2.048 V reference. Coil resistance only sets op-amp headroom, ~2.1 V either way — fine on 5 V.
+- **Head depth (3.5 in) and panel width (9 in) confirmed against real bezels.** 2-1/2" or 3-1/2" meters both fit the face; 4-1/2" would not. Meter depth is 1.85–1.92 in, so 3.5 in is comfortable.
+
 ## 2026-09-03 (enclosure)
 
 ### Decided

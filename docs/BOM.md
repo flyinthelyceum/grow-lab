@@ -387,7 +387,21 @@ VCC 1092 Series amber, polished bezel — Amazon/Mouser, ~$5-8, 0.5"/12.7mm, 12V
 
 ## Analog VU meters — the vitals (×2: e.g. pH + moisture)
 
-Hero (buildable): Simpson Wide-Vue raw DC panel meter, order in µA/mA full-scale (e.g. 0-1mA) — rammeter.com, ~$70-140 ea by size (2.5"/3.5"/4.5"). Raw movement = drive directly with an op-amp scaler off sensor voltage. Add a warm LED behind the dial. Archetypal American instrument face.
+Hero (buildable): Simpson Wide-Vue raw DC panel meter — rammeter.com, ~$70-140 ea by size. Raw movement = drive directly with an op-amp scaler off sensor voltage. Add a warm LED behind the dial. Archetypal American instrument face.
+
+**From the Simpson Wide-Vue datasheet (Rev. 10-25) — dimensions in inches:**
+
+| Size | Model | Bezel | Panel cutout | Behind panel | Bezel proud | Mtg holes | Terminals |
+|---|---|---|---|---|---|---|---|
+| 2-1/2" | 1227 | 2.47 × 2.47 | Ø 2.22 | 1.15 body + 0.70 studs = 1.85 | 0.48 | (4) Ø.125 on 1.88 × 1.88 | (2) 1/4-28, 1.00 apart |
+| 3-1/2" | 1327 | 3.25 × 3.25 | Ø 2.79 | 1.22 + 0.70 = 1.92 | 0.62 | (4) Ø.125 on 2.25 × 2.25 | (2) 1/4-28, 1.50 apart |
+| 4-1/2" | 1329 | 4.70 × 4.70 | Ø 2.81 | 1.20 + 0.70 = 1.90 | 0.64 | (4) Ø.156 on 4.00 × 4.00 | (2) 1/4-28, 1.50 apart |
+
+Scale length: 2.30" (1227), 3.14" (1327), 3.93" (1329). Response ≤1.5 s. Overload 10× FS for 1 s, 1.5× continuous.
+
+**DC microammeter movements (self-shielding), catalog no. by size 1227 / 1327 / 1329:**
+0-50 µA, 1800 Ω — **04310 / 04380 / 04480**. 0-100 µA, 1800 Ω — 04320 / 04390 / 04490. 0-1 mA, 43 Ω — 06175 / 06310 / 06470.
+Taut-band (no pivot friction, better linearity) 0-50 µA, 960 Ω — 04311 / 04381 / 04481.
 Soul upgrade (one-off): Weston NOS microammeter (Model 1/301/1921), 0-100µA/0-1mA — eBay, ~$50-150, ~3.5" cream Bakelite face, engraved serif scale. Pre-war patina no repro touches.
 Hi-fi look (audio-cal, backlit): Sifam Tinsley AL29WF Presentor — don-audio.com, ~$65, 46×40mm, built-in overhead LED. The Urei 1176 meter; order to a sensitivity or bypass the cal resistor to drive as DC.
 Each raw DC meter needs a small op-amp current-driver stage (design later).
@@ -421,9 +435,9 @@ Signal path: Pi → I²C DAC → op-amp voltage-to-current (meter in feedback) �
 
 - **DAC:** Microchip MCP4728, quad 12-bit I²C (Adafruit #4470 breakout, ~$8, or bare SOIC). Addr 0x60 — no conflict with EZO 0x63/0x64, ADS1115 0x48, lux 0x39, OLED 0x3c. 2 channels used (A=pH, B=moisture), 2 spare (future 3rd meter / R+B light).
 - **Op-amp:** Microchip MCP6004 quad, rail-to-rail, single +5V (~$0.50; DIP-14 or SOIC). 2 of 4 used.
-- **R_sense (×2):** precision metal-film sized to the Simpson movement's full-scale current — ~2.05kΩ for 1mA FS, ~41kΩ for 50µA FS (finalize when the meter is chosen). Put part of it as a **multiturn cermet trimmer** (Bourns 3296, ~$1.50 ea) for full-scale calibration against a known input.
+- **R_sense (×2):** precision metal-film, R = V_DAC(FS) / I_meter(FS). With the MCP4728 on its internal 2.048 V reference: **40.96 kΩ for a 0-50 µA movement, 2.048 kΩ for 0-1 mA.** Coil resistance does not enter this equation (meter-in-feedback makes needle current independent of the coil) — it only sets op-amp headroom: I_FS × (R_sense + R_coil) = 50 µA × (41 k + 1.8 k) = 2.14 V, or 1 mA × (2.05 k + 43) = 2.1 V. Both comfortably inside a 5 V rail. Put part of R_sense as a **multiturn cermet trimmer** (Bourns 3296, ~$1.50 ea) for full-scale calibration against a known input.
 - **Dial backlight (×2):** warm-white LED behind each meter dial + series resistor, steady on +5V. Not dimmed, not an effect.
 - **Decoupling:** 0.1µF ceramic per IC; optional small cap across the meter to slow needle settle if desired.
 - **Software:** Pi maps pH 4.0–9.0 → 0–FS and moisture 0–100% → 0–FS, writes MCP4728 over I²C. Print the dial scales to match the mapping.
 
-All RESEARCHED LEADS — verify listings/values before buying; R_sense value pending the meter full-scale spec.
+Movement data above is from the Simpson datasheet; R_sense is now fixed by it. Remaining leads (jewel, VCC indicator, Sifam, Weston) are still researched-not-verified — check listing, price and stock before buying.

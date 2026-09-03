@@ -273,6 +273,10 @@ The station runs without this. Do it once the plant is stable.
 - Fabricate the tray in 304 stainless, 16 ga: bare bead-blast inside, white powder-coat on
   the outer face only. Cutouts in the floor for load pads rising from the cabinet rail.
 - Electronics mount above the water line and to the side, never over the reservoir.
+- **When the Inky Impression goes on the Pi:** it hard-wires BCM17 as BUSY, which is the
+  pump relay pin. Set `[irrigation] relay_gpio = 23` (pin 16) and move the relay wire
+  before powering up the display. Stack the Inky on the i3 InterLink's pass-through header;
+  the two share no pins.
 - Cable glands on every penetration, drip loops on every cable into the wet zone.
 - Mains separated from DC and signal inside; EZO isolator leads kept clean.
 - GX16 bulkheads per run so the station can be disassembled without cutting wire.
