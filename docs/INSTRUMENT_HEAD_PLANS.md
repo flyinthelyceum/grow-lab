@@ -94,6 +94,13 @@ instrument that mostly sits still.
 
 ## Dial faces — converting to pH and moisture
 
+**The sourced meters are centre-zero** (Weston 301, 5-0-5 mA and 30-0-30 mA). The pointer
+rests mid-scale and the movement's hairsprings are balanced for that; it cannot be converted
+to end-zero without rebuilding the movement, and should not be. Design the dials as
+**deviation-from-target** instruments: needle dead centre means on target, and drift reads as
+asymmetry without anyone reading a number. That is the better instrument for tending, and it
+settles the pH scale question below — centre is simply 6.0.
+
 A NOS meter arrives reading "MICROAMPERES D.C." The job is not relabelling it: the dial is a
 separate flat plate held to the movement frame (typically two small screws — confirm on the
 unit), and you **replace the plate**.
@@ -101,7 +108,7 @@ unit), and you **replace the plate**.
 ### Two facts that make this easier than it looks
 
 **1. Hunt for matching faces, not matching movements.** Each channel has its own R_sense, so
-a 50 µA meter and a 100 µA meter sit side by side and read identically. Only the *faces* have
+a 5 mA meter and a 30 mA meter sit side by side and read identically. Only the *faces* have
 to match — same diameter, same arc, same typographic character, similar patina. Two
 mismatched dials read as a flea market; two different movements behind matched dials read as
 an instrument. This widens the hunt considerably.
@@ -114,23 +121,20 @@ the dial the way the instrument should read, then write the mapping to match it.
 this. Order of operations: **design the dial first, write the mapping to fit it.** Not the
 reverse.
 
-### The pH scale decision
+### The pH scale, on a centre-zero dial
 
-Mapping pH 4.0–9.0 linearly across the arc puts the 5.8–6.2 target band at 8% of full scale —
-on a ~90° arc, about 7°. Visible, but a poor use of the instrument, since almost all of the
-dial covers water this system will never hold.
+Centre is 6.0 — the target — so the question is only the span. **±1.0 pH (5.0 to 7.0)** puts
+the 5.8–6.2 band at ±20% of half-scale, plainly legible, with a fine band printed at its
+edges. Water above 7.0 pegs right during fill and top-off, but on a centre-zero dial a pegged
+needle still reads correctly as "far too alkaline" rather than as a number you have to
+interpret. Widen to ±1.5 if you would rather see the 8.3 fill water on-scale.
 
-Mapping 5.0–7.0 linearly gives the target band ~18°, far more legible, but the meter pegs
-during fill and top-off (plain water measured pH 8.3 in March) — exactly when you most want
-to watch it move.
+The scale law is still arbitrary, so it can be expanded around centre if ±1.0 proves coarse.
 
-**Recommended: a non-linear scale, expanded around the working band.** For example
-4.0–5.5 across the first 20°, 5.5–6.5 across the middle 45°, 6.5–9.0 across the last 25°.
-The target band gets the same ~18° as the narrow linear scale, and pH 8.3 still reads on
-the dial instead of slamming the stop. Print a fine band at 5.8–6.2 so drift is legible
-without reading numbers at all.
-
-Moisture stays linear 0–100%; there is no reason to distort it. Mark the working band.
+**Moisture** deflects wet-right, dry-left from a centred target. Size the span from the real
+data rather than guessing: the SEN0308 has logged since April, so query the actual daily
+wet-to-dry swing and set the scale so a normal irrigation cycle uses most of the arc without
+pegging. The needle then breathes visibly with the watering rhythm.
 
 ### Making the plate
 

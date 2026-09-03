@@ -433,13 +433,72 @@ Pimoroni Inky Impression 7.3" (7-colour) — already in the standards; slow unla
 
 ## Meter driver stage (drives the two vitals meters)
 
-Signal path: Pi → I²C DAC → op-amp voltage-to-current (meter in feedback) → meter. Needle current = V_DAC / R_sense, coil-independent. Schematic artifact: https://claude.ai/code/artifact/c26c99e8-57c9-4675-a6e6-072a2d88ecf5
+**Revised 2026-09-03 for centre-zero movements.** The meters sourced are Weston 301
+**centre-zero milliammeters** (5-0-5 mA and 30-0-30 mA), not the end-zero microammeters this
+stage was first drawn for. The needle rests mid-scale and must deflect *both ways*, so the
+drive is now **bipolar** — which the original unipolar topology could not do.
 
-- **DAC:** Microchip MCP4728, quad 12-bit I²C (Adafruit #4470 breakout, ~$8, or bare SOIC). Addr 0x60 — no conflict with EZO 0x63/0x64, ADS1115 0x48, lux 0x39, OLED 0x3c. 2 channels used (A=pH, B=moisture), 2 spare (future 3rd meter / R+B light).
-- **Op-amp:** Microchip MCP6004 quad, rail-to-rail, single +5V (~$0.50; DIP-14 or SOIC). 2 of 4 used.
-- **R_sense (×2):** precision metal-film, R = V_DAC(FS) / I_meter(FS). With the MCP4728 on its internal 2.048 V reference: **40.96 kΩ for a 0-50 µA movement, 2.048 kΩ for 0-1 mA.** Coil resistance does not enter this equation (meter-in-feedback makes needle current independent of the coil) — it only sets op-amp headroom: I_FS × (R_sense + R_coil) = 50 µA × (41 k + 1.8 k) = 2.14 V, or 1 mA × (2.05 k + 43) = 2.1 V. Both comfortably inside a 5 V rail. Put part of R_sense as a **multiturn cermet trimmer** (Bourns 3296, ~$1.50 ea) for full-scale calibration against a known input.
-- **Dial backlight (×2):** warm-white LED behind each meter dial + series resistor, steady on +5V. Not dimmed, not an effect.
-- **Decoupling:** 0.1µF ceramic per IC; optional small cap across the meter to slow needle settle if desired.
-- **Software:** Pi maps pH 4.0–9.0 → 0–FS and moisture 0–100% → 0–FS, writes MCP4728 over I²C. Print the dial scales to match the mapping.
+Signal path: Pi → I²C DAC → **differential** op-amp voltage-to-current (meter in feedback) →
+meter. Needle current = **(V_DAC − V_ref) / R_sense**, signed, coil-independent.
+Earlier unipolar schematic (superseded):
+https://claude.ai/code/artifact/c26c99e8-57c9-4675-a6e6-072a2d88ecf5
+
+### Bipolar drive on a single 5V rail
+
+The meter floats between two op-amp outputs. One op-amp buffers a fixed mid-reference; the
+other is driven by the DAC through the current-feedback loop. Above the reference the needle
+goes right, below it goes left, and no negative supply is needed.
+
+- **Take the reference from the DAC itself.** The MCP4728 is a quad — allocate **A = pH drive,
+  B = moisture drive, C = V_ref at mid-scale (1.024 V), D spare.** Because drive and reference
+  come from the same chip and the same internal reference, reference drift is common-mode and
+  cancels: the needle stays centred even as the reference wanders. Do not use a separate
+  divider for V_ref; that reintroduces the drift this cancels.
+- **Op-amp budget:** one shared reference buffer + one driver per meter = **3 of 4** MCP6004
+  sections, one spare.
+
+### R_sense — recalculated for these movements
+
+Full-scale deflection at maximum deviation, |V_DAC − V_ref| = 1.024 V:
+
+| Meter | I at FS | R_sense |
+|---|---|---|
+| Weston 301, 5-0-5 mA | 5 mA | **204.8 Ω** |
+| Weston 301, 30-0-30 mA | 30 mA | **34.1 Ω** |
+
+Coil resistance still does not enter this (meter-in-feedback), only op-amp headroom. Weston's
+selector gives DC milliammeter coils from 27 Ω down to 0.2 Ω across the range, so the burden
+is a fraction of a volt either way. Keep part of R_sense as a **multiturn cermet trimmer**
+(Bourns 3296) and calibrate full scale onto the *printed* dial maximum.
+
+### The 30-0-30 channel needs a current buffer — verified
+
+From the MCP6001/2/4 datasheet (DS20001733L): **output short-circuit current ≈ 25 mA** at 5V,
+and **"Current at Output and Supply Pins ±30 mA" is an Absolute Maximum Rating** — a
+destructive limit, not an operating point.
+
+So the MCP6004 **cannot drive the 30-0-30 meter to full scale.** 30 mA is above its
+short-circuit current and sits exactly at the absolute maximum.
+
+- **5-0-5 mA channel:** drives directly. 5 mA against ~25 mA capability is 5× margin.
+- **30-0-30 mA channel:** add a **complementary emitter-follower inside the feedback loop**
+  (2N3904 / 2N3906 or BC337 / BC327, a few cents). Take feedback *after* the buffer so the
+  op-amp still sets the current precisely and the transistors' V_BE drops out of the equation.
+  Alternatively give that one channel an op-amp with real output drive.
+- **For any future meter purchase, prefer movements in the 1–5 mA or µA range** — they need no
+  buffer at all.
+
+### Software
+
+The Pi computes the DAC word, so **the scale law is arbitrary** — see the dial-face section in
+`INSTRUMENT_HEAD_PLANS.md`. For centre-zero the natural mapping is *deviation from target*:
+
+- **pH:** centre = 6.0, so V_DAC = V_ref at target. Suggested span ±1.0 pH (5.0–7.0), putting
+  the 5.8–6.2 band at ±20% of half-scale. Water above ~7.0 pegs right, which still reads
+  correctly as "far too alkaline".
+- **Moisture:** centre = target moisture, deflecting wet-right / dry-left. **Size the span from
+  the real data** — the SEN0308 has been logging since April, so query the actual daily
+  wet-to-dry swing and set the scale so a normal irrigation cycle uses most of the arc without
+  pegging. The needle then visibly breathes with the watering rhythm.
 
 Movement data above is from the Simpson datasheet; R_sense is now fixed by it. Remaining leads (jewel, VCC indicator, Sifam, Weston) are still researched-not-verified — check listing, price and stock before buying.
