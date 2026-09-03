@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (corrections)
+
+### Fixed
+- **Retracted the acrylic-enclosure strike.** The previous BOM pass struck the acrylic on the grounds that the fabricated cabinet superseded it. That collapsed two objects with opposite jobs: the plinth is furniture and should recede, while the instrument enclosure carries the front panel — jewel pilot lamp, analog meters, e-ink — and should declare itself. Acrylic was also not an arbitrary material: a transparent body is the **Transparent / Material Non-Artifice** register made literal, keeping the apparatus legible rather than hidden in painted casework. The enclosure is restored as a distinct designed object, with its placement relative to the plinth recorded as an open question to settle before the plinth is fabricated (one candidate changes its width).
+- **Retracted the TSL2591 strike.** It was struck citing the AS7341, without noting that `BOM.md` explicitly calls TSL2591 the *active* sensor and the AS7341 disabled. The code says the opposite — `pi/drivers/as7341.py` exists and emits `as7341_lux`, there is no TSL2591 driver, and `config.example.toml` carries only `[sensors.as7341]`. Both claim I2C 0x39 and so cannot share the bus. The conflict is now flagged in both docs rather than silently resolved.
+
+### Changed
+- **Filter specced as the Rain Bird RBY075MPTX** — 3/4" MPT x MPT, 200 mesh (75 micron) stainless element, o-ring sealed cap, 0.20–12.0 GPM. Equivalent to the DIG part and better documented. Adds the low-flow caveat: at ~2 GPH there is no scouring velocity, so it needs manual flushing rather than self-clearing.
+- **Core liners replaced with sealing the block.** No liners — a bag in a hole is wrong for a piece whose block is meant to stay honest. Instead: leach the block first (dilute vinegar soak, then repeated flushing over a week or two), then seal the core interiors with fish-safe / aquarium-grade epoxy, with solvent-free raw linseed oil as the natural alternative. The problem is unchanged — raw CMU drives pH alkaline and would poison both the plant and the chemistry data — and Stage 2's existing wet test still validates whichever method is used.
+
 ## 2026-09-03 (BOM pass)
 
 ### Changed

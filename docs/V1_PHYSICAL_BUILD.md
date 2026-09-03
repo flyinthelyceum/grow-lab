@@ -222,16 +222,19 @@ pressure-compensating emitters x2, bypass tee + throttle valve, measuring jugs.
 
 ### To buy
 
-- [ ] **Inline filter** — DIG P11-200, 3/4" MPT, **200 mesh stainless screen**, flush cap.
-      200 mesh (not 120) because 1 GPH emitter orifices are small. Rated 13 GPM against a
-      ~2 GPH need, so it is enormously oversized — which is the point: negligible pressure
-      drop when clean, and a long interval before a clog can starve a system that only has
-      ~1.2 PSI to give. Flush cap cleans it without disassembly. Needs adapters from
+- [x] **Inline filter** — Rain Bird RBY075MPTX, 3/4" MPT x MPT, **200 mesh (75 micron)
+      stainless element**, o-ring sealed cap. 200 mesh (not 120) because 1 GPH emitter
+      orifices are small. Rated 0.20–12.0 GPM against a ~2 GPH need, so it is enormously
+      oversized — the point being negligible pressure drop when clean, and a long interval
+      before a clog can starve a system with only ~1.2 PSI. At this flow there is no
+      scouring velocity, so **flush it manually on a schedule**. Needs adapters from
       3/4" MPT down to the main line.
 - [ ] **Stainless mesh screen** for the core drain holes, ~20 mesh — coarse enough to drain
       freely, fine enough to hold perlite; a layer of coarse perlite at the bottom of each
       core does the real filtering. Stainless so it does not corrode in nutrient solution.
-- [ ] **Core liners x2** — see note below.
+- [ ] **Acrylic stock** for the instrument enclosure (fabricate in-house).
+- [ ] **Fish-safe / aquarium-grade epoxy sealer** for the core interiors — see note below.
+      No liners.
 - [ ] Standard CMU (cinder block)
 - [ ] Coco coir + perlite
 - [ ] GFCI outlet / adapter
@@ -247,25 +250,34 @@ pressure-compensating emitters x2, bypass tee + throttle valve, measuring jugs.
   is specified for exactly EZO-pH / ORP / DO / EC. pH and EC are the two circuits that need
   it. **Action instead: verify both are seated in the isolated slots, not the non-isolated
   one.** That check replaces a ~$56 purchase.
-- ~~TSL2591 lux breakout~~ — the AS7341 already emits `as7341_lux`.
 - ~~12V buck module~~ — the fan already runs from a 12V adapter; a buck would only
   consolidate mains cords inside the enclosure.
-- ~~Acrylic stock for the enclosure~~ — superseded by the fabricated cabinet.
+- ~~TSL2591 lux breakout~~ — **strike retracted, see BOM.** The BOM calls TSL2591 the
+  active sensor while the code has only an AS7341 driver. That conflict is unresolved and
+  was papered over here; do not buy either until it is settled.
 - ~~2.5 gal bucket + lid~~ — replaced by the stainless pans.
 
-### Note on core liners
+### Note on the cores — sealed, not lined
 
-Nothing off-the-shelf fits a CMU core well (~5.6 x 5.6 in tapering, 7.6 in deep): nursery
-pots are either too wide or too short. Options, in order of preference:
+**No liners.** A bag in a hole is the wrong answer for a piece whose block is meant to stay
+honest. Seal the block itself instead; the seal is invisible and the CMU reads as CMU.
 
-1. **Fabricate them in stainless** to match the tray and pans, with the drain hole and mesh
-   built in rather than improvised. Best result and one material through the whole wet
-   path — but a 5.6 x 5.6 x 7 in open box is deep and narrow, so check it against the
-   brake's throat before committing. A rolled sleeve with a welded base is the easier
-   variant.
-2. **Food-grade polyethylene sheet** (6 mil FDA) folded into each core. Cheap, conforms,
-   invisible below the media surface. The pragmatic v1 answer.
-3. Pond liner — workable, but most is fish-safe rather than food-grade certified.
+The problem being solved is unchanged: raw CMU leaches free lime and drives pH sharply
+alkaline, which would poison both the plant and the chemistry data the piece exists to make
+legible. Two steps, in order:
+
+1. **Leach it first.** Soak the block in a dilute vinegar solution (~1/4 cup per gallon)
+   for half an hour, then flush repeatedly with water over a week or two — several rinses a
+   day. This pulls out the bulk of the free lime and surface alkalinity. Free, and it works
+   on the whole block rather than a coating.
+2. **Then seal the core interiors** with a **fish-safe / aquarium-grade epoxy paint** — the
+   pond-and-aquarium standard, and the option specifically recommended for concrete beds
+   growing edibles. A raw, solvent-free linseed oil is the natural alternative: it
+   penetrates and hardens slowly, but it is a slower, softer barrier.
+
+**The existing gate still validates it.** Stage 2's wet test — 24 h with the filled block,
+runoff pH compared against a plain-water control, within ~0.3 — tests whatever method you
+use. Fail it and leach longer or add a second coat before planting.
 
 ## Deferred to v2
 
