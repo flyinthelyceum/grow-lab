@@ -493,12 +493,58 @@ short-circuit current and sits exactly at the absolute maximum.
 The Pi computes the DAC word, so **the scale law is arbitrary** — see the dial-face section in
 `INSTRUMENT_HEAD_PLANS.md`. For centre-zero the natural mapping is *deviation from target*:
 
-- **pH:** centre = 6.0, so V_DAC = V_ref at target. Suggested span ±1.0 pH (5.0–7.0), putting
-  the 5.8–6.2 band at ±20% of half-scale. Water above ~7.0 pegs right, which still reads
-  correctly as "far too alkaline".
-- **Moisture:** centre = target moisture, deflecting wet-right / dry-left. **Size the span from
-  the real data** — the SEN0308 has been logging since April, so query the actual daily
-  wet-to-dry swing and set the scale so a normal irrigation cycle uses most of the arc without
-  pegging. The needle then visibly breathes with the watering rhythm.
+- **pH:** centre = 6.0, span ±1.0 (5.0–7.0), putting the 5.8–6.2 band at ±20% of half-scale.
+- **EC:** centre = the real target, span sized to match. **Blocked — see below.**
+
+### Second meter reads EC, not moisture (2026-09-03)
+
+Changed on the strength of the Weston handoff spec. EC pairs with pH far better than soil
+moisture does: both are reservoir chemistry, both come from EZO circuits in the same water,
+both benefit from the same isolation story, and the two needles then read the same body of
+liquid. Moisture is a media value on a different rhythm.
+
+**Blocking: this project's own EC numbers disagree, and they set the dial's centre.**
+`V1_GO_LIVE_RUNBOOK.md` targets **800–1,200 µS/cm**, but the same doc records the plain-water
+baseline at **1,529 µS/cm** — already above target before any nutrient is added. You cannot
+reach 0.8–1.2 mS/cm by adding salts to 1.53 mS/cm water. Either the target is wrong for this
+tap water or the build needs RO/distilled makeup water. **Resolve before printing an EC face**,
+because the resolved target *is* mechanical centre.
+
+Once resolved, centre on the target and span ±1.0 mS/cm so the band sits at ±20% of
+half-scale, matching pH. Do **not** centre at 2.0 mS/cm on an 0–4 face: with a ~1.0 target the
+needle would rest 40–60% left of centre in normal healthy operation, which defeats the entire
+point of a centre-zero instrument.
+
+### Firmware behaviour (adopted from the Weston handoff)
+
+- **Programme all DAC channels to the midpoint code in EEPROM** so both needles are centred
+  through controller boot, reset and power-down. Never let a needle slam an endpoint at power-up.
+- **Five-point calibration per meter**, stored independently: left endpoint, left mid, centre,
+  right mid, right endpoint, piecewise-linear between. The two movements will not share gain or
+  linearity. Keep display calibration separate from Atlas probe calibration.
+- **Damped motion:** command at 20–50 Hz, easing to a median-then-EMA filtered value, 1.5–3 s
+  time constant, configurable. Alive, not twitching on the last digit.
+- **Faults ease the needle to centre** and light the amber indicator. Never signal error by
+  driving an endpoint.
+- **Hardware limits current, never firmware alone.** No trimmer that can be turned to zero
+  series resistance — put the trimmer in series with a fixed minimum.
+- **Service mode:** centre, 25/50/75/endpoint tests, per-meter polarity and span, five-point
+  linearisation, raw and filtered readings.
+- Validate under real pump, relay and grow-light switching, not on a quiet bench.
+
+### Movement characterisation — size the rig to the meter
+
+The handoff's principle is right (a fixed resistor sets a fault floor that cannot exceed full
+scale) but its values are for µA movements and will not move a milliamp needle:
+
+| Meter | Fixed R | Pot | Current at pot max → min |
+|---|---|---|---|
+| 5-0-5 mA | 300 Ω | 5 kΩ | 0.28 mA → 5.0 mA |
+| 30-0-30 mA | 47 Ω | 1 kΩ | 1.4 mA → 32 mA |
+
+From a fresh 1.5 V cell, pot starting at maximum, a trustworthy meter in series, working down
+slowly. Record left endpoint current, centre behaviour, right endpoint current and the voltage
+across the movement; R_meter = V/I. Never put a DMM's continuity or diode mode across a
+movement, and never a bench supply directly.
 
 Movement data above is from the Simpson datasheet; R_sense is now fixed by it. Remaining leads (jewel, VCC indicator, Sifam, Weston) are still researched-not-verified — check listing, price and stock before buying.

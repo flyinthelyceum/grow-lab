@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (handoff reconciled)
+
+### Changed
+- **Second meter reads EC, not soil moisture**, per the Weston handoff spec. EC pairs with pH far better: both are reservoir chemistry from EZO circuits in the same water, sharing the same isolation story, so the two needles read one body of liquid. Moisture is a media value on a different rhythm.
+- **Adopted from the handoff:** midpoint DAC codes in EEPROM so needles stay centred through boot and reset; five-point per-meter calibration stored independently of Atlas probe calibration; damped 20–50 Hz motion with a 1.5–3 s time constant; faults ease the needle to centre rather than driving an endpoint; hardware current limiting with no trimmer able to reach zero series resistance; validation under real pump and grow-light switching. These are better than what the BOM carried.
+- **Movement characterisation rig resized.** The handoff's method is right — a fixed resistor sets a fault floor below full scale — but its values (220 kΩ from 1.5 V) are for µA movements and yield ~7 µA, which would not visibly move a milliamp needle and could read as a dead meter. Corrected to 300 Ω + 5 kΩ pot for the 5-0-5 mA and 47 Ω + 1 kΩ pot for the 30-0-30 mA.
+
+### Blocked
+- **The EC dial cannot be drawn until this project's own EC numbers are reconciled.** `V1_GO_LIVE_RUNBOOK.md` targets 800–1,200 µS/cm while recording the plain-water baseline at 1,529 µS/cm — already above target before nutrients. Either the target is wrong for this tap water or the build needs RO makeup water. The resolved target is the dial's mechanical centre, so this gates the artwork. Centring at 2.0 mS/cm on an 0–4 face, as the handoff proposes, would leave the needle resting 40–60% left of centre in normal operation and defeat the centre-zero concept entirely.
+
+### Rejected from the handoff
+- **Moving pH/EC sensing to an ESP32-S3.** The Pi owns the EZO circuits today via `pi/drivers/ezo_ph.py` and `ezo_ec.py` at 0x63/0x64 on the i3 InterLink, logging to SQLite and serving the dashboard, and has since March. Re-hosting sensing on an ESP32 would either break that path or add a relay hop back to the Pi for no gain, and would orphan the i3. Code takes precedence: sensing stays on the Pi, and the MCP4728 goes on the Pi's I²C bus at 0x60 as a display peripheral.
+- **Buying two isolated EZO carrier boards.** The i3 InterLink already provides two isolated EZO slots, specified for exactly EZO-pH and EZO-EC. The purchase is only needed on the rejected ESP32 path.
+- **Direct DAC-to-meter drive through series resistors.** Sound for the µA movements the handoff assumed; not for the milliamp meters actually bought. Per DS22187E the MCP4728's short-circuit current is 15 mA typical / 24 mA max and ±25 mA is an *Absolute Maximum Rating*, against a characterisation load of 5 kΩ. It cannot drive 30 mA at all, and 5 mA is five times its characterised load. The op-amp stage stays, with an emitter-follower on the 30 mA channel.
+- **The handoff's resistor table.** 56.2 kΩ per leg is correct for a ±30 µA movement and 1000× too high for the ±30 mA movement in hand — it would cap the needle at 0.1% of full scale.
+
 ## 2026-09-03 (meters sourced)
 
 ### Changed
