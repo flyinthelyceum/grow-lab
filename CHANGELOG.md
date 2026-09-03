@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-03 (later)
+
+### Changed
+- **Reservoir specced as a stainless half-size steam table pan, 6 in deep** (12.8 x 10.4 x 5.9 in, ~13 L; 2.5 gal sits at ~4.3 in). Replaces the generic "shallow tub". 304 stainless matches the tray, is opaque so it excludes light better than translucent plastic, and its lid drills cleanly for the pump cord, feed line and probe leads. Geometry is unchanged — water full at 16.3 in, low at 14 in on the 12 in shelf, lift still 1.42 ft.
+- **Tray confirmed as a flush rebate**, not a raised collar: it drops into the cabinet's top frame and becomes the top surface, flush with the sides.
+
+### Deferred to v2
+- **Rain from overhead.** Wanted as a visual effect, but it forces too many simultaneous departures: two ~1 GPH emitters read as a leak rather than rain; a multi-outlet bar needs pressure the SICCE cannot make; lift to fixture height runs 2.1-2.7 ft, fragile to dead; the tray must grow to catch splash and drift; and overhead watering on ranunculus invites botrytis and powdery mildew, which every source advises against. The v2 path is recorded in `V1_PHYSICAL_BUILD.md`: a >=6 ft head pump plus a second circuit on a solenoid, so rain is a brief scheduled morning event separate from the irrigation that keeps the plant alive.
+
+### Notes
+- Checked whether a metal reservoir would disturb the EC probe. Atlas designs its conductivity probes specifically against "fringe effect" — readings shifting near a nearby object — so the stainless pan is fine. Keep probes off the walls as already specced and do not bond the pan to ground; the EZO isolators cover stray voltage paths.
+
 ## 2026-09-03
 
 ### Added

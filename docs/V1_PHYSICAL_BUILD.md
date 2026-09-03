@@ -35,13 +35,17 @@ longer has to sit below the vessel.** Nothing returns by gravity. That freedom i
 optional here: **the reservoir must be raised** or the pump cannot reach the emitters.
 See "Station geometry" below for the resolved heights.
 
-1. **Source** — 2.5 gal solution in a **shallow tub, not a tall bucket** (~14 x 10 x 6 in).
-   2.5 gal is 577 in³; in a 12 in-diameter bucket that is only **5.1 in of water**, so a
-   tall bucket spends cabinet height on air and costs lift you cannot spare. A shallow tub
-   of the same volume sits on a higher shelf and slides out rather than lifting overhead.
+1. **Source** — **stainless half-size steam table pan, 6 in deep** (12.8 x 10.4 x 5.9 in,
+   ~13 L to the brim), with lid. 2.5 gal sits at ~4.3 in depth with freeboard.
+   **Not a tall bucket** — 2.5 gal is 577 in³, only 5.1 in deep in a 12 in bucket, so a
+   tall vessel spends cabinet height on air and costs lift you cannot spare. 304 stainless
+   matches the tray, is opaque (better algae exclusion than translucent plastic), and its
+   lid can be drilled cleanly for the pump cord, feed line and probe leads.
    Holds solution, pump, and the pH / EC / water-temp probes. Small volume: pH/EC swing
    faster, top-off more often. Fine for one CMU. Probes sit in **still water** — off the
-   walls and out of the pump's turbulence.
+   walls and out of the pump's turbulence, which also avoids any fringe effect from the
+   metal vessel. Do not bond the pan to ground; the EZO isolators already handle stray
+   voltage paths.
 2. **Lift** — SICCE Micra Plus, submersible. Read its curve, not its headline: **158 GPH
    at zero head, 0 GPH at 2.8 ft** (its shutoff). Like most aquarium pumps it is
    high-flow / low-pressure — built to circulate inside a tank, not to lift.
@@ -108,7 +112,11 @@ Cabinet plinth at **24 in**, CMU on standoffs in a lift-out tray, mast at the ba
 | **Static lift, low water → emitters** | **17.0 in · 1.42 ft** |
 
 Plan: cabinet **20 x 14 in** (depth set by the reservoir, not the block); CMU 15.625 x
-7.625 actual; tray 18 x 10 leaving a ~1.2 in gap around the block.
+7.625 actual. The reservoir pan at 12.8 x 10.4 leaves ~7 in of cabinet width for the dry
+bay.
+
+**Tray is a flush rebate**, not a raised collar — it drops into the cabinet's top frame and
+becomes the top surface, flush with the sides. One clean volume, no step.
 
 **Build the reservoir shelf adjustable** — slotted supports. 1.42 ft is comfortable on
 paper, but Stage 0.2 decides it, and moving the shelf an inch afterwards should not mean
@@ -227,9 +235,22 @@ To buy:
 - [ ] Acrylic stock for the enclosure (fabricate in-house)
 - [ ] pH / EC calibration solutions
 
+## Deferred to v2
+
+- **Rain from overhead.** Emitters raining across the canopy is wanted as a visual effect
+  but forces too many departures at once: two ~1 GPH emitters read as a leak rather than
+  rain, a multi-outlet bar needs pressure the SICCE cannot make, lift to fixture height
+  runs 2.1-2.7 ft (fragile to dead), the tray must grow to catch splash and drift, and
+  overhead water on ranunculus invites botrytis and powdery mildew — every source advises
+  watering at the base. The v2 path, if taken: a higher-head pump (>=6 ft), a second
+  circuit on a solenoid so rain is a brief scheduled event separate from the irrigation
+  that keeps the plant alive, timed for morning so foliage dries across the photoperiod,
+  with the fan ramping after.
+- Red/blue supplement channels (see Lighting decision).
+- Recirculation of runoff (see Water loop).
+
 ## Open items
 
-- Red/blue supplement channels — concept-alignment decision, deferred.
 - Enclosure design — its own print/laser task.
 - 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;
