@@ -151,8 +151,8 @@ mast is thin where it carries only the drip line and sensor loom, and thickens i
 instrument head where the apparatus lives — dimension as a byproduct of contents.
 
 - **Shaft:** 2 x 3 in hollow section, plinth top to 46 in. Tubing and cable inside.
-- **Head:** **9.5 x 12 x 3.5 in** acrylic, 46 to 58 in, sized around two Simpson 3-1/2"
-  movements and the 7.3" e-ink. Front panel on its face, panel centre at 52 in — read
+- **Head:** **9.5 x 12 x 3.5 in** acrylic, 46 to 58 in, sized around two Weston 301 3-1/2"
+  centre-zero movements and the 7.3" e-ink. Front panel on its face, panel centre at 52 in — read
   standing, while tending. Fabrication schedules: INSTRUMENT_HEAD_PLANS.md.
 - **Fixture:** hangs from the **head's underside** at 46 in, cantilevered ~10 in forward to
   centre over the block. Hanging it from the head rather than the shaft puts the moment over
@@ -180,12 +180,15 @@ instrument head where the apparatus lives — dimension as a byproduct of conten
   installed, move the pump relay to a free GPIO** — GPIO23 (pin 16) is plain, unused, and
   clear of PWM (12/13/18/19), SPI (8-11) and the Inky buttons. One config line; until then
   the bench keeps running on 17 (code takes precedence; the Inky is not on the bench yet).
-- **Head depth holds at 3.5 in.** A 2-1/2" Simpson movement needs 1.85 in behind the panel
-  (1.15 body + 0.70 terminal studs); a 3-1/2" needs 1.92. Pi + stacked HATs ~1.5 in beside
-  them, not behind. 3.5 in is comfortable for either meter size.
-- **Meter size settled: 3-1/2" (Model 1327).** Two 3.25 in bezels at a 0.75 in gap span
-  7.00 in; the face goes to 9.50 wide to give them 1.125 in margins, and the e-ink (6.85
-  board, 6.30 window) sits inside that span. Head height to 12.00 for the taller bezel row.
+- **Head depth holds at 3.5 in.** The figures this was sized on (a Simpson 1327 at 1.92 in
+  behind the panel) no longer apply — the movements are **Weston 301s, and their depth is
+  pending measurement on arrival**. Pi + stacked HATs ~1.5 in sit beside the movements, not
+  behind. 3.5 in was comfortable for the Simpson; confirm it for the Weston before cutting.
+- **Meters: Weston 301, 3-1/2", centre-zero — 30-0-30 µA and 100-0-100 µA.** The face is
+  9.50 wide for two 3.50 in bezels with margins, and the e-ink (6.85 board, 6.30 window)
+  sits inside that span. Head height 12.00. **The panel cut and stud pattern in
+  INSTRUMENT_HEAD_PLANS.md are still Simpson figures — caliper the Weston bezels and recut
+  the schedule before drilling.** The face is emulated at `/panel` on the dashboard.
 
 ## Lighting decision
 

@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-04 (the station in CAD)
+
+### Added
+- **`cad/` — the V1 station modelled in build123d**, exported as STEP for finishing in Fusion. Plinth carcass on a recessed base with the rail at 24, the wet/dry divider, the adjustable reservoir shelf and a full-height rear panel; 16 ga stainless tray nesting inside the carcass top with pad cutouts and the mast notch; 2 × 3 HSS mast from the carcass floor to 46 with its 1/4 in flange; the five-sided acrylic head and its removable face; the CMU, media, reservoir and LED fixture as reference envelopes. `python cad/build.py` writes the assembly and each part to `cad/out/`.
+- **`cad/growlab_cad/params.py`** — every dimension as data, in inches, each cited to the document it came from and every invented value marked `CHOICE`. The physical sibling of `panel_geometry.py`.
+- **The head's face is read from `pi/dashboard/panel_geometry.py`**, not restated — the acrylic that gets cut, the `/panel` emulator and the docs' hole schedule are one set of numbers.
+- **`cad/render.py`** — front, side and plan elevations as SVG, hidden lines dashed.
+- **`.github/workflows/cad.yml`** — on any change to `cad/` or the panel geometry: install the `cad` extra, run the CAD tests, build, render, and publish `cad/out/` as a workflow artifact. STEP files for Fusion without installing the kernel locally.
+- **50 tests.** `test_cad_params.py` holds `params.py` against the docs' height table exactly, no kernel needed. `test_cad_geometry.py` builds every part and asserts where it sits, that nothing fabricated interferes, that the face reads the panel geometry, and that the dial is a witness mark until a cut is supplied.
+- A `cad` extra in `pyproject.toml`, separate from `dev` because the OCP kernel is ~150 MB and the Pi never needs it.
+
+### Found
+- **The docs' 14 in cabinet cannot hold the docs' reservoir pan and the mast inside the footprint.** Front panel 0.75 + clearance 0.25 + pan 10.4 + mast 3.0 + rear panel 0.75 = **15.15 in required of 14.00**. The model reports it as a design conflict rather than resolving it silently; the option table is in the PR. Rotating the mast to 3 across × 2 deep on a 15 in cabinet, or keeping it as drawn on 16 in, both clear by 0.85.
+- **Centred in the tray, the block also ran into the mast** — back face at 10.81 against a mast front at 10.25. Resolved by sitting the block forward, 1.0 in behind the tray's front wall, which clears by 0.81 and puts the vessel in front of the column: the composition the piece wants anyway. The doc never said centred.
+- **The "~10 in" fixture cantilever is not a real number.** It came from the section drawing, which drew the mast behind the cabinet; the doc's "tray notched to clear" puts it inside. With the mast inside and the block forward the cantilever derives to **6.1 in**. `params.FIXTURE_CANTILEVER` computes it rather than restating the 10.
+
+### Fixed
+- **`V1_PHYSICAL_BUILD.md` still specified Simpson 1327 movements** in the head internals — the third document found carrying that. Reconciled to the Weston 301s, with the head depth and the panel cut marked pending measurement.
+
+### Deliberately not modelled
+- The dial cut diameter (pending calipers; the face carries a witness ring at the bezel OD instead), the dial mounting studs (Simpson pattern), the Inky standoffs ("transfer from the board in hand"), and the LED heatsink (no dimensions exist — an envelope at the right place).
+
 ## 2026-09-04 (Pi Inspect)
 
 ### Added
