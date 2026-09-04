@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-04 (Pi Inspect)
+
+### Added
+- **`.github/workflows/pi-inspect.yml`** — a fixed menu of operations runnable on the Pi from the Actions tab: git state and diff, service status, both journals, disk usage, `sensor scan/status`, `ph-slope`, `meter status`, live control state, the test suite, a service restart, and a narrow cleanup of six enumerated stale files. The runner is the only way onto the box, and reading its state should not require someone at the keyboard.
+
+### Notes
+- **A `choice` input, not a command string, on purpose.** A workflow accepting an arbitrary command would be remote code execution on a machine inside a home network, available to anyone who can dispatch workflows on this repository. Every command that can run is written out in the file. Adding an operation is a small reviewable pull request; the menu stays the boundary.
+- `clean-stale-leftovers` is the only operation that mutates the working tree. It deletes six enumerated paths and refuses any that turn out to be tracked, so it cannot become a general delete.
+
 ## 2026-09-03 (runner setup script fix)
 
 ### Fixed
