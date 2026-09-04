@@ -276,7 +276,11 @@ def cutlist() -> dict:
                  "note": "floor to cap; side line pass; 4 rear bolt holes"},
                 {"part": "Mast cap", "qty": 1, "length": P.MAST_D,
                  "note": f"{P.MAST_CAP_T} plate, {P.MAST_W} x {P.MAST_D}, welded"},
-                {"part": "Fixture arm", "qty": 1, "length": P.FIXTURE_ARM_W, "note": "see fixture.py"},
+                {"part": "Fixture arm, forward", "qty": 1,
+                 "length": (P.MAST_Y + P.MAST_D / 2) - (P.FIXTURE_Y + P.FIXTURE_D / 2 - P.FIXTURE_BAR_D),
+                 "note": f"{P.FIXTURE_ARM_W} x {P.FIXTURE_ARM_T} flat, welded to the cap"},
+                {"part": "Fixture arm, cross bar", "qty": 1, "length": P.FIXTURE_W,
+                 "note": "along the fixture's back edge; spans the mast's offset"},
             ],
         },
         "sheet": [

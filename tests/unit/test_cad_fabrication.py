@@ -229,6 +229,14 @@ class TestTheCutList:
         assert steel["Frame leg"]["length"] + P.FRAME_TUBE == pytest.approx(P.SHADOW_GAP_H)
         assert steel["Frame ring, front/back"]["length"] == pytest.approx(
             P.PLINTH_W - 2 * P.FRAME_LEG_INSET)
+        # The arm's members are its real lengths, not its section.
+        from cad.growlab_cad import fixture
+
+        from cad.growlab_cad._shapes import bbox_in
+
+        arm = bbox_in(fixture.build_arm())
+        assert steel["Fixture arm, cross bar"]["length"] == pytest.approx(arm["x1"] - arm["x0"])
+        assert steel["Fixture arm, forward"]["length"] == pytest.approx(arm["y1"] - arm["y0"])
         sheet = {r["part"]: r for r in data["sheet"]}
         assert sheet["Instrument plate"]["blank"] == [FACE_WIDTH, FACE_HEIGHT]
         assert sheet["Instrument case body"]["blank"][0] == pytest.approx(
