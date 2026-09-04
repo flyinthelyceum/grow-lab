@@ -8,6 +8,7 @@ pip install -e ".[cad]"      # build123d + the OCP kernel, ~150 MB
 python cad/build.py          # writes cad/out/
 python cad/build.py --check  # build and report, write nothing
 python cad/render.py         # front / side / plan elevations as SVG
+python cad/viewer.py         # one-file 3D viewer with the height variants
 pytest tests/unit/test_cad_*.py
 ```
 
@@ -28,6 +29,8 @@ station is arranged the way it is.
 | `fixture.py` | The arm and cross bar from the mast's cap, and the LED fixture envelope — reference |
 | `cmu.py` | The block, at actual size with two cores — reference |
 | `assembly.py` | Everything, labelled, plus the interference and design-conflict checks |
+| `viewer.py` + `viewer_template.html` | Tessellates every part at several `PLINTH_H` and writes one HTML file: orbit, part toggles, section cut, datums, a stand-in-front eye-height view |
+| `fusion/` | The Fusion 360 script and the iteration loop — see `fusion/README.md` |
 
 Every part is built in world coordinates — floor at Z = 0, plinth width
 centred on X, front face at Y = 0 — so assembly is composition and the tests
@@ -72,12 +75,26 @@ it.
 `PLINTH_H` is the one knob. It moves the panel, the block and the light
 together and leaves the lift alone.
 
+## Looking at it
+
+`viewer.html` (in `cad/out/` and in the CI artifact) is the model in a
+browser, no install: orbit, toggle parts, cut a section on any axis, read
+the height datums, flip between cabinet heights, and stand where a person
+stands — eye at 62 in, 36 in in front of the face — to judge the panel. It
+is the fast way to look before deciding; `PLINTH_H` variants are built by
+setting `GROWLAB_PLINTH_H` in the environment, which `params.py` honours for
+that one knob.
+
 ## Into Fusion
 
-STEP is tagged in millimetres and built at true size; set the document units
-to inches after import to read dimensions as the docs give them. Parts arrive
-as named components. The front panel, the face and the door are flat plates
-in place; lay them out for the laser or the saw from there.
+STEP is tagged in millimetres and built at true size; the sync script sets
+the document units to inches so dimensions read as the docs give them. Parts
+arrive as named components. The front panel, the face and the door are flat
+plates in place; lay them out for the laser or the saw from there.
+
+The loop — a Fusion project with the import as a versioned design, a
+separate finishing design that links it, and a script that turns "new
+artifact" into "new version" — is in `fusion/README.md`.
 
 ## Tests
 

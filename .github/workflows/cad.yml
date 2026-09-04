@@ -56,6 +56,11 @@ jobs:
       - name: Render elevations
         run: python cad/render.py
 
+      - name: Build the browser viewer
+        # One HTML file with every part embedded and the height variants;
+        # opens straight from the artifact, no server.
+        run: python cad/viewer.py
+
       - name: Summary
         run: |
           {
@@ -78,7 +83,7 @@ jobs:
           print(f"- dial cut: {'not cut — pending calipers' if r['dial_cut_diameter'] is None else r['dial_cut_diameter']}")
           PY
             echo ""
-            echo "STEP files and elevations are in the **growlab-v1-station-cad** artifact."
+            echo "STEP files, elevations and \`viewer.html\` are in the **growlab-v1-station-cad** artifact."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4

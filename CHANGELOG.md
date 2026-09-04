@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-04 (looking at it)
+
+### Added
+- **`cad/viewer.py`** — the station as one HTML file: every part tessellated and embedded, three.js from the CDN, no server. Orbit, part toggles by material, a section cut on any axis, the height stack as labelled datums, and a **stand-in-front view** with the eye at 62 in and a 5 ft 8 figure, so the panel-centre question can be looked at from where a person stands. Built at three cabinet heights (36 / 40 / 44) to flip between. In the CI artifact alongside the STEP.
+- **`GROWLAB_PLINTH_H`** — `params.py` honours this one environment override so a sweep can build variants without editing the file. Only the open knob is exposed; every other number keeps its provenance.
+- **`cad/fusion/`** — the Fusion 360 loop. `growlab_sync.py` imports a STEP into a new document in inches, applies appearances by component name, and saves it as a new *version* of `growlab_v1_station` in the **GROWLAB** project, so anything that links it gets an update badge. `README.md` sets out the discipline: dimensional work in code, cosmetic and hardware work in a separate finishing design attached by joint, never by feature on the import. The script is written against the API reference and has not been run — there is no Fusion here — so the first run is the test.
+- `cad.yml` builds the viewer into the artifact.
+
 ## 2026-09-04 (console layout)
 
 ### Changed
