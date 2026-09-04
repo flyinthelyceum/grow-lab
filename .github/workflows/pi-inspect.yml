@@ -1,0 +1,228 @@
+name: Pi Inspect
+
+# A fixed set of operations that can be run on the Pi from the Actions tab.
+#
+# Nobody can SSH to the box: no route to the LAN, and the Cloudflare tunnel
+# publishes only HTTP. The self-hosted runner is the only way in, so this makes
+# a curated slice of it available for diagnosis and routine maintenance.
+#
+# Deliberately a `choice` input, not a free-form command. Every command that
+# can run is written out below. Nothing else can, whatever is passed in.
+#
+# A workflow that took an arbitrary command string would be remote code
+# execution on a machine inside a home network, reachable by anyone able to
+# dispatch workflows on this repository. That is a large thing to install for
+# convenience. Adding an operation here is a two-minute pull request and it is
+# reviewable; the menu stays the boundary.
+#
+# Still true, and worth keeping in view:
+#   * workflow_dispatch only. Merging a commit never triggers this.
+#   * Runs as `jared`, not root. sudo is limited by
+#     /etc/sudoers.d/growlab-runner to restart/start/stop and journalctl on
+#     growlab and growlab-dashboard. This workflow does not widen that.
+#   * contents: read — the job token cannot write to the repository.
+#   * Every dispatch is recorded in the Actions history with the operation and
+#     who asked for it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "What to run on the Pi"
+        required: true
+        type: choice
+        options:
+          - git-status
+          - git-diff
+          - git-log
+          - services
+          - logs-orchestrator
+          - logs-dashboard
+          - disk
+          - sensor-scan
+          - sensor-status
+          - ph-slope
+          - meter-status
+          - control-state
+          - pytest
+          - restart-services
+          - clean-stale-leftovers
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pi-inspect
+  cancel-in-progress: false
+
+env:
+  GROWLAB_DIR: /home/jared/grow-lab
+
+jobs:
+  run:
+    name: ${{ inputs.operation }}
+    runs-on: [self-hosted, growlab]
+    timeout-minutes: 20
+
+    steps:
+      - name: Run
+        run: |
+          set +e
+          cd "$GROWLAB_DIR" || { echo "::error::no clone at $GROWLAB_DIR"; exit 1; }
+          echo "host $(hostname)  ·  $(date -u +%FT%TZ)  ·  $(pwd)"
+          echo "=================================================================="
+
+          # The venv holds the growlab CLI and pytest. Only the operations that
+          # need it activate it, so a git or systemd query still works if the
+          # venv is ever broken.
+          activate() {
+              # shellcheck disable=SC1091
+              . "$GROWLAB_DIR/.venv/bin/activate" || {
+                  echo "::error::could not activate $GROWLAB_DIR/.venv"; exit 1; }
+          }
+
+          case "${{ inputs.operation }}" in
+
+            git-status)
+              echo "## branch and head"
+              git status -sb
+              echo
+              echo "## last 3 commits"
+              git log --oneline -3
+              echo
+              echo "## modified tracked files"
+              git diff --stat
+              echo
+              echo "## untracked files"
+              git ls-files --others --exclude-standard
+              ;;
+
+            git-diff)
+              echo "## diff of modified tracked files"
+              git --no-pager diff
+              ;;
+
+            git-log)
+              git --no-pager log --oneline -25
+              ;;
+
+            services)
+              for unit in growlab growlab-dashboard; do
+                echo "## $unit"
+                systemctl is-active "$unit" || true
+                systemctl --no-pager --full status "$unit" | sed -n '1,14p' || true
+                echo
+              done
+              echo "## runner"
+              systemctl --no-pager status 'actions.runner.*' 2>/dev/null | sed -n '1,10p' || \
+                echo "(runner unit not visible to this user)"
+              ;;
+
+            logs-orchestrator)
+              sudo journalctl -u growlab -n 200 --no-pager
+              ;;
+
+            logs-dashboard)
+              sudo journalctl -u growlab-dashboard -n 200 --no-pager
+              ;;
+
+            disk)
+              echo "## filesystems"
+              df -h
+              echo
+              echo "## largest things under the home directory"
+              du -h -d 2 "$HOME" 2>/dev/null | sort -rh | head -25
+              echo
+              echo "## database"
+              ls -lh "$GROWLAB_DIR"/*.db "$GROWLAB_DIR"/data/*.db 2>/dev/null || \
+                echo "(no .db in the usual places)"
+              ;;
+
+            sensor-scan)
+              activate
+              growlab sensor scan
+              ;;
+
+            sensor-status)
+              activate
+              growlab sensor status
+              ;;
+
+            ph-slope)
+              activate
+              echo "Slope reflects the LAST calibration, not the present moment."
+              echo "Calibrate first or this number means nothing. See docs/BOM.md."
+              echo
+              growlab sensor ph-slope
+              ;;
+
+            meter-status)
+              activate
+              growlab meter status
+              ;;
+
+            control-state)
+              curl -s --max-time 10 http://127.0.0.1:8000/api/control || \
+                echo "(dashboard did not answer)"
+              echo
+              curl -s --max-time 10 http://127.0.0.1:8000/api/meters/status || true
+              echo
+              ;;
+
+            pytest)
+              activate
+              python -m pytest -q
+              ;;
+
+            restart-services)
+              sudo systemctl restart growlab growlab-dashboard
+              sleep 5
+              for unit in growlab growlab-dashboard; do
+                printf '%s: ' "$unit"
+                systemctl is-active "$unit" || true
+              done
+              echo
+              echo "## health"
+              curl -s -o /dev/null -w 'HTTP %{http_code}\n' --max-time 10 \
+                http://127.0.0.1:8000/api/system/status || echo "no answer"
+              ;;
+
+            clean-stale-leftovers)
+              # Exactly these six paths, enumerated so this cannot be
+              # repurposed into a general delete. Each is a leftover with a
+              # tracked successor, established in the session of 2026-09-03:
+              # five predate the move into static/ and templates/, and
+              # tsl2591.py was removed from git in b7d5664 with the switch to
+              # AS7341. They block the deploy job's dirty-tree check.
+              for f in \
+                  pi/dashboard/art.html \
+                  pi/dashboard/art.js \
+                  pi/dashboard/art-core.js \
+                  pi/dashboard/ec-ring.js \
+                  pi/dashboard/ph-ring.js \
+                  pi/drivers/tsl2591.py; do
+                if [ -e "$f" ]; then
+                  if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+                    echo "REFUSED $f — it is tracked, so this is not a leftover"
+                  else
+                    rm -f "$f" && echo "removed  $f"
+                  fi
+                else
+                  echo "absent   $f"
+                fi
+              done
+              echo
+              echo "## working tree after"
+              git status --porcelain
+              ;;
+
+            *)
+              echo "::error::unknown operation: ${{ inputs.operation }}"
+              exit 1
+              ;;
+          esac
+
+          rc=$?
+          echo "=================================================================="
+          echo "exit: $rc"
+          exit $rc

@@ -144,6 +144,33 @@ For when the box is down and the fix is obvious. Not a habit.
 **Check what is deployed** — the run summary reports the before and after SHA
 and the commit subject.
 
+## Running things on the Pi: `Pi Inspect`
+
+`.github/workflows/pi-inspect.yml` exposes a fixed menu of operations on the
+box — git state, service status, journals, disk, sensor and meter CLI
+commands, the test suite, a service restart. Actions tab → *Pi Inspect* → *Run
+workflow* → pick one.
+
+It exists because the runner is the only way onto the Pi, and reading state
+should not require someone standing at the keyboard.
+
+**It is a `choice` input, not a command string, and that is the whole design.**
+A workflow taking an arbitrary command would be remote code execution on a
+machine inside a home network, available to anyone who can dispatch workflows
+here. Every command that can run is written out in the file; nothing else can,
+whatever is passed in. Adding an operation is a small pull request — reviewable,
+and the menu stays the boundary.
+
+The rest of the posture is the same as the deploy job: `workflow_dispatch`
+only so a merge never triggers it, running as `jared` rather than root with
+sudo still limited to the two units by `/etc/sudoers.d/growlab-runner`,
+`contents: read` so the token cannot write, and every dispatch recorded in the
+Actions history with the operation and who asked for it.
+
+`clean-stale-leftovers` is the one operation that changes the working tree. It
+deletes six enumerated paths and refuses any that turn out to be tracked, so it
+cannot be repurposed into a general delete.
+
 ## Concurrency is scoped to the deploy job, deliberately
 
 Only one deploy runs at a time — two racing on one Pi would interleave a git
