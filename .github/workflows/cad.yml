@@ -66,11 +66,15 @@ jobs:
           r = json.load(open("cad/out/report.json"))
           d = r["depth_budget"]
           print(f"- static lift: **{r['static_lift_in']:.1f} in**")
-          print(f"- fixture cantilever: **{r['fixture_cantilever_in']:.2f} in**")
-          print(f"- depth budget at the mast: {d['required']:.2f} in required of {d['available']:.2f} → **{d['slack']:+.2f} in**")
+          print(f"- panel centre: **{r['panel_centre_in']:.1f} in**")
+          print(f"- fixture moment arm at the mast: **{r['fixture_cantilever_in']:.2f} in**")
+          print(f"- depth budget through the wet bay: {d['required']:.2f} in required of {d['available']:.2f} → **{d['slack']:+.2f} in**")
+          print(f"- rear door opening: {r['rear_door_opening_in']['width']:.2f} × {r['rear_door_opening_in']['height']:.2f} in")
           print(f"- fabricated interferences: **{len(r['interferences'])}**")
           if r["reference_clashes"]:
               print(f"- design conflicts (reference vs fabricated): " + ", ".join(f"{a}∩{b}" for a, b, _ in r["reference_clashes"]))
+          else:
+              print("- design conflicts: **none**")
           print(f"- dial cut: {'not cut — pending calipers' if r['dial_cut_diameter'] is None else r['dial_cut_diameter']}")
           PY
             echo ""

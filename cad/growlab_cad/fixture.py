@@ -1,13 +1,12 @@
-"""The LED fixture — an envelope, not a part.
+"""The LED fixture — an envelope, not a part — and the arm that carries it.
 
-"Fixture: hangs from the head's underside at 46 in, cantilevered forward to
-centre over the block. Hanging it from the head rather than the shaft puts the
-moment over the column instead of bending it." — V1_PHYSICAL_BUILD.md § Mast
-
-Two LM301H boards on a heatsink. No dimensions exist for the heatsink, so this
-is a box of plausible size at the right place, plus the arm from the flange
-boss that carries it. It is here so the assembly reads correctly and so the
-cantilever — derived from where the mast and block actually are — is visible.
+Two LM301H boards on a heatsink, hung over the block from the mast. No
+dimensions exist for the heatsink, so this is a box of plausible size at the
+right place. The arm is real enough to check: it runs forward from the mast's
+cap over the fixture's back edge, and a cross bar along that edge carries the
+fixture, whose centre is off to the side of the mast (the mast is in the dry
+bay; the block is centred). The moment arm at the mast — mast centreline to
+fixture centreline — is ``params.FIXTURE_CANTILEVER``, derived not asserted.
 """
 
 from __future__ import annotations
@@ -16,27 +15,30 @@ from build123d import Part
 
 from . import params as P
 from ._shapes import box, labelled
-from .mast import shaft_top
+
+
+def arm_z0() -> float:
+    """The arm sits on the mast's cap."""
+    return P.MAST_TOP
 
 
 def build_arm() -> Part:
-    """From the shaft's front face, just under the flange, forward to the fixture.
-
-    Welded to the shaft rather than passing through it. Its rear end is
-    coplanar with the shaft's front wall — touching, not overlapping.
-    """
-    z_top = shaft_top()
-    z0 = z_top - P.FIXTURE_ARM_T
-    shaft_front = P.MAST_Y - P.MAST_D / 2
-    length = shaft_front - P.FIXTURE_Y + P.FIXTURE_D / 2
-    y_centre = shaft_front - length / 2
-    return labelled(box(P.FIXTURE_ARM_W, length, P.FIXTURE_ARM_T, at=(P.MAST_X, y_centre, z0)), "fixture_arm")
+    """From the back of the mast's cap forward to the fixture's back edge, plus
+    the cross bar along that edge out to both ends of the fixture."""
+    z0 = arm_z0()
+    y_back = P.MAST_Y + P.MAST_D / 2
+    bar_y1 = P.FIXTURE_Y + P.FIXTURE_D / 2
+    bar_y0 = bar_y1 - P.FIXTURE_BAR_D
+    forward = box(P.FIXTURE_ARM_W, y_back - bar_y0, P.FIXTURE_ARM_T,
+                  at=(P.MAST_X, (y_back + bar_y0) / 2, z0))
+    bar = box(P.FIXTURE_W, P.FIXTURE_BAR_D, P.FIXTURE_ARM_T,
+              at=(P.FIXTURE_X, (bar_y0 + bar_y1) / 2, z0))
+    return labelled(forward + bar, "fixture_arm")
 
 
 def build_envelope() -> Part:
-    z0 = shaft_top() - P.FIXTURE_ARM_T - P.FIXTURE_H
     return labelled(
-        box(P.FIXTURE_W, P.FIXTURE_D, P.FIXTURE_H, at=(P.CMU_X, P.FIXTURE_Y, z0)),
+        box(P.FIXTURE_W, P.FIXTURE_D, P.FIXTURE_H, at=(P.FIXTURE_X, P.FIXTURE_Y, P.FIXTURE_Z)),
         "led_fixture_envelope",
     )
 

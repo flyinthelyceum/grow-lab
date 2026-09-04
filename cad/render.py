@@ -10,7 +10,7 @@ against the other by eye.
 
 These are for looking at, not for fabricating from: the STEP is the
 fabrication source. But a plan view is the fastest way to see that the
-reservoir and the mast want the same three inches.
+pan, the console bay and the rear door all fit in the depth.
 """
 
 from __future__ import annotations
@@ -31,25 +31,29 @@ OUT = REPO / "cad" / "out"
 # Each view: name, where the camera sits (mm), which way is up, what it looks at.
 # Distances are large so the projection is effectively orthographic.
 FAR = 5000.0
+_ZC = P.MAST_TOP / 2 * IN
+_YC = P.PLINTH_D / 2 * IN
 VIEWS = {
-    "front": dict(viewport_origin=(0, -FAR, 700), viewport_up=(0, 0, 1), look_at=(0, 0, 700)),
-    "side": dict(viewport_origin=(FAR, 180, 700), viewport_up=(0, 0, 1), look_at=(0, 180, 700)),
-    "plan": dict(viewport_origin=(0, 180, FAR), viewport_up=(0, 1, 0), look_at=(0, 180, 0)),
+    "front": dict(viewport_origin=(0, -FAR, _ZC), viewport_up=(0, 0, 1), look_at=(0, 0, _ZC)),
+    "side": dict(viewport_origin=(FAR, _YC, _ZC), viewport_up=(0, 0, 1), look_at=(0, _YC, _ZC)),
+    "plan": dict(viewport_origin=(0, _YC, FAR), viewport_up=(0, 1, 0), look_at=(0, _YC, 0)),
 }
 
 # Datum lines on the front elevation, in inches. Labelled as the docs label them.
 DATUMS = [
     ("floor", 0.0),
     ("shadow gap", P.HEIGHTS.shadow_gap),
+    ("face bottom", P.HEIGHTS.face_bottom),
     ("reservoir shelf", P.HEIGHTS.reservoir_shelf),
+    ("panel centre", P.HEIGHTS.panel_centre),
     ("water low", P.HEIGHTS.water_low),
+    ("face top", P.HEIGHTS.face_top),
     ("tray floor", P.HEIGHTS.tray_floor),
     ("tray rim", P.HEIGHTS.tray_rim),
-    ("CMU top", P.HEIGHTS.cmu_top),
     ("emitters", P.HEIGHTS.emitter),
-    ("head bottom / fixture", P.HEIGHTS.head_bottom),
-    ("panel centre", P.HEIGHTS.panel_centre),
-    ("head top", P.HEIGHTS.head_top),
+    ("CMU top", P.HEIGHTS.cmu_top),
+    ("fixture", P.HEIGHTS.fixture),
+    ("mast top", P.HEIGHTS.mast_top),
 ]
 
 
@@ -97,15 +101,21 @@ def _add_datums(path: Path) -> None:
                   f'width="{vw + margin:.1f}mm" height="{vh + 2 * pad:.1f}mm"', text, count=1)
 
     lines = ['<g id="datums" font-family="ui-monospace, Menlo, monospace" font-size="7.5">']
-    for label, z in DATUMS:
+    prev_z = None
+    for label, z in sorted(DATUMS, key=lambda d: d[1]):
         y = floor_y - z * IN
         lines.append(
             f'<line x1="{vx - margin + 2:.1f}" y1="{y:.1f}" x2="{vx + vw:.1f}" y2="{y:.1f}" '
             f'stroke="#c8871f" stroke-width="0.9" stroke-dasharray="6 4" opacity="0.85"/>'
         )
+        # Two datums within half an inch of each other: label the upper one
+        # above its line and the lower one below, so neither hides the other.
+        below = prev_z is not None and z - prev_z < 0.5
+        ty = y + 8.5 if below else y - 2.2
         lines.append(
-            f'<text x="{vx - margin + 3:.1f}" y="{y - 2.2:.1f}" fill="#8a5a10">{label} · {z:g} in</text>'
+            f'<text x="{vx - margin + 3:.1f}" y="{ty:.1f}" fill="#8a5a10">{label} · {z:g} in</text>'
         )
+        prev_z = z
     lines.append("</g>")
     text = text.replace("</svg>", "\n".join(lines) + "\n</svg>", 1)
     path.write_text(text)

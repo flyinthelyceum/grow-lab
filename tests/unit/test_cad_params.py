@@ -16,20 +16,25 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from cad.growlab_cad import params as P  # noqa: E402
+from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH, LAYOUTS  # noqa: E402
 
-# The table, verbatim from the doc.
+# The table, verbatim from the doc (console layout, 2026-09-04).
 DOC_HEIGHTS = {
     "shadow_gap": 2.0,
-    "reservoir_shelf": 12.0,
-    "water_low": 14.0,
-    "water_full": 16.1,
-    "tray_floor": 24.0,
-    "tray_rim": 26.0,
-    "cmu_underside": 24.75,
-    "media_surface": 30.9,
-    "emitter": 31.0,
-    "cmu_top": 32.4,
-    "fixture": 46.0,
+    "face_bottom": 22.2,
+    "panel_centre": 28.2,
+    "reservoir_shelf": 28.0,
+    "water_low": 30.0,
+    "water_full": 32.1,
+    "face_top": 34.2,
+    "tray_floor": 36.0,
+    "tray_rim": 38.0,
+    "cmu_underside": 36.75,
+    "media_surface": 42.9,
+    "emitter": 43.0,
+    "cmu_top": 44.4,
+    "fixture": 57.9,
+    "mast_top": 59.4,
 }
 
 
@@ -37,17 +42,52 @@ class TestHeightStackMatchesTheDocs:
     @pytest.mark.parametrize("name,expected", DOC_HEIGHTS.items())
     def test_height(self, name, expected):
         actual = getattr(P.HEIGHTS, name)
-        # The doc rounds the block figures to one decimal.
+        # The doc rounds to one decimal.
         assert actual == pytest.approx(expected, abs=0.05), name
 
-    def test_static_lift_is_seventeen_inches(self):
-        """The number the pump lives or dies by."""
-        assert P.HEIGHTS.static_lift == pytest.approx(17.0)
+    def test_static_lift_is_thirteen_inches(self):
+        """The number the pump lives or dies by — and the reason the pan sits
+        behind the console rather than under it."""
+        assert P.HEIGHTS.static_lift == pytest.approx(13.0)
+        assert P.HEIGHTS.static_lift <= 17.0, "the docs' design target for the SICCE"
 
-    def test_head_spans_46_to_58_with_centre_at_52(self):
-        assert P.HEIGHTS.head_bottom == 46.0
-        assert P.HEIGHTS.head_top == 58.0
-        assert P.HEIGHTS.panel_centre == 52.0
+    def test_cabinet_is_20_by_16_and_36_to_the_tray_floor(self):
+        assert (P.PLINTH_W, P.PLINTH_D, P.PLINTH_H) == (20.0, 16.0, 36.0)
+
+
+class TestTheFaceIsInTheFront:
+    def test_face_is_centred_on_the_cabinet(self):
+        assert P.FACE_X0 == pytest.approx(-FACE_WIDTH / 2)
+
+    def test_face_is_flush_with_the_front(self):
+        assert P.FACE_Y0 == 0.0
+
+    def test_face_clears_the_rail_by_its_margin(self):
+        assert P.FACE_Z1 + P.FACE_MARGIN == pytest.approx(P.RAIL_BOTTOM_Z)
+        assert P.FACE_Z1 - P.FACE_Z0 == pytest.approx(FACE_HEIGHT)
+
+    def test_lip_holds_the_corner_screws(self):
+        from pi.dashboard.panel_geometry import CORNER_SCREW_INSET
+
+        assert CORNER_SCREW_INSET + P.FACE_SCREW_DIA / 2 < P.FACE_LIP
+        assert CORNER_SCREW_INSET - P.FACE_SCREW_DIA / 2 > 0
+
+    @pytest.mark.parametrize("layout", LAYOUTS, ids=lambda l: l.id)
+    def test_every_layouts_elements_clear_the_lip(self, layout):
+        """Nothing that passes through the face may land on the front panel's lip."""
+        lip = P.FACE_LIP
+        for e in layout.elements:
+            if e.kind == "dial":
+                continue  # the bezel sits proud of the face; the cut is pending
+            assert e.left >= lip - 1e-9, (layout.id, e.id)
+            assert e.right <= FACE_WIDTH - lip + 1e-9, (layout.id, e.id)
+            assert e.bottom >= lip - 1e-9, (layout.id, e.id)
+            assert e.top <= FACE_HEIGHT - lip + 1e-9, (layout.id, e.id)
+
+    def test_console_is_as_deep_as_the_plans_need(self):
+        """INSTRUMENT_HEAD_PLANS.md § Depth stack: 'both fit inside 3.00 clear'."""
+        assert P.CONSOLE_D >= 3.0
+        assert P.CONSOLE_ELECTRONICS_D <= P.CONSOLE_D
 
 
 class TestDerivedGeometry:
@@ -55,29 +95,41 @@ class TestDerivedGeometry:
         assert P.TRAY_W == P.PLINTH_W - 2 * P.CARCASS_T
         assert P.TRAY_D == P.PLINTH_D - 2 * P.CARCASS_T
 
-    def test_mast_is_against_the_rear_panel(self):
+    def test_mast_is_against_the_rear_panel_in_the_dry_bay(self):
         back_face = P.MAST_Y + P.MAST_D / 2
         assert back_face == pytest.approx(P.PLINTH_D - P.REAR_PANEL_T)
+        assert P.MAST_X - P.MAST_W / 2 >= P.DRY_BAY_X0
+        assert P.MAST_X + P.MAST_W / 2 <= P.INSIDE_X1
+
+    def test_mast_is_as_drawn(self):
+        assert (P.MAST_W, P.MAST_D) == (2.0, 3.0)
+
+    def test_mast_clears_the_rear_door(self):
+        """The door is the wet bay's width; the mast is in the dry bay."""
+        door_x1 = P.DIVIDER_X - P.DIVIDER_T / 2
+        assert P.MAST_X - P.MAST_W / 2 > door_x1
 
     def test_fixture_cantilever_is_derived_not_asserted(self):
-        """The doc's "~10 in" assumed the mast behind the cabinet. It is inside,
-        and the block sits forward of it, so the cantilever is what those two
-        positions make it — and well short of 10."""
-        assert P.FIXTURE_CANTILEVER == pytest.approx(P.MAST_Y - P.CMU_Y)
+        assert P.FIXTURE_CANTILEVER == pytest.approx(P.MAST_Y - P.FIXTURE_Y)
         assert 4.0 < P.FIXTURE_CANTILEVER < 8.0
 
-    def test_block_clears_the_mast(self):
-        """Back face of the block in front of the front face of the mast."""
+    def test_block_is_centred_and_clears_the_mast(self):
+        assert P.CMU_Y == pytest.approx(P.PLINTH_D / 2)
         block_back = P.CMU_Y + P.CMU_W / 2
         mast_front = P.MAST_Y - P.MAST_D / 2
         assert block_back < mast_front, (block_back, mast_front)
 
     def test_block_sits_inside_the_tray(self):
-        tray_front_inside = P.CARCASS_T + P.TRAY_T
-        assert P.CMU_Y - P.CMU_W / 2 >= tray_front_inside
+        assert P.CMU_Y - P.CMU_W / 2 >= P.CARCASS_T + P.TRAY_T
+        assert P.CMU_Y + P.CMU_W / 2 <= P.PLINTH_D - P.CARCASS_T - P.TRAY_T
 
     def test_fixture_is_centred_over_the_block(self):
         assert P.FIXTURE_Y == P.CMU_Y
+        assert P.FIXTURE_X == P.CMU_X
+
+    def test_fixture_keeps_the_docs_distance_above_the_media(self):
+        """46 − 30.9 in the old stack; the light-to-canopy distance is what matters."""
+        assert P.FIXTURE_Z - P.MEDIA_SURFACE_Z == pytest.approx(15.0, abs=0.15)
 
     def test_pads_land_under_solid_block(self):
         """Under the corners, where a face shell meets an end shell."""
@@ -90,11 +142,19 @@ class TestDerivedGeometry:
         """Pending calipers. A number here would be a guess in the drawings."""
         assert P.DIAL_CUT_DIAMETER is None
 
+
+class TestTheReservoirFits:
     def test_wet_bay_leaves_room_for_the_dry_bay(self):
-        inside = P.PLINTH_W - 2 * P.CARCASS_T
-        dry = inside - P.WET_BAY_W - P.DIVIDER_T
-        assert dry >= 5.0, "dry bay too narrow for the Pi, PSU and driver"
+        assert P.DRY_BAY_W >= P.MAST_W + 2 * P.MAST_SIDE_CLEARANCE + 2.0, "room beside the mast for the PSU and driver"
         assert P.WET_BAY_W > P.RESERVOIR_L, "reservoir must fit the wet bay"
 
-    def test_reservoir_fits_the_cabinet_depth(self):
-        assert P.RESERVOIR_W < P.PLINTH_D - P.CARCASS_T - P.REAR_PANEL_T
+    def test_depth_budget_is_positive(self):
+        assert P.DEPTH.slack >= 0.25, P.DEPTH.slack
+        assert P.RESERVOIR_Y1 <= P.REAR_INSIDE_Y
+
+    def test_pan_can_be_lifted_off_the_shelf(self):
+        assert P.SHELF_H + P.RESERVOIR_H + P.RESERVOIR_LIFT_CLEARANCE <= P.RAIL_BOTTOM_Z
+
+    def test_water_lines_follow_the_shelf(self):
+        assert P.WATER_LOW == P.SHELF_H + 2.0
+        assert P.WATER_FULL == pytest.approx(P.SHELF_H + 4.1)

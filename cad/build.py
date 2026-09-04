@@ -29,7 +29,7 @@ sys.path.insert(0, str(REPO))
 
 from build123d import export_step  # noqa: E402
 
-from cad.growlab_cad import assembly, params  # noqa: E402
+from cad.growlab_cad import assembly, params, plinth  # noqa: E402
 from cad.growlab_cad._shapes import bbox_in  # noqa: E402
 
 OUT = REPO / "cad" / "out"
@@ -53,6 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     ref = assembly.reference()
     print(f"built {len(fab)} fabricated + {len(ref)} reference parts in {time.monotonic() - t0:.1f}s")
 
+    door_w, door_h = plinth.door_opening()
     report = {
         "units": "inches",
         "fabricated": {n: bbox_in(p) for n, p in fab.items()},
@@ -60,10 +61,13 @@ def main(argv: list[str] | None = None) -> int:
         "interferences": assembly.interferences(fab),
         "reference_clashes": assembly.reference_clashes(fab, ref),
         "depth_budget": {**vars(params.DEPTH), "required": params.DEPTH.required, "slack": params.DEPTH.slack},
-        "mast_rotated": params.MAST_ROTATED,
         "heights": vars(params.HEIGHTS),
         "static_lift_in": params.HEIGHTS.static_lift,
+        "panel_centre_in": params.PANEL_CENTRE_Z,
         "fixture_cantilever_in": params.FIXTURE_CANTILEVER,
+        "rear_door_opening_in": {"width": door_w, "height": door_h,
+                                 "pan_passes": door_w > params.RESERVOIR_L
+                                 and door_h > params.RESERVOIR_H + params.RESERVOIR_LIFT_CLEARANCE},
         "dial_cut_diameter": params.DIAL_CUT_DIAMETER,
         "params": _params_snapshot(),
     }
@@ -85,11 +89,22 @@ def main(argv: list[str] | None = None) -> int:
         print("DESIGN CONFLICT — reference envelope meets a fabricated part:")
         for r, f, v in report["reference_clashes"]:
             print(f"  {r} ∩ {f} = {v} in³")
+    else:
+        print("no design conflicts: reservoir, block, fixture and console electronics all clear")
 
     d = params.DEPTH
     verdict = "fits" if d.slack >= 0 else "DOES NOT FIT"
-    print(f"depth budget at the mast: {d.required:.2f} in required of {d.available:.2f} available "
-          f"→ {d.slack:+.2f} in ({verdict}); mast {'3 across × 2 deep' if params.MAST_ROTATED else '2 across × 3 deep'}")
+    print(f"depth budget through the wet bay: {d.required:.2f} in required of {d.available:.2f} available "
+          f"→ {d.slack:+.2f} in ({verdict})")
+    print(f"static lift, low water → emitters: {params.HEIGHTS.static_lift:.1f} in "
+          f"({params.HEIGHTS.static_lift / 12:.2f} ft); panel centre {params.PANEL_CENTRE_Z:.1f} in; "
+          f"overall height {params.MAST_TOP + params.FIXTURE_ARM_T:.1f} in")
+    # The pan has to be lifted off the shelf to come out, so the opening must
+    # clear its height plus the lift — the same condition the test asserts.
+    pan_h_lifted = params.RESERVOIR_H + params.RESERVOIR_LIFT_CLEARANCE
+    door_ok = door_w > params.RESERVOIR_L and door_h > pan_h_lifted
+    print(f"rear door opening {door_w:.2f} × {door_h:.2f}; pan {params.RESERVOIR_L} × {params.RESERVOIR_H} "
+          f"(+{params.RESERVOIR_LIFT_CLEARANCE} lift) {'passes' if door_ok else 'DOES NOT PASS'}")
 
     if params.DIAL_CUT_DIAMETER is None:
         print("dials: NOT CUT — witness rings at bezel OD; set DIAL_CUT_DIAMETER after calipers")

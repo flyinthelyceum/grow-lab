@@ -2,8 +2,32 @@
 
 This is the physical sibling of ``pi/dashboard/panel_geometry.py``: one place
 the numbers live, so the CAD, the emulator, and the fabrication docs cannot
-drift apart. Everything downstream (``plinth.py``, ``mast.py``, ``head.py`` …)
+drift apart. Everything downstream (``plinth.py``, ``mast.py``, ``face.py`` …)
 reads from here and computes nothing of its own.
+
+The layout (decided 2026-09-04, superseding the mast-and-head scheme)
+---------------------------------------------------------------------
+The instrument panel is in the **front face of the cabinet**, not in a head on
+top of the mast. Behind the face, a shallow dry **console bay** runs the full
+width; behind that, the **reservoir** in the wet bay and the **mast** in the
+dry bay, side by side. Access is from the **rear**: a door behind the wet bay
+for the reservoir, and the mast bolts to the fixed rear panel behind the dry
+bay. The cabinet is as tall as that stack needs. The mast is the 2 × 3 hollow
+section as drawn, carrying only the LED fixture, the drip line and the LED
+cable — the sensor loom never leaves the cabinet.
+
+Why it is arranged this way
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* **Depth.** The reservoir pan and the mast no longer share an X, so the old
+  conflict (pan 10.4 + mast 3.0 in a 14 in cabinet) is gone. The cabinet is
+  16 in deep because the console bay needs 3 in clear in front of the pan.
+* **Lift.** With the pan *behind* the console rather than under it, the
+  reservoir shelf can rise almost to the top rail. Static lift falls from the
+  docs' 17 in to ~13 in, on the same pump. Putting the pan under a console
+  deck instead would have pushed the lift to ~28 in — "fragile, avoid" on the
+  SICCE's curve — so that arrangement was not built.
+* **Access.** A steam-table pan slides out of a rear door at working height
+  rather than a stoop. The mast sits in the dry bay so the door is clear.
 
 Conventions
 -----------
@@ -12,18 +36,17 @@ Conventions
   ``IN`` at construction. Tests assert in inches.
 * **Origin** is on the floor, at the centre of the plinth's width, on the
   plinth's front face. ``+X`` is the viewer's right, ``+Y`` runs from the front
-  face toward the back, ``+Z`` is up. So the mast — "at the back" — sits at
-  high Y, and the instrument face the viewer reads is at low Y.
+  face toward the back, ``+Z`` is up.
 * **Provenance.** Each value carries the document and section it came from.
-  Values that appear in no document are marked ``CHOICE`` — they are design
-  decisions made here to produce a buildable model, and the person finishing
-  this in Fusion should treat them as proposals, not canon.
+  Values that appear in no document are marked ``CHOICE`` — design decisions
+  made here to produce a buildable model; the person finishing this in Fusion
+  should treat them as proposals, not canon.
 
 Two things are deliberately *not* asserted:
 
 * **The dial cut diameter.** The Weston 301 bezels are pending calipers; the
-  drawings' Ø 2.79 is a Simpson figure that does not apply. ``head.py`` engraves
-  a witness circle at the bezel OD unless a measured cut is supplied.
+  drawings' Ø 2.79 is a Simpson figure that does not apply. ``face.py``
+  engraves a witness circle at the bezel OD unless a measured cut is supplied.
 * **The LED fixture.** Two LM301H boards on a heatsink, cantilevered forward of
   the mast. No dimensions exist for the heatsink; the fixture here is an
   envelope so the assembly reads correctly, not a part to fabricate.
@@ -31,44 +54,64 @@ Two things are deliberately *not* asserted:
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
+
+from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH
 
 IN = 25.4  # millimetres per inch — the only unit conversion in the package
 
 
 # ---------------------------------------------------------------------------
 # Plinth (cabinet)
-# V1_PHYSICAL_BUILD.md § Station geometry (resolved 2026-09-03)
+# V1_PHYSICAL_BUILD.md § Station geometry
 # ---------------------------------------------------------------------------
 
 PLINTH_W = 20.0  # "cabinet 20 x 14 in" — width, viewer's left-right
-PLINTH_D = 14.0  # depth, "set by the reservoir, not the block"
-PLINTH_H = 24.0  # "Cabinet top / tray floor — 24 in"
+PLINTH_D = 16.0  # CHOICE: was 14. See DepthBudget — the console bay in front of the pan.
+PLINTH_H = 36.0  # CHOICE: "cabinet to necessary height". The one knob that moves
+                 # the panel, the block and the light together; the lift does
+                 # not change with it. Tray floor is at this height.
 
 SHADOW_GAP_H = 2.0  # "Recessed base / shadow gap — 0–2 in"
 SHADOW_GAP_INSET = 1.0  # CHOICE: how far the kick steps back under the sides
 
 CARCASS_T = 0.75  # CHOICE: 3/4 in sheet stock for sides, top frame and floor
 REAR_PANEL_T = 0.75  # "full-height rear panel in the carcass" — the mast fixes here
+DOOR_GAP = 0.0625  # CHOICE: clearance around the rear door
 
-SHELF_H = 12.0  # "Reservoir shelf — 12 in"
-SHELF_T = 0.75  # CHOICE: same stock as the carcass
-SHELF_SLOT_PITCH = 1.0  # "slotted supports … moving the shelf an inch afterwards"
-SHELF_SLOT_COUNT = 5  # CHOICE: ±2 in of adjustment around the design height
+# Console bay: the dry slice directly behind the front face, full width.
+# INSTRUMENT_HEAD_PLANS.md § Depth stack: meters, Inky, i3 and Pi "both fit
+# inside 3.00 clear".
+CONSOLE_D = 3.0  # clear depth behind the face
+CONSOLE_PARTITION_T = 0.5  # CHOICE: the wall between the console bay and the wet bay
 
-# Wet bay (reservoir) and dry bay (electronics), "hard-divided".
-# "The reservoir pan at 12.8 x 10.4 leaves ~7 in of cabinet width for the dry bay."
+# The acrylic face sits in a rebated opening in the front panel, centred on
+# the cabinet's width and as high as the rail allows. FACE_WIDTH/HEIGHT come
+# from panel_geometry so the opening and the face cannot disagree.
+FACE_MARGIN = 1.0  # CHOICE: from the face's top edge up to the rail
+FACE_LIP = 0.5  # CHOICE: the front panel's lip behind the face's edge. The F1–4
+                # screws at 0.375 inset land in it, and the OFFSET layout's high
+                # dial (bezel top at 11.75) still clears the through-opening.
+
+# Wet bay (reservoir) and dry bay (mast, PSU, driver), behind the console
+# partition, "hard-divided".
 DIVIDER_T = 0.5  # CHOICE
-WET_BAY_W = 13.0  # pan 12.8 + working clearance; dry bay gets the rest (~6.5)
+WET_BAY_W = 13.0  # pan 12.8 + working clearance; dry bay gets the rest (~5)
 
 # Reservoir: "stainless half-size steam table pan, 6 in deep (12.8 x 10.4 x 5.9)"
 # V1_PHYSICAL_BUILD.md § Water loop item 1. Modelled as a reference envelope.
 RESERVOIR_L = 12.8  # X, across the wet bay
 RESERVOIR_W = 10.4  # Y, front to back
 RESERVOIR_H = 5.9
-RESERVOIR_FRONT_CLEARANCE = 0.25  # CHOICE: behind the front panel
-WATER_LOW = 14.0  # "Water surface — low (design case) — 14.0 in"
-WATER_FULL = 16.1  # "Water surface — full — 16.1 in"
+RESERVOIR_FRONT_CLEARANCE = 0.25  # CHOICE: behind the console partition
+RESERVOIR_LIFT_CLEARANCE = 0.5  # CHOICE: above the pan rim, to lift it off the shelf
+WATER_LOW_ABOVE_SHELF = 2.0  # the docs' low line was 2 in above the shelf (12 → 14)
+WATER_FULL_ABOVE_SHELF = 4.1  # and the full line 4.1 above (12 → 16.1)
+
+SHELF_T = 0.75  # CHOICE: same stock as the carcass
+SHELF_SLOT_PITCH = 1.0  # "slotted supports … moving the shelf an inch afterwards"
+SHELF_SLOT_COUNT = 5  # CHOICE: ±2 in of adjustment around the design height
 
 
 # ---------------------------------------------------------------------------
@@ -77,12 +120,11 @@ WATER_FULL = 16.1  # "Water surface — full — 16.1 in"
 # ---------------------------------------------------------------------------
 
 # "Tray is a flush rebate … drops into the cabinet's top frame and becomes the
-# top surface, flush with the sides." Read as: the carcass sides rise to the
-# tray rim (26), the tray nests inside them on a rail, and its rim finishes
-# flush with the top of the sides. So the pan's plan is the carcass INSIDE.
+# top surface, flush with the sides." The carcass sides rise to the tray rim,
+# the tray nests inside them on a rail, and its rim finishes flush.
 TRAY_W = PLINTH_W - 2 * CARCASS_T  # 18.5
-TRAY_D = PLINTH_D - 2 * CARCASS_T  # 12.5
-TRAY_UPSTAND = 2.0  # "Tray upstand — 26 in", i.e. 24 → 26
+TRAY_D = PLINTH_D - 2 * CARCASS_T  # 14.5
+TRAY_UPSTAND = 2.0  # "Tray upstand" is 2 in above the tray floor
 TRAY_T = 0.0625  # "16 ga" — stainless 16 ga is 0.0625 in (1.59 mm)
 TRAY_CORNER_R = 0.25  # CHOICE: inside bend radius for a formed pan
 
@@ -111,64 +153,40 @@ CMU_FACE_SHELL = 1.25  # CHOICE: typical for a standard two-core block
 CMU_END_SHELL = 1.25  # CHOICE
 CMU_WEB = 1.0  # CHOICE — "The block's own center web divides the two cores"
 
-# Media: "fill both cores to 1–2 in below the rim" → the doc's 30.9 surface
-# against a 32.4 top is 1.5 in down.
+# Media: "fill both cores to 1–2 in below the rim"; the docs' 30.9 surface
+# against a 32.4 top was 1.5 in down.
 MEDIA_BELOW_RIM = 1.5
+EMITTER_ABOVE_MEDIA = 0.125  # the docs put discharge 0.1 above the media surface
 
 
 # ---------------------------------------------------------------------------
 # Mast (vertical armature)
-# V1_PHYSICAL_BUILD.md § Mast — thin shaft, instrument head
+# V1_PHYSICAL_BUILD.md § Mast: "2 x 3 in hollow section"
 # ---------------------------------------------------------------------------
 
-# "2 x 3 in hollow section". The doc does not say which way round. Default:
-# the 2 in face toward the viewer (X), 3 in deep (Y) — the thinner reading of
-# "thin shaft". Rotating it is one flag, and it matters: see depth_budget().
-MAST_ROTATED = False  # CHOICE — True puts 3 in across and 2 in deep
-MAST_W, MAST_D = (3.0, 2.0) if MAST_ROTATED else (2.0, 3.0)
+# 2 in face toward the viewer (X), 3 in deep (Y): the strong axis front-back,
+# where the fixture's moment is. "Mast as drawn."
+MAST_W, MAST_D = 2.0, 3.0
 MAST_WALL = 0.120  # CHOICE: 11 ga, the common wall for 2x3 HSS
-MAST_TOP = 46.0  # "plinth top to 46 in"
-
-# The doc says "plinth top to 46 in" for the shaft and, separately, that it
-# "bolts to the cabinet carcass … a full-height rear panel". The section
-# drawing draws it running the full height of the cabinet. Both are honoured:
-# the visible shaft rises from the plinth top, and it continues down the inside
-# of the rear panel to the cabinet floor for its fixing.
-MAST_BOTTOM = SHADOW_GAP_H + CARCASS_T  # CHOICE: stands on the carcass floor, inside
+MAST_BOTTOM = SHADOW_GAP_H + CARCASS_T  # stands on the carcass floor, inside
+MAST_SIDE_CLEARANCE = 0.125  # CHOICE: between the shaft and the divider
 MAST_BOLT_DIA = 0.3125  # CHOICE: 5/16 in through-bolts into the rear panel
 MAST_BOLT_COUNT = 4
 MAST_BOLT_PITCH = 6.0  # CHOICE: spread along the fixing length
-
-# Flange — INSTRUMENT_HEAD_PLANS.md § Panel schedule:
-# "Flange | 6.00 x 4.00 | 1/4 steel. Shaft welded on; 4 x M6 tapped; arm boss"
-FLANGE_W = 6.0
-FLANGE_D = 4.0
-FLANGE_T = 0.25
-# Head bottom panel: "4 x Ø 0.257 on 2.00 x 1.50 for flange bolts"
-FLANGE_BOLT_PATTERN_X = 2.0
-FLANGE_BOLT_PATTERN_Y = 1.5
-FLANGE_BOLT_CLEARANCE_DIA = 0.257
+MAST_CAP_T = 0.25  # CHOICE: a welded cap plate closes the top; the arm lands on it
+MAST_LINE_PASS_DIA = 0.75  # "Ø 0.75 loom pass, grommeted" — now in the shaft's
+                           # side wall, where the drip line and LED cable enter
 
 
 # ---------------------------------------------------------------------------
-# Instrument head
-# INSTRUMENT_HEAD_PLANS.md — face dimensions and hole schedule come from
+# Instrument face
+# INSTRUMENT_HEAD_PLANS.md § Face — the hole schedule comes from
 # pi/dashboard/panel_geometry.py, the same source the emulator draws from.
+# The box around it (sides, top, bottom, back, flange) is superseded: the
+# cabinet is the box now.
 # ---------------------------------------------------------------------------
 
-HEAD_D = 3.5  # "Head external: 9.50 W x 12.00 H x 3.50 D"
-HEAD_BOTTOM = 46.0  # "head bottom at 46 in (fixture level), top at 58 in"
-HEAD_TOP = 58.0
 ACRYLIC_T = 0.25  # "1/4 in cast acrylic throughout"
-
-# "Vent: 8 slots 2.00 x 0.125 at 0.75 pitch, centred" — top and bottom panels
-VENT_SLOT_COUNT = 8
-VENT_SLOT_L = 2.0
-VENT_SLOT_W = 0.125
-VENT_SLOT_PITCH = 0.75
-
-LOOM_PASS_DIA = 0.75  # "Ø 0.75 loom pass, grommeted" — bottom panel
-CORNER_BLOCK = 0.75  # "Corner block | 4 | 0.75 | 0.75"
 FACE_SCREW_DIA = 0.135  # "F1–4 … Ø 0.135 c'sunk x4 | M3 flat-head"
 
 # The dial cut diameter is pending calipers. None means: engrave a witness
@@ -176,26 +194,24 @@ FACE_SCREW_DIA = 0.135  # "F1–4 … Ø 0.135 c'sunk x4 | M3 flat-head"
 DIAL_CUT_DIAMETER: float | None = None
 WITNESS_DEPTH = 0.02  # CHOICE: engraving depth for reference marks
 
+# What lives behind the face, as a reference envelope: the face footprint,
+# CONSOLE_D deep. If this touches the partition the console is too shallow.
+CONSOLE_ELECTRONICS_D = CONSOLE_D
+
 
 # ---------------------------------------------------------------------------
 # LED fixture — envelope only
-# V1_PHYSICAL_BUILD.md § Mast: "hangs from the head's underside at 46 in,
-# cantilevered ~10 in forward to centre over the block"
+# V1_PHYSICAL_BUILD.md § Mast: "hangs … at 46 in, cantilevered forward to
+# centre over the block". 46 was 15.1 above the media; that distance is kept.
 # ---------------------------------------------------------------------------
 
-FIXTURE_Z = HEAD_BOTTOM  # 46
-# The doc says "~10 in forward". That figure came from the section drawing,
-# which drew the mast BEHIND the cabinet. The doc also says the tray is
-# "notched to clear" the mast, which puts it INSIDE the footprint against the
-# rear panel — and that is what is modelled, because it is the stiffer mount
-# and the one the notch implies. The cantilever is then whatever the geometry
-# says: mast centreline to block centreline. See FIXTURE_CANTILEVER below,
-# after the plan positions are known.
+FIXTURE_ABOVE_MEDIA = 15.0  # CHOICE: the docs' 46 − 30.9, rounded
 FIXTURE_W = 16.0  # CHOICE: spans the 15.625 block, per the section drawing
-FIXTURE_D = 8.0  # CHOICE: envelope for two boards on a heatsink
+FIXTURE_D = 6.0  # CHOICE: envelope for two boards on a heatsink
 FIXTURE_H = 1.5  # CHOICE
-FIXTURE_ARM_W = 1.5  # CHOICE: the arm from the flange boss to the fixture
+FIXTURE_ARM_W = 1.5  # CHOICE: the arm forward from the mast
 FIXTURE_ARM_T = 0.5  # CHOICE
+FIXTURE_BAR_D = 1.0  # CHOICE: the cross bar along the fixture's back edge
 
 
 # ---------------------------------------------------------------------------
@@ -203,31 +219,65 @@ FIXTURE_ARM_T = 0.5  # CHOICE
 # restated, so a test can hold the two against each other.
 # ---------------------------------------------------------------------------
 
-TRAY_FLOOR_Z = PLINTH_H  # 24
-TRAY_RIM_Z = PLINTH_H + TRAY_UPSTAND  # 26
-CMU_UNDERSIDE_Z = TRAY_FLOOR_Z + PAD_H  # 24.75
-CMU_TOP_Z = CMU_UNDERSIDE_Z + CMU_H  # 32.375 — docs round to 32.4
-MEDIA_SURFACE_Z = CMU_TOP_Z - MEDIA_BELOW_RIM  # 30.875 — docs: 30.9
-EMITTER_Z = 31.0  # "Emitter discharge — 31.0 in", just above the media
-PANEL_CENTRE_Z = (HEAD_BOTTOM + HEAD_TOP) / 2  # 52 — "read standing"
+FLOOR_TOP_Z = SHADOW_GAP_H + CARCASS_T  # 2.75
+TRAY_FLOOR_Z = PLINTH_H  # 36
+TRAY_RIM_Z = PLINTH_H + TRAY_UPSTAND  # 38
+RAIL_TOP_Z = TRAY_FLOOR_Z - TRAY_T  # the tray floor rests on the rail
+RAIL_BOTTOM_Z = RAIL_TOP_Z - CARCASS_T  # 35.19 — the top of every bay
+CMU_UNDERSIDE_Z = TRAY_FLOOR_Z + PAD_H  # 36.75
+CMU_TOP_Z = CMU_UNDERSIDE_Z + CMU_H  # 44.375
+MEDIA_SURFACE_Z = CMU_TOP_Z - MEDIA_BELOW_RIM  # 42.875
+EMITTER_Z = MEDIA_SURFACE_Z + EMITTER_ABOVE_MEDIA  # 43.0
+FIXTURE_Z = MEDIA_SURFACE_Z + FIXTURE_ABOVE_MEDIA  # 57.875 — underside of the fixture
+MAST_TOP = FIXTURE_Z + FIXTURE_H  # 59.375 — top of the cap; the arm sits on it
 
-# Mast plan position: centred on width, against the inside of the rear panel.
-MAST_X = 0.0
-MAST_Y = PLINTH_D - REAR_PANEL_T - MAST_D / 2
+# Reservoir shelf: as high as the rail allows, rounded down to a whole inch so
+# the slotted supports read as a sensible range. The pan must clear the rail
+# by RESERVOIR_LIFT_CLEARANCE to be lifted off the shelf and slid out.
+SHELF_H = float(math.floor(RAIL_BOTTOM_Z - RESERVOIR_LIFT_CLEARANCE - RESERVOIR_H))  # 28
+WATER_LOW = SHELF_H + WATER_LOW_ABOVE_SHELF  # 30.0
+WATER_FULL = SHELF_H + WATER_FULL_ABOVE_SHELF  # 32.1
 
-# CMU plan position. Centred on width. In depth it sits FORWARD in the tray,
-# behind the tray's front wall by CMU_FRONT_SETBACK — not centred. Centred, its
-# back face (10.81 in a 14 in cabinet) runs into a mast whose front face is at
-# 10.25. Forward, the block is in front of the column, which is also the
-# composition the piece wants: vessel, then mast, then head.
+# The face: centred on width, top edge FACE_MARGIN under the rail.
+FACE_X0 = -FACE_WIDTH / 2
+FACE_Z1 = RAIL_BOTTOM_Z - FACE_MARGIN
+FACE_Z0 = FACE_Z1 - FACE_HEIGHT  # 22.19
+PANEL_CENTRE_Z = (FACE_Z0 + FACE_Z1) / 2  # 28.19 — read standing, looking down
+FACE_Y0 = 0.0  # in a pocket cut into the front panel, flush with the cabinet's front
+
+# Plan: console bay, partition, then the wet and dry bays behind.
+CONSOLE_Y0 = CARCASS_T  # inside face of the front panel
+CONSOLE_Y1 = CONSOLE_Y0 + CONSOLE_D  # 3.75
+PARTITION_Y0 = CONSOLE_Y1
+PARTITION_Y1 = PARTITION_Y0 + CONSOLE_PARTITION_T  # 4.25
+REAR_INSIDE_Y = PLINTH_D - REAR_PANEL_T  # 15.25
+
+# The divider between the wet bay (viewer's left) and the dry bay.
+INSIDE_X0 = -PLINTH_W / 2 + CARCASS_T  # −9.25
+INSIDE_X1 = PLINTH_W / 2 - CARCASS_T  # 9.25
+DIVIDER_X = INSIDE_X0 + WET_BAY_W + DIVIDER_T / 2  # 4.0
+DRY_BAY_X0 = DIVIDER_X + DIVIDER_T / 2  # 4.25
+DRY_BAY_W = INSIDE_X1 - DRY_BAY_X0  # 5.0
+
+# Mast plan position: in the dry bay, against the rear panel, as close to the
+# cabinet's centre as the divider allows — so the fixture's cross bar is short.
+MAST_X = DRY_BAY_X0 + MAST_SIDE_CLEARANCE + MAST_W / 2  # 5.375
+MAST_Y = REAR_INSIDE_Y - MAST_D / 2  # 13.75
+
+# Reservoir plan position: in the wet bay, from the partition.
+RESERVOIR_X = INSIDE_X0 + WET_BAY_W / 2
+RESERVOIR_Y0 = PARTITION_Y1 + RESERVOIR_FRONT_CLEARANCE  # 4.5
+RESERVOIR_Y1 = RESERVOIR_Y0 + RESERVOIR_W  # 14.9
+
+# CMU plan position: centred in the cabinet. The mast is off to the side now,
+# so nothing argues for setting the block forward.
 CMU_X = 0.0
-CMU_FRONT_SETBACK = 1.0  # CHOICE: from the tray's inside front wall
-CMU_Y = CARCASS_T + TRAY_T + CMU_FRONT_SETBACK + CMU_W / 2
+CMU_Y = PLINTH_D / 2  # 8.0
 
-# Fixture: centred over the block. Cantilever is derived, not asserted.
+# Fixture: centred over the block. The moment arm at the mast is derived.
+FIXTURE_X = CMU_X
 FIXTURE_Y = CMU_Y
-FIXTURE_CANTILEVER = MAST_Y - CMU_Y  # 4.75 with the mast inside; the doc's ~10
-                                     # assumed it outside. See the note above.
+FIXTURE_CANTILEVER = MAST_Y - FIXTURE_Y  # 5.75 — mast centreline to fixture centreline
 
 # Where the pads meet the block: under the four corners, where a face shell
 # meets an end shell and the block is solid all the way down.
@@ -240,9 +290,12 @@ class HeightStack:
     """The published height stack, for comparison against the docs' table."""
 
     shadow_gap: float = SHADOW_GAP_H
+    face_bottom: float = FACE_Z0
+    panel_centre: float = PANEL_CENTRE_Z
     reservoir_shelf: float = SHELF_H
     water_low: float = WATER_LOW
     water_full: float = WATER_FULL
+    face_top: float = FACE_Z1
     tray_floor: float = TRAY_FLOOR_Z
     tray_rim: float = TRAY_RIM_Z
     cmu_underside: float = CMU_UNDERSIDE_Z
@@ -250,9 +303,7 @@ class HeightStack:
     emitter: float = EMITTER_Z
     cmu_top: float = CMU_TOP_Z
     fixture: float = FIXTURE_Z
-    head_bottom: float = HEAD_BOTTOM
-    panel_centre: float = PANEL_CENTRE_Z
-    head_top: float = HEAD_TOP
+    mast_top: float = MAST_TOP
 
     @property
     def static_lift(self) -> float:
@@ -265,22 +316,25 @@ HEIGHTS = HeightStack()
 
 @dataclass(frozen=True)
 class DepthBudget:
-    """What the cabinet's depth has to hold, front to back, at the mast's X.
+    """What the cabinet's depth has to hold, front to back, through the wet bay.
 
-    The reservoir pan and the mast both want the back of the wet bay. This is
-    the arithmetic that decides whether they fit, and by how much.
+    The console bay sits in front of the reservoir pan; this is the arithmetic
+    that decides whether they fit, and by how much. The mast is in the dry bay
+    and no longer competes with the pan.
     """
 
     front_panel: float = CARCASS_T
+    console: float = CONSOLE_D
+    partition: float = CONSOLE_PARTITION_T
     front_clearance: float = RESERVOIR_FRONT_CLEARANCE
     reservoir: float = RESERVOIR_W
-    mast: float = MAST_D
     rear_panel: float = REAR_PANEL_T
     available: float = PLINTH_D
 
     @property
     def required(self) -> float:
-        return self.front_panel + self.front_clearance + self.reservoir + self.mast + self.rear_panel
+        return (self.front_panel + self.console + self.partition
+                + self.front_clearance + self.reservoir + self.rear_panel)
 
     @property
     def slack(self) -> float:
