@@ -96,22 +96,23 @@ def _flag(name: str, default: bool = False) -> bool:
 
 # ---------------------------------------------------------------------------
 # Form (design pass, 2026-09-04)
-# The height is decided: 36. The fascia is decided, with its materials
-# inverted from the first candidate: the band across the front is CLEAR
-# acrylic, and what sits behind it is a black metal instrument case whose
-# front plate carries the dials, the e-ink window and the knobs — the
+# Decided: height 36; the clear fascia over a black instrument case (the
 # apparatus on show behind glass, cabling included, the way the Transparent
-# speaker shows its amplifier. FASCIA=0 rebuilds the plain box for the record.
-# The steel frame remains a candidate.
+# speaker shows its amplifier); and the steel base frame the cabinet floats
+# on, whose members continue into the mast. Both flags default on and both
+# can be turned off — GROWLAB_FASCIA=0, GROWLAB_FRAME=0 — to rebuild the
+# earlier forms for the record.
 # ---------------------------------------------------------------------------
 
 FASCIA = _flag("FASCIA", True)  # decided. A full-width clear band recessed into the
                                 # front over an open console bay; the instrument
                                 # case behind it; the four vertical corners
                                 # chamfered so the sides read as planes meeting.
-FRAME = _flag("FRAME")          # candidate: the cabinet floats on a welded 1 x 1
-                                # steel frame instead of a recessed plinth, and the
-                                # mast runs to the floor as part of that frame.
+FRAME = _flag("FRAME", True)    # decided. The cabinet floats on a welded 1 x 1 steel
+                                # frame rather than a recessed plinth, and the mast
+                                # runs to the floor as one of its members: legs,
+                                # ring, mast, fixture arm and the instrument case
+                                # are then one black register, the ply another.
 
 
 # ---------------------------------------------------------------------------

@@ -54,12 +54,11 @@ MATERIALS = {
 }
 
 
-# The design as decided, the one candidate still open, and the box before
-# the design pass for the record.
+# The design as decided, and the two forms it came from, for the record.
 DEFAULT_VARIANTS = [
     ("Design", {}),
-    ("Design + frame", {"GROWLAB_FRAME": "1"}),
-    ("Box (before)", {"GROWLAB_FASCIA": "0"}),
+    ("On a plinth", {"GROWLAB_FRAME": "0"}),
+    ("Box (before)", {"GROWLAB_FASCIA": "0", "GROWLAB_FRAME": "0"}),
 ]
 
 

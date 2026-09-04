@@ -91,11 +91,14 @@ glass:
   unit. A black backplate on the partition behind it; the loom drops through
   the chase behind the ledge to the PSU below.
 
-Still a candidate: **Frame** (`GROWLAB_FRAME=1`) — the cabinet floats on a
-welded 1 × 1 steel frame and the mast runs to the floor as one of its
-members. `GROWLAB_FASCIA=0` rebuilds the plain box for the record.
-`python cad/viewer.py` builds the design, the design on the frame, and the
-box. The lift, the shelf and the block do not move between them, which
+- **Steel base frame** — the cabinet floats 6 in on a welded 1 × 1 frame,
+  legs inset an inch so it overhangs, and the mast runs to the floor as one
+  of its members. Legs, ring, mast, fixture arm and case are one black
+  register; the ply body is the other.
+
+`GROWLAB_FRAME=0` puts it back on a recessed plinth and `GROWLAB_FASCIA=0`
+rebuilds the plain box, both for the record; `python cad/viewer.py` builds
+all three. The lift, the shelf and the block do not move between them, which
 `test_cad_forms.py` asserts.
 
 ## Looking at it
