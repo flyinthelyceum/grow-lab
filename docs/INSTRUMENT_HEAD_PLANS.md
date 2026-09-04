@@ -1,12 +1,15 @@
-# Instrument Head Plans — Rev B (2026-09-04)
+# Instrument Head Plans — Rev C (2026-09-04)
 
-**Rev B: the face is in the cabinet's front, not in a head on the mast.** See
-V1_PHYSICAL_BUILD.md § Station geometry (console layout). What stands from Rev A: the face
-hole schedule, the depth stack, the dial-face conversion, and the layout candidates. What is
-superseded: the box (back, sides, top, bottom, corner blocks), the flange, the loom pass and
-the 46–58 height stack. The face now sits **pocketed flush into the 3/4 in front panel**
-with a 0.5 in lip behind its edge; F1–4 screw into that lip (M3 inserts). Panel centre
-**28.2 in**; 3.00 clear behind the face, full cabinet width. Modelled in `cad/face.py`.
+**Rev C: the face is the front plate of a black aluminium instrument case, behind a clear
+acrylic fascia in the cabinet's front.** See V1_PHYSICAL_BUILD.md § Mast → *The console*.
+What stands from Rev A: the face hole schedule (now cut in 1/8 in aluminium), the depth
+stack, the dial-face conversion, and the layout candidates. What is superseded: the acrylic
+box, the corner blocks, the flange, the mast loom pass, the 46–58 height stack, and Rev B's
+ply lip. The plate is the front of a 9.50 × 12.00 × 2.75 folded 16 ga box (`cad/case.py`);
+F1–4 fasten the plate to the box's front flanges. The case sits 0.1 in behind the fascia,
+which has holes only for the two knob shafts. Panel centre **28.2 in**. Black: powder-coat
+or anodise. Reverse-engraving no longer applies; the witness rings are scribe lines on the
+back of the plate.
 
 Fabrication schedules for the instrument face. Drawings (Rev A, head-on-mast):
 `https://claude.ai/code/artifact/f1a197ae-7692-4219-a686-0100183e3f0b`
@@ -14,7 +17,8 @@ Design study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b2
 **These tables are the authority; the drawings illustrate them.**
 
 - Units: inches unless marked mm. Origin: panel bottom-left, X right, Y up.
-- Material: 1/4 in **cast** acrylic throughout (not extruded — it crazes at solvent joints).
+- Material (Rev C): plate 1/8 in aluminium, box 16 ga aluminium, both black. The fascia in
+  front of them is 1/4 in **cast** acrylic, clear (not extruded — it crazes).
 - Meters: **Weston 301, 3-1/2 in centre-zero**, two — 30-0-30 uA and 100-0-100 uA.
   The Simpson Wide-Vue 1327 this schedule was drawn for is **not** what is being
   built. Bezel OD 3.50 in is nominal for the size class; **the panel cut and stud

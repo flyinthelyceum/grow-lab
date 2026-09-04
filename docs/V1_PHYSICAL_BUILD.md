@@ -202,12 +202,30 @@ The instrument head is gone from the top of the mast; the panel is in the cabine
 - Bolts to the **cabinet carcass** — not the tray, not the block — with the tray notched to
   clear.
 
-**The console (the head, laid into the cabinet):** 9.50 x 12.00 acrylic face, 1/4 in,
-pocketed flush into the front panel with a 0.5 in lip behind its edge for the F1–4 screws.
-3.00 in clear behind it, full width. INSTRUMENT_HEAD_PLANS.md's face schedule, dial-face
-conversion and layout candidates stand; its box panels, flange and loom pass are
-superseded. Vent the console bay (the right-side holes) — the Pi and meter backlights still
-dissipate. The face is emulated at `/panel`.
+**The console — the instrument behind glass (decided 2026-09-04).** Reference: the
+Transparent speaker — a glass box, black metal components, the wiring in view. Ours,
+inverted from the first fascia candidate:
+
+- **Fascia: clear 1/4 in cast acrylic**, a band across the whole front from 21.2 to 35.2 in,
+  recessed 0.15 in behind the front plane, between 0.5 in chamfers on the cabinet's corners.
+  The only holes in it are two for the knob shafts; the dials and the e-ink are read through
+  it. Screws through its margins into the sides' front edges and the ledge. Removable.
+- **Instrument case: black aluminium**, 9.50 x 12.00 x 2.75. A 1/8 in front plate carrying
+  INSTRUMENT_HEAD_PLANS.md's hole schedule (dials, window, jewel, amber, knobs, F1–4), and
+  a 16 ga folded box behind it the meters, Inky, i3, Pi and meter driver mount in, closed at
+  the back with a Ø 0.75 grommeted loom pass. The plate sits 0.1 in behind the acrylic; the
+  case sits on a ply **ledge** and pulls straight out forward once the fascia and the knob
+  caps are off — the whole apparatus on a bench, unplugged at one terminal block.
+- **What shows beside the case:** a black sheet on the partition (the backplate), the ply
+  ledge as a sill, and the loom dropping behind the case through the chase to the PSU and
+  driver below, which stay behind the removable lower ply front. Cable discipline is
+  visible; plan the runs.
+- Console bay 3.00 in clear; 0.44 in behind the case for the loom to turn down. Vent the
+  bay (the right-side holes) — the Pi and meter backlights still dissipate.
+
+INSTRUMENT_HEAD_PLANS.md's face schedule, dial-face conversion and layout candidates
+stand, on metal now; its acrylic box, flange and mast loom pass are superseded. The plate
+is emulated at `/panel`.
 
 **Head internals — checked against datasheets and the running code (2026-09-03):**
 
@@ -384,11 +402,11 @@ use. Fail it and leach longer or add a second coat before planting.
 
 - **Weston 301 depth and bezel** — caliper on arrival; sets `DIAL_CUT_DIAMETER` and confirms
   the 3.00 console depth.
-- **Form.** 36 is decided (2026-09-04, from the viewer). What the cabinet reads as is not:
-  two candidates are in the model — a recessed dark instrument fascia across the front with
-  chamfered corners, and a welded 1 x 1 steel base frame the cabinet floats on with the mast
-  running to the floor as part of it. `GROWLAB_FASCIA` / `GROWLAB_FRAME`; all four
-  combinations are in the viewer. Pick from the viewer, then it becomes the model.
+- **Base.** The fascia is decided (clear, over the black case). Still open: the welded
+  1 x 1 steel base frame the cabinet floats on, with the mast running to the floor as part
+  of it, versus the recessed plinth. `GROWLAB_FRAME=1`; both are in the viewer.
+- **Case fabrication.** 16 ga aluminium folded box with a 1/8 in plate: bend it, or have the
+  plate laser-cut and the box folded from one development. Powder-coat or anodise black.
 - 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;
   otherwise right-size the pump.
@@ -409,6 +427,10 @@ use. Fail it and leach longer or add a second coat before planting.
 - **2026-09-04** — Cabinet height decided at **36** from the browser viewer. Design pass
   opened: two form candidates in the model (instrument fascia + chamfers; steel base frame
   with the mast as a leg), switchable, all four combinations in the viewer.
+- **2026-09-04** — **Fascia decided, materials inverted:** clear acrylic band over an open
+  console bay; the instrument becomes a removable black aluminium case behind it, its plate
+  carrying the hole schedule; a dark backplate and the loom in view. Reference: the
+  Transparent speaker. The steel frame stays a candidate.
 - **2026-09-04** — Console layout. The instrument panel moves from a head on the mast into
   the cabinet's front face; doors move to the rear; the cabinet grows to 20 x 16 x 36 (tray
   floor). Reservoir behind the console bay on a shelf at 28, lift **13 in** (was 17); mast

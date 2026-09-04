@@ -23,7 +23,8 @@ station is arranged the way it is.
 | Module | Builds |
 |---|---|
 | `plinth.py` | Carcass on a recessed base: sides, floor, full-height rear panel with the wet-bay door opening, the removable front panel with the face pocketed into it, the rail under the tray, the console partition, the wet/dry divider, the adjustable reservoir shelf. Also the rear door, and the reservoir and console-electronics envelopes |
-| `face.py` | The 1/4 in acrylic instrument face, from `INSTRUMENT_HEAD_PLANS.md` and `panel_geometry.py` |
+| `face.py` | The instrument plate — the hole schedule from `INSTRUMENT_HEAD_PLANS.md` and `panel_geometry.py`, in 1/8 in aluminium (or 1/4 in acrylic in the box form) |
+| `case.py` | The black aluminium instrument case: the plate plus the folded box behind it |
 | `tray.py` | 16 ga stainless pan nesting inside the carcass top, with pad cutouts and the mast notch; and the four pads |
 | `mast.py` | 2 × 3 HSS from the carcass floor to its cap, in the dry bay, bolted through the rear panel |
 | `fixture.py` | The arm and cross bar from the mast's cap, and the LED fixture envelope — reference |
@@ -75,26 +76,27 @@ it.
 `PLINTH_H` is the one knob. It moves the panel, the block and the light
 together and leaves the lift alone. **36 is decided.**
 
-## The design pass
+## The design
 
-A plywood box with an acrylic window is a plywood box. Two moves are in the
-model as switchable candidates so they can be looked at rather than argued
-about, and combined:
+A plywood box with an acrylic window is a plywood box. The design (decided
+2026-09-04, reference: the Transparent speaker) puts the instrument behind
+glass:
 
-- **Fascia** (`GROWLAB_FASCIA=1`) — the instruments get their own band: a
-  dark strip across the whole front, recessed behind the front plane, the
-  acrylic face flush in it. The band is what the eye reads as "the
-  instrument"; the plywood becomes the thing that carries it. The four
-  vertical corners are chamfered so the sides meet as planes.
-- **Frame** (`GROWLAB_FRAME=1`) — the cabinet floats on a welded 1 × 1
-  steel frame instead of sitting on a recessed plinth, and the mast runs to
-  the floor as one of the frame's members. Steel is then one continuous
-  armature — legs, ring, mast, fixture arm — and wood is one body carried by
-  it. The shadow gap becomes six inches of air.
+- **Fascia** — a clear acrylic band across the whole front, recessed behind
+  the front plane, over an open console bay, between chamfered corners. Two
+  holes in it, for the knob shafts; everything else is read through it.
+- **Instrument case** (`case.py`) — black aluminium: a 1/8 in plate carrying
+  the hole schedule, the front of a folded box the electronics live in. It
+  sits on a ply ledge 0.1 in behind the glass and pulls out forward as one
+  unit. A black backplate on the partition behind it; the loom drops through
+  the chase behind the ledge to the PSU below.
 
-Both off is the box. `python cad/viewer.py` builds all four combinations.
-`params.py` derives everything else from the flags; the lift, the shelf and
-the block do not move between candidates, which `test_cad_forms.py` asserts.
+Still a candidate: **Frame** (`GROWLAB_FRAME=1`) — the cabinet floats on a
+welded 1 × 1 steel frame and the mast runs to the floor as one of its
+members. `GROWLAB_FASCIA=0` rebuilds the plain box for the record.
+`python cad/viewer.py` builds the design, the design on the frame, and the
+box. The lift, the shelf and the block do not move between them, which
+`test_cad_forms.py` asserts.
 
 ## Looking at it
 

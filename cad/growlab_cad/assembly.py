@@ -6,8 +6,9 @@ component names in Fusion.
 
 Two kinds of part:
 
-* **Fabricated** — plinth, rear door, tray, pads, mast, face. These must not
-  interfere. ``interferences()`` checks every pair and is what the test suite
+* **Fabricated** — plinth, base, rear door, tray, pads, mast, and the
+  instrument case, fascia and backplate (or the acrylic face in the box
+  form). These must not interfere. ``interferences()`` checks every pair and is what the test suite
   asserts on.
 * **Reference** — the CMU, its media, the reservoir, the LED fixture, the
   console electronics. Bought or undimensioned; present so the composition
@@ -21,7 +22,7 @@ from itertools import combinations
 
 from build123d import Compound, Part
 
-from . import cmu, face, fixture, mast, plinth, tray
+from . import case, cmu, face, fixture, mast, plinth, tray
 from .params import IN
 
 
@@ -35,21 +36,29 @@ def fabricated() -> dict[str, Part]:
         "tray": tray.build(),
         "pads": tray.build_pads(),
         "mast": mast.build(),
-        "face": face.build(),
     }
     if P.FASCIA:
+        parts["case"] = case.build()
         parts["fascia"] = plinth.build_fascia()
+        parts["backplate"] = plinth.build_backplate()
+    else:
+        parts["face"] = face.build()
     return parts
 
 
 def reference() -> dict[str, Part]:
-    return {
+    from . import params as P
+
+    parts = {
         "cmu": cmu.build(),
         "media": cmu.media(),
         "reservoir": plinth.build_reservoir(),
         "fixture": fixture.build(),
-        "console": plinth.build_console_electronics(),
     }
+    if not P.FASCIA:
+        # The box form has no case; an envelope stands in for the electronics.
+        parts["console"] = plinth.build_console_electronics()
+    return parts
 
 
 def _shared_in3(a: Part, b: Part) -> float:

@@ -55,39 +55,48 @@ class TestHeightStackMatchesTheDocs:
         assert (P.PLINTH_W, P.PLINTH_D, P.PLINTH_H) == (20.0, 16.0, 36.0)
 
 
-class TestTheFaceIsInTheFront:
-    def test_face_is_centred_on_the_cabinet(self):
+class TestTheInstrumentIsBehindTheGlass:
+    """The design: a clear fascia over an open bay, the metal case behind it."""
+
+    def test_the_design_is_the_default(self):
+        assert P.FASCIA is True
+        assert P.FRAME is False
+
+    def test_plate_is_centred_on_the_cabinet(self):
         assert P.FACE_X0 == pytest.approx(-FACE_WIDTH / 2)
 
-    def test_face_is_flush_with_the_front(self):
-        assert P.FACE_Y0 == 0.0
+    def test_plate_sits_just_behind_the_fascia(self):
+        assert P.FACE_Y0 == pytest.approx(P.FASCIA_POCKET + P.CASE_GAP)
+        assert P.FACE_T == P.PLATE_T
+        assert 0 < P.CASE_GAP <= 0.125, "a knob bushing has to span this"
 
-    def test_face_clears_the_rail_by_its_margin(self):
+    def test_plate_clears_the_rail_by_its_margin(self):
         assert P.FACE_Z1 + P.FACE_MARGIN == pytest.approx(P.RAIL_BOTTOM_Z)
         assert P.FACE_Z1 - P.FACE_Z0 == pytest.approx(FACE_HEIGHT)
 
-    def test_lip_holds_the_corner_screws(self):
-        from pi.dashboard.panel_geometry import CORNER_SCREW_INSET
+    def test_case_fits_the_console_bay_with_a_cable_gap_behind(self):
+        assert P.CASE_Y1 <= P.CONSOLE_Y1 - P.BACKPLATE_T
+        assert P.CONSOLE_Y1 - P.BACKPLATE_T - P.CASE_Y1 >= 0.375, "the loom has to turn down behind the case"
 
-        assert CORNER_SCREW_INSET + P.FACE_SCREW_DIA / 2 < P.FACE_LIP
-        assert CORNER_SCREW_INSET - P.FACE_SCREW_DIA / 2 > 0
+    def test_case_holds_what_the_plans_say_needs_three_inches(self):
+        """INSTRUMENT_HEAD_PLANS.md § Depth stack: meters, Inky, i3 and Pi 'both
+        fit inside 3.00 clear' — of a head 3.50 deep. The case is shallower;
+        the Pi stack sits beside the movements, not behind."""
+        assert P.CASE_D - P.PLATE_T - P.CASE_SHEET_T >= 2.5
+
+    def test_ledge_leaves_the_chase_open(self):
+        assert P.LEDGE_CHASE >= 0.5
+        assert P.CONSOLE_Y1 - P.LEDGE_CHASE > P.FASCIA_POCKET
 
     @pytest.mark.parametrize("layout", LAYOUTS, ids=lambda l: l.id)
-    def test_every_layouts_elements_clear_the_lip(self, layout):
-        """Nothing that passes through the face may land on the front panel's lip."""
-        lip = P.FACE_LIP
+    def test_every_layouts_knobs_are_inside_the_fascia(self, layout):
+        """The knob holes in the fascia must land inside the band."""
         for e in layout.elements:
-            if e.kind == "dial":
-                continue  # the bezel sits proud of the face; the cut is pending
-            assert e.left >= lip - 1e-9, (layout.id, e.id)
-            assert e.right <= FACE_WIDTH - lip + 1e-9, (layout.id, e.id)
-            assert e.bottom >= lip - 1e-9, (layout.id, e.id)
-            assert e.top <= FACE_HEIGHT - lip + 1e-9, (layout.id, e.id)
-
-    def test_console_is_as_deep_as_the_plans_need(self):
-        """INSTRUMENT_HEAD_PLANS.md § Depth stack: 'both fit inside 3.00 clear'."""
-        assert P.CONSOLE_D >= 3.0
-        assert P.CONSOLE_ELECTRONICS_D <= P.CONSOLE_D
+            if e.kind != "knob":
+                continue
+            r = e.width / 2 + P.KNOB_HOLE_CLEARANCE
+            assert P.FACE_Z0 + e.y - r > P.FACE_Z0 - P.FASCIA_MARGIN, (layout.id, e.id)
+            assert abs(P.FACE_X0 + e.x) + r < P.PLINTH_W / 2 - P.CHAMFER, (layout.id, e.id)
 
 
 class TestDerivedGeometry:

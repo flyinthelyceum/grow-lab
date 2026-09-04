@@ -14,9 +14,11 @@ The carcass sides rise to the tray rim so the tray nests inside and finishes
 flush; a rail under the tray floor carries it and, through the tray's cutouts,
 the four pads the block bears on.
 
-The front panel is one removable piece — unscrew it and the console bay is
-open. The partition stops at the divider, so the dry bay behind it is reached
-the same way.
+The console bay is open to the front behind a clear fascia band; the
+instrument case (``case.py``) sits in it on a ledge, with a dark backplate on
+the partition behind. The ply front panel below the band is removable for the
+PSU and driver. The partition stops at the divider, so the dry bay behind it
+is reached the same way.
 """
 
 from __future__ import annotations
@@ -156,39 +158,64 @@ def build_shell() -> Part:
 
 
 def build_front() -> Part:
-    """The removable front panel, with the pocket the acrylic face sits in.
+    """The removable front panel.
 
-    A pocket the face's size and the acrylic's thickness, cut from the front,
-    so the face finishes flush with the cabinet; inside it, a through-opening
-    FACE_LIP smaller all round. The F1–4 corner screws land in that lip.
+    Fascia form: the ply stops at the bottom of the band; above it the console
+    bay is open behind the clear fascia. Unscrew this panel and the PSU and
+    driver below the case are reached.
+
+    Box form: one panel to the rail, with a pocket the acrylic face sits in
+    and a through-opening FACE_LIP smaller all round for F1–4 to land in.
     """
-    panel = _panel(IX0, IX1, Y0, IY0, Z0, RAIL_BOTTOM)
-
     fx0, fx1 = P.FACE_X0, P.FACE_X0 + FACE_WIDTH
     fz0, fz1 = P.FACE_Z0, P.FACE_Z1
+
     if P.FASCIA:
-        bz0, bz1 = _fascia_band()
-        panel -= _panel(IX0 - 0.5, IX1 + 0.5, Y0 - 0.5, P.FASCIA_POCKET, bz0, bz1)  # band pocket
-    else:
-        panel -= _panel(fx0, fx1, Y0 - 0.5, Y0 + P.ACRYLIC_T, fz0, fz1)  # face pocket
+        bz0, _ = _fascia_band()
+        return labelled(_panel(IX0, IX1, Y0, IY0, Z0, bz0), "front_panel_lower_removable")
+
+    panel = _panel(IX0, IX1, Y0, IY0, Z0, RAIL_BOTTOM)
+    panel -= _panel(fx0, fx1, Y0 - 0.5, Y0 + P.ACRYLIC_T, fz0, fz1)  # face pocket
     lip = P.FACE_LIP
     panel -= _panel(fx0 + lip, fx1 - lip, Y0 - 0.5, IY0 + 0.5, fz0 + lip, fz1 - lip)  # opening
-
     # Tap drill for M3 (2.5 mm) on the F1–4 centres, into the lip.
     for px, py in _corner_screws():
         panel -= cyl_y(2.5 / 25.4, P.CARCASS_T * 3, at=(fx0 + px, (Y0 + IY0) / 2, fz0 + py))
-
     return labelled(panel, "front_panel_removable")
 
 
 def build_fascia() -> Part:
-    """The fascia candidate's band: dark, full width between the chamfers,
-    recessed behind the front plane, with the face's opening in it."""
+    """The clear band: full width between the chamfers, recessed behind the
+    front plane, over the open console bay. The only holes in it are for the
+    knob shafts; the dials and the e-ink are read through it."""
+    from .face import knob_points
+
     bz0, bz1 = _fascia_band()
     band = _panel(X0 + P.CHAMFER, X1 - P.CHAMFER, P.FASCIA_RECESS, P.FASCIA_POCKET, bz0, bz1)
-    fx0, fx1 = P.FACE_X0, P.FACE_X0 + FACE_WIDTH
-    band -= _panel(fx0, fx1, P.FASCIA_RECESS - 0.5, P.FASCIA_POCKET + 0.5, P.FACE_Z0, P.FACE_Z1)
-    return labelled(band, "front_fascia_band")
+    for wx, wz, dia in knob_points():
+        band -= cyl_y(dia + 2 * P.KNOB_HOLE_CLEARANCE, P.FASCIA_T * 4,
+                      at=(wx, (P.FASCIA_RECESS + P.FASCIA_POCKET) / 2, wz))
+    return labelled(band, "fascia_clear_acrylic")
+
+
+def build_ledge() -> Part:
+    """The ply ledge the instrument case sits on, flush behind the fascia so
+    the fascia's bottom screws land in it. Stops short of the partition: the
+    chase behind it is where the loom drops to the PSU."""
+    return labelled(
+        _panel(IX0, IX1, P.FASCIA_POCKET, P.CONSOLE_Y1 - P.LEDGE_CHASE, P.FACE_Z0 - P.LEDGE_T, P.FACE_Z0),
+        "console_ledge",
+    )
+
+
+def build_backplate() -> Part:
+    """A dark sheet on the partition, behind the case, filling the band zone:
+    what shows through the glass beside the instrument is black, not ply."""
+    bz0, bz1 = _fascia_band()
+    return labelled(
+        _panel(IX0, IX1, P.PARTITION_Y0 - P.BACKPLATE_T, P.PARTITION_Y0, bz0, bz1),
+        "console_backplate",
+    )
 
 
 def _corner_screws() -> list[tuple[float, float]]:
@@ -319,8 +346,8 @@ def build_console_electronics() -> Part:
 def build() -> Part:
     """The carcass as one part, for the assembly. The base, the door and the
     fascia are separate parts: different materials, different fabrication."""
-    return labelled(
-        build_shell() + build_front() + build_top_rail()
-        + build_partition() + build_divider() + build_shelf(),
-        "plinth",
-    )
+    carcass = (build_shell() + build_front() + build_top_rail()
+               + build_partition() + build_divider() + build_shelf())
+    if P.FASCIA:
+        carcass += build_ledge()
+    return labelled(carcass, "plinth")

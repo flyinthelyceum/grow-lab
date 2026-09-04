@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-04 (the instrument behind glass)
+
+### Decided
+- **Fascia, materials inverted.** The band across the front is **clear** 1/4 in cast acrylic over an open console bay; the instrument is a **removable black aluminium case** behind it — a 1/8 in plate carrying the hole schedule, the front of a 16 ga folded box the meters, Inky, i3, Pi and driver live in, closed at the back with a grommeted loom pass. Reference: the Transparent speaker. The case sits on a ply ledge 0.1 in behind the glass and pulls straight out forward once the fascia and the knob caps are off; a black backplate on the partition fills what shows beside it; the loom drops through the chase behind the ledge to the PSU below. The fascia's only holes are for the two knob shafts. `FASCIA` defaults on; `GROWLAB_FASCIA=0` rebuilds the box for the record. The steel frame stays a candidate.
+
+### Added
+- `cad/growlab_cad/case.py`; `face.py` now builds the plate (metal in the design, acrylic in the box form) and exposes `knob_points()` for the fascia's holes; `plinth.py` gains the ledge and the backplate and loses the lip.
+- Tests: the case sweeps forward through nothing but the fascia; the fascia's volume is the band minus exactly two knob holes; the knob holes line up with the plate; the case sits on the ledge; only glass is in front of the e-ink window; the cable gap behind the case; every emulator layout's knobs land inside the band.
+- Docs: `V1_PHYSICAL_BUILD.md` § Mast → *The console* rewritten; `INSTRUMENT_HEAD_PLANS.md` → Rev C.
+
 ## 2026-09-04 (design pass: two form candidates)
 
 ### Decided

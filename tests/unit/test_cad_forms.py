@@ -27,10 +27,10 @@ def _clean_env(**knobs: str) -> dict:
     return env
 
 FORMS = {
-    "box": {},
-    "fascia": {"GROWLAB_FASCIA": "1"},
-    "frame": {"GROWLAB_FRAME": "1"},
-    "fascia+frame": {"GROWLAB_FASCIA": "1", "GROWLAB_FRAME": "1"},
+    "design": {},
+    "design+frame": {"GROWLAB_FRAME": "1"},
+    "box": {"GROWLAB_FASCIA": "0"},
+    "box+frame": {"GROWLAB_FASCIA": "0", "GROWLAB_FRAME": "1"},
 }
 
 

@@ -38,6 +38,7 @@
   }
 
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body { height: 100%; }
   body {
     margin: 0;
@@ -287,7 +288,7 @@ function loadVariant(v) {
     geo.setIndex(new THREE.BufferAttribute(new Uint32Array(b64ToBuffer(md.indices)), 1));
     geo.computeVertexNormals();
     const mesh = new THREE.Mesh(geo, makeMaterial(spec));
-    mesh.renderOrder = spec.opacity < 1 ? 2 : 1;
+    mesh.renderOrder = spec.opacity < 1 ? (name === 'fascia' ? 3 : 2) : 1;
     mesh.visible = visible[name];
     station.add(mesh);
     meshes[name] = mesh;
