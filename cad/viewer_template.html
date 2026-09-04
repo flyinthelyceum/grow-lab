@@ -86,10 +86,11 @@
   }
 
   .seg { display: flex; gap: 0; border: 1px solid var(--panel-edge); border-radius: 3px; overflow: hidden; }
+  .seg { flex-wrap: wrap; }
   .seg button {
-    flex: 1; padding: 7px 0; border: 0; background: transparent; color: var(--ink);
+    flex: 1 1 45%; padding: 7px 4px; border: 0; background: transparent; color: var(--ink);
     font: inherit; font-size: 13px; cursor: pointer;
-    border-right: 1px solid var(--panel-edge);
+    border-right: 1px solid var(--panel-edge); border-bottom: 1px solid var(--panel-edge);
   }
   .seg button:last-child { border-right: 0; }
   .seg button[aria-pressed="true"] { background: var(--accent); color: #1B1408; font-weight: 600; }
@@ -147,8 +148,8 @@
   </header>
 
   <section>
-    <h2>Cabinet height</h2>
-    <div class="seg" id="variants" role="group" aria-label="PLINTH_H variants"></div>
+    <h2>Candidates</h2>
+    <div class="seg" id="variants" role="group" aria-label="Design candidates"></div>
     <dl class="readout" id="readout"></dl>
   </section>
 
@@ -294,6 +295,8 @@ function loadVariant(v) {
   applyClipping();
   buildDatums();
   renderReadout();
+  // Only list the parts this candidate actually has (one base or the other, fascia or none).
+  document.querySelectorAll('#parts label[data-part]').forEach(l => { l.hidden = !(l.dataset.part in v.meshes); });
   needs();
 }
 
@@ -303,7 +306,7 @@ let datumGroup = new THREE.Group();
 scene.add(datumGroup);
 let datumPoints = [];
 const DATUM_NAMES = {
-  shadow_gap: 'shadow gap', face_bottom: 'face bottom', panel_centre: 'panel centre', reservoir_shelf: 'reservoir shelf',
+  shadow_gap: 'cabinet underside', face_bottom: 'face bottom', panel_centre: 'panel centre', reservoir_shelf: 'reservoir shelf',
   water_low: 'water low', face_top: 'face top', tray_floor: 'tray floor', tray_rim: 'tray rim', cmu_underside: 'block underside',
   media_surface: 'media', emitter: 'emitters', cmu_top: 'block top', fixture: 'fixture', mast_top: 'mast top',
 };
@@ -473,6 +476,7 @@ const readout = document.getElementById('readout');
 function renderReadout() {
   const v = current;
   const rows = [
+    ['Form', v.form, false],
     ['Cabinet W × D × H', `${v.plinth_w} × ${v.plinth_d} × ${v.plinth_h} in`, false],
     ['Panel centre', `${v.panel_centre.toFixed(1)} in`, true],
     ['Static lift', `${v.static_lift.toFixed(1)} in`, true],
@@ -485,10 +489,10 @@ function renderReadout() {
 }
 
 const variantsEl = document.getElementById('variants');
-DATA.variants.forEach(v => {
+DATA.variants.forEach((v, n) => {
   const b = document.createElement('button');
-  b.textContent = `${v.plinth_h.toFixed(0)} in`;
-  b.setAttribute('aria-pressed', String(v.plinth_h === DATA.default));
+  b.textContent = v.label;
+  b.setAttribute('aria-pressed', String(n === 0));
   b.addEventListener('click', () => {
     variantsEl.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
     b.setAttribute('aria-pressed', 'true');
@@ -505,7 +509,7 @@ for (const group of ['fabricated', 'reference']) {
   partsEl.appendChild(t);
   for (const [name, spec] of Object.entries(DATA.materials)) {
     if (spec.group !== group) continue;
-    const l = document.createElement('label'); l.className = 'check';
+    const l = document.createElement('label'); l.className = 'check'; l.dataset.part = name;
     l.innerHTML = `<input type="checkbox" checked><span class="swatch" style="background:${spec.colour}"></span><span>${spec.label}</span>`;
     l.querySelector('input').addEventListener('change', e => {
       visible[name] = e.target.checked;
@@ -521,7 +525,7 @@ document.getElementById('datums').addEventListener('change', e => {
   datumGroup.visible = e.target.checked; labelsEl.style.display = e.target.checked ? '' : 'none'; needs();
 });
 
-document.getElementById('meta').textContent = `commit ${DATA.sha} · inches · Z up · ${DATA.variants.length} height variants`;
+document.getElementById('meta').textContent = `commit ${DATA.sha} · inches · Z up · ${DATA.variants.length} candidates`;
 
 // ---------- render loop (on demand) ----------
 let dirty = true;
@@ -556,7 +560,7 @@ function frame() {
 }
 
 resize();
-loadVariant(DATA.variants.find(v => v.plinth_h === DATA.default) || DATA.variants[0]);
+loadVariant(DATA.variants[0]);
 setView('iso');
 frame();
 </script>

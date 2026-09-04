@@ -81,6 +81,35 @@ def _knob(name: str, default: float) -> float:
         raise ValueError(f"{var}={raw!r} is not a number (inches expected, e.g. {var}={default:g})") from None
 
 
+def _flag(name: str, default: bool = False) -> bool:
+    """A yes/no design candidate, switchable from the environment the same way."""
+    var = f"GROWLAB_{name}"
+    raw = os.environ.get(var)
+    if not raw:
+        return default
+    if raw.lower() in ("1", "true", "yes", "on"):
+        return True
+    if raw.lower() in ("0", "false", "no", "off"):
+        return False
+    raise ValueError(f"{var}={raw!r} is not a yes/no (use 1 or 0)")
+
+
+# ---------------------------------------------------------------------------
+# Form candidates (design pass, 2026-09-04)
+# The height is decided: 36. What remains is whether the thing reads as a
+# cabinet or as apparatus. Two moves, independently switchable, so the viewer
+# can show all four combinations. Both off is the box as first modelled.
+# ---------------------------------------------------------------------------
+
+FASCIA = _flag("FASCIA")  # a full-width instrument band recessed into the front,
+                          # dark, with the acrylic face flush in it; and the four
+                          # vertical corners chamfered so the sides read as planes
+                          # meeting, not a box's edges.
+FRAME = _flag("FRAME")    # the cabinet floats on a welded 1 x 1 steel frame instead
+                          # of a recessed plinth, and the mast runs to the floor as
+                          # part of that frame: one steel armature, one wooden body.
+
+
 # ---------------------------------------------------------------------------
 # Plinth (cabinet)
 # V1_PHYSICAL_BUILD.md § Station geometry
@@ -93,8 +122,22 @@ PLINTH_H = _knob("PLINTH_H", 36.0)  # CHOICE: "cabinet to necessary height". The
                                     # together; the lift does not change with it. Tray
                                     # floor is at this height. Sweepable: GROWLAB_PLINTH_H.
 
-SHADOW_GAP_H = 2.0  # "Recessed base / shadow gap — 0–2 in"
+SHADOW_GAP_H = 6.0 if FRAME else 2.0  # "Recessed base / shadow gap — 0–2 in";
+                                      # on the frame the cabinet floats at 6.
 SHADOW_GAP_INSET = 1.0  # CHOICE: how far the kick steps back under the sides
+
+# Frame candidate: 1 x 1 HSS legs at the corners, inset under the cabinet so it
+# overhangs, joined by a ring the cabinet floor sits on. CHOICE throughout.
+FRAME_TUBE = 1.0
+FRAME_LEG_INSET = 1.0  # from the cabinet's outer faces to the legs' outer faces
+
+# Fascia candidate: a band across the whole front, recessed behind the front
+# plane, in a dark material; the face sits flush in it. CHOICE throughout.
+CHAMFER = 0.5 if FASCIA else 0.0  # on the four vertical outer corners
+FASCIA_T = 0.25
+FASCIA_RECESS = 0.15  # the band's face behind the cabinet's front plane
+FASCIA_POCKET = FASCIA_RECESS + FASCIA_T  # 0.40 cut out of the front for it
+FASCIA_MARGIN = 1.0  # the band runs this far above and below the acrylic face
 
 CARCASS_T = 0.75  # CHOICE: 3/4 in sheet stock for sides, top frame and floor
 REAR_PANEL_T = 0.75  # "full-height rear panel in the carcass" — the mast fixes here
@@ -188,7 +231,9 @@ EMITTER_ABOVE_MEDIA = 0.125  # the docs put discharge 0.1 above the media surfac
 # where the fixture's moment is. "Mast as drawn."
 MAST_W, MAST_D = 2.0, 3.0
 MAST_WALL = 0.120  # CHOICE: 11 ga, the common wall for 2x3 HSS
-MAST_BOTTOM = SHADOW_GAP_H + CARCASS_T  # stands on the carcass floor, inside
+MAST_BOTTOM = 0.0 if FRAME else SHADOW_GAP_H + CARCASS_T  # on the frame it IS a
+                                                          # leg; otherwise it stands
+                                                          # on the carcass floor
 MAST_SIDE_CLEARANCE = 0.125  # CHOICE: between the shaft and the divider
 MAST_BOLT_DIA = 0.3125  # CHOICE: 5/16 in through-bolts into the rear panel
 MAST_BOLT_COUNT = 4
@@ -263,7 +308,7 @@ FACE_X0 = -FACE_WIDTH / 2
 FACE_Z1 = RAIL_BOTTOM_Z - FACE_MARGIN
 FACE_Z0 = FACE_Z1 - FACE_HEIGHT  # 22.19
 PANEL_CENTRE_Z = (FACE_Z0 + FACE_Z1) / 2  # 28.19 — read standing, looking down
-FACE_Y0 = 0.0  # in a pocket cut into the front panel, flush with the cabinet's front
+FACE_Y0 = FASCIA_RECESS if FASCIA else 0.0  # flush with the fascia, or with the front
 
 # Plan: console bay, partition, then the wet and dry bays behind.
 CONSOLE_Y0 = CARCASS_T  # inside face of the front panel

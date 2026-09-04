@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-04 (design pass: two form candidates)
+
+### Decided
+- **Cabinet height 36**, from the viewer's stand-in-front view. `PLINTH_H` stays a knob for sweeps; the documented value is the decision.
+
+### Added
+- **Two form candidates in the model**, each a `GROWLAB_*` flag so the viewer can show all four combinations at 36. Both off is the box as first modelled.
+  - **Fascia** (`GROWLAB_FASCIA=1`): a full-width instrument band across the front, recessed 0.15 in behind the front plane in a dark material, the acrylic face flush in it, the band running 1 in above and below the face; and the four vertical corners chamfered 0.5 in so the sides read as planes meeting rather than a box's edges. The F1–4 screws still land in the plywood lip behind the fascia.
+  - **Frame** (`GROWLAB_FRAME=1`): the recessed plinth replaced by a welded 1 × 1 HSS frame — four legs inset 1 in so the cabinet overhangs, a ring the floor sits on — with the cabinet floating at 6 in and the **mast running to the floor as part of the frame**. One steel armature, one wooden body. The lift does not move: the shelf, the tray and the block stay where they were.
+- The base is now its own fabricated part (`base_recess` or `base_frame`) and the fascia its own (`fascia`): different materials, different fabrication, their own colours in the viewer.
+- `viewer.py` builds the four candidates by default; `--heights` builds a height sweep instead, `--variant "Label=KEY:VAL,…"` anything else.
+- `tests/unit/test_cad_forms.py` builds every candidate through the real entry point in its own process and asserts no interference, no design conflicts, and that the lift is unchanged; and that a bad flag value fails naming itself.
+
 ## 2026-09-04 (looking at it)
 
 ### Added

@@ -33,7 +33,7 @@ def refs():
 
 class TestEveryPartBuilds:
     def test_fabricated(self, parts):
-        assert set(parts) == {"plinth", "rear_door", "tray", "pads", "mast", "face"}
+        assert set(parts) == {"plinth", "base_recess", "rear_door", "tray", "pads", "mast", "face"}
         for name, p in parts.items():
             assert p.volume > 0, name
 
@@ -42,10 +42,13 @@ class TestEveryPartBuilds:
 
 
 class TestWhereThingsSit:
-    def test_plinth_from_floor_to_tray_rim(self, parts):
+    def test_plinth_from_the_base_to_the_tray_rim(self, parts):
         bb = bbox_in(parts["plinth"])
-        assert bb["z0"] == pytest.approx(0.0)
+        assert bb["z0"] == pytest.approx(P.SHADOW_GAP_H)
         assert bb["z1"] == pytest.approx(P.TRAY_RIM_Z)
+        base = bbox_in(parts["base_recess"])
+        assert base["z0"] == pytest.approx(0.0)
+        assert base["z1"] == pytest.approx(P.SHADOW_GAP_H)
         assert bb["x1"] - bb["x0"] == pytest.approx(P.PLINTH_W)
         assert bb["y1"] - bb["y0"] == pytest.approx(P.PLINTH_D)
 
