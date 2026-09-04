@@ -47,14 +47,19 @@ jobs:
 
       - name: CAD tests
         # The geometry tests assert where every part sits against the docs'
-        # height table and that nothing fabricated interferes.
-        run: pytest -q tests/unit/test_cad_params.py tests/unit/test_cad_geometry.py
+        # height table and that nothing fabricated interferes; the fabrication
+        # tests read the written DXFs back.
+        run: pytest -q tests/unit/test_cad_params.py tests/unit/test_cad_geometry.py tests/unit/test_cad_fabrication.py
 
       - name: Build and export
         run: python cad/build.py
 
       - name: Render elevations
         run: python cad/render.py
+
+      - name: Build the fabrication pack
+        # DXFs to cut from and a cut list to buy from, in inches.
+        run: python cad/fabrication.py
 
       - name: Build the browser viewer
         # One HTML file with every part embedded and the height variants;
@@ -83,7 +88,7 @@ jobs:
           print(f"- dial cut: {'not cut — pending calipers' if r['dial_cut_diameter'] is None else r['dial_cut_diameter']}")
           PY
             echo ""
-            echo "STEP files, elevations and \`viewer.html\` are in the **growlab-v1-station-cad** artifact."
+            echo "STEP, elevations, \`viewer.html\` and the \`fab/\` pack are in the **growlab-v1-station-cad** artifact."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4

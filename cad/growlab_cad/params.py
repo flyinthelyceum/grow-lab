@@ -143,6 +143,11 @@ FASCIA_T = 0.25  # "1/4 in cast acrylic" — clear
 FASCIA_RECESS = 0.15  # the band's face behind the cabinet's front plane
 FASCIA_POCKET = FASCIA_RECESS + FASCIA_T  # 0.40 cut out of the front for it
 FASCIA_MARGIN = 1.0  # the band runs this far above and below the instrument plate
+FASCIA_TOP_LIP = 0.75  # CHOICE: ply left behind the band's top edge — the header the
+                       # fascia's top row of screws lands in. Below it the bay is open.
+FASCIA_SCREW_DIA = 0.135  # clearance for M3 c'sunk, as the plate's F1-4
+FASCIA_SCREW_COLUMNS = 5  # CHOICE: across each of the two rows
+PILOT_DIA = 2.5 / 25.4  # pilot in ply for an M3 screw or a threaded insert
 KNOB_HOLE_CLEARANCE = 0.0625  # the knob shafts pass through the acrylic; the
                               # dials and the e-ink are read through it
 
@@ -275,6 +280,13 @@ CASE_SHEET_T = 0.0625  # 16 ga folded box behind the plate
 CASE_D = 2.75  # plate front to case back; INSTRUMENT_HEAD_PLANS.md: "inside 3.00 clear"
 CASE_GAP = 0.1  # fascia back to plate front — the knobs' bushings span it
 CASE_LOOM_DIA = 0.75  # grommeted pass in the case's back for the loom
+CASE_FLANGE = 0.5  # CHOICE: return flanges folded inward from the LEFT and RIGHT walls'
+                   # front edges, full height. The plate's F1-4 screws tap into them;
+                   # without them there is nothing in 16 ga to take a screw. No flange on
+                   # the top and bottom walls: one would reach 0.5625 in behind the
+                   # plate's top edge, and the OFFSET layout puts a dial bezel within
+                   # 0.25 of it. Side flanges clear every layout (tightest: WIDE, 0.06).
+CASE_TAP_DIA = 2.5 / 25.4  # M3 tap drill in the flanges
 
 # The dial cut diameter is pending calipers. None means: engrave a witness
 # circle at the bezel OD and do not cut. Supply a measured value to cut.
