@@ -87,7 +87,7 @@ def _dump(out_path: Path, tolerance_mm: float, angular: float) -> None:
     heights = vars(P.HEIGHTS)
     variant = {
         "label": os.environ.get("GROWLAB_VARIANT_LABEL", f"{P.PLINTH_H:g} in"),
-        "form": ("fascia " if P.FASCIA else "") + ("frame" if P.FRAME else "") or "box",
+        "form": " + ".join(n for n, on in (("fascia", P.FASCIA), ("frame", P.FRAME)) if on) or "box",
         "plinth_h": P.PLINTH_H,
         "plinth_w": P.PLINTH_W,
         "plinth_d": P.PLINTH_D,

@@ -19,6 +19,13 @@ pytest.importorskip("build123d")
 
 REPO = Path(__file__).resolve().parents[2]
 
+
+def _clean_env(**knobs: str) -> dict:
+    """The caller's shell may carry GROWLAB_* knobs; a candidate must not inherit them."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GROWLAB_")}
+    env.update(knobs)
+    return env
+
 FORMS = {
     "box": {},
     "fascia": {"GROWLAB_FASCIA": "1"},
@@ -29,7 +36,7 @@ FORMS = {
 
 @pytest.mark.parametrize("form", FORMS, ids=list(FORMS))
 def test_form_builds_without_interference_or_conflict(form):
-    env = {**os.environ, **FORMS[form]}
+    env = _clean_env(**FORMS[form])
     r = subprocess.run(
         [sys.executable, str(REPO / "cad" / "build.py"), "--check"],
         env=env, cwd=str(REPO), capture_output=True, text=True, timeout=600,
@@ -41,7 +48,7 @@ def test_form_builds_without_interference_or_conflict(form):
 
 
 def test_bad_flag_names_itself():
-    env = {**os.environ, "GROWLAB_FRAME": "maybe"}
+    env = _clean_env(GROWLAB_FRAME="maybe")
     r = subprocess.run(
         [sys.executable, "-c", "import sys; sys.path.insert(0, '.'); import cad.growlab_cad.params"],
         env=env, cwd=str(REPO), capture_output=True, text=True,
