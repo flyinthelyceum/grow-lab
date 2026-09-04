@@ -95,19 +95,23 @@ def _flag(name: str, default: bool = False) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Form candidates (design pass, 2026-09-04)
-# The height is decided: 36. What remains is whether the thing reads as a
-# cabinet or as apparatus. Two moves, independently switchable, so the viewer
-# can show all four combinations. Both off is the box as first modelled.
+# Form (design pass, 2026-09-04)
+# The height is decided: 36. The fascia is decided, with its materials
+# inverted from the first candidate: the band across the front is CLEAR
+# acrylic, and what sits behind it is a black metal instrument case whose
+# front plate carries the dials, the e-ink window and the knobs — the
+# apparatus on show behind glass, cabling included, the way the Transparent
+# speaker shows its amplifier. FASCIA=0 rebuilds the plain box for the record.
+# The steel frame remains a candidate.
 # ---------------------------------------------------------------------------
 
-FASCIA = _flag("FASCIA")  # a full-width instrument band recessed into the front,
-                          # dark, with the acrylic face flush in it; and the four
-                          # vertical corners chamfered so the sides read as planes
-                          # meeting, not a box's edges.
-FRAME = _flag("FRAME")    # the cabinet floats on a welded 1 x 1 steel frame instead
-                          # of a recessed plinth, and the mast runs to the floor as
-                          # part of that frame: one steel armature, one wooden body.
+FASCIA = _flag("FASCIA", True)  # decided. A full-width clear band recessed into the
+                                # front over an open console bay; the instrument
+                                # case behind it; the four vertical corners
+                                # chamfered so the sides read as planes meeting.
+FRAME = _flag("FRAME")          # candidate: the cabinet floats on a welded 1 x 1
+                                # steel frame instead of a recessed plinth, and the
+                                # mast runs to the floor as part of that frame.
 
 
 # ---------------------------------------------------------------------------
@@ -131,13 +135,22 @@ SHADOW_GAP_INSET = 1.0  # CHOICE: how far the kick steps back under the sides
 FRAME_TUBE = 1.0
 FRAME_LEG_INSET = 1.0  # from the cabinet's outer faces to the legs' outer faces
 
-# Fascia candidate: a band across the whole front, recessed behind the front
-# plane, in a dark material; the face sits flush in it. CHOICE throughout.
+# The fascia: a clear band across the whole front, recessed behind the front
+# plane, over the open console bay. CHOICE throughout.
 CHAMFER = 0.5 if FASCIA else 0.0  # on the four vertical outer corners
-FASCIA_T = 0.25
+FASCIA_T = 0.25  # "1/4 in cast acrylic" — clear
 FASCIA_RECESS = 0.15  # the band's face behind the cabinet's front plane
 FASCIA_POCKET = FASCIA_RECESS + FASCIA_T  # 0.40 cut out of the front for it
-FASCIA_MARGIN = 1.0  # the band runs this far above and below the acrylic face
+FASCIA_MARGIN = 1.0  # the band runs this far above and below the instrument plate
+KNOB_HOLE_CLEARANCE = 0.0625  # the knob shafts pass through the acrylic; the
+                              # dials and the e-ink are read through it
+
+# What shows through the band besides the case: a dark sheet on the partition
+# and a ply ledge the case sits on. The ledge stops short of the partition so
+# the cables drop behind the case to the PSU below. CHOICE throughout.
+BACKPLATE_T = 0.0625
+LEDGE_T = 0.75
+LEDGE_CHASE = 0.75  # gap behind the ledge, the cable route down
 
 CARCASS_T = 0.75  # CHOICE: 3/4 in sheet stock for sides, top frame and floor
 REAR_PANEL_T = 0.75  # "full-height rear panel in the carcass" — the mast fixes here
@@ -152,10 +165,8 @@ CONSOLE_PARTITION_T = 0.5  # CHOICE: the wall between the console bay and the we
 # The acrylic face sits in a rebated opening in the front panel, centred on
 # the cabinet's width and as high as the rail allows. FACE_WIDTH/HEIGHT come
 # from panel_geometry so the opening and the face cannot disagree.
-FACE_MARGIN = 1.0  # CHOICE: from the face's top edge up to the rail
-FACE_LIP = 0.5  # CHOICE: the front panel's lip behind the face's edge. The F1–4
-                # screws at 0.375 inset land in it, and the OFFSET layout's high
-                # dial (bezel top at 11.75) still clears the through-opening.
+FACE_MARGIN = 1.0  # CHOICE: from the plate's top edge up to the rail
+FACE_LIP = 0.5  # box form only: the ply lip behind the face's edge that F1–4 screw into
 
 # Wet bay (reservoir) and dry bay (mast, PSU, driver), behind the console
 # partition, "hard-divided".
@@ -251,8 +262,18 @@ MAST_LINE_PASS_DIA = 0.75  # "Ø 0.75 loom pass, grommeted" — now in the shaft
 # cabinet is the box now.
 # ---------------------------------------------------------------------------
 
-ACRYLIC_T = 0.25  # "1/4 in cast acrylic throughout"
+ACRYLIC_T = 0.25  # "1/4 in cast acrylic throughout" — the box form's face, and the fascia
 FACE_SCREW_DIA = 0.135  # "F1–4 … Ø 0.135 c'sunk x4 | M3 flat-head"
+
+# The instrument case (fascia form): a black metal box the meters, Inky, i3,
+# Pi and meter driver live in, its front plate carrying the hole schedule.
+# Removable forward as a unit once the fascia is off and the knob caps are
+# pulled. Sheet aluminium, black. CHOICE throughout.
+PLATE_T = 0.125  # 1/8 in front plate — stiff enough to carry two movements
+CASE_SHEET_T = 0.0625  # 16 ga folded box behind the plate
+CASE_D = 2.75  # plate front to case back; INSTRUMENT_HEAD_PLANS.md: "inside 3.00 clear"
+CASE_GAP = 0.1  # fascia back to plate front — the knobs' bushings span it
+CASE_LOOM_DIA = 0.75  # grommeted pass in the case's back for the loom
 
 # The dial cut diameter is pending calipers. None means: engrave a witness
 # circle at the bezel OD and do not cut. Supply a measured value to cut.
@@ -261,7 +282,7 @@ WITNESS_DEPTH = 0.02  # CHOICE: engraving depth for reference marks
 
 # What lives behind the face, as a reference envelope: the face footprint,
 # CONSOLE_D deep. If this touches the partition the console is too shallow.
-CONSOLE_ELECTRONICS_D = CONSOLE_D
+CONSOLE_ELECTRONICS_D = CONSOLE_D  # box form; the fascia form has the case instead
 
 
 # ---------------------------------------------------------------------------
@@ -308,7 +329,12 @@ FACE_X0 = -FACE_WIDTH / 2
 FACE_Z1 = RAIL_BOTTOM_Z - FACE_MARGIN
 FACE_Z0 = FACE_Z1 - FACE_HEIGHT  # 22.19
 PANEL_CENTRE_Z = (FACE_Z0 + FACE_Z1) / 2  # 28.19 — read standing, looking down
-FACE_Y0 = FASCIA_RECESS if FASCIA else 0.0  # flush with the fascia, or with the front
+# The plate sits behind the fascia by CASE_GAP; the box form's acrylic face is
+# flush with the front instead.
+FACE_Y0 = FASCIA_POCKET + CASE_GAP if FASCIA else 0.0  # 0.50 behind the front plane
+FACE_T = PLATE_T if FASCIA else ACRYLIC_T
+CASE_Y0 = FACE_Y0
+CASE_Y1 = FACE_Y0 + CASE_D  # 3.25 — the cable gap behind is CONSOLE_Y1 − this
 
 # Plan: console bay, partition, then the wet and dry bays behind.
 CONSOLE_Y0 = CARCASS_T  # inside face of the front panel

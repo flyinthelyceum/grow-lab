@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 build123d = pytest.importorskip("build123d")
 
-from cad.growlab_cad import assembly, cmu, face, mast, params as P, plinth, tray  # noqa: E402
+from cad.growlab_cad import assembly, case, cmu, face, mast, params as P, plinth, tray  # noqa: E402
 from cad.growlab_cad._shapes import bbox_in, box  # noqa: E402
 
 from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH, SCHEDULE  # noqa: E402
@@ -33,12 +33,13 @@ def refs():
 
 class TestEveryPartBuilds:
     def test_fabricated(self, parts):
-        assert set(parts) == {"plinth", "base_recess", "rear_door", "tray", "pads", "mast", "face"}
+        assert set(parts) == {"plinth", "base_recess", "rear_door", "tray", "pads", "mast",
+                              "case", "fascia", "backplate"}
         for name, p in parts.items():
             assert p.volume > 0, name
 
     def test_reference(self, refs):
-        assert set(refs) == {"cmu", "media", "reservoir", "fixture", "console"}
+        assert set(refs) == {"cmu", "media", "reservoir", "fixture"}
 
 
 class TestWhereThingsSit:
@@ -75,18 +76,30 @@ class TestWhereThingsSit:
         assert bb["x1"] - bb["x0"] == pytest.approx(P.MAST_W)
         assert bb["y1"] - bb["y0"] == pytest.approx(P.MAST_D)
 
-    def test_face_is_in_the_front_of_the_cabinet(self, parts):
-        bb = bbox_in(parts["face"])
-        assert bb["y0"] == pytest.approx(0.0)
-        assert bb["y1"] == pytest.approx(P.ACRYLIC_T)
+    def test_case_is_behind_the_fascia_in_the_console_bay(self, parts):
+        bb = bbox_in(parts["case"])
+        assert bb["y0"] == pytest.approx(P.FACE_Y0)
+        assert bb["y1"] == pytest.approx(P.CASE_Y1)
         assert bb["x1"] - bb["x0"] == pytest.approx(FACE_WIDTH)
         assert bb["z1"] - bb["z0"] == pytest.approx(FACE_HEIGHT)
         assert (bb["z0"] + bb["z1"]) / 2 == pytest.approx(P.PANEL_CENTRE_Z)
+        fascia = bbox_in(parts["fascia"])
+        assert bb["y0"] - fascia["y1"] == pytest.approx(P.CASE_GAP)
 
-    def test_face_is_below_the_rail_and_above_the_floor(self, parts):
-        bb = bbox_in(parts["face"])
-        assert bb["z1"] < P.RAIL_BOTTOM_Z
-        assert bb["z0"] > P.FLOOR_TOP_Z
+    def test_fascia_is_recessed_in_the_front_and_spans_the_bay(self, parts):
+        bb = bbox_in(parts["fascia"])
+        assert bb["y0"] == pytest.approx(P.FASCIA_RECESS)
+        assert bb["y1"] == pytest.approx(P.FASCIA_POCKET)
+        assert bb["z0"] == pytest.approx(P.FACE_Z0 - P.FASCIA_MARGIN)
+        assert bb["z1"] == pytest.approx(P.RAIL_BOTTOM_Z)
+        assert bb["x0"] == pytest.approx(-P.PLINTH_W / 2 + P.CHAMFER)
+
+    def test_case_sits_on_the_ledge(self, parts):
+        """Touching, not floating: the ledge's top is the case's bottom."""
+        ledge_top = P.FACE_Z0
+        probe = box(FACE_WIDTH - 1, 1.0, 0.1, at=(0, P.FASCIA_POCKET + 0.6, ledge_top - 0.1))
+        assert (parts["plinth"] & probe).volume > 1.0
+        assert bbox_in(parts["case"])["z0"] == pytest.approx(ledge_top)
 
     def test_fixture_hangs_from_the_mast_cap_over_the_block(self, refs, parts):
         from cad.growlab_cad import fixture
@@ -115,6 +128,43 @@ class TestWhereThingsSit:
     def test_nothing_fabricated_is_below_the_floor(self, parts):
         for name, p in parts.items():
             assert bbox_in(p)["z0"] >= -1e-6, name
+
+
+class TestTheCaseComesOut:
+    def test_case_sweeps_forward_through_nothing_but_the_fascia(self, parts):
+        """Fascia off, knob caps off, the case pulls straight out."""
+        c = bbox_in(parts["case"])
+        sweep = box(c["x1"] - c["x0"], c["y1"] + 3.0, c["z1"] - c["z0"],
+                    at=((c["x0"] + c["x1"]) / 2, (c["y1"] - 3.0) / 2, c["z0"]))
+        for name, part in parts.items():
+            if name in ("case", "fascia"):
+                continue
+            assert (sweep & part).volume < 1.0, name
+
+    def test_fascia_has_holes_only_for_the_knobs(self, parts):
+        import math
+
+        from cad.growlab_cad.face import knob_points
+
+        band_w = P.PLINTH_W - 2 * P.CHAMFER
+        band_h = P.RAIL_BOTTOM_Z - (P.FACE_Z0 - P.FASCIA_MARGIN)
+        solid = band_w * band_h * P.FASCIA_T
+        holes = sum(math.pi * (d / 2 + P.KNOB_HOLE_CLEARANCE) ** 2 * P.FASCIA_T for _, _, d in knob_points())
+        assert parts["fascia"].volume / P.IN**3 == pytest.approx(solid - holes, rel=1e-3)
+        assert len(knob_points()) == 2
+
+    def test_knob_holes_line_up_with_the_plate(self, parts):
+        from cad.growlab_cad.face import knob_points
+
+        for wx, wz, d in knob_points():
+            probe = box(0.1, 1.0, 0.1, at=(wx, (P.FASCIA_RECESS + P.CASE_Y0) / 2, wz - 0.05))
+            assert (probe & parts["fascia"]).volume < 1.0
+            assert (probe & parts["case"]).volume < 1.0
+
+    def test_loom_pass_is_in_the_case_back(self):
+        body = case.build_body()
+        probe = box(0.2, 1.0, 0.2, at=(0, P.CASE_Y1 - 0.03, P.FACE_Z0 + 1.5 - 0.1))
+        assert (probe & body).volume < 1.0
 
 
 class TestNothingInterferes:
@@ -151,15 +201,15 @@ class TestTheFaceReadsThePanelGeometry:
     """The face and the emulator draw from one module."""
 
     def _probe(self, wx, wz):
-        return box(0.2, P.ACRYLIC_T * 2, 0.2, at=(wx, face.FACE_MID_Y, wz - 0.1))
+        return box(0.2, P.FACE_T * 2, 0.2, at=(wx, face.FACE_MID_Y, wz - 0.1))
 
     def test_face_without_dial_cuts_is_nearly_solid(self):
         """Dials are witness rings, not holes, until calipers arrive."""
         assert P.DIAL_CUT_DIAMETER is None
         f = face.build_face()
-        plate = FACE_WIDTH * FACE_HEIGHT * P.ACRYLIC_T * P.IN**3
+        plate = FACE_WIDTH * FACE_HEIGHT * P.FACE_T * P.IN**3
         window = next(e for e in SCHEDULE.elements if e.kind == "window")
-        removed = window.width * window.height * P.ACRYLIC_T * P.IN**3
+        removed = window.width * window.height * P.FACE_T * P.IN**3
         assert f.volume < plate - removed
         assert f.volume > (plate - removed) * 0.97
 
@@ -185,24 +235,15 @@ class TestTheFaceReadsThePanelGeometry:
         for layout in LAYOUTS:
             assert face.build_face(layout).volume > 0, layout.id
 
-    def test_front_panel_opening_frames_the_face(self, parts):
-        """The window and the rail elements see daylight through the front panel."""
+    def test_nothing_but_glass_is_in_front_of_the_window(self, parts):
+        """From the front plane to the plate, the e-ink window sees only the fascia."""
         window = next(e for e in SCHEDULE.elements if e.kind == "window")
         wx, wz = face.panel_to_world(window.x, window.y)
-        probe = box(0.2, P.CARCASS_T * 2, 0.2, at=(wx, P.CARCASS_T / 2, wz - 0.1))
-        assert (parts["plinth"] & probe).volume < 1.0
-
-    def test_corner_screws_land_in_the_lip(self, parts):
-        """Behind each F1–4 hole there is front-panel material to screw into."""
-        for px, py in face.corner_screw_points():
-            wx, wz = face.panel_to_world(px, py)
-            # A 0.2 in square around the screw, inside the 0.5 in lip. The tap
-            # drill takes the middle out of it; the rest must be front panel.
-            probe = box(0.2, P.CARCASS_T - P.ACRYLIC_T - 0.05, 0.2,
-                        at=(wx, (P.ACRYLIC_T + P.CARCASS_T) / 2, wz - 0.1))
-            drill = 3.14159 * (2.5 / 25.4 / 2) ** 2 * (P.CARCASS_T - P.ACRYLIC_T - 0.05)
-            wood = (probe.volume / P.IN**3) - drill
-            assert (parts["plinth"] & probe).volume / P.IN**3 == pytest.approx(wood, rel=0.05)
+        probe = box(0.2, P.FACE_Y0, 0.2, at=(wx, P.FACE_Y0 / 2, wz - 0.1))
+        for name, part in parts.items():
+            if name == "fascia":
+                continue
+            assert (part & probe).volume < 1.0, name
 
 
 class TestMastDetails:

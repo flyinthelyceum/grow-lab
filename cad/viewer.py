@@ -38,12 +38,14 @@ MATERIALS = {
     "plinth": dict(label="Cabinet carcass", colour="#C9A46A", opacity=1.0, group="fabricated"),
     "base_recess": dict(label="Recessed base", colour="#9C7B4E", opacity=1.0, group="fabricated"),
     "base_frame": dict(label="Steel base frame", colour="#3E4247", opacity=1.0, group="fabricated"),
-    "fascia": dict(label="Instrument fascia", colour="#2E2C29", opacity=1.0, group="fabricated"),
+    "fascia": dict(label="Fascia, clear acrylic", colour="#BFD9E8", opacity=0.28, group="fabricated"),
+    "case": dict(label="Instrument case, black aluminium", colour="#26282B", opacity=1.0, group="fabricated"),
+    "backplate": dict(label="Console backplate", colour="#1E2023", opacity=1.0, group="fabricated"),
     "rear_door": dict(label="Rear door (wet bay)", colour="#B8925A", opacity=1.0, group="fabricated"),
     "tray": dict(label="Tray, 304 16 ga", colour="#C4C9CC", opacity=1.0, group="fabricated"),
     "pads": dict(label="Block pads", colour="#8F7A55", opacity=1.0, group="fabricated"),
     "mast": dict(label="Mast, 2 × 3 HSS", colour="#4A4F55", opacity=1.0, group="fabricated"),
-    "face": dict(label="Instrument face, acrylic", colour="#9CC3D8", opacity=0.55, group="fabricated"),
+    "face": dict(label="Instrument face, acrylic (box form)", colour="#9CC3D8", opacity=0.55, group="fabricated"),
     "cmu": dict(label="CMU vessel", colour="#9A9590", opacity=1.0, group="reference"),
     "media": dict(label="Media", colour="#5E4A38", opacity=1.0, group="reference"),
     "reservoir": dict(label="Reservoir pan", colour="#5C8DB3", opacity=0.5, group="reference"),
@@ -52,13 +54,12 @@ MATERIALS = {
 }
 
 
-# The design pass: the four combinations of the two form knobs, at the
-# decided height. Both off is the box as first modelled.
+# The design as decided, the one candidate still open, and the box before
+# the design pass for the record.
 DEFAULT_VARIANTS = [
-    ("Box", {}),
-    ("Fascia", {"GROWLAB_FASCIA": "1"}),
-    ("Frame", {"GROWLAB_FRAME": "1"}),
-    ("Fascia + frame", {"GROWLAB_FASCIA": "1", "GROWLAB_FRAME": "1"}),
+    ("Design", {}),
+    ("Design + frame", {"GROWLAB_FRAME": "1"}),
+    ("Box (before)", {"GROWLAB_FASCIA": "0"}),
 ]
 
 
