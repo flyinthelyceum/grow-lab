@@ -3,8 +3,19 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 from datetime import datetime, timezone
 from pathlib import Path
+
+# The CAD form knobs (GROWLAB_FASCIA, GROWLAB_FRAME, GROWLAB_PLINTH_H …) are read
+# by cad.growlab_cad.params at IMPORT time, and the CAD tests import it at module
+# scope to assert the design as documented. A knob left exported in the shell —
+# easy after a viewer sweep — would silently rebuild the station and fail those
+# assertions for a reason that has nothing to do with the change under test.
+# conftest is imported before any test module, so scrubbing here is early enough.
+# test_cad_forms.py sets its own knobs per subprocess and is unaffected.
+for _var in [k for k in os.environ if k.startswith("GROWLAB_")]:
+    del os.environ[_var]
 
 import pytest
 import pytest_asyncio
