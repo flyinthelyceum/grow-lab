@@ -46,7 +46,7 @@ on:
           - control-state
           - pytest
           - restart-services
-          - clean-stale-leftovers
+          - unblock-deploy
 
 permissions:
   contents: read
@@ -187,13 +187,16 @@ jobs:
                 http://127.0.0.1:8000/api/system/status || echo "no answer"
               ;;
 
-            clean-stale-leftovers)
-              # Exactly these six paths, enumerated so this cannot be
-              # repurposed into a general delete. Each is a leftover with a
-              # tracked successor, established in the session of 2026-09-03:
-              # five predate the move into static/ and templates/, and
-              # tsl2591.py was removed from git in b7d5664 with the switch to
-              # AS7341. They block the deploy job's dirty-tree check.
+            unblock-deploy)
+              # Clears the two things standing between this clone and a clean
+              # dirty-tree check. Both sets are enumerated so this cannot be
+              # repurposed into a general delete or a general discard.
+
+              echo "## stale leftovers"
+              # Each has a tracked successor. Five predate the move into
+              # static/ and templates/ — no commit has ever touched those loose
+              # paths — and tsl2591.py was removed from git in b7d5664 with the
+              # switch to AS7341.
               for f in \
                   pi/dashboard/art.html \
                   pi/dashboard/art.js \
@@ -211,9 +214,34 @@ jobs:
                   echo "absent   $f"
                 fi
               done
+
+              echo
+              echo "## mode-only changes on the deploy scripts"
+              # Someone ran chmod +x on these on the box. The diff was checked
+              # on 2026-09-04 and is a mode bit and nothing else -- no content,
+              # so discarding loses no work. Upstream now carries 755 for both,
+              # matching the other two scripts in deploy/, so once this clone
+              # fast-forwards the executable bit comes back and stays.
+              #
+              # Restored only if the diff is STILL mode-only. If someone has
+              # edited the contents since, this refuses and leaves it alone --
+              # discarding a real edit on a box nobody can shell into is the
+              # thing worth being careful about.
+              for f in deploy/push-dashboard.sh deploy/recover-dashboard.sh; do
+                if git diff --quiet -- "$f"; then
+                  echo "clean    $f"
+                elif [ -z "$(git diff --numstat -- "$f" | awk '{print $1+$2}' | grep -v '^0$')" ]; then
+                  git checkout -- "$f" && echo "restored $f (mode only, no content change)"
+                else
+                  echo "REFUSED  $f — it has content changes, not just a mode bit:"
+                  git --no-pager diff --stat -- "$f"
+                fi
+              done
+
               echo
               echo "## working tree after"
               git status --porcelain
+              echo "(empty above means the deploy job will now pass its dirty-tree check)"
               ;;
 
             *)
