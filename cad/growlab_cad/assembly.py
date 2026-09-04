@@ -47,10 +47,15 @@ def reference() -> dict[str, Part]:
 
 
 def _shared_in3(a: Part, b: Part) -> float:
+    """Shared volume of two solids, in in³.
+
+    A kernel failure here is not "no overlap" — it is a check that did not
+    run. Raise with the pair named rather than report a clean result.
+    """
     try:
         return (a & b).volume / IN**3
-    except Exception:
-        return 0.0
+    except Exception as exc:  # noqa: BLE001 — re-raised with context
+        raise RuntimeError(f"intersection check failed for {a.label!r} ∩ {b.label!r}: {exc}") from exc
 
 
 def interferences(parts: dict[str, Part], *, tolerance_in3: float = 0.001) -> list[tuple[str, str, float]]:

@@ -65,7 +65,9 @@ def main(argv: list[str] | None = None) -> int:
         "static_lift_in": params.HEIGHTS.static_lift,
         "panel_centre_in": params.PANEL_CENTRE_Z,
         "fixture_cantilever_in": params.FIXTURE_CANTILEVER,
-        "rear_door_opening_in": {"width": door_w, "height": door_h},
+        "rear_door_opening_in": {"width": door_w, "height": door_h,
+                                 "pan_passes": door_w > params.RESERVOIR_L
+                                 and door_h > params.RESERVOIR_H + params.RESERVOIR_LIFT_CLEARANCE},
         "dial_cut_diameter": params.DIAL_CUT_DIAMETER,
         "params": _params_snapshot(),
     }
@@ -97,8 +99,12 @@ def main(argv: list[str] | None = None) -> int:
     print(f"static lift, low water → emitters: {params.HEIGHTS.static_lift:.1f} in "
           f"({params.HEIGHTS.static_lift / 12:.2f} ft); panel centre {params.PANEL_CENTRE_Z:.1f} in; "
           f"overall height {params.MAST_TOP + params.FIXTURE_ARM_T:.1f} in")
+    # The pan has to be lifted off the shelf to come out, so the opening must
+    # clear its height plus the lift — the same condition the test asserts.
+    pan_h_lifted = params.RESERVOIR_H + params.RESERVOIR_LIFT_CLEARANCE
+    door_ok = door_w > params.RESERVOIR_L and door_h > pan_h_lifted
     print(f"rear door opening {door_w:.2f} × {door_h:.2f}; pan {params.RESERVOIR_L} × {params.RESERVOIR_H} "
-          f"{'passes' if door_w > params.RESERVOIR_L and door_h > params.RESERVOIR_H else 'DOES NOT PASS'}")
+          f"(+{params.RESERVOIR_LIFT_CLEARANCE} lift) {'passes' if door_ok else 'DOES NOT PASS'}")
 
     if params.DIAL_CUT_DIAMETER is None:
         print("dials: NOT CUT — witness rings at bezel OD; set DIAL_CUT_DIAMETER after calipers")
