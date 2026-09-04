@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-04 (form settled)
+
+### Decided
+- **The steel base frame**, over the recessed plinth. The cabinet floats 6 in on a welded 1 × 1 frame whose legs are inset an inch so it overhangs, and the mast runs to the floor as one of that frame's members. Legs, ring, mast, fixture arm and the instrument case are one black register; the ply body is the other. `FRAME` defaults on; `GROWLAB_FRAME=0` restores the plinth. The lift, the shelf, the block and the panel centre are unchanged — everything above the carcass floor is measured from `PLINTH_H`, asserted.
+- Viewer candidates are now **Design / On a plinth / Box (before)**. The height table's first row is the cabinet's underside at 6 in.
+
+**Form is settled.** What remains before fabrication is detail (frame joins, case development, hardware) and the two pending measurements (Weston bezels, case depth).
+
 ## 2026-09-04 (the instrument behind glass)
 
 ### Decided

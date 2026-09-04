@@ -104,7 +104,7 @@ and carries only the LED fixture, the drip line and the LED cable.
 
 | Element | Height from floor |
 |---|---|
-| Recessed base / shadow gap | 0–2 in |
+| Floor to the cabinet's underside (steel frame) | 0–6 in |
 | Instrument face — bottom edge | 22.2 in |
 | Reservoir shelf | 28 in |
 | **Panel centre** | **28.2 in** — read standing, looking down |
@@ -402,9 +402,9 @@ use. Fail it and leach longer or add a second coat before planting.
 
 - **Weston 301 depth and bezel** — caliper on arrival; sets `DIAL_CUT_DIAMETER` and confirms
   the 3.00 console depth.
-- **Base.** The fascia is decided (clear, over the black case). Still open: the welded
-  1 x 1 steel base frame the cabinet floats on, with the mast running to the floor as part
-  of it, versus the recessed plinth. `GROWLAB_FRAME=1`; both are in the viewer.
+- **Frame fabrication.** 1 x 1 HSS or solid square bar; welded or bolted at the corners;
+  levelling feet in the legs. Whether the mast is welded to the ring or bolted through it
+  is a fabricator's call — welded is stiffer, bolted lets the cabinet come off the frame.
 - **Case fabrication.** 16 ga aluminium folded box with a 1/8 in plate: bend it, or have the
   plate laser-cut and the box folded from one development. Powder-coat or anodise black.
 - 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
@@ -430,7 +430,12 @@ use. Fail it and leach longer or add a second coat before planting.
 - **2026-09-04** — **Fascia decided, materials inverted:** clear acrylic band over an open
   console bay; the instrument becomes a removable black aluminium case behind it, its plate
   carrying the hole schedule; a dark backplate and the loom in view. Reference: the
-  Transparent speaker. The steel frame stays a candidate.
+  Transparent speaker.
+- **2026-09-04** — **Steel base frame decided.** The cabinet floats 6 in on a welded 1 x 1
+  frame whose legs are inset an inch so it overhangs, and the mast runs to the floor as one
+  of that frame's members. Legs, ring, mast, fixture arm and the instrument case are one
+  black register; the ply body is the other. **Form is settled**; what remains is
+  fabrication detail and the pending measurements.
 - **2026-09-04** — Console layout. The instrument panel moves from a head on the mast into
   the cabinet's front face; doors move to the rear; the cabinet grows to 20 x 16 x 36 (tray
   floor). Reservoir behind the console bay on a shelf at 28, lift **13 in** (was 17); mast

@@ -20,7 +20,7 @@ from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH, LAYOUTS  # noqa
 
 # The table, verbatim from the doc (console layout, 2026-09-04).
 DOC_HEIGHTS = {
-    "shadow_gap": 2.0,
+    "shadow_gap": 6.0,   # the cabinet floats on the frame
     "face_bottom": 22.2,
     "panel_centre": 28.2,
     "reservoir_shelf": 28.0,
@@ -55,12 +55,28 @@ class TestHeightStackMatchesTheDocs:
         assert (P.PLINTH_W, P.PLINTH_D, P.PLINTH_H) == (20.0, 16.0, 36.0)
 
 
+class TestTheCabinetFloatsOnTheFrame:
+    def test_the_mast_is_a_member_of_the_frame(self):
+        """Not standing on the carcass floor: it runs to the ground."""
+        assert P.MAST_BOTTOM == 0.0
+        assert P.MAST_BOTTOM < P.FLOOR_TOP_Z
+
+    def test_legs_are_inset_so_the_cabinet_overhangs(self):
+        assert P.FRAME_LEG_INSET >= P.FRAME_TUBE
+        assert P.FRAME_LEG_INSET < P.PLINTH_D / 4
+
+    def test_the_frame_does_not_move_the_lift(self):
+        """Everything above the carcass floor is measured from PLINTH_H."""
+        assert P.HEIGHTS.static_lift == pytest.approx(13.0)
+        assert P.TRAY_FLOOR_Z == P.PLINTH_H
+
+
 class TestTheInstrumentIsBehindTheGlass:
     """The design: a clear fascia over an open bay, the metal case behind it."""
 
     def test_the_design_is_the_default(self):
         assert P.FASCIA is True
-        assert P.FRAME is False
+        assert P.FRAME is True
 
     def test_plate_is_centred_on_the_cabinet(self):
         assert P.FACE_X0 == pytest.approx(-FACE_WIDTH / 2)
