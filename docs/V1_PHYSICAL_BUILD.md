@@ -90,40 +90,74 @@ Fallback if measured delivery is unusable: raise the reservoir further, or fit a
 higher-head pump (a 12V diaphragm pump reaches 40+ PSI, at the cost of audible ticking —
 a real consideration for a gallery piece, where the submersible is near-silent).
 
-## Station geometry (resolved 2026-09-03)
+## Station geometry (console layout, 2026-09-04)
 
-Section drawing: `https://claude.ai/code/artifact/fe1e9c0e-2688-4afb-bc32-4b36c4d76261`
+Model: `cad/` (build123d → STEP); elevations in the `growlab-v1-station-cad` CI artifact.
+Supersedes the mast-and-head layout of 2026-09-03 (section drawing
+`https://claude.ai/code/artifact/fe1e9c0e-2688-4afb-bc32-4b36c4d76261`), kept for the record.
 
-Cabinet plinth at **24 in**, CMU on standoffs in a lift-out tray, mast at the back.
+**The instrument panel is in the front face of the cabinet.** Behind it a shallow dry
+console bay; behind that the reservoir (wet bay, viewer's left) and the mast (dry bay,
+right) side by side. Access is from the **rear**: a door behind the wet bay for the pan.
+The cabinet is as tall as that stack needs. The mast is the 2 x 3 hollow section as drawn,
+and carries only the LED fixture, the drip line and the LED cable.
 
 | Element | Height from floor |
 |---|---|
 | Recessed base / shadow gap | 0–2 in |
-| Reservoir shelf | 12 in |
-| Water surface — low (design case) | 14.0 in |
-| Water surface — full | 16.1 in |
-| Cabinet top / tray floor | 24 in |
-| Tray upstand | 26 in |
-| CMU underside (on 0.75 in pads) | 24.75 in |
-| Media surface | 30.9 in |
-| **Emitter discharge** | **31.0 in** |
-| CMU top | 32.4 in |
-| LED fixture | ~46 in |
-| **Static lift, low water → emitters** | **17.0 in · 1.42 ft** |
+| Instrument face — bottom edge | 22.2 in |
+| Reservoir shelf | 28 in |
+| **Panel centre** | **28.2 in** — read standing, looking down |
+| Water surface — low (design case) | 30.0 in |
+| Water surface — full | 32.1 in |
+| Instrument face — top edge | 34.2 in |
+| Cabinet top / tray floor | 36 in |
+| CMU underside (on 0.75 in pads) | 36.75 in |
+| Tray upstand | 38 in |
+| Media surface | 42.9 in |
+| **Emitter discharge** | **43.0 in** |
+| CMU top | 44.4 in |
+| LED fixture (underside) | 57.9 in |
+| Mast cap / top of the piece | 59.4 in (59.9 with the arm) |
+| **Static lift, low water → emitters** | **13.0 in · 1.08 ft** |
 
-Plan: cabinet **20 x 14 in** (depth set by the reservoir, not the block); CMU 15.625 x
-7.625 actual. The reservoir pan at 12.8 x 10.4 leaves ~7 in of cabinet width for the dry
-bay.
+Plan: cabinet **20 x 16 in**. Front to back: front panel 0.75, console bay **3.00 clear**
+(INSTRUMENT_HEAD_PLANS.md: meters, Inky, i3 and Pi "both fit inside 3.00 clear"), partition
+0.5, clearance 0.25, pan 10.4, rear panel / door 0.75 — **15.65 of 16.00, +0.35 in**. Wet bay
+13.0 wide for the 12.8 pan; dry bay ~5 wide with the mast in its rear corner beside the
+divider, PSU and driver alongside. CMU 15.625 x 7.625 actual, centred in the tray.
+
+Why this arrangement, in three numbers:
+
+- **Depth.** The pan and the mast no longer share an X, so the 2026-09-03 conflict (pan
+  10.4 + mast 3.0 in a 14 in cabinet, 1.15 in short) is gone. 16 in is what the console bay
+  in front of the pan costs.
+- **Lift.** With the pan *behind* the console rather than under it, the shelf rises to 28
+  and the lift falls from 17 in to **13 in** on the same pump — inside the SICCE's design
+  target with margin. Putting the pan under a console deck would have pushed the lift to
+  ~28 in (2.3 ft: "fragile, avoid"), so that arrangement was not built.
+- **Access.** The pan slides out of the rear door at 28 in — working height, not a stoop.
+
+**`PLINTH_H` is the one knob.** Raising the cabinet raises the panel, the block and the
+light together; the lift does not change with it. 36 puts the panel centre at 28.2 in.
 
 **Tray is a flush rebate**, not a raised collar — it drops into the cabinet's top frame and
 becomes the top surface, flush with the sides. One clean volume, no step.
 
-**Build the reservoir shelf adjustable** — slotted supports. 1.42 ft is comfortable on
+**Build the reservoir shelf adjustable** — slotted supports. 1.08 ft is comfortable on
 paper, but Stage 0.2 decides it, and moving the shelf an inch afterwards should not mean
-rebuilding the cabinet.
+rebuilding the cabinet. The shelf can go up ~0.8 in before the pan no longer clears the
+rail, and down as far as the lift allows.
 
-Wet bay (reservoir) and dry bay (Pi, ESP32, driver, PSU, relay) hard-divided, wet bay
-vented — an open reservoir in a sealed box makes a humid box.
+Wet bay (reservoir) and dry bay (mast, PSU, driver) hard-divided behind the console
+partition; console bay (Pi, i3, meters, Inky, meter driver) in front of both. Wet bay vented
+high in the left side — an open reservoir in a sealed box makes a humid box — and the
+console bay vented low in the right side for PSU heat, away from the wet zone.
+
+**Access.** The rear door is the wet bay's full width and height, so the pan comes straight
+out. The front panel, with the face in it, is one removable piece: unscrew it and the
+console bay is open; the partition stops at the divider, so the dry bay behind it is
+reached the same way. The face itself is removable on its own (F1–4) for the instruments.
 
 ### Tray and block interface
 
@@ -142,31 +176,37 @@ vented — an open reservoir in a sealed box makes a humid box.
   joint in a permanently wet salty seam would fail anyway.
 - Size for the worst case: a full `max_runtime_seconds` pulse, not a normal event.
 
-### Mast — thin shaft, instrument head
+### Mast — a shaft for the light, and the console it no longer carries
 
-Study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b21b6`
+Study (mast-and-head, superseded): `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b21b6`
 
-The electronics enclosure is **integrated into the mast** rather than sitting beside it. The
-mast is thin where it carries only the drip line and sensor loom, and thickens into the
-instrument head where the apparatus lives — dimension as a byproduct of contents.
+The instrument head is gone from the top of the mast; the panel is in the cabinet's front
+(§ Station geometry). What remains of the mast is the part that had a structural job.
 
-- **Shaft:** 2 x 3 in hollow section, plinth top to 46 in. Tubing and cable inside.
-- **Head:** **9.5 x 12 x 3.5 in** acrylic, 46 to 58 in, sized around two Weston 301 3-1/2"
-  centre-zero movements and the 7.3" e-ink. Front panel on its face, panel centre at 52 in — read
-  standing, while tending. Fabrication schedules: INSTRUMENT_HEAD_PLANS.md.
-- **Fixture:** hangs from the **head's underside** at 46 in, cantilevered ~10 in forward to
-  centre over the block. Hanging it from the head rather than the shaft puts the moment over
-  the column instead of bending it.
+- **Shaft:** 2 x 3 in hollow section, the 3 in dimension front-to-back — where the
+  fixture's moment is. Stands on the carcass floor in the dry bay, bolts through its back
+  wall into the **full-height rear panel** (4 x 5/16 through-bolts) beside the divider,
+  passes up through a notch in the rail and the tray, and ends at a welded cap at 59.4 in.
+  Drip line and LED cable inside; they enter through a grommeted Ø 0.75 pass in the side
+  wall over the pan's rim, through a matching pass in the divider. **The sensor loom never
+  leaves the cabinet** — probes in the tray and the pan, Pi in the console bay.
+- **Fixture:** hangs from the cap. An arm runs forward from the cap over the fixture's back
+  edge and a cross bar along that edge carries the fixture, centred over the block; the
+  block is centred and the mast is off to the side, so the bar spans the offset. Moment arm
+  at the mast, centreline to centreline: **5.75 in** (derived in `cad/`, not asserted).
+  Fixture underside 15 in above the media, the same light-to-canopy distance as before.
+- **Verify the shaft in bending.** Its section is sized by what it carries, not by
+  structure; the load is now the fixture alone rather than the fixture plus a head, and the
+  moment goes into a rear panel rather than a flange.
 - Bolts to the **cabinet carcass** — not the tray, not the block — with the tray notched to
-  clear. The base wants a full-height rear panel in the carcass rather than a couple of
-  screws.
-- **Verify the shaft in bending.** Its section is sized by what it carries, not by structure,
-  and the head plus fixture is the whole cantilevered mass sitting at the top of it. A steel
-  core inside an acrylic skin suits the register if it needs stiffening.
-- **Vent the head** — the driver moved down to the plinth, but the Pi and meter backlights
-  still dissipate inside a closed transparent box. Make the vents part of the composition.
-- **Cable discipline is visible.** A transparent enclosure makes the loom part of the design;
-  plan runs and terminal-block layout before assembly, not after.
+  clear.
+
+**The console (the head, laid into the cabinet):** 9.50 x 12.00 acrylic face, 1/4 in,
+pocketed flush into the front panel with a 0.5 in lip behind its edge for the F1–4 screws.
+3.00 in clear behind it, full width. INSTRUMENT_HEAD_PLANS.md's face schedule, dial-face
+conversion and layout candidates stand; its box panels, flange and loom pass are
+superseded. Vent the console bay (the right-side holes) — the Pi and meter backlights still
+dissipate. The face is emulated at `/panel`.
 
 **Head internals — checked against datasheets and the running code (2026-09-03):**
 
@@ -180,13 +220,14 @@ instrument head where the apparatus lives — dimension as a byproduct of conten
   installed, move the pump relay to a free GPIO** — GPIO23 (pin 16) is plain, unused, and
   clear of PWM (12/13/18/19), SPI (8-11) and the Inky buttons. One config line; until then
   the bench keeps running on 17 (code takes precedence; the Inky is not on the bench yet).
-- **Head depth holds at 3.5 in.** The figures this was sized on (a Simpson 1327 at 1.92 in
-  behind the panel) no longer apply — the movements are **Weston 301s, and their depth is
-  pending measurement on arrival**. Pi + stacked HATs ~1.5 in sit beside the movements, not
-  behind. 3.5 in was comfortable for the Simpson; confirm it for the Weston before cutting.
+- **Console depth is 3.00 clear** (the old head's inside dimension). The figures this was
+  sized on (a Simpson 1327 at 1.92 in behind the panel) no longer apply — the movements are
+  **Weston 301s, and their depth is pending measurement on arrival**. Pi + stacked HATs
+  ~1.5 in sit beside the movements, not behind. The console bay is full width, so there is
+  room beside the face if the Westons run deep; confirm before cutting the partition.
 - **Meters: Weston 301, 3-1/2", centre-zero — 30-0-30 µA and 100-0-100 µA.** The face is
   9.50 wide for two 3.50 in bezels with margins, and the e-ink (6.85 board, 6.30 window)
-  sits inside that span. Head height 12.00. **The panel cut and stud pattern in
+  sits inside that span. Face height 12.00. **The panel cut and stud pattern in
   INSTRUMENT_HEAD_PLANS.md are still Simpson figures — caliper the Weston bezels and recut
   the schedule before drilling.** The face is emulated at `/panel` on the dashboard.
 
@@ -231,14 +272,17 @@ dedicated 12V PSU. The domains are:
 
 ## Enclosure
 
-Dry electronics box, custom — to be designed and 3D-printed / laser-cut in acrylic.
+The console bay of the cabinet (§ Station geometry) is the dry electronics box: the front
+slice behind the instrument face, partitioned from the wet bay.
 
-- One box, mounted **above the water line and to the side** — never over the reservoir.
+- **In front of the water, never over it** — the partition is the wet/dry line, and the
+  console bay's vents are on the far side from the wet bay's.
 - **Cable glands** on every penetration; drip loops on all external cables.
 - **Mains and DC/signal separated** inside; keep EZO isolator leads clean.
 - **Ventilation** for PSU + LED-driver heat, drawn away from the wet zone.
 - Houses: Raspberry Pi, ESP32, relay board, PSU (5V), 12V buck, PWM-120-24 driver,
-  meter driver, front panel on the door.
+  meter driver — behind the face and below it; the dry bay behind the partition takes
+  what does not fit beside the mast.
 
 ## Electrical constraints
 
@@ -337,7 +381,10 @@ use. Fail it and leach longer or add a second coat before planting.
 
 ## Open items
 
-- Enclosure design — its own print/laser task.
+- **Weston 301 depth and bezel** — caliper on arrival; sets `DIAL_CUT_DIAMETER` and confirms
+  the 3.00 console depth.
+- **Panel centre height.** 28.2 in reads looking down. `PLINTH_H` moves it; decide at the
+  mock-up, not in CAD.
 - 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;
   otherwise right-size the pump.
@@ -347,13 +394,19 @@ use. Fail it and leach longer or add a second coat before planting.
   certainly waters too little. How much less is an empirical question — calibrate per
   Stage 0.2 before planting.
 - **Confirm the lift before plumbing.** Reservoir water line to the highest point of the
-  tubing must stay under the pump's 2.8 ft shutoff, and well under it for usable flow.
+  tubing must stay under the pump's 2.8 ft shutoff, and well under it for usable flow. The
+  console layout puts it at 13 in on paper.
 - Reservoir cadence: runoff-to-tray returns nothing, so the 2.5 gal reservoir needs
   topping every ~3-10 days depending on dose. Consider a larger reservoir if it lands
   under about four days.
 
 ## Revision log
 
+- **2026-09-04** — Console layout. The instrument panel moves from a head on the mast into
+  the cabinet's front face; doors move to the rear; the cabinet grows to 20 x 16 x 36 (tray
+  floor). Reservoir behind the console bay on a shelf at 28, lift **13 in** (was 17); mast
+  as drawn, in the dry bay, fixture-only. Resolves the 2026-09-03 depth conflict found by
+  the CAD (pan + mast did not fit 14 in). Modelled in `cad/`.
 - **2026-09-02** — LED two-board budget measured and closed: 0.72 A per board at 24 V,
   ~33 W for the pair, comfortably inside the PWM-120-24.
 - **2026-09-02** — v1 is runoff-to-tray (recirculation deferred). Pump tamed with

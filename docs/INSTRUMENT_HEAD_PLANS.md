@@ -1,6 +1,14 @@
-# Instrument Head Plans — Rev A (2026-09-03)
+# Instrument Head Plans — Rev B (2026-09-04)
 
-Fabrication schedules for the mast's instrument head. Drawings:
+**Rev B: the face is in the cabinet's front, not in a head on the mast.** See
+V1_PHYSICAL_BUILD.md § Station geometry (console layout). What stands from Rev A: the face
+hole schedule, the depth stack, the dial-face conversion, and the layout candidates. What is
+superseded: the box (back, sides, top, bottom, corner blocks), the flange, the loom pass and
+the 46–58 height stack. The face now sits **pocketed flush into the 3/4 in front panel**
+with a 0.5 in lip behind its edge; F1–4 screw into that lip (M3 inserts). Panel centre
+**28.2 in**; 3.00 clear behind the face, full cabinet width. Modelled in `cad/face.py`.
+
+Fabrication schedules for the instrument face. Drawings (Rev A, head-on-mast):
 `https://claude.ai/code/artifact/f1a197ae-7692-4219-a686-0100183e3f0b`
 Design study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b21b6`
 **These tables are the authority; the drawings illustrate them.**
@@ -12,8 +20,8 @@ Design study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b2
   built. Bezel OD 3.50 in is nominal for the size class; **the panel cut and stud
   pattern below are Simpson figures and do not apply** — recut this schedule from
   calipered bezels before drilling. See the emulator at `/panel`.
-- Head external: **9.50 W x 12.00 H x 3.50 D**. Clear inside: 3.00.
-- Height stack: head bottom at 46 in (fixture level), top at **58 in**; panel centre **52 in**.
+- Face: **9.50 W x 12.00 H**, in the cabinet front. Clear behind: 3.00 (the console bay).
+- Height stack (Rev B): face 22.2–34.2 in; panel centre **28.2 in**. (Rev A: 46–58, centre 52.)
 
 ## Face — hole schedule
 
@@ -45,6 +53,10 @@ before final cut; if it intrudes, drop the whole rail to Y = 1.50.
 
 ## Panel schedule
 
+**Rev B: only the Face row applies.** The rest built the head's box, which the cabinet now
+replaces; kept so the Rev A drawings still read. The face's corner screws go into the front
+panel's lip rather than corner blocks.
+
 | Part | Qty | W | H | Features | Joins |
 |---|---|---|---|---|---|
 | Face | 1 | 9.50 | 12.00 | Hole schedule above | Removable, 4 × M3 c'sunk into corner blocks |
@@ -71,9 +83,10 @@ not, add it and re-check.
 
 ## Structure
 
-**The acrylic holds instruments, not loads.** The 2 × 3 in shaft ends in the 1/4 in steel
-flange. The head's bottom panel bolts down onto the flange; the LED fixture arm attaches to the
-same plate. The cantilever's moment goes steel-to-steel and never through the box.
+**The acrylic holds instruments, not loads.** In Rev B that is automatic: the face is a
+panel in a cabinet and carries nothing but itself. The mast is fixture-only — a 2 × 3 in
+shaft bolted through the carcass's rear panel with a welded cap the fixture arm lands on.
+(Rev A ran the cantilever's moment through a flange under the head.)
 
 ## Material and finish
 

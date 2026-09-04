@@ -52,6 +52,16 @@ def cyl_y(dia: float, length: float, *, at: tuple[float, float, float]) -> Part:
     )
 
 
+def cyl_x(dia: float, length: float, *, at: tuple[float, float, float]) -> Part:
+    """A cylinder along X, centred on ``at`` in all three axes — holes through
+    the carcass sides and the divider."""
+    return (
+        Pos(at[0] * IN, at[1] * IN, at[2] * IN)
+        * Rot(0, 90, 0)
+        * Cylinder(dia / 2 * IN, length * IN, align=CENTRE)
+    )
+
+
 def slot_z(lx: float, ly: float, depth: float, *, at: tuple[float, float, float]) -> Part:
     """A rectangular through-slot cutter along Z, centred in X/Y at ``at``."""
     return box(lx, ly, depth, at=at, align=CENTRE)

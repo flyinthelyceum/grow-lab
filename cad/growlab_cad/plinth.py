@@ -1,40 +1,54 @@
-"""The plinth: a cabinet carcass on a recessed base.
+"""The plinth: a cabinet carcass on a recessed base, with the instrument face
+in its front.
 
-V1_PHYSICAL_BUILD.md § Station geometry. The carcass sides rise to the tray
-rim (26) so the tray nests inside and finishes flush; a rail at 24 carries the
-tray floor and, through the tray's cutouts, the four pads the block bears on.
-Below that: a reservoir shelf on slotted supports in the wet bay, a hard
-divider to the dry bay, and a full-height rear panel the mast bolts to.
+V1_PHYSICAL_BUILD.md § Station geometry (console layout, 2026-09-04).
 
-The front is one panel, labelled so the door split can be decided in Fusion —
-the doc says the reservoir "slides out through a front door" but not where
-the door stops and the dry-bay panel begins.
+Front to back: the front panel with the acrylic face pocketed into it; the
+console bay, 3 in clear, full width, where the meters, Inky and Pi live; a
+partition; then the wet bay (reservoir on its adjustable shelf, viewer's left)
+and the dry bay (mast, PSU, driver) side by side, hard-divided. The rear panel
+is full height and the mast bolts through it; behind the wet bay it becomes a
+door so the pan slides out at working height.
+
+The carcass sides rise to the tray rim so the tray nests inside and finishes
+flush; a rail under the tray floor carries it and, through the tray's cutouts,
+the four pads the block bears on.
+
+The front panel is one removable piece — unscrew it and the console bay is
+open. The partition stops at the divider, so the dry bay behind it is reached
+the same way.
 """
 
 from __future__ import annotations
 
 from build123d import Part
 
-from . import params as P
-from ._shapes import box, cyl_y, cyl_z, labelled
+from pi.dashboard.panel_geometry import CORNER_SCREW_INSET, FACE_HEIGHT, FACE_WIDTH
 
+from . import params as P
+from ._shapes import box, cyl_x, cyl_y, labelled
 
 # Plan of the carcass box, in world coordinates.
 X0, X1 = -P.PLINTH_W / 2, P.PLINTH_W / 2
 Y0, Y1 = 0.0, P.PLINTH_D
-Z0, Z1 = P.SHADOW_GAP_H, P.TRAY_RIM_Z  # 2 → 26
+Z0, Z1 = P.SHADOW_GAP_H, P.TRAY_RIM_Z
 
 # Inside faces.
-IX0, IX1 = X0 + P.CARCASS_T, X1 - P.CARCASS_T
-IY0, IY1 = Y0 + P.CARCASS_T, Y1 - P.REAR_PANEL_T
-FLOOR_TOP = Z0 + P.CARCASS_T
+IX0, IX1 = P.INSIDE_X0, P.INSIDE_X1
+IY0, IY1 = Y0 + P.CARCASS_T, P.REAR_INSIDE_Y
+FLOOR_TOP = P.FLOOR_TOP_Z
 
-# The divider's X: the wet bay is on the viewer's left.
-DIVIDER_X = IX0 + P.WET_BAY_W + P.DIVIDER_T / 2
+DIVIDER_X = P.DIVIDER_X
+RAIL_TOP, RAIL_BOTTOM = P.RAIL_TOP_Z, P.RAIL_BOTTOM_Z
 
-# The rail the tray floor rests on.
-RAIL_TOP = P.TRAY_FLOOR_Z - P.TRAY_T
-RAIL_BOTTOM = RAIL_TOP - P.CARCASS_T
+# The rear door: the wet bay's full width and the full height of the bay.
+DOOR_X0, DOOR_X1 = IX0, DIVIDER_X - P.DIVIDER_T / 2
+DOOR_Z0, DOOR_Z1 = FLOOR_TOP, RAIL_BOTTOM
+
+# Where the drip line and the LED cable leave the wet bay for the mast: over
+# the pan's rim, through the divider, into the shaft's side. CHOICE.
+LINE_PASS_Z = P.SHELF_H + P.RESERVOIR_H + 0.4
+LINE_PASS_Y = P.RESERVOIR_Y1 - 1.0
 
 
 def _panel(x0, x1, y0, y1, z0, z1) -> Part:
@@ -53,38 +67,71 @@ def build_base() -> Part:
 
 
 def build_shell() -> Part:
-    """Sides, rear panel and floor — the parts that are one welded/glued unit."""
+    """Sides, rear panel and floor — the parts that are one welded/glued unit.
+
+    The rear panel has the door opening behind the wet bay; what remains of
+    it behind the dry bay is the fixed panel the mast bolts through.
+    """
     left = _panel(X0, IX0, Y0, Y1, Z0, Z1)
     right = _panel(IX1, X1, Y0, Y1, Z0, Z1)
     rear = _panel(IX0, IX1, IY1, Y1, Z0, Z1)
     floor = _panel(IX0, IX1, IY0, IY1, Z0, FLOOR_TOP)
     shell = left + right + rear + floor
 
-    # Mast through-bolt holes in the rear panel, matching the shaft.
+    # The door opening, through the rear panel.
+    shell -= _panel(DOOR_X0, DOOR_X1, IY1 - 0.5, Y1 + 0.5, DOOR_Z0, DOOR_Z1)
+
+    # Mast through-bolt holes in the fixed rear panel, matching the shaft.
     from .mast import bolt_heights
 
     for z in bolt_heights():
         shell -= cyl_y(P.MAST_BOLT_DIA, P.REAR_PANEL_T * 3, at=(P.MAST_X, (IY1 + Y1) / 2, z))
 
     # Wet-bay vent: "an open reservoir in a sealed box makes a humid box."
-    # A row of holes high in the left side. CHOICE.
-    vent_z = P.PLINTH_H - 3.0
+    # A row of holes high in the left side, over the pan. CHOICE.
+    vent_z = RAIL_BOTTOM - 1.0
     for i in range(4):
-        y = IY0 + 2.0 + i * 2.5
-        # Cylinder along X through the left side.
-        hole = box(P.CARCASS_T * 3, 1.0, 1.0, at=((X0 + IX0) / 2, y, vent_z - 0.5))
-        shell -= hole
+        y = P.RESERVOIR_Y0 + 1.5 + i * 2.5
+        shell -= cyl_x(1.0, P.CARCASS_T * 3, at=((X0 + IX0) / 2, y, vent_z))
+
+    # Console-bay vent: PSU and driver heat, out through the right side, low
+    # and forward — away from the wet bay. CHOICE.
+    for i in range(3):
+        z = FLOOR_TOP + 2.0 + i * 1.5
+        shell -= cyl_x(0.75, P.CARCASS_T * 3, at=((IX1 + X1) / 2, (P.CONSOLE_Y0 + P.CONSOLE_Y1) / 2, z))
 
     return labelled(shell, "carcass_shell")
 
 
 def build_front() -> Part:
-    """One front panel from the base to the rail. Door split: decide in Fusion."""
-    return labelled(_panel(IX0, IX1, Y0, IY0, Z0, RAIL_BOTTOM), "front_panel_door_split_tbd")
+    """The removable front panel, with the pocket the acrylic face sits in.
+
+    A pocket the face's size and the acrylic's thickness, cut from the front,
+    so the face finishes flush with the cabinet; inside it, a through-opening
+    FACE_LIP smaller all round. The F1–4 corner screws land in that lip.
+    """
+    panel = _panel(IX0, IX1, Y0, IY0, Z0, RAIL_BOTTOM)
+
+    fx0, fx1 = P.FACE_X0, P.FACE_X0 + FACE_WIDTH
+    fz0, fz1 = P.FACE_Z0, P.FACE_Z1
+    panel -= _panel(fx0, fx1, Y0 - 0.5, Y0 + P.ACRYLIC_T, fz0, fz1)  # pocket
+    lip = P.FACE_LIP
+    panel -= _panel(fx0 + lip, fx1 - lip, Y0 - 0.5, IY0 + 0.5, fz0 + lip, fz1 - lip)  # opening
+
+    # Tap drill for M3 (2.5 mm) on the F1–4 centres, into the lip.
+    for px, py in _corner_screws():
+        panel -= cyl_y(2.5 / 25.4, P.CARCASS_T * 3, at=(fx0 + px, (Y0 + IY0) / 2, fz0 + py))
+
+    return labelled(panel, "front_panel_removable")
+
+
+def _corner_screws() -> list[tuple[float, float]]:
+    i = CORNER_SCREW_INSET
+    return [(i, i), (FACE_WIDTH - i, i), (i, FACE_HEIGHT - i), (FACE_WIDTH - i, FACE_HEIGHT - i)]
 
 
 def build_top_rail() -> Part:
-    """The frame at 24 that the tray floor sits on and the pads rise from.
+    """The frame under the tray floor that the pads rise from.
 
     A perimeter plus two cross rails under the block's corner pads — "the
     cabinet rail carries the load." The back member is notched for the mast.
@@ -109,15 +156,27 @@ def build_top_rail() -> Part:
     return labelled(rail, "top_rail")
 
 
-def build_divider() -> Part:
-    """Wet bay / dry bay, hard-divided, floor to rail."""
+def build_partition() -> Part:
+    """Console bay from wet bay, floor to rail. Stops at the divider, so the
+    dry bay behind it is open to the console bay and reached from the front."""
     return labelled(
-        _panel(
-            DIVIDER_X - P.DIVIDER_T / 2, DIVIDER_X + P.DIVIDER_T / 2,
-            IY0, IY1, FLOOR_TOP, RAIL_BOTTOM,
-        ),
-        "bay_divider",
+        _panel(IX0, DIVIDER_X - P.DIVIDER_T / 2, P.PARTITION_Y0, P.PARTITION_Y1, FLOOR_TOP, RAIL_BOTTOM),
+        "console_partition",
     )
+
+
+def build_divider() -> Part:
+    """Wet bay / dry bay, hard-divided, floor to rail, partition to rear panel.
+
+    One grommeted pass for the drip line and the LED cable, over the pan's
+    rim, on the way to the mast's side.
+    """
+    divider = _panel(
+        DIVIDER_X - P.DIVIDER_T / 2, DIVIDER_X + P.DIVIDER_T / 2,
+        P.PARTITION_Y0, IY1, FLOOR_TOP, RAIL_BOTTOM,
+    )
+    divider -= cyl_x(P.MAST_LINE_PASS_DIA, P.DIVIDER_T * 3, at=(DIVIDER_X, LINE_PASS_Y, LINE_PASS_Z))
+    return labelled(divider, "bay_divider")
 
 
 def build_shelf() -> Part:
@@ -128,22 +187,16 @@ def build_shelf() -> Part:
     inch at a time after the flow test decides the real lift.
     """
     shelf_x0, shelf_x1 = IX0, DIVIDER_X - P.DIVIDER_T / 2
-    plate = _panel(shelf_x0, shelf_x1, IY0, IY1, P.SHELF_H - P.SHELF_T, P.SHELF_H)
+    y0, y1 = P.PARTITION_Y1, IY1
+    plate = _panel(shelf_x0, shelf_x1, y0, y1, P.SHELF_H - P.SHELF_T, P.SHELF_H)
 
-    # Cleats on the left side and on the divider, full depth.
+    # Cleats on the left side and on the divider, full depth of the bay.
     cleat_h = 1.5
-    left_cleat = _panel(shelf_x0, shelf_x0 + P.CARCASS_T, IY0, IY1,
+    left_cleat = _panel(shelf_x0, shelf_x0 + P.CARCASS_T, y0, y1,
                         P.SHELF_H - P.SHELF_T - cleat_h, P.SHELF_H - P.SHELF_T)
-    right_cleat = _panel(shelf_x1 - P.CARCASS_T, shelf_x1, IY0, IY1,
+    right_cleat = _panel(shelf_x1 - P.CARCASS_T, shelf_x1, y0, y1,
                          P.SHELF_H - P.SHELF_T - cleat_h, P.SHELF_H - P.SHELF_T)
     shelf = plate + left_cleat + right_cleat
-
-    # The mast passes through the wet bay at the back; notch the shelf for it.
-    c = P.MAST_NOTCH_CLEARANCE
-    shelf -= box(
-        P.MAST_W + 2 * c, P.MAST_D + 2 * c, P.SHELF_T * 4,
-        at=(P.MAST_X, P.MAST_Y, P.SHELF_H - P.SHELF_T * 2),
-    )
 
     # Slot holes in the carcass side and the divider are the adjustment;
     # marked here on the cleats as a column of reference holes.
@@ -152,30 +205,55 @@ def build_shelf() -> Part:
     for i in range(n):
         z = z_lo + i * P.SHELF_SLOT_PITCH
         for x in (shelf_x0 + P.CARCASS_T / 2, shelf_x1 - P.CARCASS_T / 2):
-            shelf -= box(P.CARCASS_T * 3, 0.25, 0.25, at=(x, (IY0 + IY1) / 2, z - 0.125))
+            shelf -= box(P.CARCASS_T * 3, 0.25, 0.25, at=(x, (y0 + y1) / 2, z - 0.125))
 
     return labelled(shelf, "reservoir_shelf_adjustable")
+
+
+def build_rear_door() -> Part:
+    """The door behind the wet bay: the pan slides out through it."""
+    g = P.DOOR_GAP
+    return labelled(
+        _panel(DOOR_X0 + g, DOOR_X1 - g, IY1, Y1, DOOR_Z0 + g, DOOR_Z1 - g),
+        "rear_door_wet_bay",
+    )
+
+
+def door_opening() -> tuple[float, float]:
+    """(width, height) of the opening the pan has to pass through."""
+    return DOOR_X1 - DOOR_X0, DOOR_Z1 - DOOR_Z0
 
 
 def build_reservoir() -> Part:
     """The steam-table pan, as a reference envelope on the shelf.
 
-    Placed from the FRONT with ``RESERVOIR_FRONT_CLEARANCE`` behind the front
-    panel, so whatever depth is left at the back — where the mast is — is
-    explicit. See ``params.depth_budget()``.
+    Placed from the FRONT of the wet bay with ``RESERVOIR_FRONT_CLEARANCE``
+    behind the partition, so whatever depth is left at the back — where the
+    door is — is explicit. See ``params.DEPTH``.
     """
-    x = IX0 + P.WET_BAY_W / 2
-    y = IY0 + P.RESERVOIR_FRONT_CLEARANCE + P.RESERVOIR_W / 2
     return labelled(
-        box(P.RESERVOIR_L, P.RESERVOIR_W, P.RESERVOIR_H, at=(x, y, P.SHELF_H)),
+        box(P.RESERVOIR_L, P.RESERVOIR_W, P.RESERVOIR_H,
+            at=(P.RESERVOIR_X, (P.RESERVOIR_Y0 + P.RESERVOIR_Y1) / 2, P.SHELF_H)),
         "reservoir_reference",
     )
 
 
+def build_console_electronics() -> Part:
+    """What lives behind the face — meters, Inky, i3, Pi — as an envelope the
+    plans say fits "inside 3.00 clear". If it meets the partition, the console
+    bay is too shallow."""
+    return labelled(
+        _panel(P.FACE_X0, P.FACE_X0 + FACE_WIDTH,
+               P.CONSOLE_Y0, P.CONSOLE_Y0 + P.CONSOLE_ELECTRONICS_D,
+               P.FACE_Z0, P.FACE_Z1),
+        "console_electronics_reference",
+    )
+
+
 def build() -> Part:
-    """The whole plinth as one part, for the assembly."""
+    """The whole plinth as one part, for the assembly. The door is separate."""
     return labelled(
         build_base() + build_shell() + build_front() + build_top_rail()
-        + build_divider() + build_shelf(),
+        + build_partition() + build_divider() + build_shelf(),
         "plinth",
     )

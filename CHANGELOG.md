@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-04 (console layout)
+
+### Changed
+- **The instrument panel moves into the cabinet's front face.** The head on top of the mast is gone; the 9.50 × 12.00 acrylic face sits pocketed flush into the front panel over a 3.00 in clear console bay. Doors move to the rear (one, behind the wet bay, the pan's full width and height). The cabinet grows to **20 × 16 × 36** (tray floor); the mast stays the 2 × 3 HSS as drawn, in the dry bay against the rear panel, and carries only the fixture, the drip line and the LED cable — the sensor loom never leaves the cabinet. `cad/` rebuilt for it: `face.py` replaces `head.py`; `plinth.py` gains the front-panel pocket, the console partition, the rear door and the console-electronics envelope; `mast.py` loses the flange and gains a cap and a line pass; `fixture.py` hangs the fixture from an arm and cross bar off the cap.
+- **Reservoir shelf rises to 28 in, static lift falls to 13 in** (was 17). With the pan *behind* the console rather than under it the shelf can go almost to the rail. The alternative — pan under a console deck — computed to ~28 in of lift, "fragile, avoid" on the SICCE's curve, and was not built.
+- **Depth conflict resolved.** Pan and mast no longer share an X. Depth through the wet bay: 0.75 + 3.00 + 0.5 + 0.25 + 10.4 + 0.75 = 15.65 of 16.00, +0.35 in. `build.py` reports it, and `test_no_design_conflicts` now asserts what yesterday was a finding.
+- `V1_PHYSICAL_BUILD.md` § Station geometry rewritten with the new height table; § Mast rewritten; § Enclosure now points at the console bay. `INSTRUMENT_HEAD_PLANS.md` is Rev B: face schedule, depth stack, dial conversion and layout candidates stand; box, flange and loom pass superseded.
+
+### Tests
+- 75 CAD tests (was 50). New: every emulator layout's elements clear the front panel's 0.5 in lip; the F1–4 screws land in it; the pan sweeps straight out through the door with nothing in its way; the mast's bolts land in the fixed rear panel, never the door; the line pass is over the pan's rim and under the rail; no reference envelope meets a fabricated part.
+
+### Still open
+- `PLINTH_H` (36) is a choice. 28.2 in panel centre reads looking down; decide at the mock-up.
+- Weston 301 depth and bezel, pending calipers — sets `DIAL_CUT_DIAMETER` and confirms the 3.00 console depth.
+
 ## 2026-09-04 (the station in CAD)
 
 ### Added

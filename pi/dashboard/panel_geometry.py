@@ -1,9 +1,10 @@
 """Instrument head panel geometry — the face, as data.
 
-One source of truth for what sits where on the mast's 9.50 x 12.00 acrylic
-face, so the emulator at `/panel`, the hole schedule in
-docs/INSTRUMENT_HEAD_PLANS.md, and anything else that needs the layout all
-read the same numbers instead of drifting apart.
+One source of truth for what sits where on the 9.50 x 12.00 acrylic face in
+the cabinet's front, so the emulator at `/panel`, the hole schedule in
+docs/INSTRUMENT_HEAD_PLANS.md, and the CAD (`cad/face.py`, which cuts the
+acrylic, and `cad/plinth.py`, which cuts the opening for it) all read the
+same numbers instead of drifting apart.
 
 Coordinates follow the fabrication drawings: **inches, origin at the panel's
 bottom-left, X right, Y up.** Elements are positioned by centre, which is how
