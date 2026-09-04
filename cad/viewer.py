@@ -21,9 +21,9 @@ import argparse
 import base64
 import json
 import os
-import struct
 import subprocess
 import sys
+from array import array
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -57,11 +57,16 @@ def _dump(out_path: Path, tolerance_mm: float, angular: float) -> None:
     meshes = {}
     for name, part in parts.items():
         verts, tris = part.tessellate(tolerance_mm, angular)
-        pos = struct.pack(f"<{len(verts) * 3}f", *(c / IN for v in verts for c in (v.X, v.Y, v.Z)))
-        idx = struct.pack(f"<{len(tris) * 3}I", *(i for t in tris for i in t))
+        # array() streams from the generators; no intermediate tuple of every
+        # coordinate. The page reads little-endian Float32 / Uint32.
+        pos = array("f", (c / IN for v in verts for c in (v.X, v.Y, v.Z)))
+        idx = array("I", (i for t in tris for i in t))
+        if sys.byteorder == "big":
+            pos.byteswap()
+            idx.byteswap()
         meshes[name] = {
-            "positions": base64.b64encode(pos).decode(),
-            "indices": base64.b64encode(idx).decode(),
+            "positions": base64.b64encode(pos.tobytes()).decode(),
+            "indices": base64.b64encode(idx.tobytes()).decode(),
             "triangles": len(tris),
         }
 

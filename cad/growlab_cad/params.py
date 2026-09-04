@@ -71,8 +71,14 @@ def _knob(name: str, default: float) -> float:
     decisions are exposed this way; everything else is a number with a
     provenance. The value in the file is the design as documented.
     """
-    raw = os.environ.get(f"GROWLAB_{name}")
-    return float(raw) if raw else default
+    var = f"GROWLAB_{name}"
+    raw = os.environ.get(var)
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        raise ValueError(f"{var}={raw!r} is not a number (inches expected, e.g. {var}={default:g})") from None
 
 
 # ---------------------------------------------------------------------------
