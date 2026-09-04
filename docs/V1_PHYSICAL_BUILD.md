@@ -139,7 +139,8 @@ Why this arrangement, in three numbers:
 - **Access.** The pan slides out of the rear door at 28 in — working height, not a stoop.
 
 **`PLINTH_H` is the one knob.** Raising the cabinet raises the panel, the block and the
-light together; the lift does not change with it. 36 puts the panel centre at 28.2 in.
+light together; the lift does not change with it. **36 is decided** (2026-09-04, from the
+viewer's stand-in-front view): panel centre 28.2 in.
 
 **Tray is a flush rebate**, not a raised collar — it drops into the cabinet's top frame and
 becomes the top surface, flush with the sides. One clean volume, no step.
@@ -383,8 +384,11 @@ use. Fail it and leach longer or add a second coat before planting.
 
 - **Weston 301 depth and bezel** — caliper on arrival; sets `DIAL_CUT_DIAMETER` and confirms
   the 3.00 console depth.
-- **Panel centre height.** 28.2 in reads looking down. `PLINTH_H` moves it; decide at the
-  mock-up, not in CAD.
+- **Form.** 36 is decided (2026-09-04, from the viewer). What the cabinet reads as is not:
+  two candidates are in the model — a recessed dark instrument fascia across the front with
+  chamfered corners, and a welded 1 x 1 steel base frame the cabinet floats on with the mast
+  running to the floor as part of it. `GROWLAB_FASCIA` / `GROWLAB_FRAME`; all four
+  combinations are in the viewer. Pick from the viewer, then it becomes the model.
 - 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;
   otherwise right-size the pump.
@@ -402,6 +406,9 @@ use. Fail it and leach longer or add a second coat before planting.
 
 ## Revision log
 
+- **2026-09-04** — Cabinet height decided at **36** from the browser viewer. Design pass
+  opened: two form candidates in the model (instrument fascia + chamfers; steel base frame
+  with the mast as a leg), switchable, all four combinations in the viewer.
 - **2026-09-04** — Console layout. The instrument panel moves from a head on the mast into
   the cabinet's front face; doors move to the rear; the cabinet grows to 20 x 16 x 36 (tray
   floor). Reservoir behind the console bay on a shelf at 28, lift **13 in** (was 17); mast

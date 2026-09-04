@@ -1,5 +1,5 @@
-"""The plinth: a cabinet carcass on a recessed base, with the instrument face
-in its front.
+"""The plinth: a cabinet carcass on a recessed base or a steel frame, with the
+instrument face in its front.
 
 V1_PHYSICAL_BUILD.md § Station geometry (console layout, 2026-09-04).
 
@@ -21,12 +21,12 @@ the same way.
 
 from __future__ import annotations
 
-from build123d import Part
+from build123d import Part, Rot
 
 from pi.dashboard.panel_geometry import CORNER_SCREW_INSET, FACE_HEIGHT, FACE_WIDTH
 
 from . import params as P
-from ._shapes import box, cyl_x, cyl_y, labelled
+from ._shapes import box, cyl_x, cyl_y, labelled, location_in
 
 # Plan of the carcass box, in world coordinates.
 X0, X1 = -P.PLINTH_W / 2, P.PLINTH_W / 2
@@ -59,11 +59,52 @@ def _panel(x0, x1, y0, y1, z0, z1) -> Part:
 
 
 def build_base() -> Part:
-    """The recessed block under the carcass — the shadow gap."""
+    """What the carcass stands on: the recessed plinth, or the steel frame."""
+    if P.FRAME:
+        return build_frame()
     i = P.SHADOW_GAP_INSET
     return labelled(
-        _panel(X0 + i, X1 - i, Y0 + i, Y1 - i, 0.0, P.SHADOW_GAP_H), "plinth_base_recess"
+        _panel(X0 + i, X1 - i, Y0 + i, Y1 - i, 0.0, P.SHADOW_GAP_H), "base_recess"
     )
+
+
+def build_frame() -> Part:
+    """The frame candidate: four 1 x 1 legs inset under the cabinet and a ring
+    at the top the floor sits on. The mast runs to the floor beside the rear
+    rail, which is notched for it, and is welded to it — one armature."""
+    t, i = P.FRAME_TUBE, P.FRAME_LEG_INSET
+    lx0, lx1 = X0 + i, X1 - i
+    ly0, ly1 = Y0 + i, Y1 - i
+    top = P.SHADOW_GAP_H
+    legs = None
+    for (x0, y0) in ((lx0, ly0), (lx1 - t, ly0), (lx0, ly1 - t), (lx1 - t, ly1 - t)):
+        leg = _panel(x0, x0 + t, y0, y0 + t, 0.0, top - t)
+        legs = leg if legs is None else legs + leg
+    ring = (
+        _panel(lx0, lx1, ly0, ly0 + t, top - t, top)
+        + _panel(lx0, lx1, ly1 - t, ly1, top - t, top)
+        + _panel(lx0, lx0 + t, ly0, ly1, top - t, top)
+        + _panel(lx1 - t, lx1, ly0, ly1, top - t, top)
+    )
+    frame = legs + ring
+    c = P.MAST_NOTCH_CLEARANCE
+    frame -= box(P.MAST_W + 2 * c, P.MAST_D + 2 * c, top + 1.0, at=(P.MAST_X, P.MAST_Y, -0.5))
+    return labelled(frame, "base_frame_1x1_hss")
+
+
+def _chamfer_corners(part: Part, z0: float, z1: float) -> Part:
+    """Take CHAMFER off the four vertical outer corners, full height."""
+    if not P.CHAMFER:
+        return part
+    s = P.CHAMFER * 2 ** 0.5
+    for (x, y) in ((X0, Y0), (X1, Y0), (X0, Y1), (X1, Y1)):
+        cutter = Rot(0, 0, 45) * box(s, s, (z1 - z0) + 2.0, at=(0, 0, 0))
+        part -= location_in(x, y, z0 - 1.0) * cutter
+    return part
+
+
+def _fascia_band() -> tuple[float, float]:
+    return P.FACE_Z0 - P.FASCIA_MARGIN, P.FACE_Z1 + P.FASCIA_MARGIN
 
 
 def build_shell() -> Part:
@@ -77,6 +118,17 @@ def build_shell() -> Part:
     rear = _panel(IX0, IX1, IY1, Y1, Z0, Z1)
     floor = _panel(IX0, IX1, IY0, IY1, Z0, FLOOR_TOP)
     shell = left + right + rear + floor
+    shell = _chamfer_corners(shell, Z0, Z1)
+
+    if P.FASCIA:
+        # The band pocket runs across the sides' front edges too.
+        bz0, bz1 = _fascia_band()
+        shell -= _panel(X0 - 0.5, X1 + 0.5, Y0 - 0.5, P.FASCIA_POCKET, bz0, bz1)
+
+    if P.MAST_BOTTOM < FLOOR_TOP:
+        # The mast passes through the floor to the frame below it.
+        c = P.MAST_NOTCH_CLEARANCE
+        shell -= box(P.MAST_W + 2 * c, P.MAST_D + 2 * c, P.CARCASS_T * 3, at=(P.MAST_X, P.MAST_Y, Z0 - P.CARCASS_T))
 
     # The door opening, through the rear panel.
     shell -= _panel(DOOR_X0, DOOR_X1, IY1 - 0.5, Y1 + 0.5, DOOR_Z0, DOOR_Z1)
@@ -114,7 +166,11 @@ def build_front() -> Part:
 
     fx0, fx1 = P.FACE_X0, P.FACE_X0 + FACE_WIDTH
     fz0, fz1 = P.FACE_Z0, P.FACE_Z1
-    panel -= _panel(fx0, fx1, Y0 - 0.5, Y0 + P.ACRYLIC_T, fz0, fz1)  # pocket
+    if P.FASCIA:
+        bz0, bz1 = _fascia_band()
+        panel -= _panel(IX0 - 0.5, IX1 + 0.5, Y0 - 0.5, P.FASCIA_POCKET, bz0, bz1)  # band pocket
+    else:
+        panel -= _panel(fx0, fx1, Y0 - 0.5, Y0 + P.ACRYLIC_T, fz0, fz1)  # face pocket
     lip = P.FACE_LIP
     panel -= _panel(fx0 + lip, fx1 - lip, Y0 - 0.5, IY0 + 0.5, fz0 + lip, fz1 - lip)  # opening
 
@@ -123,6 +179,16 @@ def build_front() -> Part:
         panel -= cyl_y(2.5 / 25.4, P.CARCASS_T * 3, at=(fx0 + px, (Y0 + IY0) / 2, fz0 + py))
 
     return labelled(panel, "front_panel_removable")
+
+
+def build_fascia() -> Part:
+    """The fascia candidate's band: dark, full width between the chamfers,
+    recessed behind the front plane, with the face's opening in it."""
+    bz0, bz1 = _fascia_band()
+    band = _panel(X0 + P.CHAMFER, X1 - P.CHAMFER, P.FASCIA_RECESS, P.FASCIA_POCKET, bz0, bz1)
+    fx0, fx1 = P.FACE_X0, P.FACE_X0 + FACE_WIDTH
+    band -= _panel(fx0, fx1, P.FASCIA_RECESS - 0.5, P.FASCIA_POCKET + 0.5, P.FACE_Z0, P.FACE_Z1)
+    return labelled(band, "front_fascia_band")
 
 
 def _corner_screws() -> list[tuple[float, float]]:
@@ -251,9 +317,10 @@ def build_console_electronics() -> Part:
 
 
 def build() -> Part:
-    """The whole plinth as one part, for the assembly. The door is separate."""
+    """The carcass as one part, for the assembly. The base, the door and the
+    fascia are separate parts: different materials, different fabrication."""
     return labelled(
-        build_base() + build_shell() + build_front() + build_top_rail()
+        build_shell() + build_front() + build_top_rail()
         + build_partition() + build_divider() + build_shelf(),
         "plinth",
     )

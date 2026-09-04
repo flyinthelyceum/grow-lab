@@ -73,7 +73,28 @@ under a console deck would have pushed it to ~28 in, off the pump's curve.
 it.
 
 `PLINTH_H` is the one knob. It moves the panel, the block and the light
-together and leaves the lift alone.
+together and leaves the lift alone. **36 is decided.**
+
+## The design pass
+
+A plywood box with an acrylic window is a plywood box. Two moves are in the
+model as switchable candidates so they can be looked at rather than argued
+about, and combined:
+
+- **Fascia** (`GROWLAB_FASCIA=1`) — the instruments get their own band: a
+  dark strip across the whole front, recessed behind the front plane, the
+  acrylic face flush in it. The band is what the eye reads as "the
+  instrument"; the plywood becomes the thing that carries it. The four
+  vertical corners are chamfered so the sides meet as planes.
+- **Frame** (`GROWLAB_FRAME=1`) — the cabinet floats on a welded 1 × 1
+  steel frame instead of sitting on a recessed plinth, and the mast runs to
+  the floor as one of the frame's members. Steel is then one continuous
+  armature — legs, ring, mast, fixture arm — and wood is one body carried by
+  it. The shadow gap becomes six inches of air.
+
+Both off is the box. `python cad/viewer.py` builds all four combinations.
+`params.py` derives everything else from the flags; the lift, the shelf and
+the block do not move between candidates, which `test_cad_forms.py` asserts.
 
 ## Looking at it
 
