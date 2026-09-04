@@ -167,9 +167,18 @@ sudo still limited to the two units by `/etc/sudoers.d/growlab-runner`,
 `contents: read` so the token cannot write, and every dispatch recorded in the
 Actions history with the operation and who asked for it.
 
-`clean-stale-leftovers` is the one operation that changes the working tree. It
-deletes six enumerated paths and refuses any that turn out to be tracked, so it
-cannot be repurposed into a general delete.
+`unblock-deploy` is the one operation that changes the working tree, and it
+does two enumerated things:
+
+- Deletes six named stale files, refusing any that turn out to be tracked.
+- Restores `deploy/push-dashboard.sh` and `deploy/recover-dashboard.sh` **only
+  if their diff is still mode-only**, refusing if content has changed since.
+
+Both lists are written out, so neither can be repurposed into a general delete
+or a general discard. The mode-only re-check matters: the observation that made
+discarding safe was made at a point in time, not a property of the files, and
+discarding a real edit on a box nobody can shell into is the failure worth
+guarding against.
 
 ## Concurrency is scoped to the deploy job, deliberately
 
