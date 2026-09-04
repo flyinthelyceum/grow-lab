@@ -1,0 +1,84 @@
+name: CAD
+
+# Builds the station geometry and publishes the STEP files as a downloadable
+# artifact, so every change to cad/ produces something you can open in Fusion
+# without installing the OCP kernel locally.
+#
+# Separate from deploy.yml because build123d pulls ~150 MB of kernel that the
+# Pi never needs, and because CAD changes should not gate a Pi deploy.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cad/**"
+      - "pi/dashboard/panel_geometry.py"   # the head's face reads this
+      - "tests/unit/test_cad_*.py"
+      - ".github/workflows/cad.yml"
+      - "pyproject.toml"
+  pull_request:
+    paths:
+      - "cad/**"
+      - "pi/dashboard/panel_geometry.py"
+      - "tests/unit/test_cad_*.py"
+      - ".github/workflows/cad.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build station geometry
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install (with the cad extra)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,cad]"
+
+      - name: CAD tests
+        # The geometry tests assert where every part sits against the docs'
+        # height table and that nothing fabricated interferes.
+        run: pytest -q tests/unit/test_cad_params.py tests/unit/test_cad_geometry.py
+
+      - name: Build and export
+        run: python cad/build.py
+
+      - name: Render elevations
+        run: python cad/render.py
+
+      - name: Summary
+        run: |
+          {
+            echo "### Station geometry"
+            echo ""
+            python - <<'PY'
+          import json
+          r = json.load(open("cad/out/report.json"))
+          d = r["depth_budget"]
+          print(f"- static lift: **{r['static_lift_in']:.1f} in**")
+          print(f"- fixture cantilever: **{r['fixture_cantilever_in']:.2f} in**")
+          print(f"- depth budget at the mast: {d['required']:.2f} in required of {d['available']:.2f} → **{d['slack']:+.2f} in**")
+          print(f"- fabricated interferences: **{len(r['interferences'])}**")
+          if r["reference_clashes"]:
+              print(f"- design conflicts (reference vs fabricated): " + ", ".join(f"{a}∩{b}" for a, b, _ in r["reference_clashes"]))
+          print(f"- dial cut: {'not cut — pending calipers' if r['dial_cut_diameter'] is None else r['dial_cut_diameter']}")
+          PY
+            echo ""
+            echo "STEP files and elevations are in the **growlab-v1-station-cad** artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: growlab-v1-station-cad
+          path: cad/out/
+          retention-days: 90
