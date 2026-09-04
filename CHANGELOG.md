@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-04 (the pack you cut from)
+
+### Added
+- **`cad/fabrication.py` → `cad/out/fab/`** — `plate.dxf` (full hole schedule), `case_body.dxf` (flat development, 15.50 × 17.00 blank, six bends, on a `bend` layer that must not be cut), `fascia.dxf`, `backplate.dxf`, `cutlist.md` / `.json` (ply, steel, sheet and glazing, every figure derived from `params.py`), and a pack README. In CI, in the artifact.
+- **The DXFs are inches and it is checked.** build123d's DXF exporter tags a unit without converting the coordinates — the same trap as its SVG exporter — so the flat patterns are authored in inch coordinates directly, and `test_cad_fabrication` reads the written files back to assert the header and the geometry agree.
+- **28 fabrication tests**: the case blank folds back into the modelled part both ways; every hole lands on its blank; the four taps mirror across the blank at the plate's own F1–4 inset; the fascia's holes clear the acrylic edge by ≥ 0.25; the cut list agrees with the model; the dials are scribed and not cut, and a measured `DIAL_CUT_DIAMETER` turns the rings into holes.
+
+### Fixed by drawing it
+Two things the solid model did not answer, both of which stop a drawing being buildable:
+- **The plate had nothing to screw into.** The case's side walls now carry 0.5 in return flanges folded inward at the front edge, tapped M3 on the plate's F1–4 centres. No flange on the top and bottom walls: one would reach 0.5625 in behind the plate's edge and foul the OFFSET layout's high dial (0.25). The side flanges clear every layout — tightest is WIDE at 0.06.
+- **The fascia had no fixing.** It is not drilled where it would have to reach the carcass sides (the band is wider than the front panel and laps them by only 0.25). The front panel is full height again with the band rebated into it, leaving a 0.75 in **ply header** standing behind the band's top edge; the fascia takes two rows of five M3 countersunk screws, top into the header and bottom into the console ledge, both well inside the front panel's width.
+
+### Note
+The right-hand taps were first computed from the wrong bend and landed 8 in off the blank. Caught by rendering the DXF and looking at it, then pinned by `test_four_taps_in_the_flanges_mirroring_the_plate`.
+
 ## 2026-09-04 (form settled)
 
 ### Decided
