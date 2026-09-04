@@ -1,0 +1,562 @@
+<title>GROWLAB V1 Station</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #EFEDE6;
+    --panel: #F7F5EF;
+    --panel-edge: #D8D3C7;
+    --ink: #22252A;
+    --muted: #6B6760;
+    --accent: #C8871F;
+    --accent-ink: #7A4F0C;
+    --focus: #2F6FB3;
+    --canvas-bg: 0xEFEDE6;
+    --grid-a: 0xBFB9AA;
+    --grid-b: 0xDAD5C8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1B1D21;
+      --panel: #23262B;
+      --panel-edge: #33373D;
+      --ink: #E6E3DC;
+      --muted: #9A968E;
+      --accent: #E0A045;
+      --accent-ink: #F0C070;
+      --focus: #7FB0EA;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1B1D21;
+    --panel: #23262B;
+    --panel-edge: #33373D;
+    --ink: #E6E3DC;
+    --muted: #9A968E;
+    --accent: #E0A045;
+    --accent-ink: #F0C070;
+    --focus: #7FB0EA;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Archivo Narrow", "Arial Narrow", Arial, sans-serif;
+    font-size: 14px;
+    overflow: hidden;
+  }
+  #stage { position: fixed; inset: 0; }
+  #stage canvas { display: block; width: 100%; height: 100%; }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .datum-label {
+    position: absolute;
+    transform: translate(0, -100%);
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    color: var(--accent-ink);
+    background: color-mix(in srgb, var(--ground) 82%, transparent);
+    padding: 1px 4px;
+    border-left: 2px solid var(--accent);
+    white-space: nowrap;
+  }
+
+  #rail {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 300px;
+    background: color-mix(in srgb, var(--panel) 94%, transparent);
+    border-right: 1px solid var(--panel-edge);
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+  header { padding: 18px 18px 12px; border-bottom: 1px solid var(--panel-edge); }
+  header h1 {
+    margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.02em; line-height: 1.1;
+    text-wrap: balance;
+  }
+  header .meta {
+    margin-top: 6px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; color: var(--muted);
+  }
+  section { padding: 14px 18px; border-bottom: 1px solid var(--panel-edge); }
+  section:last-of-type { border-bottom: 0; }
+  h2 {
+    margin: 0 0 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  }
+
+  .seg { display: flex; gap: 0; border: 1px solid var(--panel-edge); border-radius: 3px; overflow: hidden; }
+  .seg button {
+    flex: 1; padding: 7px 0; border: 0; background: transparent; color: var(--ink);
+    font: inherit; font-size: 13px; cursor: pointer;
+    border-right: 1px solid var(--panel-edge);
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #1B1408; font-weight: 600; }
+  .seg button:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--focus); outline-offset: 1px;
+  }
+
+  .readout { display: grid; grid-template-columns: 1fr auto; row-gap: 4px; column-gap: 12px; margin-top: 10px; }
+  .readout dt { color: var(--muted); }
+  .readout dd {
+    margin: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; text-align: right;
+  }
+  .readout dd.key { color: var(--accent-ink); font-weight: 500; }
+
+  .views { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .views button {
+    padding: 7px 4px; border: 1px solid var(--panel-edge); border-radius: 3px; background: transparent; color: var(--ink);
+    font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .views button:hover { border-color: var(--accent); }
+  .views button.wide { grid-column: span 3; border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+
+  .row { display: flex; align-items: center; gap: 10px; }
+  .row + .row { margin-top: 8px; }
+  label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 3px 0; }
+  label.check input { margin: 0; accent-color: var(--accent); }
+  .swatch { width: 12px; height: 12px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.25); flex: none; }
+  .group-title { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 8px 0 2px; }
+  input[type="range"] { flex: 1; accent-color: var(--accent); }
+  select {
+    font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--panel-edge); border-radius: 3px;
+    background: var(--panel); color: var(--ink);
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 12px; min-width: 6.5ch; text-align: right; flex: none; }
+  #cut-axis { flex: none; width: 118px; }
+
+  #hint {
+    position: fixed; right: 14px; bottom: 12px; font-size: 12px; color: var(--muted);
+    background: color-mix(in srgb, var(--panel) 85%, transparent); padding: 4px 8px; border-radius: 3px;
+  }
+  @media (max-width: 720px) {
+    #rail { top: auto; height: 46vh; width: 100%; border-right: 0; border-top: 1px solid var(--panel-edge); }
+    #hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div id="stage"></div>
+<div id="labels"></div>
+
+<aside id="rail">
+  <header>
+    <h1>GROWLAB V1 Station</h1>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <section>
+    <h2>Cabinet height</h2>
+    <div class="seg" id="variants" role="group" aria-label="PLINTH_H variants"></div>
+    <dl class="readout" id="readout"></dl>
+  </section>
+
+  <section>
+    <h2>View</h2>
+    <div class="views">
+      <button data-view="front">Front</button>
+      <button data-view="side">Side</button>
+      <button data-view="plan">Plan</button>
+      <button data-view="iso">Iso</button>
+      <button data-view="back">Back</button>
+      <button data-view="over">Over the block</button>
+      <button data-view="stand" class="wide">Stand in front, eye at 62 in</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label class="check"><input type="checkbox" id="figure"> <span>Viewer figure, 5 ft 8, at 36 in</span></label>
+    </div>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="datums" checked> <span>Height datums</span></label>
+    </div>
+  </section>
+
+  <section>
+    <h2>Section cut</h2>
+    <div class="row">
+      <select id="cut-axis" aria-label="Section axis">
+        <option value="off">Off</option>
+        <option value="y">Front to back</option>
+        <option value="x">Side to side</option>
+        <option value="z">Horizontal</option>
+      </select>
+      <input type="range" id="cut" min="0" max="1000" value="500" aria-label="Section position" disabled>
+      <span class="mono" id="cut-val">—</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Parts</h2>
+    <div id="parts"></div>
+  </section>
+</aside>
+
+<div id="hint">drag to orbit · wheel to zoom · shift-drag to pan</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const DATA = /*__STATION_DATA__*/null;
+
+// ---------- data ----------
+function b64ToBuffer(s) {
+  const bin = atob(s);
+  const buf = new ArrayBuffer(bin.length);
+  const u8 = new Uint8Array(buf);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return buf;
+}
+
+// ---------- theme-aware canvas colours ----------
+function cssColour(name) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return parseInt(v.replace('0x', ''), 16);
+}
+const dark = () => matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light'
+  || document.documentElement.dataset.theme === 'dark';
+function palette() {
+  return dark()
+    ? { bg: 0x1B1D21, gridA: 0x3A3F47, gridB: 0x272A30, floor: 0x202329 }
+    : { bg: 0xEFEDE6, gridA: 0xBFB9AA, gridB: 0xDAD5C8, floor: 0xE6E3DA };
+}
+
+// ---------- scene ----------
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.localClippingEnabled = true;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, 1, 2000);
+camera.up.set(0, 0, 1);
+
+const hemi = new THREE.HemisphereLight(0xffffff, 0x777066, 0.85);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 0.75);
+sun.position.set(-60, -90, 140);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xffffff, 0.3);
+fill.position.set(80, 60, 40);
+scene.add(fill);
+
+let grid, floor;
+function buildGround() {
+  const p = palette();
+  if (grid) scene.remove(grid);
+  if (floor) scene.remove(floor);
+  grid = new THREE.GridHelper(120, 10, p.gridA, p.gridB);   // 12 in squares
+  grid.rotation.x = Math.PI / 2;
+  grid.position.z = -0.02;
+  scene.add(grid);
+  floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshStandardMaterial({ color: p.floor, roughness: 1 }));
+  floor.position.z = -0.05;
+  scene.add(floor);
+  renderer.setClearColor(p.bg);
+}
+buildGround();
+
+// ---------- parts ----------
+const station = new THREE.Group();
+scene.add(station);
+const clipPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+let clipping = false;
+const visible = {};
+Object.keys(DATA.materials).forEach(k => visible[k] = true);
+let current = null;      // variant object
+let meshes = {};
+
+function makeMaterial(spec) {
+  const m = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(spec.colour),
+    roughness: 0.75, metalness: spec.colour === '#4A4F55' || spec.colour === '#C4C9CC' ? 0.5 : 0.05,
+    transparent: spec.opacity < 1, opacity: spec.opacity,
+    side: THREE.DoubleSide, clipShadows: true,
+  });
+  return m;
+}
+
+function loadVariant(v) {
+  Object.values(meshes).forEach(m => { station.remove(m); m.geometry.dispose(); m.material.dispose(); });
+  meshes = {};
+  current = v;
+  for (const [name, md] of Object.entries(v.meshes)) {
+    const spec = DATA.materials[name];
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(b64ToBuffer(md.positions)), 3));
+    geo.setIndex(new THREE.BufferAttribute(new Uint32Array(b64ToBuffer(md.indices)), 1));
+    geo.computeVertexNormals();
+    const mesh = new THREE.Mesh(geo, makeMaterial(spec));
+    mesh.renderOrder = spec.opacity < 1 ? 2 : 1;
+    mesh.visible = visible[name];
+    station.add(mesh);
+    meshes[name] = mesh;
+  }
+  applyClipping();
+  buildDatums();
+  renderReadout();
+  needs();
+}
+
+// ---------- datums ----------
+const labelsEl = document.getElementById('labels');
+let datumGroup = new THREE.Group();
+scene.add(datumGroup);
+let datumPoints = [];
+const DATUM_NAMES = {
+  shadow_gap: 'shadow gap', face_bottom: 'face bottom', panel_centre: 'panel centre', reservoir_shelf: 'reservoir shelf',
+  water_low: 'water low', face_top: 'face top', tray_floor: 'tray floor', tray_rim: 'tray rim', cmu_underside: 'block underside',
+  media_surface: 'media', emitter: 'emitters', cmu_top: 'block top', fixture: 'fixture', mast_top: 'mast top',
+};
+function buildDatums() {
+  scene.remove(datumGroup); datumGroup = new THREE.Group(); scene.add(datumGroup);
+  labelsEl.innerHTML = ''; datumPoints = [];
+  const w = current.plinth_w / 2 + 3;
+  const mat = new THREE.LineDashedMaterial({ color: dark() ? 0xE0A045 : 0xC8871F, dashSize: 1.2, gapSize: 0.8 });
+  for (const [key, z] of Object.entries(current.heights)) {
+    if (!(key in DATUM_NAMES) || key === 'water_full') continue;
+    const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-w, -1.5, z), new THREE.Vector3(w, -1.5, z)]);
+    const line = new THREE.Line(g, mat);
+    line.computeLineDistances();
+    datumGroup.add(line);
+    const el = document.createElement('div');
+    el.className = 'datum-label';
+    el.textContent = `${DATUM_NAMES[key]} · ${z.toFixed(z % 1 ? 2 : 0)} in`;
+    labelsEl.appendChild(el);
+    datumPoints.push({ p: new THREE.Vector3(-w, -1.5, z), el });
+  }
+  datumGroup.visible = document.getElementById('datums').checked;
+  labelsEl.style.display = datumGroup.visible ? '' : 'none';
+}
+function placeLabels() {
+  if (!datumGroup.visible) return;
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const v = new THREE.Vector3();
+  const placed = [];
+  for (const d of datumPoints) {
+    v.copy(d.p).project(camera);
+    const onScreen = v.z < 1 && Math.abs(v.x) < 1.2 && Math.abs(v.y) < 1.2;
+    d.el.style.display = onScreen ? '' : 'none';
+    if (onScreen) placed.push({ d, x: (v.x + 1) / 2 * W, y: (1 - v.y) / 2 * H });
+  }
+  // Labels sit above their line; two lines closer than a label's height
+  // would overprint, so walk them apart from the bottom of the screen up.
+  placed.sort((a, b) => b.y - a.y);
+  const MIN = 14;
+  for (let i = 1; i < placed.length; i++) {
+    if (placed[i - 1].y - placed[i].y < MIN) placed[i].y = placed[i - 1].y - MIN;
+  }
+  for (const p of placed) {
+    p.d.el.style.left = p.x + 'px';
+    p.d.el.style.top = p.y + 'px';
+  }
+}
+
+// ---------- viewer figure ----------
+const figure = new THREE.Group();
+{
+  const m = new THREE.MeshStandardMaterial({ color: 0x8C8880, transparent: true, opacity: 0.35, roughness: 1 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 6.5, 58, 20), m);
+  body.rotation.x = Math.PI / 2; body.position.set(0, -36, 29);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(4.5, 20, 14), m);
+  head.position.set(0, -36, 63.5);
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 6), new THREE.MeshBasicMaterial({ color: 0xC8871F }));
+  eye.position.set(0, -40.3, 62);
+  figure.add(body, head, eye);
+  figure.visible = false;
+  scene.add(figure);
+}
+
+// ---------- clipping ----------
+function applyClipping() {
+  const planes = clipping ? [clipPlane] : [];
+  Object.values(meshes).forEach(m => { m.material.clippingPlanes = planes; m.material.needsUpdate = true; });
+}
+const cutAxis = document.getElementById('cut-axis');
+const cut = document.getElementById('cut');
+const cutVal = document.getElementById('cut-val');
+function cutRange() {
+  const a = cutAxis.value;
+  if (a === 'x') return [-current.plinth_w / 2 - 2, current.plinth_w / 2 + 2];
+  if (a === 'y') return [-1, current.plinth_d + 1];
+  return [0, current.top + 1];
+}
+function updateCut() {
+  const a = cutAxis.value;
+  clipping = a !== 'off';
+  cut.disabled = !clipping;
+  if (clipping) {
+    const [lo, hi] = cutRange();
+    const t = cut.value / 1000;
+    const pos = lo + (hi - lo) * t;
+    // Keep the half on the viewer's side: cut away what is beyond the plane.
+    const n = a === 'x' ? new THREE.Vector3(-1, 0, 0) : a === 'y' ? new THREE.Vector3(0, -1, 0) : new THREE.Vector3(0, 0, -1);
+    clipPlane.set(n, pos);
+    cutVal.textContent = pos.toFixed(1) + ' in';
+  } else {
+    cutVal.textContent = '—';
+  }
+  applyClipping();
+  needs();
+}
+cutAxis.addEventListener('change', updateCut);
+cut.addEventListener('input', updateCut);
+
+// ---------- camera / orbit ----------
+const target = new THREE.Vector3(0, 8, 30);
+let sph = { r: 125, theta: -0.6, phi: 1.15 };   // theta about Z from -Y, phi from +Z
+function applyCamera() {
+  const x = target.x + sph.r * Math.sin(sph.phi) * Math.sin(sph.theta);
+  const y = target.y - sph.r * Math.sin(sph.phi) * Math.cos(sph.theta);
+  const z = target.z + sph.r * Math.cos(sph.phi);
+  camera.position.set(x, y, z);
+  camera.lookAt(target);
+  needs();
+}
+const VIEWS = {
+  front: () => ({ target: [0, 8, 30], r: 130, theta: 0, phi: Math.PI / 2 }),
+  back: () => ({ target: [0, 8, 30], r: 130, theta: Math.PI, phi: Math.PI / 2 }),
+  side: () => ({ target: [0, 8, 30], r: 130, theta: Math.PI / 2, phi: Math.PI / 2 }),
+  plan: () => ({ target: [0, 8, 30], r: 110, theta: 0, phi: 0.0001 }),
+  iso: () => ({ target: [0, 8, 30], r: 125, theta: -0.6, phi: 1.15 }),
+  over: () => ({ target: [0, 8, current.heights.media_surface], r: 60, theta: 0.15, phi: 0.75 }),
+};
+function setView(name) {
+  if (name === 'stand') {
+    // Eye at 62 in, 36 in in front of the face, looking at the panel centre.
+    const pc = current.panel_centre;
+    target.set(0, 0, pc);
+    const eye = new THREE.Vector3(0, -40.3, 62);
+    const d = eye.clone().sub(target);
+    sph.r = d.length();
+    sph.phi = Math.acos(d.z / sph.r);
+    sph.theta = Math.atan2(d.x, -d.y);
+    applyCamera();
+    return;
+  }
+  const v = VIEWS[name]();
+  target.set(...v.target);
+  sph = { r: v.r, theta: v.theta, phi: v.phi };
+  applyCamera();
+}
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+let drag = null;
+renderer.domElement.addEventListener('pointerdown', e => {
+  drag = { x: e.clientX, y: e.clientY, pan: e.shiftKey || e.button === 2 || e.button === 1 };
+  renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if (drag.pan) {
+    const scale = sph.r / stage.clientHeight * 1.6;
+    const right = new THREE.Vector3(); const up = new THREE.Vector3();
+    camera.matrix.extractBasis(right, up, new THREE.Vector3());
+    target.addScaledVector(right, -dx * scale).addScaledVector(up, dy * scale);
+  } else {
+    sph.theta -= dx * 0.006;
+    sph.phi = Math.min(Math.PI - 0.02, Math.max(0.02, sph.phi - dy * 0.006));
+  }
+  applyCamera();
+});
+renderer.domElement.addEventListener('pointerup', () => drag = null);
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+renderer.domElement.addEventListener('wheel', e => {
+  e.preventDefault();
+  sph.r = Math.min(600, Math.max(12, sph.r * Math.exp(e.deltaY * 0.0012)));
+  applyCamera();
+}, { passive: false });
+
+// ---------- UI ----------
+const readout = document.getElementById('readout');
+function renderReadout() {
+  const v = current;
+  const rows = [
+    ['Cabinet W × D × H', `${v.plinth_w} × ${v.plinth_d} × ${v.plinth_h} in`, false],
+    ['Panel centre', `${v.panel_centre.toFixed(1)} in`, true],
+    ['Static lift', `${v.static_lift.toFixed(1)} in`, true],
+    ['Reservoir shelf', `${v.heights.reservoir_shelf.toFixed(0)} in`, false],
+    ['Block top', `${v.heights.cmu_top.toFixed(1)} in`, false],
+    ['Fixture', `${v.heights.fixture.toFixed(1)} in`, false],
+    ['Top of the piece', `${v.top.toFixed(1)} in`, false],
+  ];
+  readout.innerHTML = rows.map(([k, val, key]) => `<dt>${k}</dt><dd class="${key ? 'key' : ''}">${val}</dd>`).join('');
+}
+
+const variantsEl = document.getElementById('variants');
+DATA.variants.forEach(v => {
+  const b = document.createElement('button');
+  b.textContent = `${v.plinth_h.toFixed(0)} in`;
+  b.setAttribute('aria-pressed', String(v.plinth_h === DATA.default));
+  b.addEventListener('click', () => {
+    variantsEl.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    b.setAttribute('aria-pressed', 'true');
+    loadVariant(v);
+    if (cutAxis.value !== 'off') updateCut();
+  });
+  variantsEl.appendChild(b);
+});
+
+const partsEl = document.getElementById('parts');
+for (const group of ['fabricated', 'reference']) {
+  const t = document.createElement('div'); t.className = 'group-title';
+  t.textContent = group === 'fabricated' ? 'Fabricated' : 'Reference (bought or undimensioned)';
+  partsEl.appendChild(t);
+  for (const [name, spec] of Object.entries(DATA.materials)) {
+    if (spec.group !== group) continue;
+    const l = document.createElement('label'); l.className = 'check';
+    l.innerHTML = `<input type="checkbox" checked><span class="swatch" style="background:${spec.colour}"></span><span>${spec.label}</span>`;
+    l.querySelector('input').addEventListener('change', e => {
+      visible[name] = e.target.checked;
+      if (meshes[name]) meshes[name].visible = visible[name];
+      needs();
+    });
+    partsEl.appendChild(l);
+  }
+}
+
+document.getElementById('figure').addEventListener('change', e => { figure.visible = e.target.checked; needs(); });
+document.getElementById('datums').addEventListener('change', e => {
+  datumGroup.visible = e.target.checked; labelsEl.style.display = e.target.checked ? '' : 'none'; needs();
+});
+
+document.getElementById('meta').textContent = `commit ${DATA.sha} · inches · Z up · ${DATA.variants.length} height variants`;
+
+// ---------- render loop (on demand) ----------
+let dirty = true;
+function needs() { dirty = true; }
+function railInset() {
+  const rail = document.getElementById('rail').getBoundingClientRect();
+  const bottomRail = rail.top > 0;          // narrow screens: rail sits at the bottom
+  return bottomRail ? { x: 0, y: rail.height } : { x: rail.width, y: 0 };
+}
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  // Shift the projection so the model centres in the free area, not the window.
+  const r = railInset();
+  camera.setViewOffset(w, h, -r.x / 2, r.y / 2, w, h);
+  camera.updateProjectionMatrix();
+  needs();
+}
+addEventListener('resize', resize);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { buildGround(); buildDatums(); needs(); });
+new MutationObserver(() => { buildGround(); buildDatums(); needs(); })
+  .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+function frame() {
+  if (dirty) {
+    dirty = false;
+    renderer.render(scene, camera);
+    placeLabels();
+  }
+  requestAnimationFrame(frame);
+}
+
+resize();
+loadVariant(DATA.variants.find(v => v.plinth_h === DATA.default) || DATA.variants[0]);
+setView('iso');
+frame();
+</script>

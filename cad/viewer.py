@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""Turn the station into a self-contained 3D viewer page.
+
+    python cad/viewer.py                 # writes cad/out/viewer.html
+    python cad/viewer.py --heights 36 40 # only those PLINTH_H variants
+
+The page is one HTML file: every part tessellated and embedded, three.js from
+cdnjs, no server. It exists so a layout decision can be looked at from the
+positions a person will actually occupy — standing in front of the panel,
+leaning over the block — before anyone commits stock to it. Part toggles, a
+section cut, the height stack as datums, and the PLINTH_H variants side by
+side.
+
+Each variant is built in a subprocess with ``GROWLAB_PLINTH_H`` set, so the
+kernel sees a clean ``params`` module every time.
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import json
+import os
+import struct
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO))
+
+OUT = REPO / "cad" / "out"
+
+# Material and role for each part, keyed by the assembly's part names.
+# Colours are the materials': ply, stainless, steel, acrylic, concrete.
+MATERIALS = {
+    "plinth": dict(label="Cabinet carcass", colour="#C9A46A", opacity=1.0, group="fabricated"),
+    "rear_door": dict(label="Rear door (wet bay)", colour="#B8925A", opacity=1.0, group="fabricated"),
+    "tray": dict(label="Tray, 304 16 ga", colour="#C4C9CC", opacity=1.0, group="fabricated"),
+    "pads": dict(label="Block pads", colour="#8F7A55", opacity=1.0, group="fabricated"),
+    "mast": dict(label="Mast, 2 × 3 HSS", colour="#4A4F55", opacity=1.0, group="fabricated"),
+    "face": dict(label="Instrument face, acrylic", colour="#9CC3D8", opacity=0.55, group="fabricated"),
+    "cmu": dict(label="CMU vessel", colour="#9A9590", opacity=1.0, group="reference"),
+    "media": dict(label="Media", colour="#5E4A38", opacity=1.0, group="reference"),
+    "reservoir": dict(label="Reservoir pan", colour="#5C8DB3", opacity=0.5, group="reference"),
+    "fixture": dict(label="LED fixture + arm", colour="#D9A83E", opacity=0.9, group="reference"),
+    "console": dict(label="Console electronics envelope", colour="#6FAE7B", opacity=0.35, group="reference"),
+}
+
+
+def _dump(out_path: Path, tolerance_mm: float, angular: float) -> None:
+    """Child process: build the station at the current params and write meshes."""
+    from cad.growlab_cad import assembly, params as P
+    from cad.growlab_cad.params import IN
+
+    parts = {**assembly.fabricated(), **assembly.reference()}
+    meshes = {}
+    for name, part in parts.items():
+        verts, tris = part.tessellate(tolerance_mm, angular)
+        pos = struct.pack(f"<{len(verts) * 3}f", *(c / IN for v in verts for c in (v.X, v.Y, v.Z)))
+        idx = struct.pack(f"<{len(tris) * 3}I", *(i for t in tris for i in t))
+        meshes[name] = {
+            "positions": base64.b64encode(pos).decode(),
+            "indices": base64.b64encode(idx).decode(),
+            "triangles": len(tris),
+        }
+
+    heights = vars(P.HEIGHTS)
+    variant = {
+        "plinth_h": P.PLINTH_H,
+        "plinth_w": P.PLINTH_W,
+        "plinth_d": P.PLINTH_D,
+        "panel_centre": P.PANEL_CENTRE_Z,
+        "static_lift": P.HEIGHTS.static_lift,
+        "top": P.MAST_TOP + P.FIXTURE_ARM_T,
+        "heights": heights,
+        "face": {"x0": P.FACE_X0, "z0": P.FACE_Z0, "z1": P.FACE_Z1},
+        "meshes": meshes,
+    }
+    out_path.write_text(json.dumps(variant))
+
+
+def build_variants(heights: list[float], tolerance_mm: float, angular: float) -> list[dict]:
+    variants = []
+    for h in heights:
+        tmp = OUT / f"_variant_{h:g}.json"
+        env = {**os.environ, "GROWLAB_PLINTH_H": f"{h:g}"}
+        subprocess.run(
+            [sys.executable, __file__, "--dump", str(tmp), "--tolerance", str(tolerance_mm), "--angular", str(angular)],
+            env=env, check=True, cwd=str(REPO),
+        )
+        variants.append(json.loads(tmp.read_text()))
+        tmp.unlink()
+        tris = sum(m["triangles"] for m in variants[-1]["meshes"].values())
+        print(f"PLINTH_H={h:g}: {tris} triangles")
+    return variants
+
+
+def _git_sha() -> str:
+    try:
+        return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=REPO, text=True).strip()
+    except Exception:
+        return "unknown"
+
+
+def render_html(variants: list[dict], default_h: float) -> str:
+    template = (REPO / "cad" / "viewer_template.html").read_text()
+    payload = json.dumps({
+        "sha": _git_sha(),
+        "default": default_h,
+        "materials": MATERIALS,
+        "variants": variants,
+    })
+    return template.replace("/*__STATION_DATA__*/null", payload)
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--heights", type=float, nargs="+", default=[36.0, 40.0, 44.0], help="PLINTH_H variants")
+    ap.add_argument("--tolerance", type=float, default=0.6, help="tessellation tolerance, mm")
+    ap.add_argument("--angular", type=float, default=0.35, help="angular tolerance, radians")
+    ap.add_argument("--dump", type=Path, help=argparse.SUPPRESS)
+    ap.add_argument("--out", type=Path, default=OUT / "viewer.html")
+    args = ap.parse_args(argv)
+
+    if args.dump:
+        _dump(args.dump, args.tolerance, args.angular)
+        return 0
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    variants = build_variants(args.heights, args.tolerance, args.angular)
+    from cad.growlab_cad import params as P
+
+    html = render_html(variants, P.PLINTH_H)
+    args.out.write_text(html)
+    print(f"wrote {args.out.relative_to(REPO) if args.out.is_relative_to(REPO) else args.out}  ({len(html) // 1024} KB)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -55,11 +55,24 @@ Two things are deliberately *not* asserted:
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import dataclass
 
 from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH
 
 IN = 25.4  # millimetres per inch — the only unit conversion in the package
+
+
+def _knob(name: str, default: float) -> float:
+    """A parameter that a sweep may override from the environment.
+
+    ``GROWLAB_PLINTH_H=40 python cad/build.py`` builds the station four inches
+    taller without editing this file. Only the knobs that are genuinely open
+    decisions are exposed this way; everything else is a number with a
+    provenance. The value in the file is the design as documented.
+    """
+    raw = os.environ.get(f"GROWLAB_{name}")
+    return float(raw) if raw else default
 
 
 # ---------------------------------------------------------------------------
@@ -69,9 +82,10 @@ IN = 25.4  # millimetres per inch — the only unit conversion in the package
 
 PLINTH_W = 20.0  # "cabinet 20 x 14 in" — width, viewer's left-right
 PLINTH_D = 16.0  # CHOICE: was 14. See DepthBudget — the console bay in front of the pan.
-PLINTH_H = 36.0  # CHOICE: "cabinet to necessary height". The one knob that moves
-                 # the panel, the block and the light together; the lift does
-                 # not change with it. Tray floor is at this height.
+PLINTH_H = _knob("PLINTH_H", 36.0)  # CHOICE: "cabinet to necessary height". The one
+                                    # knob that moves the panel, the block and the light
+                                    # together; the lift does not change with it. Tray
+                                    # floor is at this height. Sweepable: GROWLAB_PLINTH_H.
 
 SHADOW_GAP_H = 2.0  # "Recessed base / shadow gap — 0–2 in"
 SHADOW_GAP_INSET = 1.0  # CHOICE: how far the kick steps back under the sides
