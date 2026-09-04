@@ -220,6 +220,15 @@ inverted from the first fascia candidate:
   ledge as a sill, and the loom dropping behind the case through the chase to the PSU and
   driver below, which stay behind the removable lower ply front. Cable discipline is
   visible; plan the runs.
+- **How the plate fastens:** the case's side walls carry 0.5 in return flanges folded inward
+  at their front edges, tapped M3 on the plate's own F1–4 centres. There is no flange on the
+  top and bottom walls — one would reach 0.5625 in behind the plate's edge and foul the
+  OFFSET layout's high dial. The side flanges clear every layout the emulator offers.
+- **How the fascia is held:** it is not drilled anywhere it would have to reach the carcass
+  sides. The band is wider than the front panel, so its side edges are simply captured in
+  the sides' rebate; the load is taken by two rows of five M3 countersunk screws — the top
+  row into a 0.75 in **ply header** left standing behind the band's top edge, the bottom row
+  into the **console ledge**. Edge distance in the acrylic is 0.375 top, 0.875 bottom.
 - Console bay 3.00 in clear; 0.44 in behind the case for the loom to turn down. Vent the
   bay (the right-side holes) — the Pi and meter backlights still dissipate.
 
@@ -405,8 +414,11 @@ use. Fail it and leach longer or add a second coat before planting.
 - **Frame fabrication.** 1 x 1 HSS or solid square bar; welded or bolted at the corners;
   levelling feet in the legs. Whether the mast is welded to the ring or bolted through it
   is a fabricator's call — welded is stiffer, bolted lets the cabinet come off the frame.
-- **Case fabrication.** 16 ga aluminium folded box with a 1/8 in plate: bend it, or have the
-  plate laser-cut and the box folded from one development. Powder-coat or anodise black.
+- **Case fabrication.** The development is drawn: one 15.50 x 17.00 blank in 16 ga, six
+  bends, `cad/out/fab/case_body.dxf`. Powder-coat or anodise black. Confirm the shop is
+  happy with folded corners or wants them welded.
+- **Fascia edge finish.** Polished or flame-polished edges on the acrylic, and whether the
+  two knob holes want a chamfer.
 - 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;
   otherwise right-size the pump.
@@ -424,6 +436,11 @@ use. Fail it and leach longer or add a second coat before planting.
 
 ## Revision log
 
+- **2026-09-04** — **Fabrication pack** (`cad/out/fab/`): plate, case development, fascia
+  and backplate as DXFs in inches, plus a cut list for ply, steel, sheet and glazing. Two
+  gaps the drawings exposed and closed: the plate had nothing to screw into (case return
+  flanges, side walls only) and the fascia had no fixing (ply header + ledge, two screw
+  rows). Dials ship as scribe rings until the Weston bezels are calipered.
 - **2026-09-04** — Cabinet height decided at **36** from the browser viewer. Design pass
   opened: two form candidates in the model (instrument fascia + chamfers; steel base frame
   with the mast as a leg), switchable, all four combinations in the viewer.

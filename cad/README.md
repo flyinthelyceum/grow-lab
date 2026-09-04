@@ -8,7 +8,8 @@ pip install -e ".[cad]"      # build123d + the OCP kernel, ~150 MB
 python cad/build.py          # writes cad/out/
 python cad/build.py --check  # build and report, write nothing
 python cad/render.py         # front / side / plan elevations as SVG
-python cad/viewer.py         # one-file 3D viewer with the height variants
+python cad/viewer.py         # one-file 3D viewer with the design candidates
+python cad/fabrication.py    # DXFs and a cut list, into cad/out/fab/
 pytest tests/unit/test_cad_*.py
 ```
 
@@ -31,6 +32,7 @@ station is arranged the way it is.
 | `cmu.py` | The block, at actual size with two cores — reference |
 | `assembly.py` | Everything, labelled, plus the interference and design-conflict checks |
 | `viewer.py` + `viewer_template.html` | Tessellates every part at several `PLINTH_H` and writes one HTML file: orbit, part toggles, section cut, datums, a stand-in-front eye-height view |
+| `fabrication.py` | The pack you cut from: plate, case development, fascia and backplate as DXFs in inches, plus a cut list derived from the same params |
 | `fusion/` | The Fusion 360 script and the iteration loop — see `fusion/README.md` |
 
 Every part is built in world coordinates — floor at Z = 0, plinth width
@@ -110,6 +112,22 @@ stands — eye at 62 in, 36 in in front of the face — to judge the panel. It
 is the fast way to look before deciding; `PLINTH_H` variants are built by
 setting `GROWLAB_PLINTH_H` in the environment, which `params.py` honours for
 that one knob.
+
+## The fabrication pack
+
+`python cad/fabrication.py` writes `cad/out/fab/` — see its own README. Two
+things worth knowing before you open a DXF:
+
+**They are inches, and that is checked.** build123d's DXF exporter writes a
+unit into the header but does not convert the coordinates, exactly like its
+SVG exporter. The flat patterns are therefore authored directly in inch
+coordinates rather than through `_shapes` (which multiplies by `IN`), and
+`test_cad_fabrication` reads the files back to assert that the header and the
+geometry agree. Do not "tidy" that by reusing the solid model's helpers.
+
+**Bends carry no allowance.** The blank is the sum of the flat faces and the
+bend lines sit at the theoretical fold; the K-factor is the fabricator's.
+Send the STEP alongside so they can develop it their own way if they prefer.
 
 ## Into Fusion
 

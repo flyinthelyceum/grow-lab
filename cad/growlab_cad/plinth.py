@@ -109,6 +109,28 @@ def _fascia_band() -> tuple[float, float]:
     return P.FACE_Z0 - P.FASCIA_MARGIN, P.FACE_Z1 + P.FASCIA_MARGIN
 
 
+def fascia_screw_points() -> list[tuple[float, float]]:
+    """(world X, world Z) of the fascia's fixings — two rows, no side screws.
+
+    The acrylic is not drilled anywhere it would have to reach the carcass
+    sides: the band is wider than the front panel, so its side edges are only
+    captured in the sides' rebate. Everything that carries load lands where
+    there is real material behind the glass — the ply header along the top
+    (FASCIA_TOP_LIP of front panel left standing behind the band) and the
+    console ledge along the bottom. Both rows are inside the front panel's
+    width, so both find ply.
+    """
+    bz0, bz1 = _fascia_band()
+    rows = [
+        bz1 - P.FASCIA_TOP_LIP / 2,          # into the header
+        bz0 + (P.FASCIA_MARGIN + P.LEDGE_T) / 2,   # into the ledge below the plate
+    ]
+    n = P.FASCIA_SCREW_COLUMNS
+    span = (IX1 - IX0) - 2 * P.CARCASS_T
+    xs = [IX0 + P.CARCASS_T + span * i / (n - 1) for i in range(n)]
+    return [(x, z) for z in rows for x in xs]
+
+
 def build_shell() -> Part:
     """Sides, rear panel and floor — the parts that are one welded/glued unit.
 
@@ -171,8 +193,18 @@ def build_front() -> Part:
     fz0, fz1 = P.FACE_Z0, P.FACE_Z1
 
     if P.FASCIA:
-        bz0, _ = _fascia_band()
-        return labelled(_panel(IX0, IX1, Y0, IY0, Z0, bz0), "front_panel_lower_removable")
+        bz0, bz1 = _fascia_band()
+        panel = _panel(IX0, IX1, Y0, IY0, Z0, RAIL_BOTTOM)
+        # Rebate the whole band FASCIA_POCKET deep — the acrylic sits in it.
+        panel -= _panel(IX0 - 0.5, IX1 + 0.5, Y0 - 0.5, P.FASCIA_POCKET, bz0, bz1)
+        # Then take the rest of the way through, except the top lip: what is
+        # left standing behind the glass there is the header the fascia's top
+        # row screws into. Below it the console bay is open to be seen.
+        panel -= _panel(IX0 - 0.5, IX1 + 0.5, Y0 - 0.5, IY0 + 0.5, bz0, bz1 - P.FASCIA_TOP_LIP)
+        for wx, wz in fascia_screw_points():
+            if wz > bz1 - P.FASCIA_TOP_LIP:
+                panel -= cyl_y(P.PILOT_DIA, P.CARCASS_T * 3, at=(wx, (Y0 + IY0) / 2, wz))
+        return labelled(panel, "front_panel_removable")
 
     panel = _panel(IX0, IX1, Y0, IY0, Z0, RAIL_BOTTOM)
     panel -= _panel(fx0, fx1, Y0 - 0.5, Y0 + P.ACRYLIC_T, fz0, fz1)  # face pocket
@@ -192,9 +224,11 @@ def build_fascia() -> Part:
 
     bz0, bz1 = _fascia_band()
     band = _panel(X0 + P.CHAMFER, X1 - P.CHAMFER, P.FASCIA_RECESS, P.FASCIA_POCKET, bz0, bz1)
+    mid_y = (P.FASCIA_RECESS + P.FASCIA_POCKET) / 2
     for wx, wz, dia in knob_points():
-        band -= cyl_y(dia + 2 * P.KNOB_HOLE_CLEARANCE, P.FASCIA_T * 4,
-                      at=(wx, (P.FASCIA_RECESS + P.FASCIA_POCKET) / 2, wz))
+        band -= cyl_y(dia + 2 * P.KNOB_HOLE_CLEARANCE, P.FASCIA_T * 4, at=(wx, mid_y, wz))
+    for wx, wz in fascia_screw_points():
+        band -= cyl_y(P.FASCIA_SCREW_DIA, P.FASCIA_T * 4, at=(wx, mid_y, wz))
     return labelled(band, "fascia_clear_acrylic")
 
 
@@ -202,10 +236,12 @@ def build_ledge() -> Part:
     """The ply ledge the instrument case sits on, flush behind the fascia so
     the fascia's bottom screws land in it. Stops short of the partition: the
     chase behind it is where the loom drops to the PSU."""
-    return labelled(
-        _panel(IX0, IX1, P.FASCIA_POCKET, P.CONSOLE_Y1 - P.LEDGE_CHASE, P.FACE_Z0 - P.LEDGE_T, P.FACE_Z0),
-        "console_ledge",
-    )
+    ledge = _panel(IX0, IX1, P.FASCIA_POCKET, P.CONSOLE_Y1 - P.LEDGE_CHASE,
+                   P.FACE_Z0 - P.LEDGE_T, P.FACE_Z0)
+    for wx, wz in fascia_screw_points():
+        if P.FACE_Z0 - P.LEDGE_T < wz < P.FACE_Z0:
+            ledge -= cyl_y(P.PILOT_DIA, P.LEDGE_T * 3, at=(wx, P.FASCIA_POCKET + P.LEDGE_T, wz))
+    return labelled(ledge, "console_ledge")
 
 
 def build_backplate() -> Part:
