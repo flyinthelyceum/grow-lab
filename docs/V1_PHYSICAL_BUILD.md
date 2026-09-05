@@ -309,14 +309,6 @@ slice behind the instrument face, partitioned from the wet bay.
 - **Cable glands** on every penetration; drip loops on all external cables.
 - **Mains and DC/signal separated** inside; keep the EZO probe leads clean.
 - **Ventilation** for PSU + LED-driver heat, drawn away from the wet zone.
-- **Canopy fan** on a bracket off the mast's front face, axis at **49.9 in** — mid-canopy,
-  between the media surface (42.9) and the fixture (57.9) — and centred on the block at
-  x = 0 rather than on the mast, which is off in the dry bay. It blows **back to front**,
-  across the block's short axis: the two cores are separated along X, so blowing along X
-  would hand the downwind core the upwind core's exhaust. `cad/growlab_cad/fan.py` carries
-  the geometry and `test_cad_geometry.py` asserts the clearances. The bracket is drawn
-  plain on purpose — the real one wants vibration isolation and the fan's 105 mm screw
-  pattern, and neither is worth inventing before the mast is welded.
 - Houses: Raspberry Pi, ESP32, relay board, PSU (5V), 12V fan adapter, PWM-120-24 driver,
   meter driver — behind the face and below it; the dry bay behind the partition takes
   what does not fit beside the mast.
@@ -331,6 +323,41 @@ slice behind the instrument face, partitioned from the wet bay.
   verify on the bus before assigning that address to anything else.
 - **GFCI** on mains.
 - **Drip loops** on every cable into the wet zone.
+
+## Open: the canopy does not move, and it must
+
+`LIGHTING_SYSTEM.md` § Light Positioning states the requirement plainly — "**Height
+should remain adjustable**", to accommodate plant growth, allow intensity tuning and
+prevent light stress — and notes the light "may be suspended on a pulley or sliding mount
+system". That is the only trace of it. It was never specced, never dimensioned, and never
+reached the model: `params.FIXTURE_ABOVE_MEDIA` is a hard 15.0 and the arm is welded to
+the mast cap. Jared's original sketches carried a counterweight mechanism; nothing of it
+survives in this repository.
+
+**This is not only a lost mechanism. As built, the design fails a mature plant.**
+
+| Plant height | Canopy top | Clearance to fixture |
+|---|---|---|
+| 12 in | 54.9 | +3.0 in |
+| 15 in | 57.9 | **0.0 in** |
+| 18 in | 60.9 | **−3.0 in — the plant grows into the light** |
+
+Ranunculus reaches 12–18 in. The fixture sits at 57.875 and the mast ends 1.5 in above it,
+so there is not merely no adjustment — there is no headroom to adjust into.
+
+**What it would take.** Holding a 15 in working distance over an 18 in plant puts the
+fixture at 75.875, which is **18 in of travel** and a mast top near 77.4. The piece grows
+from 59.9 in to about 77.4 in overall. That is a silhouette decision, not a detail, and it
+is Jared's.
+
+**The mast is the right place for the mechanism.** It is hollow 2 x 3 HSS with a 1.76 x
+2.76 bore — enough to run a counterweight inside it on a cable over a pulley at the cap,
+which is what the sketches had. The fixture is two LM301H boards on a heatsink; weigh it
+before sizing anything. Note this is the one job the bore is genuinely good for: it was
+rejected as an air duct because 4.9 in² of area cannot pass a 120 mm fan's flow, but a
+counterweight only needs to fall down it.
+
+---
 
 ## Sourcing checklist
 
