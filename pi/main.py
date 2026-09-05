@@ -191,10 +191,12 @@ async def run(config: AppConfig) -> None:
             frequency=config.fan.frequency,
             min_duty=config.fan.min_duty,
             max_duty=config.fan.max_duty,
-            ramp_temp_low_f=config.fan.ramp_temp_low_f,
-            ramp_temp_high_f=config.fan.ramp_temp_high_f,
+            day_start_hour=config.fan.day_start_hour,
+            day_end_hour=config.fan.day_end_hour,
+            night_factor=config.fan.night_factor,
+            calm_threshold=config.fan.calm_threshold,
         )
-        fan_svc = FanService(fan_driver, repo, config.fan)
+        fan_svc = FanService(fan_driver, config.fan)
         await fan_svc.start()
 
     # Start panel meter service (centre-zero Weston movements via MCP4728)

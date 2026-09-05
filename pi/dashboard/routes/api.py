@@ -357,34 +357,33 @@ async def get_alerts(
 
 @router.get("/fan/status")
 async def get_fan_status(request: Request) -> dict:
-    """Get fan status based on latest air temperature and config."""
+    """Fan status: where the gust field is right now, and its config.
+
+    Takes no sensor input — the fan is for canopy strength, not cooling.
+    """
     from pi.config.schema import FanConfig
     from pi.drivers.fan_pwm import FanPWMDriver
 
-    repo = request.app.state.repo
-    reading = await repo.get_latest("bme280_temperature")
-
     config = getattr(request.app.state, "fan_config", FanConfig())
-    temp_f = None
-    duty = None
 
-    if reading is not None:
-        temp_f = reading.value * 9.0 / 5.0 + 32.0
-        duty = FanPWMDriver.static_duty_for_temperature(
-            temp_f,
-            min_duty=config.min_duty,
-            max_duty=config.max_duty,
-            ramp_low=config.ramp_temp_low_f,
-            ramp_high=config.ramp_temp_high_f,
-        )
+    duty = FanPWMDriver.static_duty_for_time(
+        time.time(),
+        min_duty=config.min_duty,
+        max_duty=config.max_duty,
+        day_start_hour=config.day_start_hour,
+        day_end_hour=config.day_end_hour,
+        night_factor=config.night_factor,
+        calm_threshold=config.calm_threshold,
+    )
 
     return {
         "enabled": config.enabled,
-        "temp_f": round(temp_f, 1) if temp_f is not None else None,
         "duty_percent": duty,
         "gpio_pin": config.gpio_pin,
-        "ramp_temp_low_f": config.ramp_temp_low_f,
-        "ramp_temp_high_f": config.ramp_temp_high_f,
+        "day_start_hour": config.day_start_hour,
+        "day_end_hour": config.day_end_hour,
+        "night_factor": config.night_factor,
+        "calm_threshold": config.calm_threshold,
         "min_duty": config.min_duty,
         "max_duty": config.max_duty,
     }

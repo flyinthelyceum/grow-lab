@@ -169,8 +169,13 @@ Goal: the Noctua running under software speed control on the new rail, off the r
 > already recorded below in Stage 5 (the Inky hard-wires BCM17, which is the pump relay).
 
 **The fan is for canopy strength, not cooling.** Air movement thickens stems
-(thigmomorphogenesis); it is not thermal management, so its ramp is tuned for steady
-movement rather than a temperature target.
+(thigmomorphogenesis). It takes no temperature input at all: duty comes from a gust
+field over time, blowing in spells of a few minutes and falling to nothing in between,
+because intermittent loading is what a stem responds to. Overnight it drops to a stir
+rather than stopping — still wet air grows mould. `calm_threshold` in `[fan]` is the
+knob: raise it for longer lulls and a quieter piece, lower it for more constant air.
+When you sweep the fan in step 4 below you are testing the hardware, not the control
+law; `growlab fan status` prints where the gust field is at this moment.
 
 1. Bring up the 12V rail from the fan's own 12V adapter. Verify **12V under load**
    before the fan is connected.

@@ -54,7 +54,7 @@ All services run as async tasks within `growlab start` and shut down cleanly on 
 | IrrigationService | Pump available | 30s schedule check | Timed pump pulses with safety limits |
 | AlertService | Always | 60s | Threshold monitoring with deduplication; fires NotificationService on transitions |
 | NotificationService | Alert callback | On alert | ntfy webhook POST with per-sensor cooldown |
-| FanService | `fan.enabled` | 30s | Temperature → PWM duty ramp |
+| FanService | `fan.enabled` | 5s | Gust field → PWM duty (no sensor input) |
 | MeterService | `meters.enabled` | ~30 Hz | Eases the two centre-zero panel needles toward pH and EC deviation via the MCP4728 |
 | ControlService | `control.enabled` and a service to drive | 2s | Reconciles the fan and meters toward desired state written by the dashboard |
 | LightingScheduler | ESP32 connected | 30s | Photoperiod schedule with sunrise/sunset ramps |

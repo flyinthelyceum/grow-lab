@@ -348,7 +348,7 @@ Control path:
 
 Pi GPIO18 (25 kHz, 0–100 % duty) → fan PWM input
 
-The fan accepts a 3.3V PWM signal directly; no level shifter or transistor is needed. Duty is set by the temperature ramp in `config.toml` (`ramp_temp_low_f` / `ramp_temp_high_f`) or by manual override via `/api/fan/`.
+The fan accepts a 3.3V PWM signal directly; no level shifter or transistor is needed. Duty comes from the gust field in `config.toml` (`day_start_hour` / `day_end_hour` / `night_factor` / `calm_threshold`) — the fan is for canopy strength, not cooling, so it takes no temperature input — or from a manual override via `/api/fan/`.
 
 **V0 note:** the bench prototype ran this fan always-on through a relay on GPIO6. V1 retires that relay; GPIO6 is free.
 

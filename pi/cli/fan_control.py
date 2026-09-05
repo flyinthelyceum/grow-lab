@@ -26,8 +26,10 @@ def _driver(config):
         frequency=fc.frequency,
         min_duty=fc.min_duty,
         max_duty=fc.max_duty,
-        ramp_temp_low_f=fc.ramp_temp_low_f,
-        ramp_temp_high_f=fc.ramp_temp_high_f,
+        day_start_hour=fc.day_start_hour,
+        day_end_hour=fc.day_end_hour,
+        night_factor=fc.night_factor,
+        calm_threshold=fc.calm_threshold,
     )
 
 
@@ -102,10 +104,9 @@ def fan_sweep(ctx: click.Context, dwell: float) -> None:
 @fan_group.command("status")
 @click.pass_context
 def fan_status(ctx: click.Context) -> None:
-    """Show fan config and the duty the temperature ramp would command."""
-    import asyncio
+    """Show fan config and where the gust field is right now."""
+    import time
 
-    from pi.data.repository import SensorRepository
     from pi.drivers.fan_pwm import FanPWMDriver
 
     config = ctx.obj["config"]
@@ -114,29 +115,18 @@ def fan_status(ctx: click.Context) -> None:
     click.echo(f"Enabled:   {fc.enabled}")
     click.echo(f"GPIO:      {fc.gpio_pin} @ {fc.frequency} Hz")
     click.echo(f"Duty span: {fc.min_duty}-{fc.max_duty}%")
-    click.echo(f"Ramp:      {fc.ramp_temp_low_f:.0f}-{fc.ramp_temp_high_f:.0f}°F")
+    click.echo(f"Gusts:     {fc.day_start_hour:02d}:00-{fc.day_end_hour:02d}:00, "
+               f"night at {fc.night_factor:.0%}")
+    click.echo(f"Calm below {fc.calm_threshold:.0%} of the gust field")
 
-    async def _read():
-        repo = SensorRepository(config.system.db_path)
-        await repo.connect()
-        try:
-            return await repo.get_latest("bme280_temperature")
-        finally:
-            await repo.close()
-
-    reading = asyncio.run(_read())
-
-    if reading is None:
-        click.echo("\nNo bme280_temperature reading — cannot compute target duty.")
-        return
-
-    temp_f = reading.value * 9.0 / 5.0 + 32.0
-    duty = FanPWMDriver.static_duty_for_temperature(
-        temp_f,
+    now = time.time()
+    duty = FanPWMDriver.static_duty_for_time(
+        now,
         min_duty=fc.min_duty,
         max_duty=fc.max_duty,
-        ramp_low=fc.ramp_temp_low_f,
-        ramp_high=fc.ramp_temp_high_f,
+        day_start_hour=fc.day_start_hour,
+        day_end_hour=fc.day_end_hour,
+        night_factor=fc.night_factor,
+        calm_threshold=fc.calm_threshold,
     )
-    click.echo(f"\nAir temp:  {temp_f:.1f}°F")
-    click.echo(f"Target:    {duty}% duty")
+    click.echo(f"\nRight now: {duty}% duty" + ("  (lull)" if duty == 0 else ""))

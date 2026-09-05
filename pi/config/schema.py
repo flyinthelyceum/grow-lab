@@ -112,9 +112,11 @@ class FanConfig:
     frequency: int = 25000
     min_duty: int = 20
     max_duty: int = 100
-    ramp_temp_low_f: float = 70.0
-    ramp_temp_high_f: float = 85.0
-    poll_interval_seconds: int = 30
+    day_start_hour: int = 6
+    day_end_hour: int = 22
+    night_factor: float = 0.35
+    calm_threshold: float = 0.40
+    poll_interval_seconds: int = 5
 
 
 @dataclass(frozen=True)

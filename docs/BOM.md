@@ -299,7 +299,7 @@ just change the finish, it discards what the material was doing.
 Fan
 
 **Noctua NF-A12x25 PWM chromax.black.swap** — 120mm, 4-pin PWM, 12V, ~0.06A  
-Driven at **25 kHz PWM from Pi GPIO18** (FanService temperature ramp) — not a relay  
+Driven at **25 kHz PWM from Pi GPIO18** (FanService gust field) — not a relay  
 Optional tach wire for RPM
 
 Purpose
