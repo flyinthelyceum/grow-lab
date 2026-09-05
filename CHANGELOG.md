@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-05 (the lightbox gets a material)
+
+### Decided
+- **The lightbox is a folded 16 ga mild steel channel, white DTM, open at the bottom, over the aluminium heatsink bar already on hand.** Until today the fixture had no material, no finish and no construction anywhere in the documents — every lighting page specified the *electronics* and none of them said what the body was. It is the second most visible object in the piece.
+- **Steel outside, aluminium inside.** No aluminium is fabricated for V1; steel is what is specified, shown and painted. But steel conducts at roughly a quarter of aluminium's rate, so an all-steel heatsink would want several times the area to shed the same watts — a bigger object hanging over the plant, which is the mistake the fan taught. The bar does the conducting, the shell does the looking, and the aluminium is a bought thermal component like the driver or the Pi. It is never seen once the channel is on.
+- **Open at the bottom, slotted at the top, open at the ends.** The bottom face is the light aperture, so there is nothing to fabricate there and nothing to obstruct. Nine 0.375 x 3.5 slots run along the top over the fins and each end carries a slot: an open-bottomed channel vented above is a chimney, where a closed box would be an oven. `LIGHTING_SYSTEM.md` has always asked for free airflow around the heatsink and thermal is LED-life critical — the venting is the part of this that is not decoration.
+
+### Fixed
+- **The fixture is a fabricated part now, not a reference one.** It sat in `assembly.reference()` for months — "bought or undimensioned", and so excluded from the interference check — on the strength of nobody having decided what it was. It is in `fabricated()` with the rest of what we cut, and its clash with the carriage weldment is checked for the first time. The fixture *arm* made the same trip earlier in the project; `assembly.py`'s docstring now says out loud that being in the reference list is a claim worth re-reading.
+
+### Numbers
+- Shell 2.6 lb of steel. **The head comes to about 12.6 lb** — carriage weldment 4.6, shell 2.6, heatsink ~4.7, boards ~0.7 — against the 12.0 lb the mast and clamp were sized to. The mast does not care (3.3% of allowable against 3.2%); the clamp holds by friction, so the head's real mass is the number that matters and **it has still never been on a scale**. A test asserts the modelled steel has not drifted past 14 lb. If it comes in heavy, 18 ga on the shell takes 0.7 lb back out.
+- **Every dimension is a choice against an unmeasured part.** Nobody has put a rule on the heatsink bar or the LM301H boards. The shell is drawn to clear a plausible bar and a test asserts the clearance rather than assuming it, but the bar it clears is a guess. Added to the cut list's *measure first* section beside the Weston bezels.
+
 ## 2026-09-05 (no aluminium, no powder-coat)
 
 ### Decided

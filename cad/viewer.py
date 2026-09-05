@@ -53,7 +53,12 @@ MATERIALS = {
     "canopy_carriage": dict(label="Canopy carriage + arm, white DTM", colour="#E4E6E3", opacity=1.0, group="fabricated"),
     "cmu": dict(label="CMU vessel", colour="#9A9590", opacity=1.0, group="reference"),
     "reservoir": dict(label="Reservoir pan", colour="#5C8DB3", opacity=0.5, group="reference"),
-    "fixture": dict(label="LED fixture", colour="#D9A83E", opacity=0.9, group="reference"),
+    # The lightbox is white with everything else; the heatsink inside it is bare
+    # aluminium and never seen once the channel is on, which is the whole point
+    # of the channel. Amber is kept for the heatsink alone, so the render still
+    # shows where the light actually comes from.
+    "lightbox": dict(label="Lightbox, white DTM", colour="#E7E9E6", opacity=1.0, group="fabricated"),
+    "led_heatsink": dict(label="LED heatsink (alu, on hand)", colour="#D9A83E", opacity=0.9, group="reference"),
 }
 
 

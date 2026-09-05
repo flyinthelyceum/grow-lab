@@ -18,7 +18,7 @@ sys.path.insert(0, str(REPO))
 
 build123d = pytest.importorskip("build123d")
 
-from cad.growlab_cad import assembly, canopy, case, cmu, face, mast, params as P, plinth, tray  # noqa: E402
+from cad.growlab_cad import assembly, canopy, case, cmu, face, fixture, mast, params as P, plinth, tray  # noqa: E402
 from cad.growlab_cad._shapes import bbox_in, box  # noqa: E402
 
 from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH, SCHEDULE  # noqa: E402
@@ -37,12 +37,12 @@ def refs():
 class TestEveryPartBuilds:
     def test_fabricated(self, parts):
         assert set(parts) == {"plinth", "base_frame", "rear_door", "tray", "pads", "mast",
-                              "case", "fascia", "backplate", "canopy_carriage"}
+                              "case", "fascia", "backplate", "canopy_carriage", "lightbox"}
         for name, p in parts.items():
             assert p.volume > 0, name
 
     def test_reference(self, refs):
-        assert set(refs) == {"cmu", "reservoir", "fixture"}
+        assert set(refs) == {"cmu", "reservoir", "led_heatsink"}
 
 
 class TestWhereThingsSit:
@@ -107,13 +107,13 @@ class TestWhereThingsSit:
         assert (parts["plinth"] & probe).volume > 1.0
         assert bbox_in(parts["case"])["z0"] == pytest.approx(ledge_top)
 
-    def test_fixture_rides_the_carriage_over_the_block(self, refs, parts):
+    def test_lightbox_rides_the_carriage_over_the_block(self, refs, parts):
         """It used to hang off the mast cap at one welded height."""
         car = bbox_in(parts["canopy_carriage"])
-        env = bbox_in(refs["fixture"])
+        env = bbox_in(parts["lightbox"])
         block = bbox_in(refs["cmu"])
         assert car["z1"] < bbox_in(parts["mast"])["z1"], "the carriage rides below the cap"
-        assert env["z1"] == pytest.approx(P.CARRIAGE_Z), "the arm lands on the fixture's top"
+        assert env["z1"] == pytest.approx(P.CARRIAGE_Z), "the bar lands on the lightbox's top"
         assert (env["y0"] + env["y1"]) / 2 == pytest.approx((block["y0"] + block["y1"]) / 2)
         assert (env["x0"] + env["x1"]) / 2 == pytest.approx((block["x0"] + block["x1"]) / 2)
 
@@ -304,6 +304,54 @@ class TestTheFaceReadsThePanelGeometry:
             if name == "fascia":
                 continue
             assert (part & probe).volume < 1.0, name
+
+
+class TestTheLightbox:
+    """The one part of the piece that went months with no material at all.
+
+    It was a reference part — a box of plausible size, excluded from the
+    interference check — because nobody had decided what it was. These tests
+    exist so that cannot quietly happen again.
+    """
+
+    def test_it_is_fabricated_not_reference(self, parts, refs):
+        assert "lightbox" in parts, "we cut this; it must be interference-checked"
+        assert "lightbox" not in refs
+
+    def test_the_bottom_is_open(self, parts):
+        """That face is the light aperture. A floor there would block the LEDs."""
+        probe = box(P.FIXTURE_W - 2, P.FIXTURE_D - 2, P.LIGHTBOX_T * 2,
+                    at=(P.FIXTURE_X, P.FIXTURE_Y, fixture.shell_z0()))
+        assert (probe & parts["lightbox"]).volume < 1.0
+
+    def test_the_top_is_vented_over_the_fins(self, parts):
+        """Open bottom plus slots above the fins is a chimney, not an oven."""
+        assert len(fixture.vent_xs()) == P.LIGHTBOX_VENT_N
+        top_z = fixture.shell_z0() + P.FIXTURE_H - P.LIGHTBOX_T
+        for x in fixture.vent_xs():
+            probe = box(P.LIGHTBOX_VENT_W / 2, P.LIGHTBOX_VENT_L / 2, P.LIGHTBOX_T * 2,
+                        at=(x, P.FIXTURE_Y, top_z - P.LIGHTBOX_T / 2))
+            assert (probe & parts["lightbox"]).volume < 1.0, f"slot at x={x:.2f}"
+
+    def test_the_shell_clears_the_heatsink(self, parts, refs):
+        """Drawn against an UNMEASURED bar. Caliper it before cutting steel."""
+        assert assembly._shared_in3(parts["lightbox"], refs["led_heatsink"]) < 0.001
+        hs, shell = bbox_in(refs["led_heatsink"]), bbox_in(parts["lightbox"])
+        for axis in ("x", "y"):
+            assert hs[axis + "0"] > shell[axis + "0"]
+            assert hs[axis + "1"] < shell[axis + "1"]
+
+    def test_the_head_is_still_something_the_clamp_can_hold(self, parts, refs):
+        """The collar holds by friction, so the head's mass is the real limit.
+
+        12.0 lb was the estimate the mast and the clamp were sized against, and
+        it was never weighed. This asserts the modelled steel has not drifted
+        far past it — not that the number is right. Put the head on a scale.
+        """
+        steel = 0.284  # lb/in3
+        head = (parts["canopy_carriage"].volume + parts["lightbox"].volume) / P.IN**3 * steel
+        head += 4.7 + 0.7  # heatsink and boards, both estimates
+        assert head < 14.0, f"head is {head:.1f} lb against a 12.0 lb budget"
 
 
 class TestMastDetails:
