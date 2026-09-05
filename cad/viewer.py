@@ -44,15 +44,26 @@ MATERIALS = {
     "tray": dict(label="Tray, 304 16 ga", colour="#C4C9CC", opacity=1.0, group="fabricated"),
     "pads": dict(label="Block pads", colour="#8F7A55", opacity=1.0, group="fabricated"),
     "mast": dict(label="Mast, 2 × 3 HSS", colour="#4A4F55", opacity=1.0, group="fabricated"),
+    "canopy_carriage": dict(label="Canopy carriage + arm", colour="#3A3F45", opacity=1.0, group="fabricated"),
+    "counterweight": dict(label="Counterweight (in the mast bore)", colour="#6E6257", opacity=1.0, group="fabricated"),
+    "loom_conduit": dict(label="Loom conduit / slug guide", colour="#8A8F94", opacity=1.0, group="fabricated"),
     "cmu": dict(label="CMU vessel", colour="#9A9590", opacity=1.0, group="reference"),
     "reservoir": dict(label="Reservoir pan", colour="#5C8DB3", opacity=0.5, group="reference"),
-    "fixture": dict(label="LED fixture + arm", colour="#D9A83E", opacity=0.9, group="reference"),
+    "fixture": dict(label="LED fixture", colour="#D9A83E", opacity=0.9, group="reference"),
+    "sheave": dict(label="Sheave", colour="#B0B5BA", opacity=1.0, group="reference"),
 }
 
 
-# The form is decided; the default is that one build. ``--heights`` and
-# ``--variant`` still sweep ``PLINTH_H``, the one knob params.py exposes.
-DEFAULT_VARIANTS = [("Design", {})]
+# What is worth flipping between. This used to be the form candidates — fascia
+# vs box, frame vs plinth — and the subtract pass removed those flags once the
+# design was decided, leaving the toggle with one entry and nothing to do. The
+# canopy travel replaced them: the head rides a counterweighted carriage now, so
+# the interesting question is what the piece looks like at each end of its 21 in.
+DEFAULT_VARIANTS = [
+    ("Parked — light 12 in over the media", {"GROWLAB_FIXTURE_ABOVE_MEDIA": "12"}),
+    ("Mid travel — 22.5 in", {"GROWLAB_FIXTURE_ABOVE_MEDIA": "22.5"}),
+    ("Full lift — 33 in, clears a mature plant", {"GROWLAB_FIXTURE_ABOVE_MEDIA": "33"}),
+]
 
 
 def _dump(out_path: Path, tolerance_mm: float, angular: float) -> None:
@@ -79,7 +90,7 @@ def _dump(out_path: Path, tolerance_mm: float, angular: float) -> None:
 
     heights = vars(P.HEIGHTS)
     variant = {
-        "label": os.environ.get("GROWLAB_VARIANT_LABEL", f"{P.PLINTH_H:g} in"),
+        "label": os.environ.get("GROWLAB_VARIANT_LABEL", f"light {P.FIXTURE_ABOVE_MEDIA:g} in over media"),
         "plinth_h": P.PLINTH_H,
         "plinth_w": P.PLINTH_W,
         "plinth_d": P.PLINTH_D,
@@ -126,6 +137,36 @@ def _git_sha() -> str:
         return "unknown"
 
 
+THREE_URL = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+THREE_CACHE = OUT / "_three.min.js"
+THREE_TAG = f'<script src="{THREE_URL}"></script>'
+
+
+def _three_js() -> str | None:
+    """three.js source, cached beside the output. None if it cannot be had.
+
+    The viewer is advertised as one file you can open in a browser with nothing
+    installed. It was not: it pulled three.js from a CDN, so offline — on a
+    plane, at a bench with no wifi, from the CI artifact — it opened as a blank
+    page with two console errors and no canvas. Inlining it costs ~600 KB and
+    makes the claim true.
+    """
+    if THREE_CACHE.exists():
+        return THREE_CACHE.read_text()
+    try:
+        import urllib.request
+
+        with urllib.request.urlopen(THREE_URL, timeout=30) as r:
+            src = r.read().decode()
+        THREE_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        THREE_CACHE.write_text(src)
+        return src
+    except Exception as exc:  # noqa: BLE001 — falling back is the point
+        print(f"could not fetch three.js ({exc}); falling back to the CDN tag, "
+              "which means this file needs a network to open")
+        return None
+
+
 def render_html(variants: list[dict]) -> str:
     template = (REPO / "cad" / "viewer_template.html").read_text()
     payload = json.dumps({
@@ -133,7 +174,12 @@ def render_html(variants: list[dict]) -> str:
         "materials": MATERIALS,
         "variants": variants,
     })
-    return template.replace("/*__STATION_DATA__*/null", payload)
+    html = template.replace("/*__STATION_DATA__*/null", payload)
+    src = _three_js()
+    if src is not None:
+        assert THREE_TAG in html, "the three.js script tag moved; inlining would silently no-op"
+        html = html.replace(THREE_TAG, f"<script>{src}</script>")
+    return html
 
 
 def main(argv: list[str] | None = None) -> int:

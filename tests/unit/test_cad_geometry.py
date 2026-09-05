@@ -223,6 +223,24 @@ class TestTheCanopyTravels:
         assert "no interference between fabricated parts" in r.stdout, r.stdout
 
 
+class TestTheViewerKnowsEveryPart:
+    def test_materials_cover_the_assembly_exactly(self):
+        """Adding a part to the assembly must not silently vanish in the viewer.
+
+        The canopy mechanism did exactly that: four new parts went into the
+        assembly and the viewer's materials table was never updated, so they had
+        no label, no colour and no toggle. The model was right and the picture
+        of it was quietly incomplete.
+        """
+        from cad.viewer import MATERIALS
+
+        parts = {**assembly.fabricated(), **assembly.reference()}
+        assert set(parts) == set(MATERIALS), (
+            f"missing from the viewer: {set(parts) - set(MATERIALS)}; "
+            f"stale in the viewer: {set(MATERIALS) - set(parts)}"
+        )
+
+
 class TestNothingInterferes:
     def test_fabricated_parts_do_not_overlap(self, parts):
         """Touching is fine. Shared volume is a build error."""
