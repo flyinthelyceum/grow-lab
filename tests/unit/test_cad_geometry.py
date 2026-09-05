@@ -6,16 +6,19 @@ whole module skips cleanly without it, the way the browser and node tests do.
 
 from __future__ import annotations
 
+import os
+import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
 
 build123d = pytest.importorskip("build123d")
 
-from cad.growlab_cad import assembly, case, cmu, face, mast, params as P, plinth, tray  # noqa: E402
+from cad.growlab_cad import assembly, canopy, case, cmu, face, mast, params as P, plinth, tray  # noqa: E402
 from cad.growlab_cad._shapes import bbox_in, box  # noqa: E402
 
 from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH, SCHEDULE  # noqa: E402
@@ -34,12 +37,13 @@ def refs():
 class TestEveryPartBuilds:
     def test_fabricated(self, parts):
         assert set(parts) == {"plinth", "base_frame", "rear_door", "tray", "pads", "mast",
-                              "case", "fascia", "backplate"}
+                              "case", "fascia", "backplate",
+                              "canopy_carriage", "counterweight", "loom_conduit"}
         for name, p in parts.items():
             assert p.volume > 0, name
 
     def test_reference(self, refs):
-        assert set(refs) == {"cmu", "reservoir", "fixture"}
+        assert set(refs) == {"cmu", "reservoir", "fixture", "sheave"}
 
 
 class TestWhereThingsSit:
@@ -101,14 +105,13 @@ class TestWhereThingsSit:
         assert (parts["plinth"] & probe).volume > 1.0
         assert bbox_in(parts["case"])["z0"] == pytest.approx(ledge_top)
 
-    def test_fixture_hangs_from_the_mast_cap_over_the_block(self, refs, parts):
-        from cad.growlab_cad import fixture
-
-        arm = bbox_in(fixture.build_arm())
-        assert arm["z0"] == pytest.approx(bbox_in(parts["mast"])["z1"])
-        env = bbox_in(fixture.build_envelope())
+    def test_fixture_rides_the_carriage_over_the_block(self, refs, parts):
+        """It used to hang off the mast cap at one welded height."""
+        car = bbox_in(parts["canopy_carriage"])
+        env = bbox_in(refs["fixture"])
         block = bbox_in(refs["cmu"])
-        assert env["z1"] == pytest.approx(arm["z0"])
+        assert car["z1"] < bbox_in(parts["mast"])["z1"], "the carriage rides below the cap"
+        assert env["z1"] == pytest.approx(P.CARRIAGE_Z), "the arm lands on the fixture's top"
         assert (env["y0"] + env["y1"]) / 2 == pytest.approx((block["y0"] + block["y1"]) / 2)
         assert (env["x0"] + env["x1"]) / 2 == pytest.approx((block["x0"] + block["x1"]) / 2)
 
@@ -165,6 +168,77 @@ class TestTheCaseComesOut:
         body = case.build_body()
         probe = box(0.2, 1.0, 0.2, at=(0, P.CASE_Y1 - 0.03, P.FACE_Z0 + 1.5 - 0.1))
         assert (probe & body).volume < 1.0
+
+
+class TestTheCanopyTravels:
+    """The head is counterweighted and adjustable; drawing it parked proves nothing.
+
+    LIGHTING_SYSTEM has always required an adjustable height. The old model had
+    the arm welded to the mast cap at one position, and every test agreed with
+    it, because they only ever checked the one position it was drawn in.
+    """
+
+    def test_the_slug_is_the_mass_it_claims(self):
+        w, d, area = canopy.slug_section()
+        mass = area * canopy.slug_length() * P.CW_DENSITY
+        assert mass == pytest.approx(P.CW_MASS_LB, abs=0.01)
+
+    def test_the_slug_fits_the_bore(self):
+        bw, bd = canopy.bore()
+        w, d, _ = canopy.slug_section()
+        assert w < bw and d < bd, "the counterweight has to fall down the mast"
+
+    def test_the_slug_stays_in_the_mast_at_both_ends_of_travel(self, parts):
+        """It rises as the head falls. Both extremes must stay inside the shaft."""
+        mast = bbox_in(parts["mast"])
+        top_when_parked = canopy.counterweight_z()
+        bottom_at_full_lift = top_when_parked - P.FIXTURE_TRAVEL - canopy.slug_length()
+        assert top_when_parked < mast["z1"], "the slug would foul the cap"
+        assert bottom_at_full_lift > P.RAIL_BOTTOM_Z, (
+            "the slug would drop into the cabinet below the tray"
+        )
+
+    def test_the_carriage_clears_the_shaft(self, parts):
+        """A slip fit, not an interference fit — it has to slide."""
+        car, mast = bbox_in(parts["canopy_carriage"]), bbox_in(parts["mast"])
+        assert car["z1"] < mast["z1"], "the carriage rides below the cap"
+        assert assembly._shared_in3(parts["canopy_carriage"], parts["mast"]) < 0.001
+
+    def test_the_conduit_keeps_the_loom_out_of_the_slug_s_way(self, parts):
+        """The bore carried the drip line and LED cable loose; a slug sliding
+        21 in would chafe them. The tube also guides the slug."""
+        assert assembly._shared_in3(parts["loom_conduit"], parts["counterweight"]) < 0.001
+        conduit = bbox_in(parts["loom_conduit"])
+        assert conduit["z1"] <= canopy.sheave_z() + 1e-6, "the conduit must clear the sheave"
+
+    def test_it_builds_clean_at_full_lift(self):
+        """The end of travel is a configuration nobody looks at. Build it."""
+        env = {k: v for k, v in os.environ.items() if not k.startswith("GROWLAB_")}
+        env["GROWLAB_FIXTURE_ABOVE_MEDIA"] = str(P.FIXTURE_ABOVE_MEDIA_MAX)
+        r = subprocess.run(
+            [sys.executable, str(REPO / "cad" / "build.py"), "--check"],
+            env=env, cwd=str(REPO), capture_output=True, text=True, timeout=600,
+        )
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert "no interference between fabricated parts" in r.stdout, r.stdout
+
+
+class TestTheViewerKnowsEveryPart:
+    def test_materials_cover_the_assembly_exactly(self):
+        """Adding a part to the assembly must not silently vanish in the viewer.
+
+        The canopy mechanism did exactly that: four new parts went into the
+        assembly and the viewer's materials table was never updated, so they had
+        no label, no colour and no toggle. The model was right and the picture
+        of it was quietly incomplete.
+        """
+        from cad.viewer import MATERIALS
+
+        parts = {**assembly.fabricated(), **assembly.reference()}
+        assert set(parts) == set(MATERIALS), (
+            f"missing from the viewer: {set(parts) - set(MATERIALS)}; "
+            f"stale in the viewer: {set(MATERIALS) - set(parts)}"
+        )
 
 
 class TestNothingInterferes:

@@ -20,7 +20,7 @@ from itertools import combinations
 
 from build123d import Compound, Part
 
-from . import case, cmu, fixture, mast, plinth, tray
+from . import canopy, case, cmu, fixture, mast, plinth, tray
 from .params import IN
 
 
@@ -35,6 +35,9 @@ def fabricated() -> dict[str, Part]:
         "case": case.build(),
         "fascia": plinth.build_fascia(),
         "backplate": plinth.build_backplate(),
+        "canopy_carriage": canopy.build_carriage(),
+        "counterweight": canopy.build_counterweight(),
+        "loom_conduit": canopy.build_conduit(),
     }
 
 
@@ -43,6 +46,7 @@ def reference() -> dict[str, Part]:
         "cmu": cmu.build(),
         "reservoir": plinth.build_reservoir(),
         "fixture": fixture.build(),
+        "sheave": canopy.build_sheave(),
     }
 
 

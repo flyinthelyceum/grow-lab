@@ -47,7 +47,7 @@ from build123d import (  # noqa: E402
 )
 from build123d.exporters import ExportDXF, LineType  # noqa: E402
 
-from cad.growlab_cad import case, params as P, plinth  # noqa: E402
+from cad.growlab_cad import canopy as _canopy, case, params as P, plinth  # noqa: E402
 from cad.growlab_cad.face import corner_screw_points, knob_points  # noqa: E402
 from pi.dashboard.panel_geometry import (  # noqa: E402
     DIAL_BEZEL_OD,
@@ -269,12 +269,27 @@ def cutlist() -> dict:
                 {"part": "Mast", "qty": 1, "length": P.MAST_TOP,
                  "note": "floor to cap; side line pass; 4 rear bolt holes"},
                 {"part": "Mast cap", "qty": 1, "length": P.MAST_D,
-                 "note": f"{P.MAST_CAP_T} plate, {P.MAST_W} x {P.MAST_D}, welded"},
+                 "note": f"{P.MAST_CAP_T} plate, {P.MAST_W} x {P.MAST_D}, "
+                         "slotted for the lift cable, welded"},
+                {"part": "Carriage sleeve", "qty": 1, "length": P.CARRIAGE_H,
+                 "note": f"{P.CARRIAGE_WALL} wall, {P.CARRIAGE_CLEAR} slip fit over the "
+                         "shaft; cam lock; rides the mast"},
                 {"part": "Fixture arm, forward", "qty": 1,
-                 "length": (P.MAST_Y + P.MAST_D / 2) - (P.FIXTURE_Y + P.FIXTURE_D / 2 - P.FIXTURE_BAR_D),
-                 "note": f"{P.FIXTURE_ARM_W} x {P.FIXTURE_ARM_T} flat, welded to the cap"},
+                 "length": (P.MAST_Y - P.MAST_D / 2 - P.CARRIAGE_CLEAR - P.CARRIAGE_WALL)
+                           - (P.FIXTURE_Y + P.FIXTURE_D / 2 - P.FIXTURE_BAR_D),
+                 "note": f"{P.FIXTURE_ARM_W} x {P.FIXTURE_ARM_T} flat, welded to the "
+                         "carriage's front face"},
                 {"part": "Fixture arm, cross bar", "qty": 1, "length": P.FIXTURE_W,
                  "note": "along the fixture's back edge; spans the mast's offset"},
+                {"part": "Counterweight", "qty": 1, "length": _canopy.slug_length(),
+                 "note": f"{P.CW_MASS_LB} lb of steel bar, "
+                         f"{_canopy.slug_section()[0]:.2f} x {_canopy.slug_section()[1]:.2f}, "
+                         f"notched Ø{P.CONDUIT_DIA + 2 * P.CW_CLEAR:.2f} for the conduit. "
+                         "WEIGH THE HEAD FIRST — this length follows its mass"},
+                {"part": "Loom conduit", "qty": 1,
+                 "length": _canopy.sheave_z() - P.SHEAVE_DIA / 2 - P.RAIL_BOTTOM_Z,
+                 "note": f"Ø{P.CONDUIT_DIA} tube, fixed in the bore; carries the drip line "
+                         "and LED cable and guides the counterweight"},
             ],
         },
         "sheet": [

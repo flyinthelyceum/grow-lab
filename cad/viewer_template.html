@@ -406,7 +406,7 @@ cutAxis.addEventListener('change', updateCut);
 cut.addEventListener('input', updateCut);
 
 // ---------- camera / orbit ----------
-const target = new THREE.Vector3(0, 8, 30);
+const target = new THREE.Vector3(0, 8, 30);   // replaced by setView('iso') once a variant loads
 let sph = { r: 125, theta: -0.6, phi: 1.15 };   // theta about Z from -Y, phi from +Z
 function applyCamera() {
   const x = target.x + sph.r * Math.sin(sph.phi) * Math.sin(sph.theta);
@@ -416,12 +416,19 @@ function applyCamera() {
   camera.lookAt(target);
   needs();
 }
+// Framed off the piece's actual height rather than a constant. These were
+// tuned by hand for a 59.9 in station; the counterweighted canopy took it to
+// 82.9 and the mast ran straight off the top of every stock view. The ratios
+// are the old numbers divided by the old height, so the framing is unchanged
+// for a piece of the original size.
+const H = () => (current && current.top) || 59.9;
+const CTR = () => [0, 8, H() / 2];
 const VIEWS = {
-  front: () => ({ target: [0, 8, 30], r: 130, theta: 0, phi: Math.PI / 2 }),
-  back: () => ({ target: [0, 8, 30], r: 130, theta: Math.PI, phi: Math.PI / 2 }),
-  side: () => ({ target: [0, 8, 30], r: 130, theta: Math.PI / 2, phi: Math.PI / 2 }),
-  plan: () => ({ target: [0, 8, 30], r: 110, theta: 0, phi: 0.0001 }),
-  iso: () => ({ target: [0, 8, 30], r: 125, theta: -0.6, phi: 1.15 }),
+  front: () => ({ target: CTR(), r: H() * 2.17, theta: 0, phi: Math.PI / 2 }),
+  back: () => ({ target: CTR(), r: H() * 2.17, theta: Math.PI, phi: Math.PI / 2 }),
+  side: () => ({ target: CTR(), r: H() * 2.17, theta: Math.PI / 2, phi: Math.PI / 2 }),
+  plan: () => ({ target: CTR(), r: H() * 1.84, theta: 0, phi: 0.0001 }),
+  iso: () => ({ target: CTR(), r: H() * 2.09, theta: -0.6, phi: 1.15 }),
   over: () => ({ target: [0, 8, current.heights.media_surface], r: 60, theta: 0.15, phi: 0.75 }),
 };
 function setView(name) {
