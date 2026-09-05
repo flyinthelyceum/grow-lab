@@ -309,6 +309,14 @@ slice behind the instrument face, partitioned from the wet bay.
 - **Cable glands** on every penetration; drip loops on all external cables.
 - **Mains and DC/signal separated** inside; keep the EZO probe leads clean.
 - **Ventilation** for PSU + LED-driver heat, drawn away from the wet zone.
+- **Canopy fan** on a bracket off the mast's front face, axis at **49.9 in** — mid-canopy,
+  between the media surface (42.9) and the fixture (57.9) — and centred on the block at
+  x = 0 rather than on the mast, which is off in the dry bay. It blows **back to front**,
+  across the block's short axis: the two cores are separated along X, so blowing along X
+  would hand the downwind core the upwind core's exhaust. `cad/growlab_cad/fan.py` carries
+  the geometry and `test_cad_geometry.py` asserts the clearances. The bracket is drawn
+  plain on purpose — the real one wants vibration isolation and the fan's 105 mm screw
+  pattern, and neither is worth inventing before the mast is welded.
 - Houses: Raspberry Pi, ESP32, relay board, PSU (5V), 12V fan adapter, PWM-120-24 driver,
   meter driver — behind the face and below it; the dry bay behind the partition takes
   what does not fit beside the mast.
