@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-05 (the mast comes down)
+
+### Decided
+- **The mast is a Ø 1.5 × 0.065 round tube, in white DTM acrylic.** The 2 × 3 hollow section it replaces was inherited from a spec line and never calculated. The head is 12 lb at a 5.75 in offset — 69 in-lb against a section modulus of 0.94 in³, so **73 psi in steel good for 21,600**: three tenths of one per cent of allowable, roughly 300× overbuilt. The tube runs at 3% of allowable, moves 0.16 in at the head under a deliberate 10 lb shove, and weighs 1.0 lb/ft against 3.9. That verification is the one `V1_PHYSICAL_BUILD.md` had been asking for and never doing.
+- **The counterweight is gone, and it is what was actually sizing the mast.** The sheave, the 1/16 in cable, the 12 lb slug and the loom conduit that guided it all existed to make a one-handed height adjustment possible. The slug needed a bore, the bore needed the section, and the section is what put structural steel in the air over a plant. What replaces it is a **split clamp collar**: one part that carries the head *and* locks its height, the way a lab stand or a mic boom does. Friction takes both the 12 lb and the 69 in-lb that would rotate it, so a round mast needs no key, flat or anti-rotation feature. Setting the height is now a two-handed job, which is the honest cost and happens perhaps twice in a season.
+- **The mast is held by U-bolts, not through-bolts.** A bolt through a closed section has to be tightened from inside it — never possible with the HSS either, and plainly impossible down a 1.37 in bore. Three 1/4-20 U-bolts go round the tube into the fixed rear panel, nutted in the dry bay. The tube now carries **exactly one hole**, the line pass, and a test asserts that by volume.
+
+### Changed
+- `mast.py` builds a tube and a round cap disc; `canopy.py` is down to `build_carriage()` alone — `build_counterweight()`, `build_sheave()`, `build_conduit()`, `slug_section()`, `slug_length()`, `sheave_z()`, `counterweight_z()`, `bore()` and `conduit_xy()` are all deleted with the parts they described. `params.py` loses `SHEAVE_*`, `CW_*` and `CONDUIT_DIA`.
+- **The line pass drops from Ø 0.75 to Ø 0.50** and moves onto the tube's centreline in Y. Ø 0.75 is half this tube's diameter and would have been a gash; at 13.9 in it would have been drilled off the tube's flank and come out tangential. The divider's matching pass stays where it is and the loom makes up the 0.6 in between.
+- **Top of the piece: 82.9 in → 81.4.** `build.py` and the viewer were both still adding the fixture arm's thickness to the mast top, from when the arm was welded to the cap. The arm rides below the cap now; the cap is the highest thing.
+- Viewer: mast and carriage are white, the three deleted parts are out of `MATERIALS`, and the camera framing comment carries the right height.
+
+### Open
+- **White breaks the black register.** The base frame, instrument case and backplate are black, and warm ply is the other register; the mast is the first thing to leave it. There is a good reason for it — a black tube 81 in tall is a heavy stroke through the middle of the composition, and a white one reads as a drawn line — but one white object among black ones reads as an error rather than a second register. Recorded in `UI_UX_DESIGN_REFERENCE.md` § 12c, unresolved.
+- **`V1_STATION_BUILD_PROCEDURE.md` still has Phase C as "Fan rail."** The fan left the sculpture in #42 and its software stayed deliberately, so the phase is not simply wrong, but it is no longer a step toward the piece. Not touched here.
+
 ## 2026-09-04 (the pack you cut from)
 
 ### Added

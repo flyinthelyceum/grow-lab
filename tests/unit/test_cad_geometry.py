@@ -37,13 +37,12 @@ def refs():
 class TestEveryPartBuilds:
     def test_fabricated(self, parts):
         assert set(parts) == {"plinth", "base_frame", "rear_door", "tray", "pads", "mast",
-                              "case", "fascia", "backplate",
-                              "canopy_carriage", "counterweight", "loom_conduit"}
+                              "case", "fascia", "backplate", "canopy_carriage"}
         for name, p in parts.items():
             assert p.volume > 0, name
 
     def test_reference(self, refs):
-        assert set(refs) == {"cmu", "reservoir", "fixture", "sheave"}
+        assert set(refs) == {"cmu", "reservoir", "fixture"}
 
 
 class TestWhereThingsSit:
@@ -74,11 +73,14 @@ class TestWhereThingsSit:
         assert bb["z1"] == pytest.approx(P.CMU_TOP_Z)
 
     def test_mast_stands_on_the_floor_and_ends_at_its_cap(self, parts):
+        # abs= rather than the default rel=: the kernel's bounding box of a
+        # curved face is a hair loose (~1e-9 in), which a relative tolerance
+        # against zero cannot absorb.
         bb = bbox_in(parts["mast"])
-        assert bb["z0"] == pytest.approx(P.MAST_BOTTOM)
-        assert bb["z1"] == pytest.approx(P.MAST_TOP)
-        assert bb["x1"] - bb["x0"] == pytest.approx(P.MAST_W)
-        assert bb["y1"] - bb["y0"] == pytest.approx(P.MAST_D)
+        assert bb["z0"] == pytest.approx(P.MAST_BOTTOM, abs=1e-6)
+        assert bb["z1"] == pytest.approx(P.MAST_TOP, abs=1e-6)
+        assert bb["x1"] - bb["x0"] == pytest.approx(P.MAST_OD, abs=1e-6)
+        assert bb["y1"] - bb["y0"] == pytest.approx(P.MAST_OD, abs=1e-6)
 
     def test_case_is_behind_the_fascia_in_the_console_bay(self, parts):
         bb = bbox_in(parts["case"])
@@ -171,32 +173,24 @@ class TestTheCaseComesOut:
 
 
 class TestTheCanopyTravels:
-    """The head is counterweighted and adjustable; drawing it parked proves nothing.
+    """The head is adjustable; drawing it parked proves nothing.
 
     LIGHTING_SYSTEM has always required an adjustable height. The old model had
     the arm welded to the mast cap at one position, and every test agreed with
     it, because they only ever checked the one position it was drawn in.
     """
 
-    def test_the_slug_is_the_mass_it_claims(self):
-        w, d, area = canopy.slug_section()
-        mass = area * canopy.slug_length() * P.CW_DENSITY
-        assert mass == pytest.approx(P.CW_MASS_LB, abs=0.01)
+    def test_the_collar_is_a_slip_fit_over_the_tube(self):
+        assert canopy.collar_id() > P.MAST_OD, "it has to slide"
+        assert canopy.collar_id() - P.MAST_OD == pytest.approx(2 * P.CARRIAGE_CLEAR)
+        assert canopy.collar_od() - canopy.collar_id() == pytest.approx(2 * P.CARRIAGE_WALL)
 
-    def test_the_slug_fits_the_bore(self):
-        bw, bd = canopy.bore()
-        w, d, _ = canopy.slug_section()
-        assert w < bw and d < bd, "the counterweight has to fall down the mast"
-
-    def test_the_slug_stays_in_the_mast_at_both_ends_of_travel(self, parts):
-        """It rises as the head falls. Both extremes must stay inside the shaft."""
-        mast = bbox_in(parts["mast"])
-        top_when_parked = canopy.counterweight_z()
-        bottom_at_full_lift = top_when_parked - P.FIXTURE_TRAVEL - canopy.slug_length()
-        assert top_when_parked < mast["z1"], "the slug would foul the cap"
-        assert bottom_at_full_lift > P.RAIL_BOTTOM_Z, (
-            "the slug would drop into the cabinet below the tray"
-        )
+    def test_the_split_reaches_the_bore(self):
+        """A kerf that stops short of the bore cannot close on the tube."""
+        probe = box(canopy.KERF / 2, 0.05, 0.5,
+                    at=(P.MAST_X, P.MAST_Y + canopy.collar_od() / 2 - 0.02,
+                        P.CARRIAGE_Z - 0.25))
+        assert (probe & assembly.fabricated()["canopy_carriage"]).volume < 1.0
 
     def test_the_carriage_clears_the_shaft(self, parts):
         """A slip fit, not an interference fit — it has to slide."""
@@ -204,12 +198,11 @@ class TestTheCanopyTravels:
         assert car["z1"] < mast["z1"], "the carriage rides below the cap"
         assert assembly._shared_in3(parts["canopy_carriage"], parts["mast"]) < 0.001
 
-    def test_the_conduit_keeps_the_loom_out_of_the_slug_s_way(self, parts):
-        """The bore carried the drip line and LED cable loose; a slug sliding
-        21 in would chafe them. The tube also guides the slug."""
-        assert assembly._shared_in3(parts["loom_conduit"], parts["counterweight"]) < 0.001
-        conduit = bbox_in(parts["loom_conduit"])
-        assert conduit["z1"] <= canopy.sheave_z() + 1e-6, "the conduit must clear the sheave"
+    def test_the_collar_clears_the_cap_at_full_lift(self):
+        """Full lift is set by the travel, not by where the collar happens to be
+        parked. The tube has to still be there above it."""
+        collar_top = P.CARRIAGE_Z_MAX + P.CARRIAGE_H / 2
+        assert collar_top < P.MAST_TOP - P.MAST_CAP_T, "the collar would foul the cap"
 
     def test_it_builds_clean_at_full_lift(self):
         """The end of travel is a configuration nobody looks at. Build it."""
@@ -315,15 +308,34 @@ class TestTheFaceReadsThePanelGeometry:
 
 class TestMastDetails:
     def test_shaft_is_hollow(self):
-        solid = P.MAST_W * P.MAST_D * (mast.shaft_top() - P.MAST_BOTTOM) * P.IN**3
+        solid = (P.MAST_OD / 2) ** 2 * 3.14159265 * (mast.shaft_top() - P.MAST_BOTTOM) * P.IN**3
         assert mast.build_shaft().volume < solid * 0.5
 
-    def test_bolts_land_in_the_fixed_rear_panel(self, parts):
-        """Every through-bolt is behind the dry bay, never in the door."""
+    def test_u_bolts_land_in_the_fixed_rear_panel(self, parts):
+        """Both legs of every U-bolt are behind the dry bay, never in the door."""
         door = bbox_in(parts["rear_door"])
-        for z in mast.bolt_heights():
-            assert P.MAST_X - P.MAST_BOLT_DIA / 2 > door["x1"]
+        left, right = mast.strap_bolt_x()
+        assert left - P.MAST_STRAP_BOLT_DIA / 2 > door["x1"]
+        assert left < P.MAST_X < right
+        for z in mast.strap_heights():
             assert P.MAST_BOTTOM < z < P.RAIL_BOTTOM_Z
+
+    def test_nothing_is_drilled_through_the_mast_but_the_line_pass(self):
+        """The tube is painted and shows, so it carries exactly one hole.
+
+        Compare the built shaft against a plain length of tube: the difference
+        has to be the line pass and nothing else. The U-bolts go round the tube
+        precisely so this stays true.
+        """
+        import math
+
+        length = mast.shaft_top() - P.MAST_BOTTOM
+        plain = (math.pi / 4
+                 * (P.MAST_OD**2 - (P.MAST_OD - 2 * P.MAST_WALL) ** 2)
+                 * length)
+        one_hole = math.pi / 4 * P.MAST_LINE_PASS_DIA**2 * P.MAST_WALL
+        removed = plain - mast.build_shaft().volume / P.IN**3
+        assert removed == pytest.approx(one_hole, rel=0.25)
 
     def test_line_pass_is_over_the_pan_rim_and_under_the_rail(self):
         y, z = mast.line_pass()

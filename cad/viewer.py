@@ -43,22 +43,22 @@ MATERIALS = {
     "rear_door": dict(label="Rear door (wet bay)", colour="#B8925A", opacity=1.0, group="fabricated"),
     "tray": dict(label="Tray, 304 16 ga", colour="#C4C9CC", opacity=1.0, group="fabricated"),
     "pads": dict(label="Block pads", colour="#8F7A55", opacity=1.0, group="fabricated"),
-    "mast": dict(label="Mast, 2 × 3 HSS", colour="#4A4F55", opacity=1.0, group="fabricated"),
-    "canopy_carriage": dict(label="Canopy carriage + arm", colour="#3A3F45", opacity=1.0, group="fabricated"),
-    "counterweight": dict(label="Counterweight (in the mast bore)", colour="#6E6257", opacity=1.0, group="fabricated"),
-    "loom_conduit": dict(label="Loom conduit / slug guide", colour="#8A8F94", opacity=1.0, group="fabricated"),
+    # White, not the frame's black: the mast and the head it carries are finished
+    # in a white DTM acrylic. Not quite paper white — a painted steel tube under
+    # room light reads a shade cooler and darker than the ply behind it.
+    "mast": dict(label="Mast, Ø1.5 tube, white DTM", colour="#EDEEEC", opacity=1.0, group="fabricated"),
+    "canopy_carriage": dict(label="Canopy carriage + arm, white DTM", colour="#E4E6E3", opacity=1.0, group="fabricated"),
     "cmu": dict(label="CMU vessel", colour="#9A9590", opacity=1.0, group="reference"),
     "reservoir": dict(label="Reservoir pan", colour="#5C8DB3", opacity=0.5, group="reference"),
     "fixture": dict(label="LED fixture", colour="#D9A83E", opacity=0.9, group="reference"),
-    "sheave": dict(label="Sheave", colour="#B0B5BA", opacity=1.0, group="reference"),
 }
 
 
 # What is worth flipping between. This used to be the form candidates — fascia
 # vs box, frame vs plinth — and the subtract pass removed those flags once the
 # design was decided, leaving the toggle with one entry and nothing to do. The
-# canopy travel replaced them: the head rides a counterweighted carriage now, so
-# the interesting question is what the piece looks like at each end of its 21 in.
+# canopy travel replaced them: the head rides a clamp collar now, so the
+# interesting question is what the piece looks like at each end of its 21 in.
 DEFAULT_VARIANTS = [
     ("Parked — light 12 in over the media", {"GROWLAB_FIXTURE_ABOVE_MEDIA": "12"}),
     ("Mid travel — 22.5 in", {"GROWLAB_FIXTURE_ABOVE_MEDIA": "22.5"}),
@@ -96,7 +96,7 @@ def _dump(out_path: Path, tolerance_mm: float, angular: float) -> None:
         "plinth_d": P.PLINTH_D,
         "panel_centre": P.PANEL_CENTRE_Z,
         "static_lift": P.HEIGHTS.static_lift,
-        "top": P.MAST_TOP + P.FIXTURE_ARM_T,
+        "top": P.MAST_TOP,  # the cap is the highest thing; the arm rides below it
         "heights": heights,
         "face": {"x0": P.FACE_X0, "z0": P.FACE_Z0, "z1": P.FACE_Z1},
         "meshes": meshes,

@@ -36,7 +36,7 @@ DOC_HEIGHTS = {
     "emitter": 43.0,
     "cmu_top": 44.4,
     "fixture": 54.9,   # the bottom of travel; the head is adjustable now
-    "mast_top": 82.4,  # tall enough for the carriage at full lift
+    "mast_top": 81.4,  # tall enough for the collar at full lift
 }
 
 
@@ -125,7 +125,10 @@ class TestDerivedGeometry:
         assert P.MAST_X + P.MAST_W / 2 <= P.INSIDE_X1
 
     def test_mast_is_as_drawn(self):
-        assert (P.MAST_W, P.MAST_D) == (2.0, 3.0)
+        """Round tube. The section answers to the load now that the bore has no
+        counterweight in it — see mast.py for the arithmetic."""
+        assert (P.MAST_OD, P.MAST_WALL) == (1.5, 0.065)
+        assert P.MAST_W == P.MAST_D == P.MAST_OD
 
     def test_mast_clears_the_rear_door(self):
         """The door is the wet bay's width; the mast is in the dry bay."""

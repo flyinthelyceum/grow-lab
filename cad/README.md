@@ -28,7 +28,7 @@ station is arranged the way it is.
 | `tray.py` | 16 ga stainless pan nesting inside the carcass top, with pad cutouts and the mast notch; and the four pads |
 | `mast.py` | 2 × 3 HSS from the carcass floor to its cap, in the dry bay, bolted through the rear panel |
 | `fixture.py` | The LED fixture envelope — reference |
-| `canopy.py` | The counterweighted head: carriage weldment, sheave, counterweight and the loom conduit that guides it |
+| `canopy.py` | The head's split clamp collar, and the arm and cross bar welded to it |
 | `cmu.py` | The block, at actual size with two cores — reference |
 | `assembly.py` | Everything, labelled, plus the interference check |
 | `viewer.py` + `viewer_template.html` | Tessellates every part and writes one HTML file: orbit, part toggles, section cut, datums, a stand-in-front eye-height view; `--heights` sweeps `PLINTH_H` |

@@ -100,8 +100,8 @@ Supersedes the mast-and-head layout of 2026-09-03 (section drawing
 **The instrument panel is in the front face of the cabinet.** Behind it a shallow dry
 console bay; behind that the reservoir (wet bay, viewer's left) and the mast (dry bay,
 right) side by side. Access is from the **rear**: a door behind the wet bay for the pan.
-The cabinet is as tall as that stack needs. The mast is the 2 x 3 hollow section as drawn,
-and carries only the LED fixture, the drip line and the LED cable.
+The cabinet is as tall as that stack needs. The mast is a Ø 1.5 round tube in white DTM
+acrylic, and carries only the LED fixture, the drip line and the LED cable.
 
 | Element | Height from floor |
 |---|---|
@@ -119,7 +119,7 @@ and carries only the LED fixture, the drip line and the LED cable.
 | **Emitter discharge** | **43.0 in** |
 | CMU top | 44.4 in |
 | LED fixture (underside) | **54.9 – 75.9 in, adjustable** (21 in of travel) |
-| Mast cap / top of the piece | 82.4 in (82.9 with the arm) |
+| Mast cap / top of the piece | 81.4 in |
 | **Static lift, low water → emitters** | **13.0 in · 1.08 ft** |
 
 Plan: cabinet **20 x 16 in**. Front to back: front panel 0.75, console bay **3.00 clear**
@@ -185,26 +185,31 @@ Study (mast-and-head, superseded): `https://claude.ai/code/artifact/c18075c9-9ca
 The instrument head is gone from the top of the mast; the panel is in the cabinet's front
 (§ Station geometry). What remains of the mast is the part that had a structural job.
 
-- **Shaft:** 2 x 3 in hollow section, the 3 in dimension front-to-back — where the
-  fixture's moment is. Stands on the carcass floor in the dry bay, bolts through its back
-  wall into the **full-height rear panel** (4 x 5/16 through-bolts) beside the divider,
-  passes up through a notch in the rail and the tray, and ends at a welded cap at 82.4 in.
-  **The bore is the counterweight's.** The drip line and LED cable used to run loose in it;
-  a slug sliding 21 in up and down would chafe them, so they now run in a fixed Ø 0.75 tube
-  in one corner, which doubles as the slug's guide rail and stops it swinging. They enter
-  through a grommeted Ø 0.75 pass in the side wall over the pan's rim, through a matching
-  pass in the divider. **The sensor loom never leaves the cabinet** — probes in the tray
-  and the pan, Pi in the console bay.
-- **Fixture:** rides the mast on a counterweighted carriage — see *The canopy mechanism*
-  below. A sleeve swallows the shaft and the arm and cross bar are welded to it as one
-  piece; the arm cantilevers from the sleeve's front face over the fixture's back edge, and
-  the bar spans the offset between the centred block and the off-centre mast. Moment arm at
-  the mast, centreline to centreline: **5.75 in** (derived in `cad/`, not asserted).
-  Fixture underside travels **54.9 to 75.9 in** — 12 in above the media at the bottom, 33
-  at the top, which holds 15 in of clearance over a mature 18 in plant.
-- **Verify the shaft in bending.** Its section is sized by what it carries, not by
-  structure; the load is now the fixture alone rather than the fixture plus a head, and the
-  moment goes into a rear panel rather than a flange.
+- **Shaft: Ø 1.5 x 0.065 round tube** (16 ga), finished in **white DTM acrylic**. Stands on
+  the carcass floor in the dry bay, held to the **full-height rear panel** by 3 x 1/4-20
+  U-bolts beside the divider, passes up through a notch in the rail and the tray, and ends
+  at a welded disc at 81.4 in. **The bore carries the loom:** drip line and LED cable up the
+  inside, entering through a grommeted Ø 0.50 pass in the side facing the divider, over the
+  pan's rim, and out under the cap. **The sensor loom never leaves the cabinet** — probes in
+  the tray and the pan, Pi in the console bay.
+- **Why a tube, and why this one.** The 2 x 3 hollow section this replaces was inherited
+  from a spec line and never calculated. The head is 12 lb at a 5.75 in offset — 69 in-lb
+  against a section modulus of 0.94 in³, so **73 psi in steel good for 21,600**: three
+  tenths of one per cent of allowable, roughly 300x overbuilt. What actually sized it was
+  the *bore*, because the counterweight fell down it (see below). With the counterweight
+  gone the section answers to the load, and the load is two LED strips. Ø 1.5 x 0.065 runs
+  at **3% of allowable** and moves **0.16 in** at the head under a deliberate 10 lb shove,
+  at 1.0 lb/ft against the old 3.9. That verification is now done, not deferred.
+- **Only one hole is drilled in it** — the line pass — and the U-bolts go round it rather
+  than through it, because a bolt through a closed section has to be tightened from inside
+  it, and because a painted tube that shows should not be a row of fixings.
+- **Fixture:** rides the mast on a split clamp collar — see *The canopy mechanism* below.
+  The arm and cross bar are welded to the collar as one piece; the arm cantilevers off a
+  flat pad on the collar's front over the fixture's back edge, and the bar spans the offset
+  between the centred block and the off-centre mast. Moment arm at the mast, centreline to
+  centreline: **5.75 in** (derived in `cad/`, not asserted). Fixture underside travels
+  **54.9 to 75.9 in** — 12 in above the media at the bottom, 33 at the top, which holds
+  15 in of clearance over a mature 18 in plant.
 - Bolts to the **cabinet carcass** — not the tray, not the block — with the tray notched to
   clear.
 
@@ -329,7 +334,7 @@ slice behind the instrument face, partitioned from the wet bay.
 - **GFCI** on mains.
 - **Drip loops** on every cable into the wet zone.
 
-## The canopy mechanism — counterweighted, 21 in of travel
+## The canopy mechanism — a clamp collar, 21 in of travel
 
 `LIGHTING_SYSTEM.md` § Light Positioning has always required this: "Height should remain
 adjustable", to accommodate plant growth, allow intensity tuning and prevent light stress,
@@ -342,44 +347,47 @@ canopy touched the fixture, at 18 in it was 3 in inside it.
 whole armature from those two numbers: dial the top of travel down and the mast shortens
 with it.
 
-**What it costs.** The mast goes to 82.4 in and the piece to 82.9 overall, from 59.9. That
-is the price of the requirement, and it is a different object — tall and thin, closer to a
-copy stand than a cabinet. Nothing else moves: the lift, the shelf, the block and the panel
-are where they were.
+**What it costs.** The mast goes to 81.4 in, from 59.9. That is the price of the
+requirement, and it is a different object — tall and thin, closer to a copy stand than a
+cabinet. Nothing else moves: the lift, the shelf, the block and the panel are where they
+were.
 
-**The mechanism**, top down:
+**There is no counterweight, and that is the whole design.** There was one, briefly: a
+sheave in the cap, 1/16 in cable down the mast's own bore, a 12 lb steel slug falling
+inside it, and a fixed conduit in the corner so the slug did not chafe the loom. It worked
+on paper. It also *set the section*: the bore had to swallow the slug, which forced 2 x 3
+hollow section, which put 3.9 lb/ft of structural steel in the air to hold up two LED
+strips. Cutting the counterweight cut the sheave, the cable, the conduit, the slug, the
+bore and three quarters of the mast's visual weight in one move.
+
+**The mechanism** is now one part:
 
 | Part | What |
 |---|---|
-| Sheave | Ø 1.5 ball-race, on a shoulder bolt through the mast head, under a slotted cap |
-| Cable | 1/16 in 7×19 stainless, carriage → up the back face → over the sheave → down the bore |
-| Counterweight | ~15 in of steel bar, 1.51 × 2.51, notched Ø 1.0 for the conduit, sliding in the bore |
-| Carriage | A sleeve swallowing the shaft, 6 in long, 0.0625 slip fit, cam-locked; the arm and cross bar welded to it as one piece |
-| Loom conduit | Ø 0.75 tube fixed in one corner of the bore |
+| Carriage collar | Ø 1.915 over a Ø 1.540 bore, 4 in long, 0.1875 wall. Saw-split 0.09 from the bore out through a rear boss; two 1/4-20 pinch bolts close it. Flat pad on the front for the arm. Arm and cross bar welded on: one weldment. |
+| U-bolts | 3 x 1/4-20 for Ø 1.5 tube, through the fixed rear panel, nutted in the dry bay |
+| LED lead | Coiled (retractile) white lead, cap grommet to the arm, long enough for the full 21 in |
 
-**The bore is the counterweight's, and this is the one job it is good for.** It was
-rejected as an air duct because 4.9 in² cannot pass a 120 mm fan's flow. A falling weight
-has no such objection.
+**Friction does both jobs.** The collar carries the head's 12 lb *and* resists the 69 in-lb
+that would twist it round a round tube — which is exactly what a lab stand or a mic boom
+does, and why a round mast needs no key, flat or anti-rotation feature. Two pinch bolts on
+a 0.1875 wall over 4 in of grip is not a marginal clamp.
 
-**The loom had to move.** The bore carried the drip line and LED cable loose. A slug sliding
-21 in would chafe them, so they now run in a fixed tube in one corner and the slug is
-notched around it — which turns the conduit into the slug's guide rail and stops it
-swinging. The drip line does not move, because the emitters are at a fixed height. **The
-LED cable does**, and needs a service loop at the carriage sized for the full 21 in.
+**Setting the height is a two-handed job**, deliberately. Slacken both bolts, take the
+head's weight, slide, re-tighten. Twelve pounds at chest height is a lift, not a nudge —
+and it is something that happens perhaps twice in a season. What the counterweight bought
+was a one-handed adjustment, and one-handed adjustment was not worth the mast it cost.
 
-**Two things to settle with a scale and a level, not in CAD:**
+**The loom.** The bore is the loom's again: drip line and LED cable up the inside, out
+under the cap. The drip line does not move, because the emitters are at a fixed height.
+**The LED lead does**, over the full 21 in, and takes up its slack in a coiled lead rather
+than a hanging service loop — a black loop down a white mast is the same mistake the fan
+was.
 
-1. **Weigh the head before cutting the slug.** `CW_MASS_LB` is an estimate — two LM301H
-   boards (~0.7 lb), a heatsink (~4.7) and the steel carriage, arm and bar (~6.3). The slug
-   length follows directly from it, and the heatsink has no published dimensions.
-2. **Size the slug 90–95% of the head, not 100%.** A perfectly balanced head drifts; a
-   slightly light one settles down rather than creeping up. The cam lock holds it; the
-   counterweight only has to make it easy to move.
-
-**Verify the shaft in bending at full extension**, not at the parked height. The cantilever
-is unchanged at 5.75 in but the moment arm to the base is 23 in longer, and the carriage
-adds its own load. The existing note on sizing the section still applies and now applies
-to a taller column.
+**Finish: white DTM acrylic**, direct-to-metal, on the tube, the collar and the arm. Two
+coats over a scuffed and degreased surface, and it goes on *before* the collar is fitted —
+paint in the bore is 0.002–0.004 in of the 0.020 slip fit, and paint on the pinch faces is
+what the clamp grips. Mask the bore and the arm's weld pads, or expect to hone.
 
 ---
 
@@ -392,7 +400,7 @@ pressure-compensating emitters x2, bypass tee + throttle valve, measuring jugs.
 
 **Bought:** stainless half-size steam table pans x2 with lids (reservoir + mixing spare).
 
-**Fabricating in-house:** catch tray (304 stainless), cabinet / plinth, mast.
+**Fabricating in-house:** catch tray (304 stainless), cabinet / plinth, mast and carriage collar.
 
 ### To buy
 
@@ -432,6 +440,17 @@ see *The plan, in phases* in V1_STATION_BUILD_PROCEDURE.md.
 - [ ] **Cable glands**, sized to actual cable OD. Sealed pass-throughs that clamp round a
       cable where it enters the enclosure, so water cannot track along the jacket and
       follow it in. Sizes are unknowable until the loom exists.
+- [ ] **Mast stock: Ø 1.5 in x 0.065 wall round steel tube, 7 ft** (81.4 in plus cut-off).
+      DOM or ERW; a drawn tube is straighter, which shows on a piece this thin and this
+      tall. Ø 1.5 is the size the standard U-bolt, shaft collar and tube cap are all made
+      in, which is half the reason for it.
+- [ ] **Mast hardware:** 3 x U-bolts for Ø 1.5 tube, 1/4-20, with nuts and washers; 2 x
+      1/4-20 socket cap screws for the collar's pinch bolts.
+- [ ] **White DTM acrylic**, 1 qt, plus a rattle-can of the same for touch-up. Covers the
+      tube, the collar and the arm — see *The canopy mechanism*. This is the finish that
+      makes the mast read as a drawn line rather than as structure, and it is a **decision
+      still open**: everything else steel in the piece (frame, instrument case, backplate)
+      is black.
 
 ### Struck from the list
 

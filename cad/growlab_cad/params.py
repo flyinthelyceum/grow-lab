@@ -205,38 +205,49 @@ EMITTER_ABOVE_MEDIA = 0.125  # the docs put discharge 0.1 above the media surfac
 
 # ---------------------------------------------------------------------------
 # Mast (vertical armature)
-# V1_PHYSICAL_BUILD.md § Mast: "2 x 3 in hollow section"
 # ---------------------------------------------------------------------------
 
-# 2 in face toward the viewer (X), 3 in deep (Y): the strong axis front-back,
-# where the fixture's moment is. "Mast as drawn."
-MAST_W, MAST_D = 2.0, 3.0
-MAST_WALL = 0.120  # CHOICE: 11 ga, the common wall for 2x3 HSS
+# Round tube, not rectangular section. The 2 x 3 HSS it replaces was inherited
+# from a spec line and never computed: the head is 12 lb at a 5.75 in offset,
+# which put 73 psi into a section good for 21,600 — 0.3% of allowable, roughly
+# 300x overbuilt. What actually sized it was the bore, because the counterweight
+# lived inside. With the counterweight gone the section answers to the load
+# alone: 1.5 x 0.065 carries the head at 3% of allowable and sways 0.16 in under
+# a deliberate 10 lb shove, at 1.0 lb/ft against the old 3.9.
+MAST_OD = 1.5
+MAST_WALL = 0.065  # 16 ga
+# Kept as the section's bounding box so every notch, clearance and datum
+# downstream still reads the same way. For a round tube they are both the OD.
+MAST_W = MAST_D = MAST_OD
 MAST_BOTTOM = 0.0  # the mast is one of the frame's legs: it runs to the floor
 MAST_SIDE_CLEARANCE = 0.125  # CHOICE: between the shaft and the divider
-MAST_BOLT_DIA = 0.3125  # CHOICE: 5/16 in through-bolts into the rear panel
-MAST_BOLT_COUNT = 4
-MAST_BOLT_PITCH = 6.0  # CHOICE: spread along the fixing length
-# --- counterweight mechanism -----------------------------------------------
-# The head is counterweighted rather than clamped: a cable from the carriage
-# runs over a sheave at the cap and down the mast's own bore to a slug. The
-# bore is 1.76 x 2.76 — too small to duct a fan through, which is why that idea
-# died, and ample for a weight to fall down.
-CARRIAGE_H = 6.0  # CHOICE: sleeve length; sets how much the head can rack
-CARRIAGE_CLEAR = 0.0625  # CHOICE: slip fit over the shaft
-CARRIAGE_WALL = 0.125  # CHOICE
-SHEAVE_DIA = 1.5  # CHOICE: ball-race sheave in the cap
-SHEAVE_T = 0.375  # CHOICE
-CW_CLEAR = 0.125  # CHOICE: slug to bore, all round
-CW_DENSITY = 0.284  # lb/in3, mild steel. Lead is 0.41 and shortens the slug.
-CW_MASS_LB = 12.0  # CHOICE, and the one number here that wants weighing:
-# two LM301H boards (~0.7), a heatsink (~4.7) and the steel carriage, arm and
-# cross bar (~6.3). Weigh the head before cutting the slug.
-CONDUIT_DIA = 0.75  # the loom's tube, fixed in the bore — see canopy.py
 
-MAST_CAP_T = 0.25  # CHOICE: a welded cap plate closes the top; the arm lands on it
-MAST_LINE_PASS_DIA = 0.75  # "Ø 0.75 loom pass, grommeted" — now in the shaft's
-                           # side wall, where the drip line and LED cable enter
+# --- how it is held to the cabinet ---------------------------------------
+# U-bolts round the tube, not bolts through it. A bolt through a closed
+# section has to be tightened from inside it, which was never possible with
+# the HSS either and is plainly impossible down a 1.37 in bore. A U-bolt is
+# the hardware a round tube asks for: two legs either side, through the fixed
+# rear panel, nutted in the dry bay where a hand can reach. It also leaves the
+# tube unbroken, which the painted finish wants.
+MAST_STRAP_COUNT = 3
+MAST_STRAP_PITCH = 9.0  # CHOICE: spread along the fixing length
+MAST_STRAP_BOLT_DIA = 0.28  # 1/4-20 U-bolt legs, clearance
+MAST_STRAP_SPAN = MAST_OD + 0.6  # CHOICE: leg centres, straddling the tube
+# --- the head's clamp ----------------------------------------------------
+# No counterweight. A 12 lb head is a two-handed lift, and a split clamp collar
+# holds it and locks the height in one part. The counterweight was what forced a
+# large bore, the bore was what forced the section, and the section was what made
+# the mast look like structure for a building. Removing it removes all three.
+CARRIAGE_H = 4.0  # CHOICE: collar length; sets how much the head can rack
+CARRIAGE_CLEAR = 0.020  # CHOICE: close sliding fit, closed by the split
+CARRIAGE_WALL = 0.1875  # CHOICE: enough meat for the split and its pinch bolts
+
+MAST_CAP_T = 0.25  # CHOICE: a disc welded over the top. Nothing lands on it any
+                   # more — the arm is on the collar — but an open pipe end
+                   # reads unfinished, more so in white.
+MAST_LINE_PASS_DIA = 0.50  # was 0.75, which is half the diameter of this tube
+                           # and would have been a gash rather than a hole. The
+                           # drip line and the LED cable both pass 0.50.
 
 
 # ---------------------------------------------------------------------------
@@ -285,9 +296,9 @@ WITNESS_DEPTH = 0.02  # CHOICE: engraving depth for reference marks
 # 15 in above the media has a mature ranunculus (12–18 in) growing into the
 # light: at 15 in tall the canopy touches it, at 18 in it is 3 in inside it.
 #
-# These two numbers set the whole armature. The mast height, the carriage
-# travel and the counterweight drop all derive from them, so dialling the top
-# of travel down shortens the mast with it.
+# These two numbers set the whole armature. The mast height and the carriage
+# travel both derive from them, so dialling the top of travel down shortens
+# the mast with it.
 FIXTURE_ABOVE_MEDIA_MIN = 12.0  # CHOICE: closest useful working distance
 FIXTURE_ABOVE_MEDIA_MAX = 33.0  # CHOICE: 15 in of clearance over an 18 in plant
 
@@ -326,9 +337,9 @@ CARRIAGE_Z = FIXTURE_Z + FIXTURE_H
 CARRIAGE_Z_MAX = FIXTURE_Z_MAX + FIXTURE_H
 
 # The mast is now as tall as the travel needs, not as tall as one fixed head
-# position. It stops above the carriage at full lift by enough to house the
-# sheave the lift cable turns over.
-MAST_HEAD = SHEAVE_DIA + 0.5  # CHOICE: sheave plus cap
+# position. It stops a little above the collar at full lift — enough that the
+# tube reads as continuing past the head rather than stopping at it.
+MAST_HEAD = 2.0  # CHOICE: tube above the collar at full lift, plus the cap
 MAST_TOP = CARRIAGE_Z_MAX + CARRIAGE_H / 2 + MAST_HEAD
 
 # Reservoir shelf: as high as the rail allows, rounded down to a whole inch so
