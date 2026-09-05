@@ -88,7 +88,7 @@ def _write(path: Path, cut, bend=None, mark=None) -> None:
 
 
 # ---------------------------------------------------------------------------
-# The instrument plate — 1/8 in aluminium, black.
+# The instrument plate — 1/8 in aluminium, white.
 # Origin at the plate's bottom-left, which is how the hole schedule is written.
 # ---------------------------------------------------------------------------
 
@@ -287,12 +287,12 @@ def cutlist() -> dict:
             ],
         },
         "sheet": [
-            {"part": "Instrument plate", "material": f"{P.PLATE_T} aluminium, black",
+            {"part": "Instrument plate", "material": f"{P.PLATE_T} aluminium, white",
              "blank": [FACE_WIDTH, FACE_HEIGHT], "file": "plate.dxf"},
-            {"part": "Instrument case body", "material": "16 ga aluminium, black",
+            {"part": "Instrument case body", "material": "16 ga aluminium, white",
              "blank": [m["blank_w"], m["blank_h"]], "file": "case_body.dxf",
              "note": "6 bends; see the drawing"},
-            {"part": "Console backplate", "material": f"{P.BACKPLATE_T} sheet, black",
+            {"part": "Console backplate", "material": f"{P.BACKPLATE_T} sheet, white",
              "blank": [P.INSIDE_X1 - P.INSIDE_X0, plinth._fascia_band()[1] - plinth._fascia_band()[0]],
              "note": "plain rectangle, no DXF — the blank is the part"},
             {"part": "Fascia", "material": f"{P.FASCIA_T} clear cast acrylic",

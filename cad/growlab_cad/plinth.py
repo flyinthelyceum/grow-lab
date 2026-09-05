@@ -216,8 +216,10 @@ def build_ledge() -> Part:
 
 
 def build_backplate() -> Part:
-    """A dark sheet on the partition, behind the case, filling the band zone:
-    what shows through the glass beside the instrument is black, not ply."""
+    """A painted sheet on the partition, behind the case, filling the band zone:
+    what shows through the glass beside the instrument is finished metal, not
+    ply. White, with the rest of the metal register, so the case reads as one
+    object against it rather than as a lit panel in a dark hole."""
     bz0, bz1 = _fascia_band()
     return labelled(
         _panel(IX0, IX1, P.PARTITION_Y0 - P.BACKPLATE_T, P.PARTITION_Y0, bz0, bz1),

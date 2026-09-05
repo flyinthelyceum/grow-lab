@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-05 (everything metal goes white)
+
+### Decided
+- **The whole metal register is white.** Base frame, mast, carriage collar, fixture arm, instrument case, front plate, backplate — white DTM acrylic on the steel, powder-coat on the aluminium. Warm ply is the other register and is unchanged. The mast alone went white earlier today and that raised the question rather than answering it: one white object among black ones reads as an error, and one departure from a consistent rule is a mistake where a whole register is a decision. On Jared's call, it is the lot.
+
+### What that costs, recorded rather than discovered later
+- **The console inverts.** The reference was the Transparent speaker — black metal components, wiring in view. The casework is now the light thing and the apparatus inside it is the dark thing. That is arguably the stronger reading of "material non-artifice", because the Pi, the i3, the driver and every cable now declare themselves instead of receding. It is also much harder to keep honest: **a dark cable on a dark backplate was nearly invisible and is now the highest-contrast object behind the glass.** The build doc's "cable discipline is visible; plan the runs" is upgraded to sleeving and routing for looks.
+- **The meters change relationship.** The Weston 301s are aged Bakelite — dark rings, cream faces. On a black plate the cream face was the bright thing and the ring vanished into the panel; on white the ring is the dark thing and the cream face sits a few points off the plate around it. *Match the cream* still stands for the meter's own internal look, but § Making the plate now says to hold a proof print in the meter against the coated plate before committing the print run, because a scan cannot answer this.
+- **Anodising is out.** There is no true white anodise; the dye process does not reach it. Powder-coat or wet paint. The head plans and the build doc both said "powder-coat or anodise black" and now say powder only.
+- **It shows dirt**, beside coco coir and nutrient solution. Satin rather than matte, and a rattle-can of the DTM kept for the frame, which is at floor level.
+- Paint quantity goes 1 qt → 1 gal: the frame roughly triples the steel area. One batch, one sheen — the mast and the frame are read against each other over the whole height of the piece.
+
+### Fixed
+- **The `/panel` emulator has been previewing the wrong plate since Rev C, and is now accidentally right.** Its palette is light, with a comment attributing that to a clear acrylic face with reverse-engraved marks — which Rev C superseded on 2026-09-04 when the face became an opaque *black* aluminium plate. Nobody noticed the emulator kept drawing a light one. It agrees with the physical spec again as of today; the comment now says which decision it is tracking, so the next finish change has somewhere to land.
+
 ## 2026-09-05 (the mast comes down)
 
 ### Decided
