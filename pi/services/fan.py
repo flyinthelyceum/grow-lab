@@ -1,39 +1,32 @@
-"""Fan control service — temperature-triggered PWM ramp.
+"""Fan control service — a gust field, not a thermostat.
 
-Polls the latest air temperature reading from the repository and
-adjusts the Noctua fan duty cycle according to a linear ramp curve.
-Runs as an async background task alongside polling and irrigation.
+The fan is for canopy strength: moving air thickens stems. So duty comes from
+a deterministic gust field over wall-clock time, gated by the plant's own
+photoperiod, and takes no sensor input at all. It reads no temperature and
+needs no repository.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import time
 
 from pi.config.schema import FanConfig
 from pi.drivers.fan_pwm import FanPWMDriver
 
 logger = logging.getLogger(__name__)
 
-# Sensor IDs that carry air temperature (stored as °C in the DB)
-_TEMP_SENSOR_IDS = ("bme280_temperature",)
-
-
-def _c_to_f(c: float) -> float:
-    return c * 9.0 / 5.0 + 32.0
-
 
 class FanService:
-    """Background service that maps air temperature to fan PWM duty."""
+    """Background service that drives the fan from a gust field."""
 
     def __init__(
         self,
         fan: FanPWMDriver,
-        repo,
         config: FanConfig,
     ) -> None:
         self._fan = fan
-        self._repo = repo
         self._config = config
         self._task: asyncio.Task | None = None
         self._override_duty: int | None = None
@@ -52,7 +45,7 @@ class FanService:
         self._override_duty = max(0, min(100, duty))
 
     def clear_override(self) -> None:
-        """Return to automatic temperature-based ramp."""
+        """Return to the automatic gust field."""
         self._override_duty = None
 
     async def start(self) -> None:
@@ -69,10 +62,11 @@ class FanService:
             return
 
         logger.info(
-            "Fan service started (GPIO%d, ramp %.0f–%.0f°F)",
+            "Fan service started (GPIO%d, gusts %02d:00–%02d:00, calm %.0f%%)",
             self._config.gpio_pin,
-            self._config.ramp_temp_low_f,
-            self._config.ramp_temp_high_f,
+            self._config.day_start_hour,
+            self._config.day_end_hour,
+            self._config.calm_threshold * 100,
         )
         self._task = asyncio.create_task(
             self._control_loop(), name="fan-control"
@@ -91,7 +85,7 @@ class FanService:
         self._fan.close()
 
     async def _control_loop(self) -> None:
-        """Poll temperature and adjust fan duty cycle."""
+        """Follow the gust field."""
         while True:
             try:
                 if self._override_duty is not None:
@@ -100,25 +94,11 @@ class FanService:
                         self._fan.set_duty(target)
                         logger.debug("Fan override: %d%% duty", target)
                 else:
-                    temp_f = await self._get_air_temp_f()
-                    if temp_f is not None:
-                        target = self._fan.duty_for_temperature(temp_f)
-                        if target != self._fan.duty_cycle:
-                            self._fan.set_duty(target)
-                            logger.debug(
-                                "Fan adjusted: %.1f°F → %d%% duty",
-                                temp_f,
-                                target,
-                            )
+                    target = self._fan.duty_for_time(time.time())
+                    if target != self._fan.duty_cycle:
+                        self._fan.set_duty(target)
+                        logger.debug("Fan gust: %d%% duty", target)
             except Exception as exc:
                 logger.error("Fan control error: %s", exc, exc_info=True)
 
             await asyncio.sleep(self._config.poll_interval_seconds)
-
-    async def _get_air_temp_f(self) -> float | None:
-        """Get the latest air temperature in Fahrenheit from the repo."""
-        for sid in _TEMP_SENSOR_IDS:
-            reading = await self._repo.get_latest(sid)
-            if reading is not None:
-                return _c_to_f(reading.value)
-        return None

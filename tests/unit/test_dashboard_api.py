@@ -244,23 +244,23 @@ class TestAlertsEndpoint:
 
 
 class TestFanStatusEndpoint:
-    async def test_fan_status_no_temp(self, client, mock_repo):
+    async def test_reports_the_gust_field(self, client):
+        response = await client.get("/api/fan/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert 0 <= data["duty_percent"] <= 100
+        assert data["day_start_hour"] == 6
+        assert data["day_end_hour"] == 22
+
+    async def test_reports_no_temperature(self, client, mock_repo):
+        """The fan is for canopy strength; a temp field here means it regressed."""
         mock_repo.get_latest.return_value = None
         response = await client.get("/api/fan/status")
         assert response.status_code == 200
         data = response.json()
-        assert data["temp_f"] is None
-        assert data["duty_percent"] is None
-
-    async def test_fan_status_with_temp(self, client, mock_repo):
-        mock_repo.get_latest.return_value = _reading("bme280_temperature", 23.8, "°C")
-        response = await client.get("/api/fan/status")
-        assert response.status_code == 200
-        data = response.json()
-        # 23.8°C = 74.84°F — in ramp range
-        assert data["temp_f"] is not None
+        assert "temp_f" not in data
+        assert "ramp_temp_low_f" not in data
         assert data["duty_percent"] is not None
-        assert 0 <= data["duty_percent"] <= 100
 
 
 # POST /api/fan/override is gated by Depends(require_admin) as of the Stage 1

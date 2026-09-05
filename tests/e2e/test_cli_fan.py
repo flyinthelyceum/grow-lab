@@ -24,8 +24,6 @@ gpio_pin = 18
 frequency = 25000
 min_duty = 20
 max_duty = 100
-ramp_temp_low_f = 70.0
-ramp_temp_high_f = 85.0
 {extra}
 """
     )
@@ -33,7 +31,7 @@ ramp_temp_high_f = 85.0
 
 
 class TestFanStatus:
-    def test_shows_config_without_reading(self, tmp_path):
+    def test_shows_gust_config_and_current_duty(self, tmp_path):
         runner = CliRunner()
         config = _make_config(tmp_path)
         result = runner.invoke(cli, ["--config", config, "fan", "status"])
@@ -41,31 +39,17 @@ class TestFanStatus:
         assert "Enabled:" in result.output
         assert "GPIO:      18 @ 25000 Hz" in result.output
         assert "Duty span: 20-100%" in result.output
-        assert "70-85" in result.output
-        assert "cannot compute target duty" in result.output
+        assert "Gusts:     06:00-22:00" in result.output
+        assert "Right now:" in result.output
 
-    def test_computes_target_duty_from_reading(self, tmp_path):
+    def test_needs_no_sensor_reading(self, tmp_path):
+        """It used to require a bme280 reading to say anything useful."""
         runner = CliRunner()
         config = _make_config(tmp_path)
-
-        # 30 C == 86 F, above ramp_temp_high_f, so target is max_duty.
-        reading = MagicMock(value=30.0)
-
-        async def _latest(_sensor_id):
-            return reading
-
-        mock_repo = MagicMock()
-        mock_repo.connect = MagicMock(side_effect=lambda: _noop())
-        mock_repo.close = MagicMock(side_effect=lambda: _noop())
-        mock_repo.get_latest = _latest
-
-        with patch("pi.data.repository.SensorRepository", return_value=mock_repo):
-            result = runner.invoke(cli, ["--config", config, "fan", "status"])
-
+        result = runner.invoke(cli, ["--config", config, "fan", "status"])
         assert result.exit_code == 0
-        assert "86.0" in result.output
-        assert "100% duty" in result.output
-
+        assert "cannot compute" not in result.output
+        assert "Air temp" not in result.output
 
 class TestFanSet:
     def test_reports_gpio_unavailable(self, tmp_path):

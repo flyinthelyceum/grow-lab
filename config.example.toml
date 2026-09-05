@@ -84,14 +84,24 @@ relay_gpio = 17
 # Noctua NF-A12x25 PWM canopy fan on Pi hardware PWM (GPIO18 / pin 12).
 # 4-pin PWM control, NOT a relay — see docs/WIRING_&_BUSES.md "Fan PWM Wiring".
 # Leave disabled until the fan is physically wired and the 12V rail is up.
+#
+# This fan is for CANOPY STRENGTH, not cooling: moving air thickens stems.
+# Duty is a gust field over time and takes no sensor input. It blows in spells
+# of a few minutes and falls to nothing in between, because intermittent
+# loading is what a stem responds to — a fan that never stops is a constant the
+# plant just grows around.
 enabled = false
 gpio_pin = 18          # hardware PWM0
 frequency = 25000      # 25 kHz — the Intel/Noctua 4-pin PWM standard
 min_duty = 20          # below ~20% the fan stalls; 0 is off, 1-19 clamps up to 20
 max_duty = 100
-ramp_temp_low_f = 70.0   # below this the fan is off
-ramp_temp_high_f = 85.0  # at/above this the fan is at max_duty
-poll_interval_seconds = 30
+day_start_hour = 6     # match the [lighting] photoperiod
+day_end_hour = 22
+night_factor = 0.35    # overnight gusts at this fraction of daytime strength;
+                       # not zero, because still wet air overnight grows mould
+calm_threshold = 0.40  # gust field below this = fan fully off. Raise for longer
+                       # lulls and a quieter piece, lower for more constant air
+poll_interval_seconds = 5   # gusts need finer steps than a thermostat did
 
 [control]
 # Cross-process control channel. `growlab start` owns the hardware;
