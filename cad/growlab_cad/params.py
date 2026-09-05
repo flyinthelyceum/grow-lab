@@ -352,7 +352,7 @@ CMU_Y = PLINTH_D / 2  # 8.0
 # both cores get the same air rather than one breathing the other's exhaust.
 FAN_X = CMU_X
 FAN_Y = (MAST_Y - MAST_D / 2) - FAN_THICK / 2
-FAN_Z = MEDIA_SURFACE_Z + FAN_ABOVE_MEDIA  # 49.875 — the fan's AXIS, not its underside
+FAN_Z = MEDIA_SURFACE_Z + FAN_ABOVE_MEDIA  # 46.875 — the fan's AXIS, not its underside
 
 FIXTURE_X = CMU_X
 FIXTURE_Y = CMU_Y

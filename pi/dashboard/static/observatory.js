@@ -387,7 +387,10 @@
                 return;
             }
             if (data.duty_percent !== null) {
-                setText("air-fan", "Fan: " + data.duty_percent + "% @ " + data.temp_f + "°F");
+                // No temperature here: the fan is a gust field, not a thermostat.
+                setText("air-fan", data.duty_percent
+                    ? "Fan: " + data.duty_percent + "%"
+                    : "Fan: calm");
             } else {
                 setText("air-fan", "Fan: no temp data");
             }
