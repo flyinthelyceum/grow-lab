@@ -1,4 +1,4 @@
-"""The instrument case: a black metal box behind the clear fascia.
+"""The instrument case: a white metal box behind the clear fascia.
 
 The plate from ``face.py`` is its front; behind it a folded sheet box the
 meters, Inky, i3, Pi and meter driver mount inside, closed at the back with
@@ -7,7 +7,10 @@ forward as one unit: fascia off, knob caps off, unplug at the terminal block,
 lift out. Everything the apparatus needs to be serviced is then on a bench.
 
 Behind the glass the case is what the eye reads as the instrument; the
-cabinet is what carries it.
+cabinet is what carries it. It was black until 2026-09-05, when the whole metal
+register went white — which inverts the Transparent-speaker reference it came
+from: the apparatus inside it is now the dark thing against a light ground
+rather than the other way round.
 """
 
 from __future__ import annotations

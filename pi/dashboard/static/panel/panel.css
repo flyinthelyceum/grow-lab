@@ -1,9 +1,15 @@
 /* Instrument head emulator — /panel
  *
- * Light register throughout, per the abandoned-dark decision in
- * UI_UX_DESIGN_REFERENCE.md: the physical face is clear acrylic with
- * reverse-engraved marks reading as frosted glass, and the e-ink is
- * reflective. A dark chrome around it would misrepresent both.
+ * Light register throughout. The reason has changed twice and the colours
+ * have not. It was originally the abandoned-dark decision in
+ * UI_UX_DESIGN_REFERENCE.md plus a clear acrylic face with reverse-engraved
+ * marks; Rev C made the face an opaque BLACK aluminium plate, at which point
+ * this palette was previewing something the shop was not going to build, and
+ * nobody noticed. As of 2026-09-05 the whole metal register is white
+ * (V1_PHYSICAL_BUILD.md § The white register) and it is accurate again.
+ *
+ * If the plate's finish changes, change these. The e-ink stays reflective
+ * either way, so a dark chrome around it would still misrepresent it.
  */
 
 :root {

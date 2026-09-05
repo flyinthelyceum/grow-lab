@@ -83,10 +83,11 @@ def _knob(name: str, default: float) -> float:
 
 # ---------------------------------------------------------------------------
 # Plinth (cabinet)
-# The form is decided (2026-09-04): height 36; the clear fascia over a black
+# The form is decided (2026-09-04): height 36; the clear fascia over a white
 # instrument case (the apparatus on show behind glass, cabling included, the
 # way the Transparent speaker shows its amplifier); and the steel base frame
-# the cabinet floats on, whose members continue into the mast.
+# the cabinet floats on, whose members continue into the mast. Every metal part
+# is white (2026-09-05); the ply body is the other register.
 # V1_PHYSICAL_BUILD.md § Station geometry
 # ---------------------------------------------------------------------------
 
@@ -260,10 +261,10 @@ MAST_LINE_PASS_DIA = 0.50  # was 0.75, which is half the diameter of this tube
 
 FACE_SCREW_DIA = 0.135  # "F1–4 … Ø 0.135 c'sunk x4 | M3 flat-head"
 
-# The instrument case (fascia form): a black metal box the meters, Inky, i3,
+# The instrument case (fascia form): a white metal box the meters, Inky, i3,
 # Pi and meter driver live in, its front plate carrying the hole schedule.
 # Removable forward as a unit once the fascia is off and the knob caps are
-# pulled. Sheet aluminium, black. CHOICE throughout.
+# pulled. Sheet aluminium, powder-coated white. CHOICE throughout.
 PLATE_T = 0.125  # 1/8 in front plate — stiff enough to carry two movements
 CASE_SHEET_T = 0.0625  # 16 ga folded box behind the plate
 CASE_D = 2.75  # plate front to case back; INSTRUMENT_HEAD_PLANS.md: "inside 3.00 clear"

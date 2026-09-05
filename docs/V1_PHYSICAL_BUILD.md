@@ -213,24 +213,34 @@ The instrument head is gone from the top of the mast; the panel is in the cabine
 - Bolts to the **cabinet carcass** — not the tray, not the block — with the tray notched to
   clear.
 
-**The console — the instrument behind glass (decided 2026-09-04).** Reference: the
-Transparent speaker — a glass box, black metal components, the wiring in view. Ours,
-inverted from the first fascia candidate:
+**The console — the instrument behind glass (decided 2026-09-04; white 2026-09-05).**
+Reference: the Transparent speaker — a glass box, the components and the wiring in view.
+Ours, inverted from the first fascia candidate, and now inverted again in value: the
+casework is white and the apparatus inside it is the dark thing.
+
+**Every metal part in the piece is white.** Frame, mast, carriage, arm, case, plate,
+backplate — one register, in white DTM acrylic on the steel and powder-coat on the
+aluminium. Warm ply is the other register and is unchanged. What this costs is set out
+under *The white register* below; it is not free, and the place it costs most is the
+console.
 
 - **Fascia: clear 1/4 in cast acrylic**, a band across the whole front from 21.2 to 35.2 in,
   recessed 0.15 in behind the front plane, between 0.5 in chamfers on the cabinet's corners.
   The only holes in it are two for the knob shafts; the dials and the e-ink are read through
   it. Screws through its margins into the sides' front edges and the ledge. Removable.
-- **Instrument case: black aluminium**, 9.50 x 12.00 x 2.75. A 1/8 in front plate carrying
+- **Instrument case: white aluminium**, 9.50 x 12.00 x 2.75. A 1/8 in front plate carrying
   INSTRUMENT_HEAD_PLANS.md's hole schedule (dials, window, jewel, amber, knobs, F1–4), and
   a 16 ga folded box behind it the meters, Inky, i3, Pi and meter driver mount in, closed at
   the back with a Ø 0.75 grommeted loom pass. The plate sits 0.1 in behind the acrylic; the
   case sits on a ply **ledge** and pulls straight out forward once the fascia and the knob
   caps are off — the whole apparatus on a bench, unplugged at one terminal block.
-- **What shows beside the case:** a black sheet on the partition (the backplate), the ply
+- **What shows beside the case:** a white sheet on the partition (the backplate), the ply
   ledge as a sill, and the loom dropping behind the case through the chase to the PSU and
-  driver below, which stay behind the removable lower ply front. Cable discipline is
-  visible; plan the runs.
+  driver below, which stay behind the removable lower ply front. **Cable discipline is
+  visible, and on white it is unforgiving** — a dark cable on a dark backplate was almost
+  invisible and is now the highest-contrast thing behind the glass. Plan the runs, use
+  white or grey sleeving where a run has to cross the open field, and expect to route for
+  looks and not only for length.
 - **How the plate fastens:** the case's side walls carry 0.5 in return flanges folded inward
   at their front edges, tapped M3 on the plate's own F1–4 centres. There is no flange on the
   top and bottom walls — one would reach 0.5625 in behind the plate's edge and foul the
@@ -389,6 +399,49 @@ coats over a scuffed and degreased surface, and it goes on *before* the collar i
 paint in the bore is 0.002–0.004 in of the 0.020 slip fit, and paint on the pinch faces is
 what the clamp grips. Mask the bore and the arm's weld pads, or expect to hone.
 
+## The white register — decided 2026-09-05
+
+**Every metal part is white.** Base frame, mast, carriage collar, fixture arm, instrument
+case, front plate, backplate. Warm ply is the other register. That is the whole palette.
+
+It began as a question about the mast alone. A black tube 81 in tall is a heavy vertical
+stroke through the middle of the composition, and the lesson the fan taught is that a dark
+object in the growing volume takes far more of the eye than its function earns. White makes
+the mast a drawn line rather than structure. But one white object among black ones reads as
+an error, not as a second register — so the choice was the mast or the lot, and it is the
+lot.
+
+**What it costs, in the order the cost shows up:**
+
+1. **The console inverts.** The reference was the Transparent speaker: black metal
+   components, wiring in view. The case is now the light thing and the apparatus inside it
+   — the Pi, the i3, the meter driver, every cable — is the dark thing. That is arguably
+   the stronger reading of the same idea, because the components *declare* themselves
+   instead of receding. It is also a much harder thing to keep tidy. **A dark cable on a
+   dark backplate was nearly invisible; on white it is the highest-contrast object behind
+   the glass.** Sleeve in white or grey anything crossing the open field, and route for
+   looks.
+2. **The dial faces need looking at again, with both meters and the plate in hand.** The
+   Weston 301s are aged Bakelite: dark rings, cream faces. On a black plate the cream face
+   was the bright thing and the ring disappeared. On a white plate the ring becomes the
+   dark thing and the cream face sits only a few points off the plate around it. The
+   instruction in `INSTRUMENT_HEAD_PLANS.md` § Making the plate — *match the cream* — is
+   about the face looking native to its own meter and still stands. What is new is the
+   relationship between face and plate, and that cannot be settled from a scan; it wants
+   the printed face held against the finished plate.
+3. **Anodising is out.** There is no true white anodise — the dye process does not reach
+   it. The case is powder-coated or wet-painted, which is a shop constraint the black
+   version did not have.
+4. **It shows dirt.** A white cabinet beside coco coir, perlite and nutrient solution will
+   show every splash. DTM acrylic and powder both wash; matte white shows more than satin
+   and hides fingerprints worse. Satin, and keep a rattle-can of the DTM for the frame,
+   which is at floor level and will take the knocks.
+
+**One batch, one sheen, for the steel.** The mast and the frame are read against each other
+over the whole height of the piece. The powder on the aluminium will not match the DTM
+exactly and does not need to — the case sits behind glass, which is where a sheen
+difference reads least.
+
 ---
 
 ## Sourcing checklist
@@ -446,11 +499,15 @@ see *The plan, in phases* in V1_STATION_BUILD_PROCEDURE.md.
       in, which is half the reason for it.
 - [ ] **Mast hardware:** 3 x U-bolts for Ø 1.5 tube, 1/4-20, with nuts and washers; 2 x
       1/4-20 socket cap screws for the collar's pinch bolts.
-- [ ] **White DTM acrylic**, 1 qt, plus a rattle-can of the same for touch-up. Covers the
-      tube, the collar and the arm — see *The canopy mechanism*. This is the finish that
-      makes the mast read as a drawn line rather than as structure, and it is a **decision
-      still open**: everything else steel in the piece (frame, instrument case, backplate)
-      is black.
+- [ ] **White DTM acrylic**, 1 gal, plus a rattle-can of the same for touch-up. Covers the
+      mast, the collar, the arm and the **base frame** — every steel part in the piece.
+      One gallon rather than one quart: the frame roughly triples the area. Get all of it
+      from one batch and one sheen, because the mast and the frame are read against each
+      other across the whole height of the piece.
+- [ ] **Powder-coat, white**, for the instrument case, its front plate and the backplate —
+      a shop job, quoted with the case fabrication rather than bought. Match the sheen to
+      the DTM as closely as the two processes allow; they will not match exactly, and the
+      case sits behind glass where the difference reads least.
 
 ### Struck from the list
 
@@ -529,8 +586,10 @@ use. Fail it and leach longer or add a second coat before planting.
   levelling feet in the legs. Whether the mast is welded to the ring or bolted through it
   is a fabricator's call — welded is stiffer, bolted lets the cabinet come off the frame.
 - **Case fabrication.** The development is drawn: one 15.50 x 17.00 blank in 16 ga, six
-  bends, `cad/out/fab/case_body.dxf`. Powder-coat or anodise black. Confirm the shop is
-  happy with folded corners or wants them welded.
+  bends, `cad/out/fab/case_body.dxf`. **Powder-coat white — anodising is not an option any
+  more.** There is no true white anodise; the dye process cannot reach it, and the nearest
+  results are a chalky off-grey. Powder or wet paint. Confirm the shop is happy with folded
+  corners or wants them welded.
 - **Fascia edge finish.** Polished or flame-polished edges on the acrylic, and whether the
   two knob holes want a chamfer.
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;

@@ -444,28 +444,46 @@ removed does not measure what a piece lost.**
 The fan's software survives, disabled, so this is reversible without rewriting anything.
 What does not survive is the assumption that motion is optional.
 
-## 12c. The mast goes white, and that breaks the register — 2026-09-05
+## 12c. Everything metal goes white — 2026-09-05
 
-Everything structural in the piece is black: the steel base frame, the instrument case, the
-backplate. Warm ply is the other register, and the two of them are the whole palette. It has
-been consistent enough that it reads as a rule rather than as a series of choices.
+Everything structural in the piece was black: the steel base frame, the instrument case, the
+backplate. Warm ply was the other register, and the two of them were the whole palette,
+consistent enough that it read as a rule rather than as a series of choices.
 
-The mast is now **white DTM acrylic**, on Jared's instruction, and it is the first thing to
-leave that register. There is a good reason for it — a black tube 81 in tall is a heavy
-vertical stroke through the middle of the composition, and the thing the fan taught is that
-a dark object in the growing volume dominates whatever leverage it has — and a white mast
-reads as a drawn line instead, closer to a copy stand or a lab armature than to structure.
+The mast went white first, and that raised the question rather than answering it. A black
+tube 81 in tall is a heavy vertical stroke through the middle of the composition, and the
+thing the fan taught is that a dark object in the growing volume dominates whatever leverage
+it has; a white mast reads as a drawn line, closer to a copy stand or a lab armature than to
+structure. But one white object among black ones reads as an error. One departure from a
+consistent rule is a mistake; a whole register is a decision.
 
-**But it is one white object among black ones, and that is the risk.** One departure from a
-consistent rule reads as an error; two read as a second register. The open question is
-whether the white extends — to the carriage and arm (it does, in the current spec), and
-beyond that to the base frame, or the case, or neither. That question is not settled here,
-and the CAD carries the mast and its head in white and everything else unchanged, which is
-the state the decision has actually reached rather than a resolution of it.
+**So the whole register goes white.** Frame, mast, carriage, arm, case, plate, backplate.
+White DTM acrylic on the steel, powder-coat on the aluminium. The ply is unchanged and the
+palette is still two registers — it is the same structure with the value inverted.
 
-The counterweight went with the black. Section 12b's complaint stands unchanged: the head
-now moves, but only when a person moves it, twice in a season. That is adjustability, not
-motion.
+**What that costs is not in the CAD, and it is worth naming here rather than in the build
+doc, because it is a design cost and not a fabrication one.**
+
+The console inverts. The reference was the Transparent speaker: black metal components with
+the wiring in view, the apparatus legible instead of hidden in painted casework. The
+casework is now the light thing and the apparatus is the dark thing inside it. That is
+arguably a *stronger* reading of the same idea — the Pi, the i3, the meter driver and every
+cable now declare themselves against a light ground instead of receding into a dark one, and
+"material non-artifice" is better served by components you cannot help seeing. It is also
+much harder to keep honest. A dark cable on a dark backplate was nearly invisible; on white
+it is the highest-contrast object behind the glass. **Cable discipline stops being a nicety
+and becomes part of the composition.**
+
+And the meters change relationship. The Weston 301s are aged Bakelite — dark rings, cream
+faces. On a black plate the cream face was the bright thing and the ring disappeared into
+the panel. On white the ring becomes the dark thing and the cream face sits only a few
+points off the plate around it. The needles still read; whether the *pair* reads is a
+question that cannot be answered from a scan, and § *Making the plate* now says to hold a
+proof print in the meter against the coated plate before committing the print run.
+
+**What is not resolved by this.** § 12b's complaint stands, unchanged and unaddressed:
+nothing in the growing volume moves. The head is adjustable, not animate — a person moves it
+twice in a season. Painting the piece white is a decision about how it reads standing still.
 
 ---
 
