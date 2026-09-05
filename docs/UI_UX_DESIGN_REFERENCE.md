@@ -418,6 +418,34 @@ Alternatives:
 
 ---
 
+## 12b. Nothing in the piece moves any more — 2026-09-05
+
+A standing critique, recorded because it was arrived at by accumulation and nobody chose it.
+
+GROWLAB was conceived with an atmosphere: rain simulators working in the canopy, and a fan
+animating the plants. Both are now gone. Overhead rain was deferred to v2 on a sound
+horticultural argument (`V1_PHYSICAL_BUILD.md` — overhead water on ranunculus invites
+botrytis and powdery mildew). The fan was cut on 2026-09-05 because a 120 mm axial part
+dominated the visual field and no placement, mechanism, concealment or styling survived
+review. **Each decision was defensible on its own. Their sum was never put to anyone.**
+
+What is left that moves: the two Weston needles on the front panel, easing at ~30 Hz, and
+the light going on and off. Nothing in the growing volume itself moves at all. For a piece
+whose charter is a *living* plant sculpture where biology and engineered systems coexist
+visibly, that is a real loss and it should be treated as an open wound rather than a
+settled state.
+
+This is the mirror of the failure `SUBTRACT_PASS.md` was written to catch. That brief warns
+that generative work only ever adds, and that each addition is individually justified while
+the accumulation is invisible. Subtraction has exactly the same failure mode: eight
+defensible cuts in one day, and a dimension of the work quietly gone. **Counting lines
+removed does not measure what a piece lost.**
+
+The fan's software survives, disabled, so this is reversible without rewriting anything.
+What does not survive is the assumption that motion is optional.
+
+---
+
 ## 13. Key Takeaway
 
 The UI is not a dashboard.

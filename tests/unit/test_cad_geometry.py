@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 build123d = pytest.importorskip("build123d")
 
-from cad.growlab_cad import assembly, case, cmu, face, fan, mast, params as P, plinth, tray  # noqa: E402
+from cad.growlab_cad import assembly, case, cmu, face, mast, params as P, plinth, tray  # noqa: E402
 from cad.growlab_cad._shapes import bbox_in, box  # noqa: E402
 
 from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH, SCHEDULE  # noqa: E402
@@ -34,12 +34,12 @@ def refs():
 class TestEveryPartBuilds:
     def test_fabricated(self, parts):
         assert set(parts) == {"plinth", "base_frame", "rear_door", "tray", "pads", "mast",
-                              "case", "fascia", "backplate", "fan_bracket"}
+                              "case", "fascia", "backplate"}
         for name, p in parts.items():
             assert p.volume > 0, name
 
     def test_reference(self, refs):
-        assert set(refs) == {"cmu", "reservoir", "fixture", "canopy_fan"}
+        assert set(refs) == {"cmu", "reservoir", "fixture"}
 
 
 class TestWhereThingsSit:
@@ -165,66 +165,6 @@ class TestTheCaseComesOut:
         body = case.build_body()
         probe = box(0.2, 1.0, 0.2, at=(0, P.CASE_Y1 - 0.03, P.FACE_Z0 + 1.5 - 0.1))
         assert (probe & body).volume < 1.0
-
-
-class TestTheCanopyFan:
-    """The fan was specified in every electrical respect and placed nowhere.
-
-    The docs give its rail, its 4-pin wiring, GPIO18, 25 kHz and a whole control
-    law, and never said what holds it or which way it points. These pin the
-    answer so it cannot drift back out.
-    """
-
-    def test_it_sits_in_the_canopy(self, refs):
-        bb = bbox_in(refs["canopy_fan"])
-        assert bb["z0"] > P.CMU_TOP_Z, "the fan must clear the block, not sit against it"
-        assert bb["z1"] < P.FIXTURE_Z, "the fan must not foul the light"
-
-    def test_it_sits_low_in_the_foliage_not_in_clear_air(self, refs):
-        """Height here is a composition constraint, not just a clearance.
-
-        At mid-canopy this put a 4.7 in black square in open air above the
-        block, in the most looked-at volume of the piece. It is a low-leverage
-        part and it must not dominate. Sitting it on the block top is the
-        lowest the geometry allows and puts it in the densest foliage.
-        """
-        bb = bbox_in(refs["canopy_fan"])
-        assert bb["z0"] - P.CMU_TOP_Z < 0.5, (
-            "the fan has drifted up out of the foliage and back into clear air"
-        )
-
-    def test_it_is_centred_on_the_block_not_the_mast(self, refs):
-        bb = bbox_in(refs["canopy_fan"])
-        assert (bb["x0"] + bb["x1"]) / 2 == pytest.approx(P.CMU_X, abs=1e-6), (
-            "a fan on the mast's centreline favours one end of a 15.6 in block"
-        )
-
-    def test_it_blows_along_the_block_s_short_axis(self, refs):
-        bb = bbox_in(refs["canopy_fan"])
-        depth = bb["y1"] - bb["y0"]
-        assert depth < bb["x1"] - bb["x0"] and depth < bb["z1"] - bb["z0"], (
-            "the thin axis is the airflow axis; blowing along X would give the "
-            "downwind core the upwind core's exhaust"
-        )
-        assert bb["y1"] <= P.MAST_Y - P.MAST_D / 2 + 1e-6, "it hangs off the mast's front face"
-
-    def test_it_is_the_real_noctua_size(self, refs):
-        bb = bbox_in(refs["canopy_fan"])
-        assert bb["x1"] - bb["x0"] == pytest.approx(120.0 / 25.4, abs=1e-6)
-        assert bb["z1"] - bb["z0"] == pytest.approx(120.0 / 25.4, abs=1e-6)
-        assert bb["y1"] - bb["y0"] == pytest.approx(25.0 / 25.4, abs=1e-6)
-
-    def test_the_bracket_spans_mast_to_fan(self, parts):
-        bb = bbox_in(parts["fan_bracket"])
-        assert bb["x1"] == pytest.approx(P.MAST_X + P.MAST_W / 2, abs=1e-6), "reaches the mast"
-        assert bb["x0"] == pytest.approx(P.FAN_X, abs=1e-6), "reaches the fan's centreline"
-
-    def test_the_fan_does_not_foul_anything_fabricated(self, parts, refs):
-        for name, part in parts.items():
-            if name == "fan_bracket":
-                continue
-            shared = assembly._shared_in3(refs["canopy_fan"], part)
-            assert shared < 0.001, f"canopy_fan overlaps {name} by {shared:.3f} in3"
 
 
 class TestNothingInterferes:
