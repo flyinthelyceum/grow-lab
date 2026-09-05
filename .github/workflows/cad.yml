@@ -54,16 +54,13 @@ jobs:
       - name: Build and export
         run: python cad/build.py
 
-      - name: Render elevations
-        run: python cad/render.py
-
       - name: Build the fabrication pack
         # DXFs to cut from and a cut list to buy from, in inches.
         run: python cad/fabrication.py
 
       - name: Build the browser viewer
-        # One HTML file with every part embedded and the height variants;
-        # opens straight from the artifact, no server.
+        # One HTML file with every part embedded; opens straight from the
+        # artifact, no server.
         run: python cad/viewer.py
 
       - name: Summary
@@ -81,14 +78,10 @@ jobs:
           print(f"- depth budget through the wet bay: {d['required']:.2f} in required of {d['available']:.2f} → **{d['slack']:+.2f} in**")
           print(f"- rear door opening: {r['rear_door_opening_in']['width']:.2f} × {r['rear_door_opening_in']['height']:.2f} in")
           print(f"- fabricated interferences: **{len(r['interferences'])}**")
-          if r["reference_clashes"]:
-              print(f"- design conflicts (reference vs fabricated): " + ", ".join(f"{a}∩{b}" for a, b, _ in r["reference_clashes"]))
-          else:
-              print("- design conflicts: **none**")
           print(f"- dial cut: {'not cut — pending calipers' if r['dial_cut_diameter'] is None else r['dial_cut_diameter']}")
           PY
             echo ""
-            echo "STEP, elevations, \`viewer.html\` and the \`fab/\` pack are in the **growlab-v1-station-cad** artifact."
+            echo "STEP, \`viewer.html\` and the \`fab/\` pack are in the **growlab-v1-station-cad** artifact."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4

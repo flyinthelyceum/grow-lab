@@ -17,8 +17,6 @@ timeout = 2.0
 [installation]
 node_id = "growlab-v0"
 fixture_id = "bench-fixture-a"
-fixture_model = "Samsung LM301H strip"
-sensor_board_id = ""
 
 [sensors.bme280]
 address = 0x76
@@ -36,7 +34,6 @@ interval_seconds = 300
 enabled = true
 
 [sensors.ds18b20]
-gpio = 4
 interval_seconds = 120
 enabled = true
 
@@ -47,7 +44,7 @@ enabled = true
 
 [sensors.as7341]
 address = 0x39
-interval_seconds = 120
+interval_seconds = 600
 enabled = false
 
 [sensors]
@@ -60,7 +57,6 @@ output_dir = "~/grow-lab-data/images"
 enabled = true
 
 [lighting]
-mode = "veg"           # "veg" or "flower"
 on_hour = 6
 off_hour = 22
 intensity = 200        # PWM 0-255
@@ -157,11 +153,6 @@ invert = false
 enabled = false
 address = 0x3C
 
-[calibration]
-enabled = false
-profile_dir = "./config/calibration"
-active_profile = ""
-
 [notifications]
 cooldown_seconds = 300  # Per-sensor cooldown between repeated notifications
 muted_sensors = []      # Sensor ids whose alerts are recorded but NOT delivered.
@@ -180,13 +171,3 @@ format = "raw"              # "raw"  -> POST JSON {event_type, description, time
                             #           urgency as headers, so it lands as a readable phone
                             #           push. The topic name is the only secret: pick a long
                             #           random one, and anyone who knows it can read alerts.
-
-[notifications.email]
-enabled = false
-smtp_host = ""
-smtp_port = 587
-smtp_user = ""
-smtp_password = ""          # Plaintext — consider using an env var for production
-use_tls = true
-from_address = ""
-to_addresses = []

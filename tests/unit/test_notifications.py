@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from pi.config.schema import EmailConfig, NotificationConfig, WebhookConfig
+from pi.config.schema import NotificationConfig, WebhookConfig
 from pi.data.models import SystemEvent
 from pi.services.notifications import NotificationService
 
@@ -35,22 +35,6 @@ def disabled_config():
 def webhook_config():
     return NotificationConfig(
         webhook=WebhookConfig(enabled=True, url="https://example.com/hook"),
-        cooldown_seconds=300,
-    )
-
-
-@pytest.fixture
-def email_config():
-    return NotificationConfig(
-        email=EmailConfig(
-            enabled=True,
-            smtp_host="smtp.example.com",
-            smtp_port=587,
-            smtp_user="user",
-            smtp_password="pass",
-            from_address="growlab@example.com",
-            to_addresses=("user@example.com",),
-        ),
         cooldown_seconds=300,
     )
 
@@ -163,45 +147,6 @@ class TestWebhookChannel:
             await svc.dispatch(event)
 
 
-class TestEmailChannel:
-    async def test_sends_email(self, email_config):
-        svc = NotificationService(email_config)
-        event = _alert_event()
-
-        with patch("pi.services.notifications.smtplib.SMTP") as MockSMTP:
-            mock_smtp = MagicMock()
-            MockSMTP.return_value.__enter__ = MagicMock(return_value=mock_smtp)
-            MockSMTP.return_value.__exit__ = MagicMock(return_value=False)
-
-            await svc._send_email(event)
-
-            mock_smtp.sendmail.assert_called_once()
-            call_args = mock_smtp.sendmail.call_args[0]
-            assert call_args[0] == "growlab@example.com"
-            assert call_args[1] == ["user@example.com"]
-
-    async def test_handles_smtp_error(self, email_config):
-        """SMTP errors should propagate (caught by dispatch, not _send_email)."""
-        svc = NotificationService(email_config)
-        event = _alert_event()
-
-        with patch("pi.services.notifications.smtplib.SMTP") as MockSMTP:
-            MockSMTP.side_effect = Exception("SMTP connection failed")
-
-            with pytest.raises(Exception, match="SMTP connection failed"):
-                await svc._send_email(event)
-
-    async def test_dispatch_catches_email_error(self, email_config):
-        """dispatch() should catch email errors and not raise."""
-        svc = NotificationService(email_config)
-        event = _alert_event()
-
-        with patch.object(svc, "_send_email", new_callable=AsyncMock) as mock_email:
-            mock_email.side_effect = Exception("SMTP failed")
-            # Should not raise
-            await svc.dispatch(event)
-
-
 class TestNtfyFormat:
     """format="ntfy" must produce a legible phone push, not a JSON blob."""
 
@@ -213,7 +158,6 @@ class TestNtfyFormat:
                     url="https://ntfy.sh/growlab-test-topic",
                     format="ntfy",
                 ),
-                email=EmailConfig(enabled=False),
             )
         )
 
@@ -265,7 +209,6 @@ class TestNtfyFormat:
         svc = NotificationService(
             NotificationConfig(
                 webhook=WebhookConfig(enabled=True, url="https://example.com/hook"),
-                email=EmailConfig(enabled=False),
             )
         )
         client = self._mock_client(svc)
@@ -288,7 +231,6 @@ class TestNtfyHeaderEncoding:
                 webhook=WebhookConfig(
                     enabled=True, url="https://ntfy.sh/t", format="ntfy"
                 ),
-                email=EmailConfig(enabled=False),
             )
         )
         mock_response = MagicMock()
@@ -323,7 +265,6 @@ class TestMutedSensors:
                 webhook=WebhookConfig(
                     enabled=True, url="https://ntfy.sh/t", format="ntfy"
                 ),
-                email=EmailConfig(enabled=False),
                 muted_sensors=muted,
             )
         )

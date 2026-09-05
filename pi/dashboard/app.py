@@ -28,7 +28,6 @@ from pi.config.schema import (
     MetersConfig,
     SecurityConfig,
 )
-from pi.dashboard.connections import ConnectionManager
 from pi.dashboard.routes.admin import router as admin_router
 from pi.dashboard.routes.api import router as api_router
 from pi.dashboard.routes.pages import router as pages_router
@@ -88,7 +87,6 @@ def create_app(
     fan_service=None,
     meters_config: MetersConfig | None = None,
     control_config: ControlConfig | None = None,
-    connection_manager: ConnectionManager | None = None,
     security_config: SecurityConfig | None = None,
 ) -> FastAPI:
     """Build the observatory dashboard application.
@@ -102,7 +100,6 @@ def create_app(
             this config plus the database rather than from the live service.
         control_config: Optional control-channel configuration. Sets the
             expiry written onto a manual override.
-        connection_manager: Optional ConnectionManager for WebSocket broadcasts.
         security_config: Stage 1 security baseline config (auth, rate limits,
             request logging). Defaults to SecurityConfig() (auth disabled).
 
@@ -125,7 +122,6 @@ def create_app(
     app.state.fan_service = fan_service
     app.state.meters_config = meters_config or MetersConfig()
     app.state.control_config = control_config or ControlConfig()
-    app.state.connection_manager = connection_manager or ConnectionManager()
     app.state.security_config = security
     app.state.templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
     app.state.templates.env.globals["static_asset"] = build_static_asset_url

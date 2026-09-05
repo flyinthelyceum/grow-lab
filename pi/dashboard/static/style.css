@@ -443,7 +443,7 @@ body {
 }
 
 /* Mobile-nav admin variant: subtler than primary nav so admin links read
-   as a grouped trailer rather than competing with ART/DREAM. */
+   as a grouped trailer rather than competing with ART. */
 .mobile-nav-admin {
     color: var(--text-dim, #8a8a8a) !important;
     font-size: 0.85em;

@@ -21,14 +21,14 @@ Stage 1 does NOT defend against:
 
 | Surface | Public | Admin only |
 | --- | --- | --- |
-| `/`, `/art`, `/dream` | yes | — |
+| `/`, `/art` | yes | — |
 | `GET /api/readings/*`, `/api/events`, `/api/images*`, `/api/alerts*`, `/api/system/status`, `/api/fan/status` | yes | — |
-| `POST /api/fan/override` | — | yes (`require_admin` + admin rate limit) |
+| `POST /api/fan/override` | — | yes (`require_admin`) |
 | `/admin/login`, `/admin/logout` | yes (form) | — |
 | `/admin/visitors` | — | yes |
 | WebSocket `/ws/*` | yes | — |
 
-All routes are subject to the default rate limit (`security.rate_limit_default`, default `60/minute` per IP). Admin POST routes also obey `security.rate_limit_admin` (default `10/minute`).
+All routes are subject to the default rate limit (`security.rate_limit_default`, default `60/minute` per IP).
 
 ## Setting the admin password
 

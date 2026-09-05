@@ -7,8 +7,7 @@ fixture, modelled parametrically and exported as STEP for finishing in Fusion.
 pip install -e ".[cad]"      # build123d + the OCP kernel, ~150 MB
 python cad/build.py          # writes cad/out/
 python cad/build.py --check  # build and report, write nothing
-python cad/render.py         # front / side / plan elevations as SVG
-python cad/viewer.py         # one-file 3D viewer with the design candidates
+python cad/viewer.py         # one-file 3D viewer of the design
 python cad/fabrication.py    # DXFs and a cut list, into cad/out/fab/
 pytest tests/unit/test_cad_*.py
 ```
@@ -23,17 +22,16 @@ station is arranged the way it is.
 
 | Module | Builds |
 |---|---|
-| `plinth.py` | Carcass on a recessed base: sides, floor, full-height rear panel with the wet-bay door opening, the removable front panel with the face pocketed into it, the rail under the tray, the console partition, the wet/dry divider, the adjustable reservoir shelf. Also the rear door, and the reservoir and console-electronics envelopes |
-| `face.py` | The instrument plate — the hole schedule from `INSTRUMENT_HEAD_PLANS.md` and `panel_geometry.py`, in 1/8 in aluminium (or 1/4 in acrylic in the box form) |
+| `plinth.py` | Carcass on the steel base frame: sides, floor, full-height rear panel with the wet-bay door opening, the removable front panel rebated for the fascia band, the rail under the tray, the console partition, the wet/dry divider, the reservoir shelf and the console ledge. Also the base frame, the rear door, the fascia, the backplate and the reservoir envelope |
+| `face.py` | The instrument plate — the hole schedule from `INSTRUMENT_HEAD_PLANS.md` and `panel_geometry.py`, in 1/8 in aluminium |
 | `case.py` | The black aluminium instrument case: the plate plus the folded box behind it |
 | `tray.py` | 16 ga stainless pan nesting inside the carcass top, with pad cutouts and the mast notch; and the four pads |
 | `mast.py` | 2 × 3 HSS from the carcass floor to its cap, in the dry bay, bolted through the rear panel |
 | `fixture.py` | The arm and cross bar from the mast's cap, and the LED fixture envelope — reference |
 | `cmu.py` | The block, at actual size with two cores — reference |
-| `assembly.py` | Everything, labelled, plus the interference and design-conflict checks |
-| `viewer.py` + `viewer_template.html` | Tessellates every part at several `PLINTH_H` and writes one HTML file: orbit, part toggles, section cut, datums, a stand-in-front eye-height view |
-| `fabrication.py` | The pack you cut from: plate, case development, fascia and backplate as DXFs in inches, plus a cut list derived from the same params |
-| `fusion/` | The Fusion 360 script and the iteration loop — see `fusion/README.md` |
+| `assembly.py` | Everything, labelled, plus the interference check |
+| `viewer.py` + `viewer_template.html` | Tessellates every part and writes one HTML file: orbit, part toggles, section cut, datums, a stand-in-front eye-height view; `--heights` sweeps `PLINTH_H` |
+| `fabrication.py` | The pack you cut from: plate, case development and fascia as DXFs in inches, plus a cut list derived from the same params |
 
 Every part is built in world coordinates — floor at Z = 0, plinth width
 centred on X, front face at Y = 0 — so assembly is composition and the tests
@@ -43,10 +41,10 @@ can check heights against the docs' table directly.
 
 `face.py` does not restate the hole schedule. It reads
 `pi/dashboard/panel_geometry.py` — the same module the `/panel` emulator
-draws from — and `plinth.py` cuts the front panel's pocket and opening from
-the same numbers. The acrylic that gets cut, the hole it sits in, the
-emulator on the dashboard, and the schedule in the docs are one set of
-numbers.
+draws from — and `params.py` sizes the face opening and the fascia band from
+the same `FACE_WIDTH` and `FACE_HEIGHT`. The plate that gets cut, the opening
+it sits in, the emulator on the dashboard, and the schedule in the docs are
+one set of numbers.
 
 ## What is deliberately not modelled
 
@@ -98,11 +96,6 @@ glass:
   of its members. Legs, ring, mast, fixture arm and case are one black
   register; the ply body is the other.
 
-`GROWLAB_FRAME=0` puts it back on a recessed plinth and `GROWLAB_FASCIA=0`
-rebuilds the plain box, both for the record; `python cad/viewer.py` builds
-all three. The lift, the shelf and the block do not move between them, which
-`test_cad_forms.py` asserts.
-
 ## Looking at it
 
 `viewer.html` (in `cad/out/` and in the CI artifact) is the model in a
@@ -131,21 +124,44 @@ Send the STEP alongside so they can develop it their own way if they prefer.
 
 ## Into Fusion
 
-STEP is tagged in millimetres and built at true size; the sync script sets
-the document units to inches so dimensions read as the docs give them. Parts
-arrive as named components. The front panel, the face and the door are flat
-plates in place; lay them out for the laser or the saw from there.
+STEP is tagged in millimetres and built at true size; set the document units
+to inches after import so dimensions read as the docs give them. Nothing is
+scaled. Parts arrive as named components (`carcass_shell`,
+`front_panel_removable`, `rear_door_wet_bay`, …). The front panel, the plate
+and the door are flat plates in place; lay them out for the laser or the saw
+from there.
 
-The loop — a Fusion project with the import as a versioned design, a
-separate finishing design that links it, and a script that turns "new
-artifact" into "new version" — is in `fusion/README.md`.
+Import the STEP from the CI artifact as a design of its own and never edit
+that design by hand — it is the import target. Do the finishing work in a
+separate design that **links** it (right-click the import in the Data Panel →
+*Insert into Current Design*), so a rebuild from code replaces the import
+without touching your work. Re-importing under the same name in the same
+folder records a new version, and the linked copy offers *Get Latest*.
+
+### What survives an update and what does not
+
+Fusion re-derives the linked component from the new STEP. Anything **inside**
+that component is replaced. Anything in the finishing design that references
+the import by **joint or position** survives. Features that reference the
+import's **faces** — a fillet on an imported edge, a sketch projected from an
+imported face — may lose their reference when the underlying geometry
+changes, and Fusion flags them yellow. So:
+
+- **Do in code:** anything dimensional, anything that has to stay true to the
+  docs, anything you would want re-derived when a parameter moves. Hole
+  schedules, notches, pockets, clearances. Ask and it moves.
+- **Do in Fusion:** what has no parameter — cosmetic fillets, the choice of
+  hinge, hardware from McMaster, the drawing sheets, the CAM setups. Attach
+  by joint to the linked import, not by feature on it.
+- **When a parameter needs to move**, say so rather than dragging a face: a
+  dragged face in the finishing file is a second source of truth, and the
+  next update overwrites it anyway.
 
 ## Tests
 
 `test_cad_params.py` holds `params.py` against the docs' height table with no
-kernel needed, and checks every emulator layout's elements clear the front
-panel's lip. `test_cad_geometry.py` builds every part and asserts where it
-sits, that nothing fabricated interferes, that no reference envelope meets a
-fabricated part, that the pan sweeps straight out through the rear door, that
-the face reads the panel geometry, and that the dial is a witness mark until a
-cut is supplied. It skips cleanly without build123d.
+kernel needed, and checks every emulator layout's knobs land inside the fascia
+band. `test_cad_geometry.py` builds every part and asserts where it sits, that
+nothing fabricated interferes, that the pan sweeps straight out through the
+rear door, that the face reads the panel geometry, and that the dial is a
+witness mark until a cut is supplied. It skips cleanly without build123d.

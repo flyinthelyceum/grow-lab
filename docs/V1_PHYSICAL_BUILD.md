@@ -3,7 +3,7 @@
 ## Objective
 
 Move the working bench prototype into a real, planted object: one cinder-block
-vessel, a runoff-to-tray drip loop off a bucket reservoir, the full sensor stack
+vessel, a runoff-to-tray drip loop off a stainless pan reservoir, the full sensor stack
 online, lights on a photoperiod, camera pointed. Get something growing, then refine
 and align with the final concept.
 
@@ -17,10 +17,11 @@ Visual companion (layout, harness, plumbing): the build-map artifact —
 
 - **Standard CMU (cinder block).** The block's own center web divides the two cores —
   no divider to build. Corm 1 (Julia) in one core, corm 3 (Jared) in the other.
-- **Seal / line each core.** Raw CMU leaches lime and drives pH sharply alkaline,
-  hostile to the reservoir and the plant. Line with food-safe pond liner or planter
-  inserts so media and roots never touch bare cement. The seal is invisible; the
-  block stays honest.
+- **Seal each core — no liners.** Raw CMU leaches lime and drives pH sharply alkaline,
+  hostile to the reservoir and the plant. Leach the block, then coat the core interiors
+  with a potable-rated epoxy so media and roots never touch bare cement. See *Note on the
+  cores* below for the product and the method. The seal is invisible; the block stays
+  honest.
 - **Media:** coco coir + perlite. Mesh screen over each drain hole.
 
 ## Water loop (runoff-to-tray, no recirculation)
@@ -44,7 +45,7 @@ See "Station geometry" below for the resolved heights.
    Holds solution, pump, and the pH / EC / water-temp probes. Small volume: pH/EC swing
    faster, top-off more often. Fine for one CMU. Probes sit in **still water** — off the
    walls and out of the pump's turbulence, which also avoids any fringe effect from the
-   metal vessel. Do not bond the pan to ground; the EZO isolators already handle stray
+   metal vessel. Do not bond the pan to ground; the i3's isolated EZO slots already handle stray
    voltage paths.
 2. **Lift** — SICCE Micra Plus, submersible. Read its curve, not its headline: **158 GPH
    at zero head, 0 GPH at 2.8 ft** (its shutoff). Like most aquarium pumps it is
@@ -67,7 +68,7 @@ See "Station geometry" below for the resolved heights.
    drops and lift grows — design for nearly-empty.
 3. **Filter** — inline, on the lift side, before the emitters (reservoir feed carries
    particulates that clog drippers).
-4. **Bypass** — tee + small valve returning **unused solution** to the bucket. Its job is
+4. **Bypass** — tee + small valve returning **unused solution** to the pan. Its job is
    to stop the pump deadheading against two tiny orifices, not to "tame" flow — the
    emitters already limit delivery. Bypassed feed never touches media, so this is not
    recirculation. Open it only as far as the pump needs; every PSI bled is one you do not
@@ -92,7 +93,7 @@ a real consideration for a gallery piece, where the submersible is near-silent).
 
 ## Station geometry (console layout, 2026-09-04)
 
-Model: `cad/` (build123d → STEP); elevations in the `growlab-v1-station-cad` CI artifact.
+Model: `cad/` (build123d → STEP); `viewer.html` in the `growlab-v1-station-cad` CI artifact.
 Supersedes the mast-and-head layout of 2026-09-03 (section drawing
 `https://claude.ai/code/artifact/fe1e9c0e-2688-4afb-bc32-4b36c4d76261`), kept for the record.
 
@@ -173,7 +174,7 @@ reached the same way. The face itself is removable on its own (F1–4) for the i
 - **The block sits above its own runoff** on 0.75 in pads. Standing in it wicks salts back
   up and defeats the point of runoff-to-tray.
 - **No glued-on grate.** Media is retained by the mesh over each core's drain hole, inside
-  the liner. Runoff falls clear; lift the tray straight out and nothing moves. An adhesive
+  the sealed core. Runoff falls clear; lift the tray straight out and nothing moves. An adhesive
   joint in a permanently wet salty seam would fail anyway.
 - Size for the worst case: a full `max_runtime_seconds` pulse, not a normal event.
 
@@ -287,14 +288,14 @@ is emulated at `/panel`.
 
 ## Power domains
 
-Adding the fan adds a **12V rail** — a small buck off the 24V LED supply, or a
+Adding the fan adds a **12V rail** — the fan's own 12V adapter, or a
 dedicated 12V PSU. The domains are:
 
 | Domain | Source | Loads |
 |--------|--------|-------|
-| Mains | GFCI outlet | PWM-120-24, 5V PSU (and 12V PSU if not bucked) |
+| Mains | GFCI outlet | PWM-120-24, 5V PSU, 12V fan adapter |
 | 24V | PWM-120-24 | LED boards **only** |
-| 12V | buck from 24V, or 12V PSU | Noctua fan |
+| 12V | 12V adapter | Noctua fan |
 | 5V | Pi PSU | Pi, ESP32, relay board logic |
 | 3.3V | Pi / ESP32 regulators | sensors |
 
@@ -306,16 +307,17 @@ slice behind the instrument face, partitioned from the wet bay.
 - **In front of the water, never over it** — the partition is the wet/dry line, and the
   console bay's vents are on the far side from the wet bay's.
 - **Cable glands** on every penetration; drip loops on all external cables.
-- **Mains and DC/signal separated** inside; keep EZO isolator leads clean.
+- **Mains and DC/signal separated** inside; keep the EZO probe leads clean.
 - **Ventilation** for PSU + LED-driver heat, drawn away from the wet zone.
-- Houses: Raspberry Pi, ESP32, relay board, PSU (5V), 12V buck, PWM-120-24 driver,
+- Houses: Raspberry Pi, ESP32, relay board, PSU (5V), 12V fan adapter, PWM-120-24 driver,
   meter driver — behind the face and below it; the dry bay behind the partition takes
   what does not fit beside the mast.
 
 ## Electrical constraints
 
-- **Isolate the EZO probes.** Inline voltage isolator on each of pH and EC — the EC
-  circuit corrupts pH in shared water. Pump/solenoid grounds off the sensor path.
+- **Isolate the EZO probes.** pH and EC seat in the i3 InterLink's two isolated slots —
+  the EC circuit corrupts pH in shared water. Pump/solenoid grounds off the sensor path.
+  **Seating is unverified — confirm before go-live.**
 - **Atlas EZO boards ship in UART mode** — switch to I²C before putting them on the bus.
 - **Inky e-ink likely carries an EEPROM at ~0x50** (free in the current I²C map) —
   verify on the bus before assigning that address to anything else.
@@ -346,7 +348,7 @@ pressure-compensating emitters x2, bypass tee + throttle valve, measuring jugs.
       freely, fine enough to hold perlite; a layer of coarse perlite at the bottom of each
       core does the real filtering. Stainless so it does not corrode in nutrient solution.
 - [ ] **Acrylic stock** for the instrument enclosure (fabricate in-house).
-- [ ] **Fish-safe / aquarium-grade epoxy sealer** for the core interiors — see note below.
+- [ ] **PPG AquataPoxy A-6**, 1 qt kit (~$91) — potable-rated core sealer, see note below.
       No liners.
 - [ ] Standard CMU (cinder block)
 - [ ] Coco coir + perlite
@@ -384,10 +386,19 @@ legible. Two steps, in order:
    for half an hour, then flush repeatedly with water over a week or two — several rinses a
    day. This pulls out the bulk of the free lime and surface alkalinity. Free, and it works
    on the whole block rather than a coating.
-2. **Then seal the core interiors** with a **fish-safe / aquarium-grade epoxy paint** — the
-   pond-and-aquarium standard, and the option specifically recommended for concrete beds
-   growing edibles. A raw, solvent-free linseed oil is the natural alternative: it
-   penetrates and hardens slowly, but it is a slower, softer barrier.
+2. **Then seal the core interiors** with **PPG AquataPoxy A-6** (1 qt kit, ~$91) — NSF/ANSI
+   61 potable-water rated and, unusually, rated for application to *damp* concrete, which
+   matters here because the leach in step 1 leaves the block saturated for weeks. Two coats
+   over both cores, the drain-hole edges and the underside; ~8 h cure between coats.
+   *Alternate:* Pond Armor Pond Shield (1.5 qt, ~$90) — colour-matched, but it needs an acid
+   etch and a genuinely dry substrate, so it fights step 1.
+
+   **Cloth liners were evaluated and rejected.** Fabric pots that drop into a CMU core do
+   exist (247Garden 1.5 gal square, 8 × 7 in, food-safe, ~$0.25). But cloth is a filter, not
+   a barrier: it does nothing about lime leaching, and the air-pruning that justifies fabric
+   pots is void when the fabric is pressed against damp concrete instead of air. It also
+   leaves the block wicking, which puts efflorescence on the visible face of a piece whose
+   whole point is that the block reads as block.
 
 **The existing gate still validates it.** Stage 2's wet test — 24 h with the filled block,
 runoff pH compared against a plain-water control, within ~0.3 — tests whatever method you
@@ -419,7 +430,6 @@ use. Fail it and leach longer or add a second coat before planting.
   happy with folded corners or wants them welded.
 - **Fascia edge finish.** Polished or flame-polished edges on the acrylic, and whether the
   two knob holes want a chamfer.
-- 12V rail: buck off 24V vs. separate PSU (buck is one fewer mains cord).
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;
   otherwise right-size the pump.
 - **Irrigation dose must be measured, not derived.** Two small emitters on a low-pressure
@@ -436,31 +446,5 @@ use. Fail it and leach longer or add a second coat before planting.
 
 ## Revision log
 
-- **2026-09-04** — **Fabrication pack** (`cad/out/fab/`): plate, case development, fascia
-  and backplate as DXFs in inches, plus a cut list for ply, steel, sheet and glazing. Two
-  gaps the drawings exposed and closed: the plate had nothing to screw into (case return
-  flanges, side walls only) and the fascia had no fixing (ply header + ledge, two screw
-  rows). Dials ship as scribe rings until the Weston bezels are calipered.
-- **2026-09-04** — Cabinet height decided at **36** from the browser viewer. Design pass
-  opened: two form candidates in the model (instrument fascia + chamfers; steel base frame
-  with the mast as a leg), switchable, all four combinations in the viewer.
-- **2026-09-04** — **Fascia decided, materials inverted:** clear acrylic band over an open
-  console bay; the instrument becomes a removable black aluminium case behind it, its plate
-  carrying the hole schedule; a dark backplate and the loom in view. Reference: the
-  Transparent speaker.
-- **2026-09-04** — **Steel base frame decided.** The cabinet floats 6 in on a welded 1 x 1
-  frame whose legs are inset an inch so it overhangs, and the mast runs to the floor as one
-  of that frame's members. Legs, ring, mast, fixture arm and the instrument case are one
-  black register; the ply body is the other. **Form is settled**; what remains is
-  fabrication detail and the pending measurements.
-- **2026-09-04** — Console layout. The instrument panel moves from a head on the mast into
-  the cabinet's front face; doors move to the rear; the cabinet grows to 20 x 16 x 36 (tray
-  floor). Reservoir behind the console bay on a shelf at 28, lift **13 in** (was 17); mast
-  as drawn, in the dry bay, fixture-only. Resolves the 2026-09-03 depth conflict found by
-  the CAD (pan + mast did not fit 14 in). Modelled in `cad/`.
-- **2026-09-02** — LED two-board budget measured and closed: 0.72 A per board at 24 V,
-  ~33 W for the pair, comfortably inside the PWM-120-24.
-- **2026-09-02** — v1 is runoff-to-tray (recirculation deferred). Pump tamed with
-  lowest-flow + bypass + pressure-compensating emitters + short pulses. Fan moves from
-  GPIO6 relay to GPIO18 25 kHz PWM on a new 12V rail. Doc-scan constraints (probe
-  placement, LED heatsink, EZO UART→I²C, e-ink EEPROM) folded into the sections above.
+See [CHANGELOG.md](../CHANGELOG.md) — it is longer, more specific, and records the
+rejected alternatives this log omitted.

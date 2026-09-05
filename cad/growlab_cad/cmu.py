@@ -34,14 +34,3 @@ def build() -> Part:
         # Through both faces, so the cutter is taller than the block.
         block -= box(core_l, core_w, P.CMU_H + 1.0, at=(cx, cy, P.CMU_UNDERSIDE_Z - 0.5))
     return labelled(block, "cmu_vessel")
-
-
-def media() -> Part:
-    """The coco/perlite fill, to the documented surface — reference only."""
-    core_l, core_w = core_size()
-    height = P.MEDIA_SURFACE_Z - P.CMU_UNDERSIDE_Z
-    fill = None
-    for cx, cy in core_centres():
-        m = box(core_l, core_w, height, at=(cx, cy, P.CMU_UNDERSIDE_Z))
-        fill = m if fill is None else fill + m
-    return labelled(fill, "media_reference")

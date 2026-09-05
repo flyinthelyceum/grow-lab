@@ -39,14 +39,11 @@ class SerialConfig:
 class InstallationConfig:
     node_id: str = "growlab-node"
     fixture_id: str = ""
-    fixture_model: str = ""
-    sensor_board_id: str = ""
 
 
 @dataclass(frozen=True)
 class SensorEntry:
     address: int = 0
-    gpio: int = 0
     interval_seconds: int = 120
     enabled: bool = True
 
@@ -63,7 +60,7 @@ class SensorsConfig:
         default_factory=lambda: SensorEntry(address=0x64, interval_seconds=300)
     )
     ds18b20: SensorEntry = field(
-        default_factory=lambda: SensorEntry(gpio=4, interval_seconds=120)
+        default_factory=lambda: SensorEntry(interval_seconds=120)
     )
     soil_moisture: SensorEntry = field(
         default_factory=lambda: SensorEntry(address=0x48, interval_seconds=300)
@@ -93,7 +90,6 @@ class IrrigationScheduleEntry:
 
 @dataclass(frozen=True)
 class LightingConfig:
-    mode: str = "veg"
     on_hour: int = 6
     off_hour: int = 22
     intensity: int = 200
@@ -174,13 +170,6 @@ class DisplayConfig:
 
 
 @dataclass(frozen=True)
-class CalibrationConfig:
-    enabled: bool = False
-    profile_dir: Path = field(default_factory=lambda: Path("config") / "calibration")
-    active_profile: str = ""
-
-
-@dataclass(frozen=True)
 class WebhookConfig:
     """Outbound alert delivery.
 
@@ -197,28 +186,6 @@ class WebhookConfig:
 
 
 @dataclass(frozen=True)
-class EmailConfig:
-    enabled: bool = False
-    smtp_host: str = ""
-    smtp_port: int = 587
-    smtp_user: str = ""
-    smtp_password: str = ""
-    use_tls: bool = True
-    from_address: str = ""
-    to_addresses: tuple[str, ...] = ()
-
-    def __repr__(self) -> str:
-        masked = "***" if self.smtp_password else ""
-        return (
-            f"EmailConfig(enabled={self.enabled!r}, smtp_host={self.smtp_host!r}, "
-            f"smtp_port={self.smtp_port!r}, smtp_user={self.smtp_user!r}, "
-            f"smtp_password={masked!r}, use_tls={self.use_tls!r}, "
-            f"from_address={self.from_address!r}, "
-            f"to_addresses={self.to_addresses!r})"
-        )
-
-
-@dataclass(frozen=True)
 class NotificationConfig:
     """Outbound alerting.
 
@@ -229,7 +196,6 @@ class NotificationConfig:
     """
 
     webhook: WebhookConfig = field(default_factory=WebhookConfig)
-    email: EmailConfig = field(default_factory=EmailConfig)
     cooldown_seconds: int = 300
     muted_sensors: tuple[str, ...] = ()
 
@@ -249,7 +215,6 @@ class SecurityConfig:
     session_secret_key: str = ""
     session_max_age_seconds: int = 86400 * 7  # 1 week
     rate_limit_default: str = "60/minute"
-    rate_limit_admin: str = "10/minute"
     log_requests: bool = True
     log_user_agents: bool = True
 
@@ -262,7 +227,6 @@ class SecurityConfig:
             f"session_secret_key={masked_sk!r}, "
             f"session_max_age_seconds={self.session_max_age_seconds!r}, "
             f"rate_limit_default={self.rate_limit_default!r}, "
-            f"rate_limit_admin={self.rate_limit_admin!r}, "
             f"log_requests={self.log_requests!r}, "
             f"log_user_agents={self.log_user_agents!r})"
         )
@@ -299,6 +263,5 @@ class AppConfig:
     meters: MetersConfig = field(default_factory=MetersConfig)
     control: ControlConfig = field(default_factory=ControlConfig)
     display: DisplayConfig = field(default_factory=DisplayConfig)
-    calibration: CalibrationConfig = field(default_factory=CalibrationConfig)
     notifications: NotificationConfig = field(default_factory=NotificationConfig)
     security: SecurityConfig = field(default_factory=SecurityConfig)

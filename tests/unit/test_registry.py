@@ -117,8 +117,6 @@ class TestBuildRegistry:
         MockDriver.assert_called_once_with(
             bus_number=1,
             address=0x39,
-            ppfd_estimator=None,
-            node_id="growlab-node",
         )
 
     def test_bme280_init_failure(self):

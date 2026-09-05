@@ -243,18 +243,6 @@ class TestAlertsEndpoint:
         assert all(d["event_type"].startswith("alert_") for d in data)
 
 
-class TestAlertRulesEndpoint:
-    async def test_rules_returns_defaults(self, client):
-        response = await client.get("/api/alerts/rules")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 4
-        assert data[0]["sensor_id"] == "bme280_temperature"
-        assert "warning_low" in data[0]
-        assert "critical_high" in data[0]
-        assert data[0]["label"] == "Air"
-
-
 class TestFanStatusEndpoint:
     async def test_fan_status_no_temp(self, client, mock_repo):
         mock_repo.get_latest.return_value = None
@@ -281,7 +269,6 @@ ADMIN_PASSWORD = "test-admin-password"
 ADMIN_SECURITY_CONFIG = SecurityConfig(
     admin_password_sha256=hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest(),
     session_secret_key="x" * 48,
-    rate_limit_admin="1000/minute",  # keep slowapi out of the way of assertions
 )
 
 
@@ -388,82 +375,12 @@ class TestFanOverrideEndpoint:
         mock_repo.set_control.assert_not_awaited()
 
 
-class TestMeterOverrideEndpoint:
-    def _app(self, mock_repo):
-        return create_app(mock_repo, security_config=ADMIN_SECURITY_CONFIG)
-
-    async def test_pin_a_needle(self, mock_repo):
-        from pi.services.control import METER_PH_OVERRIDE
-
-        mock_repo.set_control.return_value = _entry(
-            METER_PH_OVERRIDE, "0.5", expires_in=3600
-        )
-        async with _admin_client(self._app(mock_repo)) as client:
-            response = await client.post(
-                "/api/meters/override", json={"meter": "ph", "deflection": 0.5}
-            )
-
-        assert response.status_code == 200
-        assert response.json()["deflection"] == 0.5
-        assert response.json()["meter"] == "ph"
-        assert mock_repo.set_control.await_args.args[0] == METER_PH_OVERRIDE
-
-    async def test_ec_routes_to_its_own_key(self, mock_repo):
-        from pi.services.control import METER_EC_OVERRIDE
-
-        mock_repo.set_control.return_value = _entry(METER_EC_OVERRIDE, "-1.0")
-        async with _admin_client(self._app(mock_repo)) as client:
-            await client.post(
-                "/api/meters/override", json={"meter": "ec", "deflection": -1.0}
-            )
-        assert mock_repo.set_control.await_args.args[0] == METER_EC_OVERRIDE
-
-    async def test_release_to_auto(self, mock_repo):
-        from pi.services.control import METER_PH_OVERRIDE
-
-        mock_repo.clear_control.return_value = _entry(METER_PH_OVERRIDE, None)
-        async with _admin_client(self._app(mock_repo)) as client:
-            response = await client.post(
-                "/api/meters/override", json={"meter": "ph", "mode": "auto"}
-            )
-        assert response.status_code == 200
-        assert response.json()["mode"] == "auto"
-        assert mock_repo.clear_control.await_args.args[0] == METER_PH_OVERRIDE
-
-    async def test_deflection_out_of_range_rejected(self, mock_repo):
-        async with _admin_client(self._app(mock_repo)) as client:
-            response = await client.post(
-                "/api/meters/override", json={"meter": "ph", "deflection": 2.0}
-            )
-        assert response.status_code == 422
-
-    async def test_unknown_meter_rejected(self, mock_repo):
-        async with _admin_client(self._app(mock_repo)) as client:
-            response = await client.post(
-                "/api/meters/override", json={"meter": "humidity", "deflection": 0.0}
-            )
-        assert response.status_code == 422
-
-    async def test_unauthenticated_is_rejected(self, mock_repo):
-        transport = ASGITransport(app=self._app(mock_repo))
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.post(
-                "/api/meters/override", json={"meter": "ph", "deflection": 0.5}
-            )
-        assert response.status_code == 401
-        mock_repo.set_control.assert_not_awaited()
-
-
 class TestControlStateEndpoint:
     async def test_unset_controls_read_auto(self, client):
         response = await client.get("/api/control")
         assert response.status_code == 200
         controls = response.json()["controls"]
-        assert set(controls) == {
-            "fan.override_duty",
-            "meters.ph.override",
-            "meters.ec.override",
-        }
+        assert set(controls) == {"fan.override_duty"}
         assert all(c["mode"] == "auto" for c in controls.values())
 
     async def test_live_override_reads_manual(self, client, mock_repo):

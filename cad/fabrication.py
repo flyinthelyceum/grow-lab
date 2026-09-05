@@ -8,7 +8,6 @@ Outputs
 fab/plate.dxf          the instrument plate, 1/8 aluminium, full hole schedule
 fab/case_body.dxf      the case's flat development, 16 ga, with bend lines
 fab/fascia.dxf         the clear acrylic band
-fab/backplate.dxf      the console backplate
 fab/cutlist.md         ply panels, frame members, sheet and bought stock
 fab/cutlist.json       the same, for anything that wants to read it
 fab/README.md          what each file is and how to read it
@@ -207,11 +206,6 @@ def fascia_flat() -> Sketch:
     return sk
 
 
-def backplate_flat() -> Sketch:
-    bz0, bz1 = plinth._fascia_band()
-    return rect(P.INSIDE_X1 - P.INSIDE_X0, bz1 - bz0, (0, 0))
-
-
 # ---------------------------------------------------------------------------
 # The cut list — what to buy and saw, from the same parameters.
 # ---------------------------------------------------------------------------
@@ -291,7 +285,7 @@ def cutlist() -> dict:
              "note": "6 bends; see the drawing"},
             {"part": "Console backplate", "material": f"{P.BACKPLATE_T} sheet, black",
              "blank": [P.INSIDE_X1 - P.INSIDE_X0, plinth._fascia_band()[1] - plinth._fascia_band()[0]],
-             "file": "backplate.dxf"},
+             "note": "plain rectangle, no DXF — the blank is the part"},
             {"part": "Fascia", "material": f"{P.FASCIA_T} clear cast acrylic",
              "blank": [fm["w"], fm["h"]], "file": "fascia.dxf",
              "note": "cast, not extruded"},
@@ -331,7 +325,7 @@ def cutlist_markdown(data: dict) -> str:
             "| Part | Material | Blank | File | Note |", "|---|---|---|---|---|"]
     for r in data["sheet"]:
         out.append(f"| {r['part']} | {r['material']} | {r['blank'][0]:.3f} × {r['blank'][1]:.3f} "
-                   f"| {r['file']} | {r.get('note', '')} |")
+                   f"| {r.get('file', '—')} | {r.get('note', '')} |")
 
     out += ["", "## Not on this list — measure first", ""]
     out += [f"- {p}" for p in data["pending"]]
@@ -348,7 +342,6 @@ model. If a number here disagrees with the STEP, the STEP is stale — rebuild.
 | `plate.dxf` | Instrument plate, {plate_t} aluminium. Hole schedule from `panel_geometry.py`. |
 | `case_body.dxf` | Case body flat, 16 ga. Blank {cbw:.3f} × {cbh:.3f}, six bends. |
 | `fascia.dxf` | Clear cast acrylic band, {fascia_t}. Two knob holes, ten fixings. |
-| `backplate.dxf` | Console backplate, {bp_t} sheet. |
 | `cutlist.md` | Ply, steel, sheet and glazing, with quantities. |
 
 **Units: inches, 1:1.** The exporter tags the unit but does not convert, so
@@ -386,7 +379,6 @@ def main(argv: list[str] | None = None) -> int:
     _write(args.out / "case_body.dxf", body, bend=bends)
 
     _write(args.out / "fascia.dxf", fascia_flat())
-    _write(args.out / "backplate.dxf", backplate_flat())
 
     data = cutlist()
     (args.out / "cutlist.json").write_text(json.dumps(data, indent=2))
@@ -394,7 +386,7 @@ def main(argv: list[str] | None = None) -> int:
 
     m = case_metrics()
     (args.out / "README.md").write_text(PACK_README.format(
-        plate_t=P.PLATE_T, fascia_t=P.FASCIA_T, bp_t=P.BACKPLATE_T,
+        plate_t=P.PLATE_T, fascia_t=P.FASCIA_T,
         cbw=m["blank_w"], cbh=m["blank_h"],
     ))
 

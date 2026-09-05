@@ -4,10 +4,11 @@ How code gets from `main` onto the Pi.
 
 ## The problem this solves
 
-The Pi is not reachable from anywhere but the LAN. The Cloudflare tunnel
-publishes HTTP to the dashboard and nothing else — no SSH, deliberately. So a
-Claude Code session, or anyone not standing next to the box, can read
-`grow.aaand.space` but cannot deploy to it.
+The Pi is reachable — `ssh jared@100.77.46.126` over Tailscale, from Jared's
+Mac or iPhone on the same mesh. What it is not reachable by is anyone else: the
+Cloudflare tunnel publishes HTTP to the dashboard and nothing else, no SSH,
+deliberately. So deploying by hand means one person, holding a key, at a
+keyboard with a working tailnet.
 
 Before this, every merge needed someone to walk over and type:
 
@@ -15,8 +16,9 @@ Before this, every merge needed someone to walk over and type:
 cd ~/grow-lab && git pull && sudo systemctl restart growlab growlab-dashboard
 ```
 
-That is still the manual fallback, and it still works. The runner just means
-nobody has to.
+That is still the manual fallback, and it still works. The runner means nobody
+has to hold a key or be at a keyboard: a deploy becomes a fixed, reviewed set of
+steps, gated on tests and recorded in the Actions history.
 
 ## How it works
 
@@ -54,8 +56,8 @@ being merged or clobbered.
 If the working tree at `/home/jared/grow-lab` is dirty, the deploy stops and
 tells you. `config.toml` and `.venv` are gitignored so they never trip this —
 anything that does show up is a hand edit made on the box, and silently
-discarding it on a machine nobody can shell into is how you lose a fix made at
-2am during a bring-up.
+discarding it — in an automated run with nobody watching — is how you lose a fix
+made at 2am during a bring-up.
 
 Fix it on the Pi (commit, stash or discard), then re-run the workflow.
 
@@ -146,13 +148,28 @@ and the commit subject.
 
 ## Running things on the Pi: `Pi Inspect`
 
-`.github/workflows/pi-inspect.yml` exposes a fixed menu of operations on the
-box — git state, service status, journals, disk, sensor and meter CLI
-commands, the test suite, a service restart. Actions tab → *Pi Inspect* → *Run
-workflow* → pick one.
+`.github/workflows/pi-inspect.yml` exposes a fixed menu of thirteen operations
+on the box. Actions tab → *Pi Inspect* → *Run workflow* → pick one.
 
-It exists because the runner is the only way onto the Pi, and reading state
-should not require someone standing at the keyboard.
+- `git-status` — branch and head, the last 25 commits, the diff of modified
+  tracked files, and untracked files. One operation, because in practice you
+  want all four at once.
+- `git-unpushed` — commits made on the box that `origin` has never seen, with
+  their patches. The runner is read-only and the Pi holds no key that can push,
+  so work committed there is stranded until someone reads it out.
+- `services` — `growlab`, `growlab-dashboard` and the runner unit.
+- `logs-orchestrator`, `logs-dashboard` — the last 200 journal lines of each.
+- `disk` — filesystems, the largest things under `$HOME`, the databases.
+- `sensor-scan`, `sensor-status`, `ph-slope`, `meter-status` — the CLI.
+- `control-state` — the live `/api/control` and `/api/meters/status` payloads.
+- `pytest` — the suite, against the deployed tree.
+- `restart-services` — restart both units and report health. The only operation
+  that acts on the machine rather than reporting on it.
+
+It exists because it is a bounded, audited path onto the box. The Pi *is*
+reachable — `ssh jared@100.77.46.126` over Tailscale — but that wants a key and
+a working tailnet on whatever is in your hand. The Actions tab wants a browser,
+and it records who asked for what.
 
 **It is a `choice` input, not a command string, and that is the whole design.**
 A workflow taking an arbitrary command would be remote code execution on a
@@ -166,19 +183,6 @@ only so a merge never triggers it, running as `jared` rather than root with
 sudo still limited to the two units by `/etc/sudoers.d/growlab-runner`,
 `contents: read` so the token cannot write, and every dispatch recorded in the
 Actions history with the operation and who asked for it.
-
-`unblock-deploy` is the one operation that changes the working tree, and it
-does two enumerated things:
-
-- Deletes six named stale files, refusing any that turn out to be tracked.
-- Restores `deploy/push-dashboard.sh` and `deploy/recover-dashboard.sh` **only
-  if their diff is still mode-only**, refusing if content has changed since.
-
-Both lists are written out, so neither can be repurposed into a general delete
-or a general discard. The mode-only re-check matters: the observation that made
-discarding safe was made at a point in time, not a property of the files, and
-discarding a real edit on a box nobody can shell into is the failure worth
-guarding against.
 
 ## Concurrency is scoped to the deploy job, deliberately
 

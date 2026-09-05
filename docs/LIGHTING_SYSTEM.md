@@ -128,10 +128,51 @@ Flowering plants
 
 Exact intensity values may be adjusted experimentally.
 
-For installed GrowLab nodes, the runtime software can estimate PPFD from the
-fixed-position AS7341 using a fixture-specific commissioning profile. This is
-intended for repeatable operation and education, not as a universal research
-instrument.
+For installed GrowLab nodes, PPFD can be estimated from the fixed-position
+AS7341 using a fixture-specific bench commissioning — see **AS7341 PPFD
+Commissioning** below. It is intended for repeatable operation and education,
+not as a universal research instrument.
+
+---
+
+# AS7341 PPFD Commissioning
+
+The upward-facing AS7341 reports raw spectral counts, not PPFD. Turning counts into a µmol/m²/s figure takes a **fixture-specific bench commissioning** against a borrowed PAR meter. The goal is a consistent, repeatable, inspectable estimate for a school demo — not a laboratory instrument. "Good enough" is: the estimate tracks dimmer changes smoothly, repeats close to itself at the same setup, and holds RMSE under ~20 µmol/m²/s with median absolute error under ~15. Commissioning targets, not certification limits.
+
+## Fix the geometry first
+
+The housing, diffuser and shroud are part of the calibration condition.
+
+• mount the AS7341 in its final installed position, upward-facing  
+• fit the final diffuser and shroud, and leave them fitted afterwards  
+• fixed standoff height and a repeatable canopy reference plane  
+• no loose or rotating sensor board, no cable strain twisting it  
+• do not commission on a breadboard and then run it inside a housing  
+
+## Hold the sensor settings fixed
+
+Set the AS7341 gain, integration time and `astep` before the first capture and do not touch them again — not mid-session, not afterwards. Changing them invalidates the result as surely as moving the sensor.
+
+## PAR meter placement and capture grid
+
+Put the PAR meter head at the canopy reference plane and keep it in that same plane for every point. Warm the fixture 2–3 minutes before the first capture, let the light settle briefly at each step, and use a dark cloth to cut stray room light.
+
+A practical bench grid, not a lab marathon:
+
+• dimmer levels: 20, 35, 50, 65, 80, 100 %  
+• three fixture-to-canopy distances  
+• centre position, optionally one or two lateral offsets  
+• **18–30 points total**, averaging ~5 sensor reads per point  
+
+Record per point: dimmer %, distance, lateral offset, gain/integration, the PAR meter reading, and the ten AS7341 channels.
+
+## Hold-out split
+
+Reserve **4–6 points as held-out validation** and fit on the rest. Judge the fit on the held-out rows — RMSE, MAE, median absolute error, R², residual range. Reject a fit with wild low-light residuals or a non-monotonic response to dimmer level even if one headline metric looks good. If a single point looks obviously wrong, retake it rather than trusting luck.
+
+## Recommission when anything optical changes
+
+Fixture model or replacement, fixture height range or installed geometry, diffuser, shroud, sensor placement or orientation, or the AS7341 gain and integration settings. Also after visible fixture aging, or a long downtime with unknown mechanical changes.
 
 ---
 
@@ -200,20 +241,6 @@ A canopy fan provides gentle horizontal airflow to:
 • reduce fungal risk
 
 Lighting and airflow should always be considered together.
-
----
-
-# Future Lighting Expansion
-
-Future system versions may include:
-
-• multiple lighting zones  
-• independent bin lighting control  
-• supplemental red spectrum LEDs  
-• spectral experimentation  
-• automated PPFD regulation
-
-However, the V0 system intentionally remains simple to validate the core biological and technical architecture.
 
 ---
 

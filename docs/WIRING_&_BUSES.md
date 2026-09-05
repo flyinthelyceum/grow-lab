@@ -32,7 +32,7 @@ AC Mains
 → LED Driver  
 → Raspberry Pi Power Supply  
 → Pump Power Supply  
-→ 12V fan rail (buck from the 24V LED supply, or a 12V PSU)  
+→ 12V fan rail (the fan's own 12V adapter)  
 
 Raspberry Pi  
 → I²C Bus (BME280 + Atlas sensors)  
@@ -57,7 +57,7 @@ Used for:
 • LED driver input  
 • Raspberry Pi power supply  
 • pump power supply  
-• 12V fan PSU (only if the fan rail is not bucked from 24V)  
+• 12V fan adapter  
 
 Guidelines:
 
@@ -104,15 +104,12 @@ Keep these wires separate from pump and lighting wiring.
 
 The Noctua canopy fan is a 12V, 4-pin PWM part (~0.06A).
 
-Power path (preferred):
+Power path:
 
-24V (PWM-120-24 output) → small buck module → 12V → fan +12V / GND
-
-Alternative: a dedicated 12V wall PSU.
+12V wall adapter → fan +12V / GND
 
 Guidelines:
 
-• the buck taps the LED driver's 24V output only; it must not back-feed the dimming input  
 • fan GND must share a common ground with the Pi so the PWM signal has a reference  
 • the fan's PWM input is a 3.3V-tolerant logic line — do not put 12V on it  
 
@@ -154,12 +151,16 @@ The I²C bus connects environmental sensors and the status display.
 
 Devices on the bus:
 
-• BME280 (temperature + humidity) — 0x76
-• SSD1306 OLED display (128x64) — 0x3C
-• Atlas EZO‑pH — 0x63 (Phase 3)
-• Atlas EZO‑EC — 0x64 (Phase 3)
-• AS7341 spectral light sensor (canopy light) — 0x39
-• ADS1115 + DFRobot SEN0308 (media moisture) — 0x48
+| Device | I²C address | Address selection | Function |
+|---|---|---|---|
+| BME280 | 0x76 | SDO→GND. SDO→VCC for 0x77 | Air temperature + humidity + pressure |
+| SSD1306 OLED (128x64) | 0x3C | SA0→GND. SA0→VCC for 0x3D | Physical status display |
+| Atlas EZO‑pH (Phase 3) | 0x63 (99 decimal) | Set via `I2C,99` during the UART→I²C mode switch | Reservoir pH |
+| Atlas EZO‑EC (Phase 3) | 0x64 (100 decimal) | Set via `I2C,100` during the UART→I²C mode switch | Reservoir EC |
+| AS7341 | 0x39 | Fixed (not configurable) | Canopy spectral light |
+| ADS1115 + DFRobot SEN0308 | 0x48 | ADDR→GND. ADDR→VDD/SDA/SCL for 0x49–0x4B | Media moisture (analog input) |
+
+No address conflicts in this configuration.
 
 Raspberry Pi pins:
 
@@ -194,7 +195,7 @@ Notes:
 • route away from pump power wires
 • Atlas EZO boards ship in UART mode — must be switched to I²C mode before use
 
-Full I²C address map: [SENSOR_STACK.md](SENSOR_STACK.md)
+This table is the full I²C address map. For what each sensor measures and how it is installed: [SENSOR_STACK.md](SENSOR_STACK.md)
 
 ---
 

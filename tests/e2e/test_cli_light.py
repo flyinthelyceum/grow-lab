@@ -19,7 +19,6 @@ data_dir = "{tmp_path}"
 db_path = "{tmp_path / 'test.db'}"
 
 [lighting]
-mode = "veg"
 on_hour = 6
 off_hour = 22
 intensity = 200
@@ -35,8 +34,6 @@ class TestLightSchedule:
         config = _make_config(tmp_path)
         result = runner.invoke(cli, ["--config", config, "light", "schedule"])
         assert result.exit_code == 0
-        assert "Mode:" in result.output
-        assert "veg" in result.output
         assert "On hour:" in result.output
         assert "Off hour:" in result.output
         assert "Intensity:" in result.output

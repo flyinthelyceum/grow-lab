@@ -59,7 +59,6 @@ def main(argv: list[str] | None = None) -> int:
         "fabricated": {n: bbox_in(p) for n, p in fab.items()},
         "reference": {n: bbox_in(p) for n, p in ref.items()},
         "interferences": assembly.interferences(fab),
-        "reference_clashes": assembly.reference_clashes(fab, ref),
         "depth_budget": {**vars(params.DEPTH), "required": params.DEPTH.required, "slack": params.DEPTH.slack},
         "heights": vars(params.HEIGHTS),
         "static_lift_in": params.HEIGHTS.static_lift,
@@ -84,13 +83,6 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {a} ∩ {b} = {v} in³")
     else:
         print("no interference between fabricated parts")
-
-    if report["reference_clashes"]:
-        print("DESIGN CONFLICT — reference envelope meets a fabricated part:")
-        for r, f, v in report["reference_clashes"]:
-            print(f"  {r} ∩ {f} = {v} in³")
-    else:
-        print("no design conflicts: reservoir, block, fixture and console electronics all clear")
 
     d = params.DEPTH
     verdict = "fits" if d.slack >= 0 else "DOES NOT FIT"

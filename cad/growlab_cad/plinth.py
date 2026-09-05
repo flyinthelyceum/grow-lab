@@ -1,5 +1,5 @@
-"""The plinth: a cabinet carcass on a recessed base or a steel frame, with the
-instrument face in its front.
+"""The plinth: a cabinet carcass on a steel base frame, with the instrument
+face in its front.
 
 V1_PHYSICAL_BUILD.md § Station geometry (console layout, 2026-09-04).
 
@@ -24,8 +24,6 @@ is reached the same way.
 from __future__ import annotations
 
 from build123d import Part, Rot
-
-from pi.dashboard.panel_geometry import CORNER_SCREW_INSET, FACE_HEIGHT, FACE_WIDTH
 
 from . import params as P
 from ._shapes import box, cyl_x, cyl_y, labelled, location_in
@@ -60,20 +58,10 @@ def _panel(x0, x1, y0, y1, z0, z1) -> Part:
     )
 
 
-def build_base() -> Part:
-    """What the carcass stands on: the recessed plinth, or the steel frame."""
-    if P.FRAME:
-        return build_frame()
-    i = P.SHADOW_GAP_INSET
-    return labelled(
-        _panel(X0 + i, X1 - i, Y0 + i, Y1 - i, 0.0, P.SHADOW_GAP_H), "base_recess"
-    )
-
-
 def build_frame() -> Part:
-    """The frame candidate: four 1 x 1 legs inset under the cabinet and a ring
-    at the top the floor sits on. The mast runs to the floor beside the rear
-    rail, which is notched for it, and is welded to it — one armature."""
+    """What the carcass stands on: four 1 x 1 legs inset under the cabinet and
+    a ring at the top the floor sits on. The mast runs to the floor beside the
+    rear rail, which is notched for it, and is welded to it — one armature."""
     t, i = P.FRAME_TUBE, P.FRAME_LEG_INSET
     lx0, lx1 = X0 + i, X1 - i
     ly0, ly1 = Y0 + i, Y1 - i
@@ -96,8 +84,6 @@ def build_frame() -> Part:
 
 def _chamfer_corners(part: Part, z0: float, z1: float) -> Part:
     """Take CHAMFER off the four vertical outer corners, full height."""
-    if not P.CHAMFER:
-        return part
     s = P.CHAMFER * 2 ** 0.5
     for (x, y) in ((X0, Y0), (X1, Y0), (X0, Y1), (X1, Y1)):
         cutter = Rot(0, 0, 45) * box(s, s, (z1 - z0) + 2.0, at=(0, 0, 0))
@@ -144,15 +130,13 @@ def build_shell() -> Part:
     shell = left + right + rear + floor
     shell = _chamfer_corners(shell, Z0, Z1)
 
-    if P.FASCIA:
-        # The band pocket runs across the sides' front edges too.
-        bz0, bz1 = _fascia_band()
-        shell -= _panel(X0 - 0.5, X1 + 0.5, Y0 - 0.5, P.FASCIA_POCKET, bz0, bz1)
+    # The band pocket runs across the sides' front edges too.
+    bz0, bz1 = _fascia_band()
+    shell -= _panel(X0 - 0.5, X1 + 0.5, Y0 - 0.5, P.FASCIA_POCKET, bz0, bz1)
 
-    if P.MAST_BOTTOM < FLOOR_TOP:
-        # The mast passes through the floor to the frame below it.
-        c = P.MAST_NOTCH_CLEARANCE
-        shell -= box(P.MAST_W + 2 * c, P.MAST_D + 2 * c, P.CARCASS_T * 3, at=(P.MAST_X, P.MAST_Y, Z0 - P.CARCASS_T))
+    # The mast passes through the floor to the frame below it.
+    c = P.MAST_NOTCH_CLEARANCE
+    shell -= box(P.MAST_W + 2 * c, P.MAST_D + 2 * c, P.CARCASS_T * 3, at=(P.MAST_X, P.MAST_Y, Z0 - P.CARCASS_T))
 
     # The door opening, through the rear panel.
     shell -= _panel(DOOR_X0, DOOR_X1, IY1 - 0.5, Y1 + 0.5, DOOR_Z0, DOOR_Z1)
@@ -182,37 +166,21 @@ def build_shell() -> Part:
 def build_front() -> Part:
     """The removable front panel.
 
-    Fascia form: the ply stops at the bottom of the band; above it the console
-    bay is open behind the clear fascia. Unscrew this panel and the PSU and
-    driver below the case are reached.
-
-    Box form: one panel to the rail, with a pocket the acrylic face sits in
-    and a through-opening FACE_LIP smaller all round for F1–4 to land in.
+    The ply stops at the bottom of the band; above it the console bay is open
+    behind the clear fascia. Unscrew this panel and the PSU and driver below
+    the case are reached.
     """
-    fx0, fx1 = P.FACE_X0, P.FACE_X0 + FACE_WIDTH
-    fz0, fz1 = P.FACE_Z0, P.FACE_Z1
-
-    if P.FASCIA:
-        bz0, bz1 = _fascia_band()
-        panel = _panel(IX0, IX1, Y0, IY0, Z0, RAIL_BOTTOM)
-        # Rebate the whole band FASCIA_POCKET deep — the acrylic sits in it.
-        panel -= _panel(IX0 - 0.5, IX1 + 0.5, Y0 - 0.5, P.FASCIA_POCKET, bz0, bz1)
-        # Then take the rest of the way through, except the top lip: what is
-        # left standing behind the glass there is the header the fascia's top
-        # row screws into. Below it the console bay is open to be seen.
-        panel -= _panel(IX0 - 0.5, IX1 + 0.5, Y0 - 0.5, IY0 + 0.5, bz0, bz1 - P.FASCIA_TOP_LIP)
-        for wx, wz in fascia_screw_points():
-            if wz > bz1 - P.FASCIA_TOP_LIP:
-                panel -= cyl_y(P.PILOT_DIA, P.CARCASS_T * 3, at=(wx, (Y0 + IY0) / 2, wz))
-        return labelled(panel, "front_panel_removable")
-
+    bz0, bz1 = _fascia_band()
     panel = _panel(IX0, IX1, Y0, IY0, Z0, RAIL_BOTTOM)
-    panel -= _panel(fx0, fx1, Y0 - 0.5, Y0 + P.ACRYLIC_T, fz0, fz1)  # face pocket
-    lip = P.FACE_LIP
-    panel -= _panel(fx0 + lip, fx1 - lip, Y0 - 0.5, IY0 + 0.5, fz0 + lip, fz1 - lip)  # opening
-    # Tap drill for M3 (2.5 mm) on the F1–4 centres, into the lip.
-    for px, py in _corner_screws():
-        panel -= cyl_y(2.5 / 25.4, P.CARCASS_T * 3, at=(fx0 + px, (Y0 + IY0) / 2, fz0 + py))
+    # Rebate the whole band FASCIA_POCKET deep — the acrylic sits in it.
+    panel -= _panel(IX0 - 0.5, IX1 + 0.5, Y0 - 0.5, P.FASCIA_POCKET, bz0, bz1)
+    # Then take the rest of the way through, except the top lip: what is left
+    # standing behind the glass there is the header the fascia's top row
+    # screws into. Below it the console bay is open to be seen.
+    panel -= _panel(IX0 - 0.5, IX1 + 0.5, Y0 - 0.5, IY0 + 0.5, bz0, bz1 - P.FASCIA_TOP_LIP)
+    for wx, wz in fascia_screw_points():
+        if wz > bz1 - P.FASCIA_TOP_LIP:
+            panel -= cyl_y(P.PILOT_DIA, P.CARCASS_T * 3, at=(wx, (Y0 + IY0) / 2, wz))
     return labelled(panel, "front_panel_removable")
 
 
@@ -252,11 +220,6 @@ def build_backplate() -> Part:
         _panel(IX0, IX1, P.PARTITION_Y0 - P.BACKPLATE_T, P.PARTITION_Y0, bz0, bz1),
         "console_backplate",
     )
-
-
-def _corner_screws() -> list[tuple[float, float]]:
-    i = CORNER_SCREW_INSET
-    return [(i, i), (FACE_WIDTH - i, i), (i, FACE_HEIGHT - i), (FACE_WIDTH - i, FACE_HEIGHT - i)]
 
 
 def build_top_rail() -> Part:
@@ -309,11 +272,12 @@ def build_divider() -> Part:
 
 
 def build_shelf() -> Part:
-    """The reservoir shelf at the design height, on slotted cleats.
+    """The reservoir shelf at the design height, on its cleats.
 
-    "Build the reservoir shelf adjustable — slotted supports." The cleats
-    carry a column of holes at SHELF_SLOT_PITCH so the shelf can move by an
-    inch at a time after the flow test decides the real lift.
+    "Build the reservoir shelf adjustable — slotted supports." The slots go in
+    the carcass side and the divider on the bench, once the flow test decides
+    the real lift; they are not modelled, so nothing here reads as a hole to
+    drill in the cleat.
     """
     shelf_x0, shelf_x1 = IX0, DIVIDER_X - P.DIVIDER_T / 2
     y0, y1 = P.PARTITION_Y1, IY1
@@ -326,16 +290,6 @@ def build_shelf() -> Part:
     right_cleat = _panel(shelf_x1 - P.CARCASS_T, shelf_x1, y0, y1,
                          P.SHELF_H - P.SHELF_T - cleat_h, P.SHELF_H - P.SHELF_T)
     shelf = plate + left_cleat + right_cleat
-
-    # Slot holes in the carcass side and the divider are the adjustment;
-    # marked here on the cleats as a column of reference holes.
-    n = P.SHELF_SLOT_COUNT
-    z_lo = P.SHELF_H - P.SHELF_T - cleat_h / 2 - P.SHELF_SLOT_PITCH * (n - 1) / 2
-    for i in range(n):
-        z = z_lo + i * P.SHELF_SLOT_PITCH
-        for x in (shelf_x0 + P.CARCASS_T / 2, shelf_x1 - P.CARCASS_T / 2):
-            shelf -= box(P.CARCASS_T * 3, 0.25, 0.25, at=(x, (y0 + y1) / 2, z - 0.125))
-
     return labelled(shelf, "reservoir_shelf_adjustable")
 
 
@@ -367,23 +321,10 @@ def build_reservoir() -> Part:
     )
 
 
-def build_console_electronics() -> Part:
-    """What lives behind the face — meters, Inky, i3, Pi — as an envelope the
-    plans say fits "inside 3.00 clear". If it meets the partition, the console
-    bay is too shallow."""
-    return labelled(
-        _panel(P.FACE_X0, P.FACE_X0 + FACE_WIDTH,
-               P.CONSOLE_Y0, P.CONSOLE_Y0 + P.CONSOLE_ELECTRONICS_D,
-               P.FACE_Z0, P.FACE_Z1),
-        "console_electronics_reference",
-    )
-
-
 def build() -> Part:
     """The carcass as one part, for the assembly. The base, the door and the
     fascia are separate parts: different materials, different fabrication."""
     carcass = (build_shell() + build_front() + build_top_rail()
-               + build_partition() + build_divider() + build_shelf())
-    if P.FASCIA:
-        carcass += build_ledge()
+               + build_partition() + build_divider() + build_shelf()
+               + build_ledge())
     return labelled(carcass, "plinth")

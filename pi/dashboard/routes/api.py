@@ -3,12 +3,11 @@
 All endpoints return JSON. Time-windowed queries support
 window parameter: 1h, 24h, 7d.
 
-Stage 1 security: POST /fan/override and POST /meters/override are gated
-by `require_admin` and limited via slowapi at security.rate_limit_admin.
-All other routes remain public (read-only), including /meters/status and
-/control.
+Stage 1 security: POST /fan/override is gated by `require_admin`, and
+subject to the default slowapi rate limit. All other routes remain public
+(read-only), including /meters/status and /control.
 
-Both override endpoints write desired state to the `control_state` table
+The override endpoint writes desired state to the `control_state` table
 rather than calling a service object. The dashboard and the orchestrator
 are separate processes; the table is the channel between them.
 """
@@ -23,7 +22,7 @@ from enum import Enum
 from pathlib import Path as FsPath, PurePosixPath
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from pi.dashboard.security import require_admin
@@ -38,7 +37,6 @@ router = APIRouter(prefix="/api")
 # 30 seconds via the rpicam-vid -t flag. Late joiners share the in-flight
 # session (their countdown may end before local 30s if they joined mid-way).
 _STREAM_DURATION_SECONDS = 30
-_STREAM_BOUNDARY = "growlabframe"
 
 
 class _LiveStreamHub:
@@ -357,25 +355,6 @@ async def get_alerts(
     ]
 
 
-@router.get("/alerts/rules")
-async def get_alert_rules() -> list[dict]:
-    """Get the current threshold alerting rules."""
-    from pi.services.alerts import DEFAULT_RULES
-
-    return [
-        {
-            "sensor_id": r.sensor_id,
-            "label": r.label or r.sensor_id,
-            "unit": r.unit,
-            "warning_low": r.warning_low,
-            "warning_high": r.warning_high,
-            "critical_low": r.critical_low,
-            "critical_high": r.critical_high,
-        }
-        for r in DEFAULT_RULES
-    ]
-
-
 @router.get("/fan/status")
 async def get_fan_status(request: Request) -> dict:
     """Get fan status based on latest air temperature and config."""
@@ -414,32 +393,6 @@ async def get_fan_status(request: Request) -> dict:
 class FanOverrideRequest(BaseModel):
     duty: int | None = Field(default=None, ge=0, le=100)
     mode: str | None = Field(default=None, pattern=r"^auto$")
-
-
-def _admin_rate_limit():
-    """Return a slowapi limit decorator pinned to security.rate_limit_admin.
-
-    Resolved at request time so it reflects the live SecurityConfig on
-    app.state. Falls back to "10/minute" if state is missing.
-    """
-
-    def _decorator(func):
-        # Wrap with a closure that defers limiter binding until call time.
-        async def _wrapped(request: Request, *args, **kwargs):
-            limiter = getattr(request.app.state, "limiter", None)
-            sec = getattr(request.app.state, "security_config", None)
-            limit_str = sec.rate_limit_admin if sec else "10/minute"
-            if limiter is not None:
-                # Apply limit via slowapi's `limit` decorator dynamically.
-                limited = limiter.limit(limit_str)(func)
-                return await limited(request, *args, **kwargs)
-            return await func(request, *args, **kwargs)
-
-        _wrapped.__name__ = func.__name__
-        _wrapped.__doc__ = func.__doc__
-        return _wrapped
-
-    return _decorator
 
 
 def _actor(request: Request) -> str | None:
@@ -501,51 +454,6 @@ async def set_fan_override(request: Request, body: FanOverrideRequest) -> dict:
     return _control_response(entry, value_key="override_duty", parse=parse_duty)
 
 
-class MeterOverrideRequest(BaseModel):
-    meter: str = Field(pattern=r"^(ph|ec)$")
-    deflection: float | None = Field(default=None, ge=-1.0, le=1.0)
-    mode: str | None = Field(default=None, pattern=r"^auto$")
-
-
-@router.post("/meters/override", dependencies=[Depends(require_admin)])
-async def set_meter_override(request: Request, body: MeterOverrideRequest) -> dict:
-    """Pin one needle to a deflection, or return it to its sensor (admin only).
-
-    Same channel as the fan override: desired state in the control table, read
-    by the orchestrator that owns the DAC. Useful for checking a movement from
-    the web without stopping the service to run `growlab meter set`.
-    """
-    from pi.services.control import (
-        METER_EC_OVERRIDE,
-        METER_PH_OVERRIDE,
-        parse_deflection,
-    )
-
-    repo = request.app.state.repo
-    actor = _actor(request)
-    key = METER_PH_OVERRIDE if body.meter == "ph" else METER_EC_OVERRIDE
-
-    if body.mode == "auto":
-        entry = await repo.clear_control(key, updated_by=actor)
-    elif body.deflection is not None:
-        entry = await repo.set_control(
-            key,
-            str(body.deflection),
-            ttl_seconds=_control_ttl(request),
-            updated_by=actor,
-        )
-    else:
-        raise HTTPException(
-            status_code=422, detail="Provide 'deflection' or 'mode: auto'"
-        )
-
-    payload = _control_response(
-        entry, value_key="deflection", parse=parse_deflection
-    )
-    payload["meter"] = body.meter
-    return payload
-
-
 @router.get("/control")
 async def get_control_state(request: Request) -> dict:
     """Every control and what it is currently asking the hardware to do.
@@ -602,28 +510,14 @@ async def get_meters_status(request: Request) -> dict:
     mirroring how the service eases a stale needle home.
     """
     from pi.config.schema import MetersConfig
-    from pi.services.control import (
-        METER_EC_OVERRIDE,
-        METER_PH_OVERRIDE,
-        parse_deflection,
-    )
     from pi.services.meters import normalise
 
     repo = request.app.state.repo
     config = getattr(request.app.state, "meters_config", None) or MetersConfig()
     now = datetime.now(timezone.utc)
 
-    # An override outranks the sensor, so report it or the panel and the page
-    # disagree about why a needle is where it is.
-    control = await repo.get_all_control()
-    override_keys = {"ph": METER_PH_OVERRIDE, "ec": METER_EC_OVERRIDE}
-
     meters = {}
     for name, cc in (("ph", config.ph), ("ec", config.ec)):
-        entry = control.get(override_keys[name])
-        override = (
-            parse_deflection(entry.effective_value(now)) if entry else None
-        )
         reading = await repo.get_latest(cc.sensor_id)
         entry = {
             "sensor_id": cc.sensor_id,
@@ -637,7 +531,6 @@ async def get_meters_status(request: Request) -> dict:
             "age_seconds": None,
             "deflection": 0.0,
             "faulted": True,
-            "override": override,
         }
 
         if reading is not None:
@@ -657,9 +550,6 @@ async def get_meters_status(request: Request) -> dict:
                 ),
                 "faulted": stale,
             })
-
-        if override is not None:
-            entry["deflection"] = override
 
         meters[name] = entry
 
@@ -817,56 +707,3 @@ async def stream_snapshot():
         raise HTTPException(status_code=503, detail="Frame timeout")
     finally:
         _stream_hub.leave(queue)
-
-
-@router.get("/stream/live")
-async def stream_live() -> StreamingResponse:
-    """Public MJPEG live feed with multi-viewer fan-out.
-
-    Up to N concurrent viewers share a single 30-second rpicam-vid session.
-    First click starts a session; later joiners receive frames from the
-    in-flight session for whatever seconds remain. The next click after a
-    session ends starts a fresh one. The X-Stream-Expires-At and
-    X-Stream-Remaining-Seconds response headers let clients sync local
-    countdown to actual session end (relevant for late joiners).
-    """
-    queue, expires_at = await _stream_hub.join()
-    now = time.time()
-    remaining = max(0, int(expires_at - now))
-
-    async def frame_stream():
-        try:
-            while True:
-                try:
-                    frame = await asyncio.wait_for(queue.get(), timeout=2.0)
-                except asyncio.TimeoutError:
-                    if time.time() >= expires_at:
-                        break
-                    continue
-                if frame is None:  # session-ended sentinel
-                    break
-                yield (
-                    f"--{_STREAM_BOUNDARY}\r\n"
-                    f"Content-Type: image/jpeg\r\n"
-                    f"Content-Length: {len(frame)}\r\n\r\n"
-                ).encode("ascii")
-                yield frame
-                yield b"\r\n"
-        except asyncio.CancelledError:
-            logger.info("[stream] viewer disconnected")
-            raise
-        finally:
-            _stream_hub.leave(queue)
-
-    return StreamingResponse(
-        frame_stream(),
-        media_type=f"multipart/x-mixed-replace; boundary={_STREAM_BOUNDARY}",
-        headers={
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "X-Stream-Expires-At": str(int(expires_at)),
-            "X-Stream-Remaining-Seconds": str(remaining),
-            "Access-Control-Expose-Headers": (
-                "X-Stream-Expires-At, X-Stream-Remaining-Seconds"
-            ),
-        },
-    )

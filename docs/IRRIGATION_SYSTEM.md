@@ -65,7 +65,7 @@ The reservoir stores the nutrient solution that feeds the irrigation system.
 
 Recommended configuration:
 
-• 5 gallon HDPE bucket with lid  
+• stainless steam table pan, half size x 6 in deep, with lid — ~13 L to the brim  
 • placed below plant containers  
 • protected from light to prevent algae growth  
 
@@ -175,7 +175,7 @@ V0 configuration:
 
 V1 configuration (locked, 2026-09-02):
 
-• lined CMU cores drain through mesh-screened holes into a catch tray  
+• sealed CMU cores drain through mesh-screened holes into a catch tray  
 • runoff is discarded / manually managed — **no recirculation**  
 • the bypass tee returns only unused feed to the reservoir, never runoff
 
@@ -265,20 +265,6 @@ Mitigation strategies:
 • reservoir volume monitoring
 
 Future versions may include automatic reservoir level sensing.
-
----
-
-# Future Expansion
-
-Later versions of the system may incorporate:
-
-• multi-bin irrigation manifolds  
-• independent watering zones  
-• automated nutrient dosing  
-• reservoir recirculation loops  
-• runoff recovery systems
-
-The V0 irrigation system intentionally remains simple to validate plant growth and system stability.
 
 ---
 

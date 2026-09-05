@@ -1,9 +1,9 @@
 """Control service — reconciles hardware toward desired state in the database.
 
 The dashboard and the orchestrator run as separate systemd units sharing only
-the SQLite file, so the dashboard cannot reach a live `FanService` or
-`MeterService` to act on a click. The `control_state` table is the channel:
-the dashboard writes what it wants, this service reads it and applies it.
+the SQLite file, so the dashboard cannot reach a live `FanService` to act on a
+click. The `control_state` table is the channel: the dashboard writes what it
+wants, this service reads it and applies it.
 
 Two properties of that design matter more than the plumbing:
 
@@ -32,12 +32,8 @@ logger = logging.getLogger(__name__)
 # Control keys, also written by the dashboard. Keep these in one place: a typo
 # on either side is a control that silently never applies.
 FAN_OVERRIDE = "fan.override_duty"
-METER_PH_OVERRIDE = "meters.ph.override"
-METER_EC_OVERRIDE = "meters.ec.override"
 
-CONTROL_KEYS = (FAN_OVERRIDE, METER_PH_OVERRIDE, METER_EC_OVERRIDE)
-
-_METER_KEYS = {METER_PH_OVERRIDE: "ph", METER_EC_OVERRIDE: "ec"}
+CONTROL_KEYS = (FAN_OVERRIDE,)
 
 
 def parse_duty(value: str | None) -> int | None:
@@ -51,17 +47,6 @@ def parse_duty(value: str | None) -> int | None:
         return None
 
 
-def parse_deflection(value: str | None) -> float | None:
-    """Parse a stored needle deflection, clamped to -1.0..+1.0."""
-    if value is None:
-        return None
-    try:
-        return max(-1.0, min(1.0, float(value)))
-    except (TypeError, ValueError):
-        logger.warning("Ignoring unparseable deflection in control_state: %r", value)
-        return None
-
-
 class ControlService:
     """Polls `control_state` and pushes changes into the live services."""
 
@@ -71,12 +56,10 @@ class ControlService:
         config,
         *,
         fan_service=None,
-        meter_service=None,
     ) -> None:
         self._repo = repo
         self._config = config
         self._fan = fan_service
-        self._meters = meter_service
         self._task: asyncio.Task | None = None
         # Last value seen per key, so application is edge-triggered. Starts
         # empty rather than None-filled: the first poll applies whatever the
@@ -95,7 +78,7 @@ class ControlService:
             logger.info("Control service disabled in config")
             return
 
-        if self._fan is None and self._meters is None:
+        if self._fan is None:
             logger.info("Control service has nothing to drive — not started")
             return
 
@@ -152,8 +135,6 @@ class ControlService:
     def _apply(self, key: str, value: str | None) -> None:
         if key == FAN_OVERRIDE:
             self._apply_fan(value)
-        elif key in _METER_KEYS:
-            self._apply_meter(_METER_KEYS[key], value)
 
     def _apply_fan(self, value: str | None) -> None:
         if self._fan is None:
@@ -165,16 +146,3 @@ class ControlService:
         else:
             self._fan.set_override(duty)
             logger.info("Fan override %d%% applied from control_state", duty)
-
-    def _apply_meter(self, meter: str, value: str | None) -> None:
-        if self._meters is None:
-            return
-        deflection = parse_deflection(value)
-        if deflection is None:
-            self._meters.clear_override(meter)
-            logger.info("Meter %s returned to auto by control_state", meter)
-        else:
-            self._meters.set_override(meter, deflection)
-            logger.info(
-                "Meter %s pinned at %+.3f from control_state", meter, deflection
-            )

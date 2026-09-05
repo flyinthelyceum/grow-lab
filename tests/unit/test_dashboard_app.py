@@ -40,6 +40,7 @@ class TestCreateApp:
         app = create_app(mock_repo)
         with TestClient(app) as client:
             assert client.get("/").status_code == 200
+            assert client.get("/art").status_code == 200
 
     def test_has_websocket_route(self, mock_repo):
         # WebSocket routes never appear in the OpenAPI schema, so connect.

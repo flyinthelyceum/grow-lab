@@ -39,7 +39,7 @@ class TestEveryPartBuilds:
             assert p.volume > 0, name
 
     def test_reference(self, refs):
-        assert set(refs) == {"cmu", "media", "reservoir", "fixture"}
+        assert set(refs) == {"cmu", "reservoir", "fixture"}
 
 
 class TestWhereThingsSit:
@@ -171,13 +171,6 @@ class TestNothingInterferes:
     def test_fabricated_parts_do_not_overlap(self, parts):
         """Touching is fine. Shared volume is a build error."""
         clashes = assembly.interferences(parts)
-        assert clashes == [], clashes
-
-    def test_no_design_conflicts(self, parts, refs):
-        """The pan, the block, the fixture and the electronics all clear the
-        fabricated parts. This was the failing case in the mast-and-head
-        layout; here it is an assertion."""
-        clashes = assembly.reference_clashes(parts, refs)
         assert clashes == [], clashes
 
     def test_cmu_sits_on_the_pads(self, parts, refs):

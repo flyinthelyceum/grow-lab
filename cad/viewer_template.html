@@ -477,7 +477,6 @@ const readout = document.getElementById('readout');
 function renderReadout() {
   const v = current;
   const rows = [
-    ['Form', v.form, false],
     ['Cabinet W × D × H', `${v.plinth_w} × ${v.plinth_d} × ${v.plinth_h} in`, false],
     ['Panel centre', `${v.panel_centre.toFixed(1)} in`, true],
     ['Static lift', `${v.static_lift.toFixed(1)} in`, true],
@@ -526,7 +525,7 @@ document.getElementById('datums').addEventListener('change', e => {
   datumGroup.visible = e.target.checked; labelsEl.style.display = e.target.checked ? '' : 'none'; needs();
 });
 
-document.getElementById('meta').textContent = `commit ${DATA.sha} · inches · Z up · ${DATA.variants.length} candidates`;
+document.getElementById('meta').textContent = `commit ${DATA.sha} · inches · Z up · ${DATA.variants.length} variants`;
 
 // ---------- render loop (on demand) ----------
 let dirty = true;

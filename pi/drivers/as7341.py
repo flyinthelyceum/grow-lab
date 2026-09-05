@@ -13,7 +13,6 @@ import logging
 import time
 from datetime import datetime, timezone
 
-from pi.calibration.runtime_estimator import AS7341RuntimeEstimator
 from pi.data.models import SensorReading
 
 logger = logging.getLogger(__name__)
@@ -117,16 +116,12 @@ class AS7341Driver:
         gain: int = DEFAULT_GAIN,
         atime: int = DEFAULT_ATIME,
         astep: int = DEFAULT_ASTEP,
-        ppfd_estimator: AS7341RuntimeEstimator | None = None,
-        node_id: str = "",
     ) -> None:
         self._bus_number = bus_number
         self._address = address
         self._gain = gain
         self._atime = atime
         self._astep = astep
-        self._ppfd_estimator = ppfd_estimator
-        self._node_id = node_id
         self._bus = None
 
     @property
@@ -229,19 +224,6 @@ class AS7341Driver:
             channels = await asyncio.to_thread(self._read_all_channels)
             now = datetime.now(timezone.utc)
             lux = _calculate_lux_like(channels, self._gain, self._atime, self._astep)
-            estimator_status = "unconfigured"
-            estimator_metadata = None
-            ppfd = None
-
-            if self._ppfd_estimator is not None:
-                ppfd, estimator_status = self._ppfd_estimator.estimate(
-                    channels,
-                    gain=self._gain,
-                    integration_time=self._atime,
-                    astep=self._astep,
-                    node_id=self._node_id,
-                )
-                estimator_metadata = self._ppfd_estimator.metadata_json(estimator_status)
 
             readings = [
                 SensorReading(
@@ -249,7 +231,6 @@ class AS7341Driver:
                     sensor_id="as7341_lux",
                     value=lux,
                     unit="lux",
-                    metadata=estimator_metadata,
                 )
             ]
             readings.extend(
@@ -258,20 +239,9 @@ class AS7341Driver:
                     sensor_id=sensor_id,
                     value=float(channels[sensor_id]),
                     unit="raw",
-                    metadata=estimator_metadata,
                 )
                 for sensor_id in SPECTRAL_CHANNELS
             )
-            if ppfd is not None:
-                readings.append(
-                    SensorReading(
-                        timestamp=now,
-                        sensor_id="estimated_ppfd",
-                        value=ppfd,
-                        unit="umol/m2/s",
-                        metadata=estimator_metadata,
-                    )
-                )
             return readings
         except Exception as exc:
             logger.error("AS7341 read failed: %s", exc)

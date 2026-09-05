@@ -1,8 +1,10 @@
 name: Deploy to Pi
 
-# The Pi runs the installation. Nobody can shell into it from a Claude Code
-# session (no route to the LAN, and the Cloudflare tunnel publishes only HTTP),
-# so this workflow is how merged work actually reaches the hardware.
+# The Pi runs the installation. It is reachable over Tailscale
+# (`ssh jared@100.77.46.126`), so this is not the only route to it — it is the
+# bounded, audited one. A deploy here needs no SSH credentials for a machine on
+# a home network, cannot run anything but the steps written out below, is gated
+# on green tests, and is recorded in the Actions history with who asked for it.
 #
 # Two jobs, in order:
 #   test    — GitHub-hosted. The gate.
@@ -95,8 +97,8 @@ jobs:
       - name: Refuse to deploy over uncommitted work
         # config.toml and .venv are gitignored so they never show here. Anything
         # that does show is a hand edit made on the box, and clobbering it
-        # silently on a machine nobody can shell into is how you lose a fix
-        # made at 2am during a bring-up.
+        # silently — with nobody watching the run — is how you lose a fix made
+        # at 2am during a bring-up.
         run: |
           cd "$GROWLAB_DIR"
           if [ -n "$(git status --porcelain)" ]; then

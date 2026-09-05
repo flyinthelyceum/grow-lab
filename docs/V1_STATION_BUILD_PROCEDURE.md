@@ -4,7 +4,7 @@
 
 Take the running bench station (nursery pot, 5 gal reservoir, relay fan) to the V1
 object described in [V1_PHYSICAL_BUILD.md](V1_PHYSICAL_BUILD.md): CMU vessel with two
-lined cores, 2.5 gal reservoir, runoff-to-tray drip with pressure-compensating emitters,
+sealed cores, 2.5 gal reservoir, runoff-to-tray drip with pressure-compensating emitters,
 PWM canopy fan on a 12V rail, dry enclosure to the side.
 
 `V1_PHYSICAL_BUILD.md` says *what the station is*. This says *what order to build it in*.
@@ -28,6 +28,38 @@ happen weeks later while the station runs.
 
 ---
 
+## Safety — read this before any stage puts power on
+
+Folded here from the Phase 1 walkthrough, which this document replaces. It is at the
+front because it is the only stop-work procedure in the repository and it is worthless
+filed at the back.
+
+**Bench prep, before power reaches the pump.** Separate the work into two zones and keep
+them separate:
+
+- **Electrical zone** — Pi, relay, breadboard, power supplies.
+- **Wet zone** — reservoir, tubing, vessel and media, drain tray.
+
+Then confirm, every time:
+
+- Pi and relay sit physically **above** any water path.
+- Every cable crossing between zones has a **drip loop**.
+- **No exposed mains wiring near the wet zone.**
+- The fan is powered and spinning.
+
+Pass condition: the bench is dry, organised and safe to proceed.
+
+**Stop/abort conditions.** Stop immediately and power down if any of these occur:
+
+- relay stuck ON
+- continuous pump run beyond the expected pulse
+- visible leak near the electrical zone
+- unstable power or a reset loop on the Pi
+
+**When in doubt: disconnect pump power first, then debug.**
+
+---
+
 ## Stage 0 — Resolve the open specs at the bench (non-disruptive)
 
 Two open items gate the build. Both are answered by measurement, not by more reading.
@@ -37,51 +69,16 @@ Two open items gate the build. Both are answered by measurement, not by more rea
 **Result:** one board draws **0.72 A at 24 V (~17 W)** warm at full PWM. Two boards ≈
 **1.4 A / 33 W** against 5 A / 120 W. Both fit in parallel, no derating. The conclusion is
 insensitive to whether the PWM was truly at 255 — even at a pessimistic 1 A per board the
-pair uses 40% of the driver. Procedure retained below for the record and for re-testing if
-the boards are ever changed.
+pair uses 40% of the driver.
 
-**Question:** do both LM301H boards fit the PWM-120-24's 120W / 5A budget in parallel?
+**The two rules that outlive the measurement.** The PWM-120-24 is a **constant-voltage**
+24 V supply. Before applying it to any board, confirm the board is the constant-voltage
+type with onboard current limiting: **a constant-current board driven from a CV supply
+will run away and destroy itself.** And when first powering a board, **abort if the
+current climbs and keeps climbing** rather than settling within a second or two — that is
+the constant-current case, and it will not stop on its own.
 
-The PWM-120-24 is a **constant-voltage** 24V supply. Before applying it, confirm the
-boards are the constant-voltage type with onboard current limiting. A constant-current
-board driven from a CV supply will run away and destroy itself.
-
-**Instrument:** a DMM with a DC amps range — the bench meter is a **Fluke 115** (6 A range,
-1 mA resolution, 10 A *continuous*, so there is no time limit at the ~2 A expected here).
-A clamp meter is the wrong tool unless its jaw is explicitly AC **and** DC; an AC-only
-clamp reads nothing on this circuit, and a 200 A jaw has no useful resolution at 2 A.
-
-Wire with the power off at every step.
-
-1. Wire **one** board to the driver. Nothing else on the rail. Confirm it lights normally
-   with the meter out of circuit first.
-2. Power off. Break the board's **positive** lead and put the meter in series across the
-   gap: red lead in the **A** jack to the driver's + wire, black in **COM** to the board's
-   + terminal. Clip the probes in rather than holding them.
-3. Select DC amps — on a Fluke 11x the amps position comes up in **AC**, so press the
-   yellow button for DC. A near-zero reading on a lit board usually means this was missed.
-4. Power on, `growlab light set 255` (full PWM), let it settle, read the current.
-5. Power off before unclipping, then **move the red lead back to the VΩ jack**. In current
-   mode the meter is a near-short; touching it across the supply for a voltage reading is
-   what blows the fuse.
-
-**Abort if the current climbs and keeps climbing** rather than settling within a second or
-two — that is the constant-current-board case above, and it will not stop on its own.
-
-| One board draws | Verdict |
-|---|---|
-| ≤ 2.3 A | Both boards fit with margin. Wire in parallel. |
-| 2.3 – 2.5 A | Fits with no headroom. Cap `intensity` below 255, or add a second driver. |
-| > 2.5 A | Two boards exceed 5 A. Second driver, or run one board in V1. |
-
-Record the measured figure in `BOM.md`. Also check heatsink temperature after 15 minutes
-at full power — the boards must be on aluminium with free airflow before this test.
-
-**No DC-amps meter to hand?** A plug-in wall wattmeter answers the same question without
-breaking into the circuit, and comparatively, so its absolute accuracy does not matter:
-read wall watts for one board at full PWM, then for both. Roughly double means the driver
-is keeping up; noticeably less than double (with visibly dimmer output) means it has hit
-its current limit. At ~90% driver efficiency, 120 W out is about 133 W at the wall.
+The full DMM procedure is in git history; this question is closed with 4× margin.
 
 ### 0.2 Emitter dose calibration — **read this before setting any schedule**
 
@@ -134,7 +131,7 @@ schedule and the cap must change, or the plant is not watered.
 3. Run the pump 5 minutes, then measure each jug. **Do not assume ~1 GPH** — the measured
    figure is the real one. The two jugs should be within ~10 % of each other; a wider split
    means asymmetric plumbing or a partly blocked emitter.
-4. Measure the lined core's usable media volume (fill the liner with water, pour into a jug).
+4. Measure the sealed core's usable media volume (fill the core with water, pour into a jug).
 5. Target roughly 5–15 % of media volume per event, aiming for 10–20 % runoff.
 6. Pulse seconds = target mL ÷ your measured mL-per-second.
 
@@ -164,9 +161,8 @@ stuck-pump guard. Do not set it arbitrarily high.
 
 Goal: the Noctua running under software speed control on the new rail, off the relay.
 
-1. Bring up the 12V rail: buck module from the driver's 24V output, or a 12V PSU.
-   Verify **12V under load** before the fan is connected. The buck taps the 24V output
-   only; it must not touch the dimming input.
+1. Bring up the 12V rail from the fan's own 12V adapter. Verify **12V under load**
+   before the fan is connected.
 2. Wire the fan's 4-pin connector — GND to common ground, +12V to the rail, PWM to
    **GPIO18 (pin 12)**, tach optional. The fan takes 3.3V PWM directly; no level shifter.
    Fan ground and Pi ground must be common or the PWM has no reference.
@@ -203,13 +199,17 @@ unit to unit. Once the service is back up, `/api/fan/status` reports the same pi
 ## Stage 2 — Vessel preparation (offline, non-disruptive)
 
 1. Drill or confirm a drain hole per core; mesh screen over each.
-2. Line each core with food-safe pond liner or a planter insert. **No media or root may
-   touch bare cement** — raw CMU leaches lime and drives pH alkaline. Check the liner for
-   pinholes; it is the whole reason the block is safe to plant in.
-3. Measure and record the lined usable volume per core (needed by 0.2 step 4).
+2. **Leach, then seal the cores — no liners.** Soak the block in dilute vinegar (~1/4 cup
+   per gallon) for half an hour, then flush repeatedly over a week or two. Then coat both
+   core interiors, the drain-hole edges and the underside with **PPG AquataPoxy A-6**
+   (NSF/ANSI 61 potable-rated, and rated for damp concrete — which the leach leaves you
+   with). Two coats, ~8 h cure between. **No media or root may touch bare cement** — raw
+   CMU leaches lime and drives pH alkaline. Check the cured film for holidays and thin
+   spots; it is the whole reason the block is safe to plant in.
+3. Measure and record the sealed usable volume per core (needed by 0.2 step 4).
 4. Hydrate coco coir, mix ~70/30 with perlite, fill both cores to 1–2 in below the rim.
 5. Leave the filled block to sit wet for a day. Check runoff pH against a plain-water
-   control. Drifting alkaline means the liner is leaking — fix before planting.
+   control. Drifting alkaline means the seal is incomplete — fix before planting.
 
 **Gate:** runoff pH from the filled block tracks the control within ~0.3.
 
@@ -241,9 +241,9 @@ Do this in one sitting, with Stages 0–3 already passed. Budget 2–3 hours.
 
 1. Photograph the running rig's wiring before disturbing it.
 2. `sudo systemctl stop growlab` — stop the scheduler so nothing fires mid-move.
-3. Transplant the corms from the nursery pot into the two lined cores. Keep the root ball
+3. Transplant the corms from the nursery pot into the two sealed cores. Keep the root ball
    intact; plant at the depth they were at, claws down.
-4. Move the reservoir to the 2.5 gal bucket. Mix to the same pH/EC as the old reservoir —
+4. Move the reservoir to the 2.5 gal stainless pan. Mix to the same pH/EC as the old one —
    the plant should not get a chemistry step change and a physical move on the same day.
 5. Move the probes across; still water, off the walls.
 6. Move the soil moisture probe into one core, at root depth. Note which core — the
@@ -272,19 +272,14 @@ The station runs without this. Do it once the plant is stable.
   wet bay and dry bay hard-divided, wet bay vented, reservoir on an adjustable shelf at
   28 in. `cad/` is the authority on every dimension here; `python cad/fabrication.py`
   writes the cut list.
-- Fabricate the tray in 304 stainless, 16 ga: bare bead-blast inside, white powder-coat on
-  the outer face only. Cutouts in the floor for load pads rising from the cabinet rail.
 - Electronics mount above the water line and to the side, never over the reservoir.
 - **When the Inky Impression goes on the Pi:** it hard-wires BCM17 as BUSY, which is the
   pump relay pin. Set `[irrigation] relay_gpio = 23` (pin 16) and move the relay wire
   before powering up the display. Stack the Inky on the i3 InterLink's pass-through header;
   the two share no pins.
-- Cable glands on every penetration, drip loops on every cable into the wet zone.
-- Mains separated from DC and signal inside; EZO isolator leads kept clean.
 - GX16 bulkheads per run so the station can be disassembled without cutting wire.
 - Front panel (meters, e-ink, knobs, pilot) set into the cabinet's **front face**, behind
   the clear fascia; service doors are at the **rear**. See the panel and meter-driver docs.
-- Ventilation for PSU and driver heat, drawn away from the wet zone.
 
 ---
 
