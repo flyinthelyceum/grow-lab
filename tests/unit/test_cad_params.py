@@ -35,8 +35,8 @@ DOC_HEIGHTS = {
     "media_surface": 42.9,
     "emitter": 43.0,
     "cmu_top": 44.4,
-    "fixture": 57.9,
-    "mast_top": 59.4,
+    "fixture": 54.9,   # the bottom of travel; the head is adjustable now
+    "mast_top": 82.4,  # tall enough for the carriage at full lift
 }
 
 
@@ -150,9 +150,19 @@ class TestDerivedGeometry:
         assert P.FIXTURE_Y == P.CMU_Y
         assert P.FIXTURE_X == P.CMU_X
 
-    def test_fixture_keeps_the_docs_distance_above_the_media(self):
-        """46 − 30.9 in the old stack; the light-to-canopy distance is what matters."""
-        assert P.FIXTURE_Z - P.MEDIA_SURFACE_Z == pytest.approx(15.0, abs=0.15)
+    def test_the_head_travels_far_enough_for_a_mature_plant(self):
+        """LIGHTING_SYSTEM: "Height should remain adjustable".
+
+        A ranunculus reaches 12-18 in. A head fixed at 15 in above the media has
+        the canopy touching it at 15 in tall and 3 in inside it at 18. The top of
+        travel must clear a mature plant by a useful working distance.
+        """
+        assert P.FIXTURE_Z_MIN - P.MEDIA_SURFACE_Z == pytest.approx(12.0)
+        mature_canopy = P.MEDIA_SURFACE_Z + 18.0
+        assert P.FIXTURE_Z_MAX - mature_canopy >= 15.0, (
+            "the plant grows into the light at the top of travel"
+        )
+        assert P.FIXTURE_TRAVEL == pytest.approx(21.0)
 
     def test_pads_land_under_solid_block(self):
         """Under the corners, where a face shell meets an end shell."""

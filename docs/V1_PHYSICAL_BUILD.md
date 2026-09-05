@@ -118,8 +118,8 @@ and carries only the LED fixture, the drip line and the LED cable.
 | Media surface | 42.9 in |
 | **Emitter discharge** | **43.0 in** |
 | CMU top | 44.4 in |
-| LED fixture (underside) | 57.9 in |
-| Mast cap / top of the piece | 59.4 in (59.9 with the arm) |
+| LED fixture (underside) | **54.9 – 75.9 in, adjustable** (21 in of travel) |
+| Mast cap / top of the piece | 82.4 in (82.9 with the arm) |
 | **Static lift, low water → emitters** | **13.0 in · 1.08 ft** |
 
 Plan: cabinet **20 x 16 in**. Front to back: front panel 0.75, console bay **3.00 clear**
@@ -188,15 +188,20 @@ The instrument head is gone from the top of the mast; the panel is in the cabine
 - **Shaft:** 2 x 3 in hollow section, the 3 in dimension front-to-back — where the
   fixture's moment is. Stands on the carcass floor in the dry bay, bolts through its back
   wall into the **full-height rear panel** (4 x 5/16 through-bolts) beside the divider,
-  passes up through a notch in the rail and the tray, and ends at a welded cap at 59.4 in.
-  Drip line and LED cable inside; they enter through a grommeted Ø 0.75 pass in the side
-  wall over the pan's rim, through a matching pass in the divider. **The sensor loom never
-  leaves the cabinet** — probes in the tray and the pan, Pi in the console bay.
-- **Fixture:** hangs from the cap. An arm runs forward from the cap over the fixture's back
-  edge and a cross bar along that edge carries the fixture, centred over the block; the
-  block is centred and the mast is off to the side, so the bar spans the offset. Moment arm
-  at the mast, centreline to centreline: **5.75 in** (derived in `cad/`, not asserted).
-  Fixture underside 15 in above the media, the same light-to-canopy distance as before.
+  passes up through a notch in the rail and the tray, and ends at a welded cap at 82.4 in.
+  **The bore is the counterweight's.** The drip line and LED cable used to run loose in it;
+  a slug sliding 21 in up and down would chafe them, so they now run in a fixed Ø 0.75 tube
+  in one corner, which doubles as the slug's guide rail and stops it swinging. They enter
+  through a grommeted Ø 0.75 pass in the side wall over the pan's rim, through a matching
+  pass in the divider. **The sensor loom never leaves the cabinet** — probes in the tray
+  and the pan, Pi in the console bay.
+- **Fixture:** rides the mast on a counterweighted carriage — see *The canopy mechanism*
+  below. A sleeve swallows the shaft and the arm and cross bar are welded to it as one
+  piece; the arm cantilevers from the sleeve's front face over the fixture's back edge, and
+  the bar spans the offset between the centred block and the off-centre mast. Moment arm at
+  the mast, centreline to centreline: **5.75 in** (derived in `cad/`, not asserted).
+  Fixture underside travels **54.9 to 75.9 in** — 12 in above the media at the bottom, 33
+  at the top, which holds 15 in of clearance over a mature 18 in plant.
 - **Verify the shaft in bending.** Its section is sized by what it carries, not by
   structure; the load is now the fixture alone rather than the fixture plus a head, and the
   moment goes into a rear panel rather than a flange.
@@ -324,38 +329,57 @@ slice behind the instrument face, partitioned from the wet bay.
 - **GFCI** on mains.
 - **Drip loops** on every cable into the wet zone.
 
-## Open: the canopy does not move, and it must
+## The canopy mechanism — counterweighted, 21 in of travel
 
-`LIGHTING_SYSTEM.md` § Light Positioning states the requirement plainly — "**Height
-should remain adjustable**", to accommodate plant growth, allow intensity tuning and
-prevent light stress — and notes the light "may be suspended on a pulley or sliding mount
-system". That is the only trace of it. It was never specced, never dimensioned, and never
-reached the model: `params.FIXTURE_ABOVE_MEDIA` is a hard 15.0 and the arm is welded to
-the mast cap. Jared's original sketches carried a counterweight mechanism; nothing of it
-survives in this repository.
+`LIGHTING_SYSTEM.md` § Light Positioning has always required this: "Height should remain
+adjustable", to accommodate plant growth, allow intensity tuning and prevent light stress,
+with a pulley or sliding mount named. It was never specced and never modelled, and the head
+sat welded to the mast cap at one height. A ranunculus reaches 12–18 in; at 15 in the
+canopy touched the fixture, at 18 in it was 3 in inside it.
 
-**This is not only a lost mechanism. As built, the design fails a mature plant.**
+**Travel.** Fixture underside **54.9 to 75.9 in** — 12 in above the media at the bottom,
+33 at the top, which holds 15 in of clearance over a mature 18 in plant. `cad/` derives the
+whole armature from those two numbers: dial the top of travel down and the mast shortens
+with it.
 
-| Plant height | Canopy top | Clearance to fixture |
-|---|---|---|
-| 12 in | 54.9 | +3.0 in |
-| 15 in | 57.9 | **0.0 in** |
-| 18 in | 60.9 | **−3.0 in — the plant grows into the light** |
+**What it costs.** The mast goes to 82.4 in and the piece to 82.9 overall, from 59.9. That
+is the price of the requirement, and it is a different object — tall and thin, closer to a
+copy stand than a cabinet. Nothing else moves: the lift, the shelf, the block and the panel
+are where they were.
 
-Ranunculus reaches 12–18 in. The fixture sits at 57.875 and the mast ends 1.5 in above it,
-so there is not merely no adjustment — there is no headroom to adjust into.
+**The mechanism**, top down:
 
-**What it would take.** Holding a 15 in working distance over an 18 in plant puts the
-fixture at 75.875, which is **18 in of travel** and a mast top near 77.4. The piece grows
-from 59.9 in to about 77.4 in overall. That is a silhouette decision, not a detail, and it
-is Jared's.
+| Part | What |
+|---|---|
+| Sheave | Ø 1.5 ball-race, on a shoulder bolt through the mast head, under a slotted cap |
+| Cable | 1/16 in 7×19 stainless, carriage → up the back face → over the sheave → down the bore |
+| Counterweight | ~15 in of steel bar, 1.51 × 2.51, notched Ø 1.0 for the conduit, sliding in the bore |
+| Carriage | A sleeve swallowing the shaft, 6 in long, 0.0625 slip fit, cam-locked; the arm and cross bar welded to it as one piece |
+| Loom conduit | Ø 0.75 tube fixed in one corner of the bore |
 
-**The mast is the right place for the mechanism.** It is hollow 2 x 3 HSS with a 1.76 x
-2.76 bore — enough to run a counterweight inside it on a cable over a pulley at the cap,
-which is what the sketches had. The fixture is two LM301H boards on a heatsink; weigh it
-before sizing anything. Note this is the one job the bore is genuinely good for: it was
-rejected as an air duct because 4.9 in² of area cannot pass a 120 mm fan's flow, but a
-counterweight only needs to fall down it.
+**The bore is the counterweight's, and this is the one job it is good for.** It was
+rejected as an air duct because 4.9 in² cannot pass a 120 mm fan's flow. A falling weight
+has no such objection.
+
+**The loom had to move.** The bore carried the drip line and LED cable loose. A slug sliding
+21 in would chafe them, so they now run in a fixed tube in one corner and the slug is
+notched around it — which turns the conduit into the slug's guide rail and stops it
+swinging. The drip line does not move, because the emitters are at a fixed height. **The
+LED cable does**, and needs a service loop at the carriage sized for the full 21 in.
+
+**Two things to settle with a scale and a level, not in CAD:**
+
+1. **Weigh the head before cutting the slug.** `CW_MASS_LB` is an estimate — two LM301H
+   boards (~0.7 lb), a heatsink (~4.7) and the steel carriage, arm and bar (~6.3). The slug
+   length follows directly from it, and the heatsink has no published dimensions.
+2. **Size the slug 90–95% of the head, not 100%.** A perfectly balanced head drifts; a
+   slightly light one settles down rather than creeping up. The cam lock holds it; the
+   counterweight only has to make it easy to move.
+
+**Verify the shaft in bending at full extension**, not at the parked height. The cantilever
+is unchanged at 5.75 in but the moment arm to the base is 23 in longer, and the carriage
+adds its own load. The existing note on sizing the section still applies and now applies
+to a taller column.
 
 ---
 

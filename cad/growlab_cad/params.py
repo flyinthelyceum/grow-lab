@@ -217,6 +217,23 @@ MAST_SIDE_CLEARANCE = 0.125  # CHOICE: between the shaft and the divider
 MAST_BOLT_DIA = 0.3125  # CHOICE: 5/16 in through-bolts into the rear panel
 MAST_BOLT_COUNT = 4
 MAST_BOLT_PITCH = 6.0  # CHOICE: spread along the fixing length
+# --- counterweight mechanism -----------------------------------------------
+# The head is counterweighted rather than clamped: a cable from the carriage
+# runs over a sheave at the cap and down the mast's own bore to a slug. The
+# bore is 1.76 x 2.76 — too small to duct a fan through, which is why that idea
+# died, and ample for a weight to fall down.
+CARRIAGE_H = 6.0  # CHOICE: sleeve length; sets how much the head can rack
+CARRIAGE_CLEAR = 0.0625  # CHOICE: slip fit over the shaft
+CARRIAGE_WALL = 0.125  # CHOICE
+SHEAVE_DIA = 1.5  # CHOICE: ball-race sheave in the cap
+SHEAVE_T = 0.375  # CHOICE
+CW_CLEAR = 0.125  # CHOICE: slug to bore, all round
+CW_DENSITY = 0.284  # lb/in3, mild steel. Lead is 0.41 and shortens the slug.
+CW_MASS_LB = 12.0  # CHOICE, and the one number here that wants weighing:
+# two LM301H boards (~0.7), a heatsink (~4.7) and the steel carriage, arm and
+# cross bar (~6.3). Weigh the head before cutting the slug.
+CONDUIT_DIA = 0.75  # the loom's tube, fixed in the bore — see canopy.py
+
 MAST_CAP_T = 0.25  # CHOICE: a welded cap plate closes the top; the arm lands on it
 MAST_LINE_PASS_DIA = 0.75  # "Ø 0.75 loom pass, grommeted" — now in the shaft's
                            # side wall, where the drip line and LED cable enter
@@ -261,7 +278,22 @@ WITNESS_DEPTH = 0.02  # CHOICE: engraving depth for reference marks
 # centre over the block". 46 was 15.1 above the media; that distance is kept.
 # ---------------------------------------------------------------------------
 
-FIXTURE_ABOVE_MEDIA = 15.0  # CHOICE: the docs' 46 − 30.9, rounded
+# --- canopy travel ---------------------------------------------------------
+# LIGHTING_SYSTEM.md has always said "Height should remain adjustable" — to
+# accommodate plant growth, allow intensity tuning and prevent light stress —
+# and named a pulley or sliding mount. It was never specced. A fixed head at
+# 15 in above the media has a mature ranunculus (12–18 in) growing into the
+# light: at 15 in tall the canopy touches it, at 18 in it is 3 in inside it.
+#
+# These two numbers set the whole armature. The mast height, the carriage
+# travel and the counterweight drop all derive from them, so dialling the top
+# of travel down shortens the mast with it.
+FIXTURE_ABOVE_MEDIA_MIN = 12.0  # CHOICE: closest useful working distance
+FIXTURE_ABOVE_MEDIA_MAX = 33.0  # CHOICE: 15 in of clearance over an 18 in plant
+
+# Where the head is drawn. Honoured as a knob so the viewer can show the
+# armature at any point in its travel; the model is drawn parked at the bottom.
+FIXTURE_ABOVE_MEDIA = _knob("FIXTURE_ABOVE_MEDIA", FIXTURE_ABOVE_MEDIA_MIN)
 FIXTURE_W = 16.0  # CHOICE: spans the 15.625 block, per the section drawing
 FIXTURE_D = 6.0  # CHOICE: envelope for two boards on a heatsink
 FIXTURE_H = 1.5  # CHOICE
@@ -284,8 +316,20 @@ CMU_UNDERSIDE_Z = TRAY_FLOOR_Z + PAD_H  # 36.75
 CMU_TOP_Z = CMU_UNDERSIDE_Z + CMU_H  # 44.375
 MEDIA_SURFACE_Z = CMU_TOP_Z - MEDIA_BELOW_RIM  # 42.875
 EMITTER_Z = MEDIA_SURFACE_Z + EMITTER_ABOVE_MEDIA  # 43.0
-FIXTURE_Z = MEDIA_SURFACE_Z + FIXTURE_ABOVE_MEDIA  # 57.875 — underside of the fixture
-MAST_TOP = FIXTURE_Z + FIXTURE_H  # 59.375 — top of the cap; the arm sits on it
+FIXTURE_Z = MEDIA_SURFACE_Z + FIXTURE_ABOVE_MEDIA  # underside of the fixture, as drawn
+FIXTURE_Z_MIN = MEDIA_SURFACE_Z + FIXTURE_ABOVE_MEDIA_MIN  # 54.875
+FIXTURE_Z_MAX = MEDIA_SURFACE_Z + FIXTURE_ABOVE_MEDIA_MAX  # 75.875
+FIXTURE_TRAVEL = FIXTURE_Z_MAX - FIXTURE_Z_MIN  # 21.0
+
+# The arm's top face, which is where the carriage is centred.
+CARRIAGE_Z = FIXTURE_Z + FIXTURE_H
+CARRIAGE_Z_MAX = FIXTURE_Z_MAX + FIXTURE_H
+
+# The mast is now as tall as the travel needs, not as tall as one fixed head
+# position. It stops above the carriage at full lift by enough to house the
+# sheave the lift cable turns over.
+MAST_HEAD = SHEAVE_DIA + 0.5  # CHOICE: sheave plus cap
+MAST_TOP = CARRIAGE_Z_MAX + CARRIAGE_H / 2 + MAST_HEAD
 
 # Reservoir shelf: as high as the rail allows, rounded down to a whole inch so
 # the slotted supports read as a sensible range. The pan must clear the rail
