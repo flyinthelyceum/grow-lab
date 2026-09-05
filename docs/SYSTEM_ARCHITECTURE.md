@@ -29,7 +29,7 @@ Sensors → Raspberry Pi → SQLite → Dashboard / Art Mode
 
 - Sensor drivers poll hardware on configurable intervals (1–15 min)
 - Readings stored in SQLite with timestamps
-- AS7341 runtime path may emit both raw spectral channels and fixture-specific `estimated_ppfd`
+- AS7341 emits the ten raw spectral channels and `as7341_lux`. PPFD estimation was removed with the calibration pipeline; the bench method is in `LIGHTING_SYSTEM.md`
 - REST API serves downsampled history (`/api/readings/<sensor>/downsampled?window=24h`) to both dashboard views
 - WebSocket (`/ws/updates`) pushes live values to connected clients (poll-response). Alerts reach the browser through the 3-second poll, not a server push.
 
@@ -53,7 +53,7 @@ All services run as async tasks within `growlab start` and shut down cleanly on 
 | PollingService | Always | Per-sensor config | Read sensors, store to DB |
 | IrrigationService | Pump available | 30s schedule check | Timed pump pulses with safety limits |
 | AlertService | Always | 60s | Threshold monitoring with deduplication; fires NotificationService on transitions |
-| NotificationService | Alert callback | On alert | Webhook POST + SMTP email dispatch with per-sensor cooldown |
+| NotificationService | Alert callback | On alert | ntfy webhook POST with per-sensor cooldown |
 | FanService | `fan.enabled` | 30s | Temperature → PWM duty ramp |
 | MeterService | `meters.enabled` | ~30 Hz | Eases the two centre-zero panel needles toward pH and EC deviation via the MCP4728 |
 | ControlService | `control.enabled` and a service to drive | 2s | Reconciles the fan and meters toward desired state written by the dashboard |
@@ -151,7 +151,7 @@ SH1106 128×64 OLED on I²C 0x3C. Rotates through 4 pages every 5 seconds:
 - data logging
 - dashboard interface
 - irrigation scheduling
-- threshold alerting with webhook/email notifications
+- threshold alerting with ntfy webhook notifications
 - fan PWM control
 - system orchestration
 
@@ -166,7 +166,7 @@ This separation keeps timing-sensitive lighting control off the Raspberry Pi.
 
 - Dashboard routes (`/`, `/art`)
 - REST API (`/api/readings/`, `/api/events`, `/api/alerts`, `/api/fan/`, `/api/meters/`, `/api/control`)
-- Override endpoints (`POST /api/fan/override`, `POST /api/meters/override`) write desired state to `control_state`; they never touch hardware directly, because this process cannot
+- The override endpoint (`POST /api/fan/override`) writes desired state to `control_state`; it never touches hardware directly, because this process cannot
 - WebSocket (`/ws/updates`) for live values
 - Static file serving (D3.js charts, art mode modules, CSS)
 

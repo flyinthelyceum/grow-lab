@@ -67,7 +67,6 @@ Variables logged:
 • light_pwm_level  
 • light_schedule_state (on/off)  
 • as7341 raw spectral channels  
-• estimated_ppfd
 
 Source:
 
