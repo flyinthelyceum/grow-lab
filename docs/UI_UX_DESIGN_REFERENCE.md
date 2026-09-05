@@ -444,6 +444,29 @@ removed does not measure what a piece lost.**
 The fan's software survives, disabled, so this is reversible without rewriting anything.
 What does not survive is the assumption that motion is optional.
 
+## 12c. The mast goes white, and that breaks the register — 2026-09-05
+
+Everything structural in the piece is black: the steel base frame, the instrument case, the
+backplate. Warm ply is the other register, and the two of them are the whole palette. It has
+been consistent enough that it reads as a rule rather than as a series of choices.
+
+The mast is now **white DTM acrylic**, on Jared's instruction, and it is the first thing to
+leave that register. There is a good reason for it — a black tube 81 in tall is a heavy
+vertical stroke through the middle of the composition, and the thing the fan taught is that
+a dark object in the growing volume dominates whatever leverage it has — and a white mast
+reads as a drawn line instead, closer to a copy stand or a lab armature than to structure.
+
+**But it is one white object among black ones, and that is the risk.** One departure from a
+consistent rule reads as an error; two read as a second register. The open question is
+whether the white extends — to the carriage and arm (it does, in the current spec), and
+beyond that to the base frame, or the case, or neither. That question is not settled here,
+and the CAD carries the mast and its head in white and everything else unchanged, which is
+the state the decision has actually reached rather than a resolution of it.
+
+The counterweight went with the black. Section 12b's complaint stands unchanged: the head
+now moves, but only when a person moves it, twice in a season. That is adjustability, not
+motion.
+
 ---
 
 ## 13. Key Takeaway

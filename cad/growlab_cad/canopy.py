@@ -1,36 +1,37 @@
-"""The counterweighted canopy: the head rides the mast instead of being welded to it.
+"""The canopy carriage: a split clamp collar the head rides on.
 
 `LIGHTING_SYSTEM.md` § Light Positioning has always required this — "Height
 should remain adjustable", to accommodate plant growth, allow intensity tuning
 and prevent light stress — and named a pulley or sliding mount. It was never
 specced and never modelled, and the head sat welded to the mast cap at one fixed
-height. A ranunculus reaches 12-18 in; at 15 in the canopy touched the fixture
+height. A ranunculus reaches 12–18 in; at 15 in the canopy touched the fixture
 and at 18 in it was 3 in inside it.
 
-The mechanism, from the top down:
+**Why there is no counterweight.** There was one, briefly: a sheave in the cap,
+a cable down the mast's own bore, and a 12 lb steel slug falling inside it. It
+worked on paper and it cost the whole silhouette, because the bore had to be big
+enough to swallow the slug, which meant a 2 × 3 section, which meant a mast
+sized like structure for a building to hold up two LED strips. Cutting the
+counterweight cut the bore, the section and about three quarters of the mast's
+visual weight with it.
 
-* a **sheave** in the mast's cap;
-* a **cable** from the carriage, up the mast's back face, over the sheave, and
-  down the mast's own bore;
-* a **counterweight** sliding in that bore. This is the one job the bore is good
-  for. It was rejected as an air duct because 4.9 in2 cannot pass a 120 mm fan's
-  flow; a falling weight has no such objection;
-* a **carriage** — a sleeve swallowing the shaft, with the arm and cross bar
-  welded to it as one piece. Rectangular section means it cannot rotate, and the
-  sleeve length sets how much the head can rack under its own cantilever.
+What replaces it is the thing lab stands and mic booms use: a **split clamp
+collar**. One part holds the head *and* locks its height. A saw kerf runs from
+the bore out through a boss on the back; two pinch bolts across the kerf close
+the collar onto the tube. Friction takes both loads — the 12 lb of head hanging
+on it, and the 69 in-lb of moment trying to twist it round the tube — so a round
+mast needs no key or flat to stop the head rotating.
 
-**The loom problem, and why the conduit is here.** The mast bore already carried
-the drip line and the LED cable. A slug sliding 21 in up and down that bore would
-chafe them. So the loom now runs in a fixed tube in one corner of the bore and
-the slug is notched around it — which turns the conduit into the weight's guide
-rail and stops it swinging. The drip line does not move: the emitters are at a
-fixed height. **The LED cable does**, and needs a service loop at the carriage
-sized for the full travel; that is noted in the build docs, not modelled here.
+**Setting the height is a two-handed job**, and deliberately so: slacken both
+bolts, take the head's weight, slide, re-tighten. Twelve pounds at chest height
+is a lift, not a nudge. It is also something that happens perhaps twice in a
+growing season.
 
-**Balance.** A perfectly balanced head drifts. Size the slug slightly light -- 90
-to 95 per cent of the head -- so it settles down rather than creeping up, and
-lock it with a cam collar on the carriage. `CW_MASS_LB` is an estimate and the
-one number here that wants a scale before anything is cut.
+**The loom.** With the slug gone the bore is the loom's again: drip line and LED
+cable up the inside, out under the cap. The drip line does not move — the
+emitters are at a fixed height. The LED cable does, over the full 21 in of
+travel, and takes up the slack in a coiled lead from the cap to the arm. That is
+noted in the build docs, not modelled here.
 """
 
 from __future__ import annotations
@@ -38,100 +39,67 @@ from __future__ import annotations
 from build123d import Part
 
 from . import params as P
-from ._shapes import box, cyl_y, cyl_z, labelled
+from ._shapes import box, cyl_x, cyl_z, labelled
+
+KERF = 0.09  # CHOICE: the saw cut the pinch bolts close
+BOSS_W = 1.0  # CHOICE: across the kerf, in X
+BOSS_PROJECTION = 0.45  # CHOICE: how far the boss stands off the collar's back
+PINCH_BOLT_DIA = 0.28  # 1/4-20 clearance
+PINCH_BOLT_SPACING = 2.2  # CHOICE: either side of the collar's mid-height
 
 
-def bore() -> tuple[float, float]:
-    """Internal width and depth of the mast section."""
-    return P.MAST_W - 2 * P.MAST_WALL, P.MAST_D - 2 * P.MAST_WALL
+def collar_od() -> float:
+    return P.MAST_OD + 2 * P.CARRIAGE_CLEAR + 2 * P.CARRIAGE_WALL
 
 
-def conduit_xy() -> tuple[float, float]:
-    """The loom tube sits in one corner of the bore, clear of the slug's body."""
-    bw, bd = bore()
-    r = P.CONDUIT_DIA / 2
-    return (P.MAST_X - bw / 2 + r + 0.06, P.MAST_Y - bd / 2 + r + 0.06)
+def collar_id() -> float:
+    return P.MAST_OD + 2 * P.CARRIAGE_CLEAR
 
 
-def slug_section() -> tuple[float, float, float]:
-    """(width, depth, area) of the counterweight, after clearance and the notch."""
-    bw, bd = bore()
-    w, d = bw - 2 * P.CW_CLEAR, bd - 2 * P.CW_CLEAR
-    notch = (P.CONDUIT_DIA + 2 * P.CW_CLEAR) ** 2
-    return w, d, w * d - notch
-
-
-def slug_length() -> float:
-    """Length of slug needed to reach CW_MASS_LB at CW_DENSITY."""
-    return P.CW_MASS_LB / (slug_section()[2] * P.CW_DENSITY)
-
-
-def sheave_z() -> float:
-    """The sheave's centre, tucked under the cap."""
-    return P.MAST_TOP - P.MAST_CAP_T - P.SHEAVE_DIA / 2
-
-
-def counterweight_z() -> float:
-    """Top of the slug, for the head's drawn position.
-
-    The weight rises as the head falls, so it is highest at the bottom of travel.
-    """
-    highest = sheave_z() - P.SHEAVE_DIA / 2 - 0.5
-    return highest - (P.FIXTURE_Z - P.FIXTURE_Z_MIN)
+def collar_front_y() -> float:
+    """The flat the fixture arm is welded to."""
+    return P.MAST_Y - collar_od() / 2
 
 
 def build_carriage() -> Part:
-    """Sleeve, arm and cross bar as one weldment.
+    """Collar, arm and cross bar as one weldment.
 
-    Fabricated, and modelled as one part because that is what it is -- welded
+    Fabricated, and modelled as one part because that is what it is — welded
     together, it cannot interfere with itself, and splitting it would report a
-    false clash between the sleeve and the arm it carries.
+    false clash between the collar and the arm it carries.
     """
-    clear, wall = P.CARRIAGE_CLEAR, P.CARRIAGE_WALL
-    inner_w, inner_d = P.MAST_W + 2 * clear, P.MAST_D + 2 * clear
     z0 = P.CARRIAGE_Z - P.CARRIAGE_H / 2
+    od, idia = collar_od(), collar_id()
 
-    sleeve = box(inner_w + 2 * wall, inner_d + 2 * wall, P.CARRIAGE_H,
-                 at=(P.MAST_X, P.MAST_Y, z0))
-    sleeve -= box(inner_w, inner_d, P.CARRIAGE_H + 1,
-                  at=(P.MAST_X, P.MAST_Y, z0 - 0.5))
+    collar = cyl_z(od, P.CARRIAGE_H, at=(P.MAST_X, P.MAST_Y, z0))
 
-    # The arm cantilevers from the sleeve's FRONT face. It used to run from the
-    # mast's back face, which was fine when it sat on the cap above everything;
-    # at mid-height that drives it straight through the shaft and the conduit.
-    y_front = P.MAST_Y - P.MAST_D / 2 - clear - wall
+    # A flat pad on the front, so the arm lands on a flat rather than a tangent,
+    # and a boss on the back to carry the pinch bolts. Both run the full height
+    # of the collar, so the whole thing saws out of one piece.
+    y_front = collar_front_y()
+    collar += box(P.FIXTURE_ARM_W, P.MAST_Y - y_front, P.CARRIAGE_H,
+                  at=(P.MAST_X, (y_front + P.MAST_Y) / 2, z0))
+    boss_y1 = P.MAST_Y + od / 2 + BOSS_PROJECTION
+    collar += box(BOSS_W, boss_y1 - P.MAST_Y, P.CARRIAGE_H,
+                  at=(P.MAST_X, (P.MAST_Y + boss_y1) / 2, z0))
+
+    # The bore, then the kerf: from the bore straight out through the back of
+    # the boss, leaving the two halves joined only round the front.
+    collar -= cyl_z(idia, P.CARRIAGE_H + 1, at=(P.MAST_X, P.MAST_Y, z0 - 0.5))
+    collar -= box(KERF, boss_y1 - P.MAST_Y + 0.5, P.CARRIAGE_H + 1,
+                  at=(P.MAST_X, (P.MAST_Y + boss_y1 + 0.5) / 2, z0 - 0.5))
+
+    # Two pinch bolts across the kerf.
+    bolt_y = P.MAST_Y + od / 2 + BOSS_PROJECTION / 2
+    for dz in (-PINCH_BOLT_SPACING / 2, PINCH_BOLT_SPACING / 2):
+        collar -= cyl_x(PINCH_BOLT_DIA, BOSS_W * 2,
+                        at=(P.MAST_X, bolt_y, P.CARRIAGE_Z + dz))
+
+    # The arm cantilevers forward off that front pad to the fixture's back edge.
     bar_y1 = P.FIXTURE_Y + P.FIXTURE_D / 2
     bar_y0 = bar_y1 - P.FIXTURE_BAR_D
     arm = box(P.FIXTURE_ARM_W, y_front - bar_y0, P.FIXTURE_ARM_T,
               at=(P.MAST_X, (y_front + bar_y0) / 2, P.CARRIAGE_Z))
     bar = box(P.FIXTURE_W, P.FIXTURE_BAR_D, P.FIXTURE_ARM_T,
               at=(P.FIXTURE_X, (bar_y0 + bar_y1) / 2, P.CARRIAGE_Z))
-    return labelled(sleeve + arm + bar, "canopy_carriage")
-
-
-def build_counterweight() -> Part:
-    w, d, _ = slug_section()
-    length = slug_length()
-    slug = box(w, d, length, at=(P.MAST_X, P.MAST_Y, counterweight_z() - length))
-    cx, cy = conduit_xy()
-    slug -= cyl_z(P.CONDUIT_DIA + 2 * P.CW_CLEAR, length + 1,
-                  at=(cx, cy, counterweight_z() - length - 0.5))
-    return labelled(slug, "counterweight")
-
-
-def build_conduit() -> Part:
-    """The loom's tube: fixed, full height, and the slug's guide rail."""
-    cx, cy = conduit_xy()
-    top = sheave_z() - P.SHEAVE_DIA / 2
-    return labelled(
-        cyl_z(P.CONDUIT_DIA, top - P.RAIL_BOTTOM_Z, at=(cx, cy, P.RAIL_BOTTOM_Z)),
-        "loom_conduit",
-    )
-
-
-def build_sheave() -> Part:
-    """Bought: a ball-race sheave on a shoulder bolt through the mast head."""
-    return labelled(
-        cyl_y(P.SHEAVE_DIA, P.SHEAVE_T, at=(P.MAST_X, P.MAST_Y, sheave_z())),
-        "sheave",
-    )
+    return labelled(collar + arm + bar, "canopy_carriage")

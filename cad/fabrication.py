@@ -259,7 +259,7 @@ def cutlist() -> dict:
         },
         "steel": {
             "stock": f"{P.FRAME_TUBE} x {P.FRAME_TUBE} HSS or solid bar; "
-                     f"{P.MAST_W} x {P.MAST_D} HSS for the mast",
+                     f"Ø{P.MAST_OD} x {P.MAST_WALL} round tube for the mast",
             "parts": [
                 {"part": "Frame leg", "qty": 4, "length": frame_leg,
                  "note": "levelling feet in the ends"},
@@ -267,29 +267,23 @@ def cutlist() -> dict:
                 {"part": "Frame ring, front/back", "qty": 2, "length": ring_x,
                  "note": "back member notched for the mast"},
                 {"part": "Mast", "qty": 1, "length": P.MAST_TOP,
-                 "note": "floor to cap; side line pass; 4 rear bolt holes"},
-                {"part": "Mast cap", "qty": 1, "length": P.MAST_D,
-                 "note": f"{P.MAST_CAP_T} plate, {P.MAST_W} x {P.MAST_D}, "
-                         "slotted for the lift cable, welded"},
-                {"part": "Carriage sleeve", "qty": 1, "length": P.CARRIAGE_H,
-                 "note": f"{P.CARRIAGE_WALL} wall, {P.CARRIAGE_CLEAR} slip fit over the "
-                         "shaft; cam lock; rides the mast"},
+                 "note": f"floor to cap; one Ø{P.MAST_LINE_PASS_DIA} side line pass, "
+                         f"grommeted. No other hole — {P.MAST_STRAP_COUNT} U-bolts go "
+                         "round it"},
+                {"part": "Mast cap", "qty": 1, "length": P.MAST_OD,
+                 "note": f"Ø{P.MAST_OD} disc, {P.MAST_CAP_T} plate, welded; "
+                         f"Ø{P.MAST_LINE_PASS_DIA} grommet for the LED lead"},
+                {"part": "Carriage collar", "qty": 1, "length": P.CARRIAGE_H,
+                 "note": f"Ø{_canopy.collar_od():.3f} over Ø{_canopy.collar_id():.3f} bore, "
+                         f"{P.CARRIAGE_WALL} wall; front pad for the arm, rear boss "
+                         f"saw-split {_canopy.KERF} and pinched by 2 x 1/4-20"},
                 {"part": "Fixture arm, forward", "qty": 1,
-                 "length": (P.MAST_Y - P.MAST_D / 2 - P.CARRIAGE_CLEAR - P.CARRIAGE_WALL)
+                 "length": _canopy.collar_front_y()
                            - (P.FIXTURE_Y + P.FIXTURE_D / 2 - P.FIXTURE_BAR_D),
                  "note": f"{P.FIXTURE_ARM_W} x {P.FIXTURE_ARM_T} flat, welded to the "
-                         "carriage's front face"},
+                         "collar's front pad"},
                 {"part": "Fixture arm, cross bar", "qty": 1, "length": P.FIXTURE_W,
                  "note": "along the fixture's back edge; spans the mast's offset"},
-                {"part": "Counterweight", "qty": 1, "length": _canopy.slug_length(),
-                 "note": f"{P.CW_MASS_LB} lb of steel bar, "
-                         f"{_canopy.slug_section()[0]:.2f} x {_canopy.slug_section()[1]:.2f}, "
-                         f"notched Ø{P.CONDUIT_DIA + 2 * P.CW_CLEAR:.2f} for the conduit. "
-                         "WEIGH THE HEAD FIRST — this length follows its mass"},
-                {"part": "Loom conduit", "qty": 1,
-                 "length": _canopy.sheave_z() - P.SHEAVE_DIA / 2 - P.RAIL_BOTTOM_Z,
-                 "note": f"Ø{P.CONDUIT_DIA} tube, fixed in the bore; carries the drip line "
-                         "and LED cable and guides the counterweight"},
             ],
         },
         "sheet": [

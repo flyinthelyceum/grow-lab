@@ -141,11 +141,14 @@ def build_shell() -> Part:
     # The door opening, through the rear panel.
     shell -= _panel(DOOR_X0, DOOR_X1, IY1 - 0.5, Y1 + 0.5, DOOR_Z0, DOOR_Z1)
 
-    # Mast through-bolt holes in the fixed rear panel, matching the shaft.
-    from .mast import bolt_heights
+    # U-bolt holes in the fixed rear panel: a pair at each strap height,
+    # straddling the tube. Nothing is drilled through the mast itself.
+    from .mast import strap_bolt_x, strap_heights
 
-    for z in bolt_heights():
-        shell -= cyl_y(P.MAST_BOLT_DIA, P.REAR_PANEL_T * 3, at=(P.MAST_X, (IY1 + Y1) / 2, z))
+    for z in strap_heights():
+        for x in strap_bolt_x():
+            shell -= cyl_y(P.MAST_STRAP_BOLT_DIA, P.REAR_PANEL_T * 3,
+                           at=(x, (IY1 + Y1) / 2, z))
 
     # Wet-bay vent: "an open reservoir in a sealed box makes a humid box."
     # A row of holes high in the left side, over the pan. CHOICE.

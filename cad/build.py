@@ -90,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
           f"→ {d.slack:+.2f} in ({verdict})")
     print(f"static lift, low water → emitters: {params.HEIGHTS.static_lift:.1f} in "
           f"({params.HEIGHTS.static_lift / 12:.2f} ft); panel centre {params.PANEL_CENTRE_Z:.1f} in; "
-          f"overall height {params.MAST_TOP + params.FIXTURE_ARM_T:.1f} in")
+          f"overall height {params.MAST_TOP:.1f} in")
     # The pan has to be lifted off the shelf to come out, so the opening must
     # clear its height plus the lift — the same condition the test asserts.
     pan_h_lifted = params.RESERVOIR_H + params.RESERVOIR_LIFT_CLEARANCE

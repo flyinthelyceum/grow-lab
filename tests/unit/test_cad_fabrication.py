@@ -237,8 +237,10 @@ class TestTheCutList:
 
         car = bbox_in(canopy.build_carriage())
         assert steel["Fixture arm, cross bar"]["length"] == pytest.approx(car["x1"] - car["x0"])
-        assert steel["Counterweight"]["length"] == pytest.approx(canopy.slug_length())
-        assert steel["Carriage sleeve"]["length"] == pytest.approx(P.CARRIAGE_H)
+        assert steel["Fixture arm, forward"]["length"] == pytest.approx(
+            canopy.collar_front_y() - (P.FIXTURE_Y + P.FIXTURE_D / 2 - P.FIXTURE_BAR_D))
+        assert steel["Carriage collar"]["length"] == pytest.approx(P.CARRIAGE_H)
+        assert data["steel"]["stock"].endswith("round tube for the mast")
         sheet = {r["part"]: r for r in data["sheet"]}
         assert sheet["Instrument plate"]["blank"] == [FACE_WIDTH, FACE_HEIGHT]
         assert sheet["Instrument case body"]["blank"][0] == pytest.approx(
