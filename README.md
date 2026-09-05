@@ -115,3 +115,8 @@ pytest tests/browser/test_browser_dashboard.py -v
 - [V0 Bench Prototype](docs/V0_BENCH_PROTOTYPE.md)
 - [Phase 1 Walkthrough](docs/PHASE1_RASPBERRY_PI_WALKTHROUGH.md)
 - [Changelog](CHANGELOG.md)
+
+## Before the next hardware order
+
+Run the subtract pass: [docs/SUBTRACT_PASS.md](docs/SUBTRACT_PASS.md). The BOM has
+expanded beyond scope and nothing in the build loop removes anything on its own.
