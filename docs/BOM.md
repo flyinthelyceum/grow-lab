@@ -186,7 +186,7 @@ Reservoir
 
 **Stainless steam table pan, half size x 6 in deep, with lid** — 12.8 x 10.4 x 5.9 in
 (325 x 265 x 150 mm), ~13 L to the brim. 2.5 gal sits at ~4.3 in with freeboard.
-Sits on an adjustable shelf at 12 in; holds solution, probes, pump.  
+Sits on an adjustable shelf at 28 in; holds solution, probes, pump.  
 **Not a tall bucket** — 2.5 gal is 577 in³, only 5.1 in deep in a 12 in bucket, so a tall
 vessel spends cabinet height on air and costs pump lift.  
 304 stainless matches the tray, is opaque (better algae exclusion than translucent
