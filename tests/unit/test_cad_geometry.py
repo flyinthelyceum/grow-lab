@@ -180,6 +180,19 @@ class TestTheCanopyFan:
         assert bb["z0"] > P.CMU_TOP_Z, "the fan must clear the block, not sit against it"
         assert bb["z1"] < P.FIXTURE_Z, "the fan must not foul the light"
 
+    def test_it_sits_low_in_the_foliage_not_in_clear_air(self, refs):
+        """Height here is a composition constraint, not just a clearance.
+
+        At mid-canopy this put a 4.7 in black square in open air above the
+        block, in the most looked-at volume of the piece. It is a low-leverage
+        part and it must not dominate. Sitting it on the block top is the
+        lowest the geometry allows and puts it in the densest foliage.
+        """
+        bb = bbox_in(refs["canopy_fan"])
+        assert bb["z0"] - P.CMU_TOP_Z < 0.5, (
+            "the fan has drifted up out of the foliage and back into clear air"
+        )
+
     def test_it_is_centred_on_the_block_not_the_mast(self, refs):
         bb = bbox_in(refs["canopy_fan"])
         assert (bb["x0"] + bb["x1"]) / 2 == pytest.approx(P.CMU_X, abs=1e-6), (

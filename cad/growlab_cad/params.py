@@ -269,7 +269,11 @@ FIXTURE_H = 1.5  # CHOICE
 # Noctua NF-A12x25. Bought, so these two are catalogue figures, not choices.
 FAN_SIZE = 120.0 / 25.4  # 4.724
 FAN_THICK = 25.0 / 25.4  # 0.984
-FAN_ABOVE_MEDIA = 7.0  # CHOICE: mid-canopy, between the media and the fixture
+FAN_ABOVE_MEDIA = 4.0  # CHOICE: as low as the block allows, down in the foliage.
+# Not mid-canopy. Mid-canopy put a 4.7 in black square in clear air above the
+# block, in the most looked-at volume of the piece, on a visible cantilevered
+# arm. This is a low-leverage part and it was dominating the composition. Here
+# its underside clears the block by 0.13 in and it sits in the densest foliage.
 FAN_BRACKET_W = 1.25  # CHOICE: depth of the bar carrying it off the mast
 FAN_BRACKET_T = 0.25  # CHOICE
 
