@@ -25,12 +25,12 @@ Subsystem details: [LIGHTING_SYSTEM.md](LIGHTING_SYSTEM.md), [IRRIGATION_SYSTEM.
 
 # Data Flow
 
-Sensors → Raspberry Pi → SQLite → Dashboard / Art Mode
+Sensors → Raspberry Pi → SQLite → Dashboard
 
 - Sensor drivers poll hardware on configurable intervals (1–15 min)
 - Readings stored in SQLite with timestamps
 - AS7341 emits the ten raw spectral channels and `as7341_lux`. PPFD estimation was removed with the calibration pipeline; the bench method is in `LIGHTING_SYSTEM.md`
-- REST API serves downsampled history (`/api/readings/<sensor>/downsampled?window=24h`) to both dashboard views
+- REST API serves downsampled history (`/api/readings/<sensor>/downsampled?window=24h`) to the dashboard
 - WebSocket (`/ws/updates`) pushes live values to connected clients (poll-response). Alerts reach the browser through the 3-second poll, not a server push.
 
 See [DATA_ARCHITECTURE.md](DATA_ARCHITECTURE.md) for storage format, schema, and visualization strategy.
@@ -118,20 +118,6 @@ All data charts support crosshair hover: vertical guide line with colored dots o
 
 Time window selector: 1H / 24H / 7D. Historical charts query downsampled REST endpoints; current values update live via WebSocket. Alerts arrive on the 3-second poll.
 
-## Art Mode (`/art`)
-
-Full-screen generative visualization rendering 24h environmental data as a radial composition:
-
-- **Pressure atmosphere** — colored radial gradient with isobar rings
-- **Thermal ring** — temperature mapped to color-graded wedges (blue → teal → amber)
-- **Humidity ring** — breathing teal-cyan band with sinusoidal opacity
-- **Water pulses** — bright cyan markers at irrigation event angles
-- **Ambient particles** — 120 drifting particles with lifecycle animation
-
-Center disc shows context-sensitive detail on hover. Distance-based priority: water markers always win, then whichever ring (temperature or humidity) the mouse is physically closer to.
-
-Design references: [UI_UX_DESIGN_REFERENCE.md](UI_UX_DESIGN_REFERENCE.md)
-
 ## Embedded OLED Display
 
 SH1106 128×64 OLED on I²C 0x3C. Rotates through 4 pages every 5 seconds:
@@ -164,11 +150,11 @@ This separation keeps timing-sensitive lighting control off the Raspberry Pi.
 
 ## Web Server: FastAPI
 
-- Dashboard routes (`/`, `/art`)
+- Dashboard routes (`/`, `/panel`)
 - REST API (`/api/readings/`, `/api/events`, `/api/alerts`, `/api/fan/`, `/api/meters/`, `/api/control`)
 - The override endpoint (`POST /api/fan/override`) writes desired state to `control_state`; it never touches hardware directly, because this process cannot
 - WebSocket (`/ws/updates`) for live values
-- Static file serving (D3.js charts, art mode modules, CSS)
+- Static file serving (D3.js charts, panel emulator modules, CSS)
 
 See [WIRING_&_BUSES.md](WIRING_&_BUSES.md) for pin assignments, bus layout, and power domains.
 

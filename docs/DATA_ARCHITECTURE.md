@@ -216,21 +216,7 @@ Chart types per subsystem:
 | ROOT | Stacked sparklines with target bands (pH + EC) | D3.js |
 | PLANT | Arc gauge (soil moisture) + camera feed | D3.js |
 
-Data pipeline: Observatory and art mode both fetch downsampled readings from `/api/readings/<sensor>/downsampled?window=<window>`. WebSocket pushes live values at 3-second intervals.
-
-## Art Mode (`/art`)
-
-Full-screen generative Canvas 2D visualization. Renders 24 hours of environmental data as a radial composition with 5 layers:
-
-1. Pressure atmosphere (colored gradient + isobar rings)
-2. Thermal ring (temperature → color-graded wedges)
-3. Humidity breathing ring (sinusoidal opacity modulation)
-4. Water pulse markers (irrigation event angles)
-5. Ambient particle field (120 particles, lifecycle animation)
-
-Hover interaction reveals context-sensitive detail in a center disc with priority routing (water > humidity > temperature).
-
-Design references: [UI_UX_DESIGN_REFERENCE.md](UI_UX_DESIGN_REFERENCE.md)
+Data pipeline: the observatory fetches downsampled readings from `/api/readings/<sensor>/downsampled?window=<window>`. WebSocket pushes live values at 3-second intervals.
 
 ## Embedded OLED Display
 

@@ -83,8 +83,11 @@ sudo systemctl --no-pager --full status cloudflared | sed -n '1,18p'
 
 echo ""
 echo "=== Local Origin Checks ==="
-curl -fsS http://127.0.0.1:8000/art | rg -n "art-live-ph|ph-ring|ec-ring|ENVIRONMENTAL \+ RESERVOIR|\?v=" || true
-curl -fsSI http://127.0.0.1:8000/static/art/ph-ring.js | sed -n '1,8p'
+# Both guarded: this is a recovery script, and a 404 here must never be the
+# reason it stops before the tunnel and tailnet checks below. Art Mode was
+# retired 2026-09-05 and these probed it.
+curl -fsS http://127.0.0.1:8000/ | rg -n "camera-live-toggle|observatory|\?v=" || true
+curl -fsSI http://127.0.0.1:8000/static/observatory.js | sed -n '1,8p' || true
 
 echo ""
 echo "=== Tailnet Snapshot ==="

@@ -21,7 +21,7 @@ Stage 1 does NOT defend against:
 
 | Surface | Public | Admin only |
 | --- | --- | --- |
-| `/`, `/art` | yes | — |
+| `/` | yes | — |
 | `GET /api/readings/*`, `/api/events`, `/api/images*`, `/api/alerts*`, `/api/system/status`, `/api/fan/status` | yes | — |
 | `POST /api/fan/override` | — | yes (`require_admin`) |
 | `/admin/login`, `/admin/logout` | yes (form) | — |

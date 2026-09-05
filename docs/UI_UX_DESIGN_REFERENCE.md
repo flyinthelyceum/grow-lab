@@ -339,6 +339,14 @@ the sensor history as the biography of sustained care). The interface reveals rh
 show. If a "look-in" ever returns, it must be derived from live state, unlabeled, and for the
 tender — not choreographed for viewers.
 
+**Executed in code 2026-09-05.** Until now this was a ruling the codebase had not caught up with.
+Removed: the `GET /art` route, `templates/art.html`, `static/art.js`, and the whole `static/art/`
+module directory (`art-core`, `radial-ring`, `humidity-ring`, `ph-ring`, `ec-ring`, `water-pulses`,
+`pressure-field`, `ambient-particles`); the ART nav links in the observatory header and footer; the
+`/art` row in the dashboard's public-surface table; and the Art Mode passages in `README.md`,
+`SYSTEM_ARCHITECTURE.md`, and `DATA_ARCHITECTURE.md`. Its sibling Dream Mode went the same way on
+2026-09-04. The decision text above is unchanged and stays here as its only written record.
+
 ---
 
 ## 9. Typography
