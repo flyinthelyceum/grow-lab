@@ -90,7 +90,6 @@ def light_schedule(ctx: click.Context) -> None:
     config = ctx.obj["config"]
     lc = config.lighting
 
-    click.echo(f"Mode:      {lc.mode}")
     click.echo(f"On hour:   {lc.on_hour:02d}:00")
     click.echo(f"Off hour:  {lc.off_hour:02d}:00")
     click.echo(f"Intensity: {lc.intensity}")

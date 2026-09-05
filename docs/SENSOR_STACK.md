@@ -151,6 +151,9 @@ Using standard conductivity solution (e.g., 1413 µS).
 
 Probe mounting guidelines identical to pH probe.
 
+EC probes outlast pH probes but need periodic cleaning, and the same wet-storage
+rule applies — see [BOM.md](BOM.md) → pH probe maintenance.
+
 ---
 
 # Reservoir Temperature
@@ -220,22 +223,6 @@ Sampling frequency:
 
 5 minutes (300s interval).
 
-## Calibration for Coco Coir + Perlite
-
-Standard soil moisture calibrations do not apply to soilless media. Substrate-specific calibration is required.
-
-Method:
-
-1. Fill pot with dry coco coir + perlite mix (same ratio as production)
-2. Insert sensor at ~2/3 pot depth, away from pot wall and drip emitter
-3. Record sensor reading (dry baseline)
-4. Add known volumes of water incrementally (100 mL at a time)
-5. Wait 5 minutes after each addition for water to distribute
-6. Record sensor reading at each step
-7. Define two thresholds: dry (trigger irrigation) and wet (skip irrigation)
-
-For irrigation decisions, relative readings are sufficient — you do not need absolute volumetric water content.
-
 ## Avoid: Generic "Capacitive Soil Moisture Sensor v1.2"
 
 The $1–3 generic sensors on Amazon/AliExpress are not reliable for continuous use. Uncoated PCB edges wick moisture, causing drift and failure within months. Do not use these.
@@ -250,48 +237,12 @@ Purpose:
 
 Capture periodic still images for timelapse generation, growth tracking, and correlation with environmental sensor data.
 
-Recommended variant:
-
-Camera Module 3 Standard (~$25). Choose Wide (~$35) if mounting close to the plant.
-
-Specifications:
-
-• Sensor: Sony IMX708
-• Resolution: 11.9 MP (4608 x 2592)
-• Focus: Phase Detection Autofocus (PDAF), motorized
-• FoV: 75° standard, 120° wide
-• Interface: CSI ribbon cable (15-pin for Pi 3/4, 22-pin for Pi 5)
-• Weight: ~14 g
-• Max exposure: 112 seconds
-• Ships with cables for both Pi connector types
-
-Variants:
-
-• Standard (75° FoV, IR filter) — general purpose
-• Wide (120° FoV, IR filter) — full installation capture
-• NoIR (75°, no IR filter) — dark period capture with IR lighting
-• Wide NoIR (120°, no IR filter) — wide-angle night capture
-
-Software:
-
-• picamera2 (Python library) — native Pi camera control
-• Legacy raspistill/raspivid are not supported with Camera Module 3
-• libcamera-still CLI tool for scripted capture
-
 Timelapse notes:
 
 • Lock focus manually after mounting (set AfMode.Manual with fixed LensPosition in picamera2)
 • Allow ~60 seconds warm-up before locking focus
 • Disable HDR for full 12 MP stills (HDR caps at ~3 MP)
 • Mount securely — the AF mechanism shifts with orientation changes
-
-Ribbon cable:
-
-Stock is 200mm. Extended cables available at 300mm and 500mm for remote mounting.
-
-Storage:
-
-At 10-minute capture intervals (~500 KB/frame): ~72 MB/day, ~2.2 GB/month. A 128 GB SD card or USB drive handles months of footage.
 
 Timelapse assembly:
 
@@ -328,21 +279,7 @@ The V0 system uses two communication buses plus the CSI camera interface.
 
 ## I²C Bus
 
-Devices, addresses, and strap conditions:
-
-| Device | I²C Address | Address Selection | Function |
-|--------|-------------|-------------------|----------|
-| ADS1115 (SEN0308 ADC) | 0x48 | ADDR→GND. ADDR→VDD/SDA/SCL for 0x49–0x4B | Media moisture (analog input) |
-| SSD1306 OLED (optional) | 0x3C | SA0→GND. SA0→VCC for 0x3D | Physical status display |
-| BME280 | 0x76 | SDO→GND. SDO→VCC for 0x77 | Air temp + humidity + pressure |
-| Atlas EZO-pH | 0x63 (99 decimal) | Set via `I2C,99` command during mode switch | Reservoir pH |
-| Atlas EZO-EC | 0x64 (100 decimal) | Set via `I2C,100` command during mode switch | Reservoir EC |
-| AS7341 | 0x39 | Fixed (not configurable) | Canopy spectral light |
-| ADS1115 (if used) | 0x48 | ADDR→GND. See datasheet for 0x49–0x4B | ADC for analog sensors |
-
-No address conflicts in this configuration.
-
-Note: Atlas EZO boards ship in UART mode by default. Use `growlab sensor ezo-setup --sensor ph|ec` to switch via UART, or see [WIRING_&_BUSES.md](WIRING_&_BUSES.md) for the manual procedure. After setup, `growlab sensor validate-all` confirms all sensors are reading correctly.
+Devices, addresses and ADDR-pin strap conditions: [WIRING_&_BUSES.md](WIRING_&_BUSES.md) → I²C Bus. Atlas EZO boards ship in UART mode and will not appear on the bus until switched; that procedure is in the same document.
 
 ## 1-Wire Bus
 
@@ -355,96 +292,3 @@ Devices:
 Devices:
 
 • Raspberry Pi Camera Module 3
-
----
-
-# Sampling Strategy
-
-Sensors are not polled continuously.
-
-Typical logging intervals:
-
-Air sensors  
-every 1–5 minutes
-
-Reservoir chemistry  
-every 5–15 minutes
-
-Reservoir temperature  
-every 1–5 minutes
-
-Event logging  
-on occurrence
-
-This reduces noise and extends sensor lifespan.
-
----
-
-# Future Sensor Expansion
-
-Possible additions in later system versions:
-
-• ~~Light measurement (PAR / PPFD sensors)~~ → AS7341 spectral sensor added (V0)
-• CO₂ concentration
-• Leaf temperature
-• Reservoir level sensing
-• Nutrient dosing monitoring
-
-The sensor architecture is designed so these sensors can be added without altering existing systems.
-
----
-
-# Sensor Placement Principles
-
-All sensors should follow these guidelines:
-
-• avoid direct light exposure  
-• avoid direct airflow blasts  
-• avoid electrical noise sources  
-• remain accessible for calibration and maintenance  
-
-Proper placement dramatically improves measurement stability.
-
----
-
-# Calibration and Maintenance
-
-## pH Probe
-
-• Calibrate monthly using 3-point calibration (pH 4, 7, 10)
-• Lifespan: 12–18 months with regular use. pH probes are consumables — budget ~$50–80/year for replacement.
-• Log a `probe_age` field in the events table when a new probe is installed. This allows long-term drift to be interpreted correctly against probe age.
-• Never allow the probe to dry out. Use storage solution (KCl) when the probe is removed from the system.
-• If the system is powered off for more than a few days, remove the probe and store it wet.
-
-## EC Probe
-
-• Calibrate using standard conductivity solution (e.g., 1413 µS) after installation and periodically thereafter
-• EC probes last longer than pH probes but need periodic cleaning
-• Same wet-storage rule applies
-
-## BME280 / SHT31
-
-• No calibration required for V0
-• If readings seem off, check placement: direct light, airflow blasts, and electrical noise all affect readings
-• BME280 may drift at sustained >70% RH. If this becomes an issue, swap to SHT31 (one-file change in sensor interface)
-
-## Soil Moisture Sensor
-
-• See calibration procedure in the Media Moisture section above
-• Re-calibrate if you change the coco/perlite ratio or pot size
-
----
-
-# Summary
-
-The V0 sensor stack provides reliable monitoring of the variables most important to plant growth:
-
-• air temperature + humidity (BME280)
-• nutrient solution pH (Atlas EZO-pH)
-• nutrient concentration EC (Atlas EZO-EC)
-• reservoir temperature (DS18B20)
-• media moisture (DFRobot SEN0308 + ADS1115)
-• visual growth record (Pi Camera Module 3)
-
-These measurements allow GROWLAB to function not just as a grow platform, but as a **biological instrumentation system** capable of recording and analyzing the interaction between plants and their engineered environment.

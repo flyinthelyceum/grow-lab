@@ -1,8 +1,8 @@
 """Tests for the cross-process control channel reconciler.
 
 The dashboard writes desired state into `control_state`; this service reads it
-and pushes changes into the live fan and meter services. These cover the three
-properties the design depends on: idempotence, edge-triggering, and expiry.
+and pushes changes into the live fan service. These cover the three properties
+the design depends on: idempotence, edge-triggering, and expiry.
 """
 
 from __future__ import annotations
@@ -16,10 +16,7 @@ from pi.config.schema import ControlConfig
 from pi.data.models import ControlEntry
 from pi.services.control import (
     FAN_OVERRIDE,
-    METER_EC_OVERRIDE,
-    METER_PH_OVERRIDE,
     ControlService,
-    parse_deflection,
     parse_duty,
 )
 
@@ -47,15 +44,8 @@ def fan():
 
 
 @pytest.fixture
-def meters():
-    return MagicMock()
-
-
-@pytest.fixture
-def service(repo, fan, meters):
-    return ControlService(
-        repo, ControlConfig(), fan_service=fan, meter_service=meters
-    )
+def service(repo, fan):
+    return ControlService(repo, ControlConfig(), fan_service=fan)
 
 
 class TestParsing:
@@ -73,14 +63,6 @@ class TestParsing:
     def test_unparseable_duty_reads_auto_not_zero(self):
         """A corrupt row must not be read as 'fan off'."""
         assert parse_duty("banana") is None
-
-    def test_deflection_clamped(self):
-        assert parse_deflection("2.0") == 1.0
-        assert parse_deflection("-9") == -1.0
-        assert parse_deflection("0.25") == 0.25
-
-    def test_unparseable_deflection_reads_auto(self):
-        assert parse_deflection("") is None
 
 
 class TestReconcile:
@@ -128,33 +110,21 @@ class TestReconcile:
         await service.reconcile_once(now=later)
         fan.clear_override.assert_called_once()
 
-    async def test_meters_route_to_their_own_channels(self, service, repo, meters):
-        repo.get_all_control.return_value = {
-            METER_PH_OVERRIDE: _entry(METER_PH_OVERRIDE, "0.5"),
-            METER_EC_OVERRIDE: _entry(METER_EC_OVERRIDE, "-1.0"),
-        }
-        await service.reconcile_once()
-        meters.set_override.assert_any_call("ph", 0.5)
-        meters.set_override.assert_any_call("ec", -1.0)
-
     async def test_returns_effective_values(self, service, repo):
         repo.get_all_control.return_value = {FAN_OVERRIDE: _entry(FAN_OVERRIDE, "70")}
         effective = await service.reconcile_once()
         assert effective[FAN_OVERRIDE] == "70"
-        assert effective[METER_PH_OVERRIDE] is None
 
-    async def test_unknown_keys_are_ignored(self, service, repo, fan, meters):
+    async def test_unknown_keys_are_ignored(self, service, repo, fan):
         repo.get_all_control.return_value = {
             "something.else": _entry("something.else", "1")
         }
         effective = await service.reconcile_once()
         assert "something.else" not in effective
 
-    async def test_missing_service_is_not_an_error(self, repo, meters):
-        """Meters configured, fan absent — the fan key must be a no-op."""
-        service = ControlService(
-            repo, ControlConfig(), fan_service=None, meter_service=meters
-        )
+    async def test_missing_service_is_not_an_error(self, repo):
+        """No fan service — the fan key must be a no-op, not a crash."""
+        service = ControlService(repo, ControlConfig(), fan_service=None)
         repo.get_all_control.return_value = {FAN_OVERRIDE: _entry(FAN_OVERRIDE, "70")}
         await service.reconcile_once()  # must not raise
 

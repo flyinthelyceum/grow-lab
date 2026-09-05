@@ -69,7 +69,7 @@ def extents(doc, layer="cut"):
 class TestTheFilesSayInchesAndMeanIt:
     """The exporter tags a unit without converting. Both have to agree."""
 
-    @pytest.mark.parametrize("name", ["plate", "case_body", "fascia", "backplate"])
+    @pytest.mark.parametrize("name", ["plate", "case_body", "fascia"])
     def test_header_says_inches(self, pack, name):
         assert read(pack, f"{name}.dxf").header["$INSUNITS"] == 1  # 1 = inches
 
@@ -265,6 +265,7 @@ def test_the_pack_builds_from_a_clean_shell(tmp_path):
     )
     assert r.returncode == 0, r.stdout + r.stderr
     assert "SCRIBE RINGS" in r.stdout
-    for name in ("plate.dxf", "case_body.dxf", "fascia.dxf", "backplate.dxf",
+    for name in ("plate.dxf", "case_body.dxf", "fascia.dxf",
                  "cutlist.md", "cutlist.json", "README.md"):
         assert (tmp_path / name).exists(), name
+    assert not (tmp_path / "backplate.dxf").exists(), "a plain rectangle needs no DXF"

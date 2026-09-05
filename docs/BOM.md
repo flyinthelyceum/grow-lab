@@ -96,14 +96,14 @@ Electrical Conductivity (EC)
 [Atlas Scientific Conductivity Probe K 1.0](https://atlas-scientific.com/probes/conductivity-probe-k-1-0/)
 — **ENV-40-EC-K1.0**, $139.99. Range 5 – 200,000 µS/cm.
 Paired with the [EZO-EC circuit](https://atlas-scientific.com/embedded-solutions/ezo-conductivity-circuit/) at I²C 0x64.
-**Inline voltage isolator required** — see Electrical Safety
+**Isolated EZO slot required** — see Electrical Safety.
 
 pH
 
 [Atlas Scientific Lab Grade pH Probe](https://atlas-scientific.com/probes/ph-probe/)
 — **ENV-40-pH**, $99.99. Double junction, pH 7.00 isopotential point.
 Paired with the [EZO-pH circuit](https://atlas-scientific.com/embedded-solutions/ezo-ph-circuit/) at I²C 0x63.
-**Inline voltage isolator required** — see Electrical Safety
+**Isolated EZO slot required** — see Electrical Safety.
 
 > **The pH probe is a consumable, and it dies if it dries out.** One was
 > lost this way over summer 2026 — see *pH probe maintenance* below. Order a
@@ -292,37 +292,6 @@ just change the finish, it discards what the material was doing.
 - Houses: Raspberry Pi, ESP32, relay board, PSU (5V), PWM-120-24 driver, meter driver
 - **Front panel on its face** — NOS jewel pilot lamp, two analog meters, e-ink, knobs
 
-**RESOLVED 2026-09-03: integrated into the mast.** Design study:
-`https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b21b6`
-
-The mast is thin where it carries only a drip line and a sensor loom (2 x 3 in section) and
-thickens into an **instrument head** where the apparatus lives — the same
-byproduct-of-function logic the front panel is already specced under. The head is 9 x 11.5 x
-3.5 in because that is what a 174 x 123 mm e-ink board and two meter movements measure, not
-because a size was chosen.
-
-| Element | Height / size |
-|---|---|
-| Shaft section | 2 x 3 in |
-| LED fixture, hung from the head underside ~10 in forward | 46 in |
-| Head | **9.5 x 12 x 3.5 in** (Simpson 3-1/2" chosen) |
-| Panel centre — read standing, while tending | 52 in |
-| Overall height | 58 in |
-
-Fabrication schedules: [INSTRUMENT_HEAD_PLANS.md](INSTRUMENT_HEAD_PLANS.md).
-
-The fixture hangs from the head's **underside**, not off the shaft, so the cantilever's
-moment lands over the column rather than bending it.
-
-**Split:** heavy, hot and mains stay in the plinth (PWM-120-24 driver, 5V PSU, relay board,
-GFCI); the instrument and its brains go in the head (panel, Pi + i3, ESP32, meter driver).
-24V runs up the shaft. Keeps the cantilever light and line voltage far from the panel.
-
-**One earned accent:** the object is cool throughout — transparent body, hairline engraving,
-grey ground. The single warm thing is the lit jewel. No amber in the e-ink palette, no warm
-wash on the acrylic, no second indicator competing. One point of fire reads; two is
-decoration.
-
 ---
 
 # Airflow
@@ -332,11 +301,6 @@ Fan
 **Noctua NF-A12x25 PWM chromax.black.swap** — 120mm, 4-pin PWM, 12V, ~0.06A  
 Driven at **25 kHz PWM from Pi GPIO18** (FanService temperature ramp) — not a relay  
 Optional tach wire for RPM
-
-12V rail
-
-**Small buck module (24V → 12V)** off the LED driver, or a dedicated 12V PSU  
-Adds a fourth low-voltage domain: 24V (LED only) / 12V (fan) / 5V (logic) / 3.3V (sensors)
 
 Purpose
 
@@ -384,35 +348,6 @@ drifting as the fixture ages.
 
 ---
 
-# Future Hardware (Not Required for V1)
-
-Lighting (concept alignment)
-
-Independently-dimmed 660nm deep-red + 450nm royal-blue supplement channels, so the
-white LM301H stays the growth workhorse while R/B carries the piece's temporal color
-register (see [V1_PHYSICAL_BUILD.md](V1_PHYSICAL_BUILD.md))
-
-Light measurement
-
-Quantum PAR sensor (Apogee SQ-520 or similar) for true µmol/m²/s PPFD
-
-Environmental control
-
-Humidity sensor network  
-CO₂ sensor
-
-Reservoir automation
-
-Dosing pumps  
-Level sensors
-
-Structural
-
-Custom aluminum frame  
-Integrated cable routing
-
----
-
 # Aliveness / Front Panel (v1, non-color)
 
 The tube-amp soul of the piece: byproduct-of-function, intransitive, for the tender.
@@ -431,47 +366,21 @@ VCC 1092 Series amber, polished bezel — Amazon/Mouser, ~$5-8, 0.5"/12.7mm, 12V
 
 ## Analog VU meters — the vitals (×2: e.g. pH + moisture)
 
-**CHOSEN 2026-09-03: Simpson Wide-Vue 3-1/2", Model 1327, 0-50 µA — catalog 04380 (or taut-band 1327T, 04381). Two.** rammeter.com. Raw movement, driven by the meter driver stage below. Warm LED behind the dial. Archetypal American instrument face.
-
-**From the Simpson Wide-Vue datasheet (Rev. 10-25) — dimensions in inches:**
-
-| Size | Model | Bezel | Panel cutout | Behind panel | Bezel proud | Mtg holes | Terminals |
-|---|---|---|---|---|---|---|---|
-| 2-1/2" | 1227 | 2.47 × 2.47 | Ø 2.22 | 1.15 body + 0.70 studs = 1.85 | 0.48 | (4) Ø.125 on 1.88 × 1.88 | (2) 1/4-28, 1.00 apart |
-| 3-1/2" | 1327 | 3.25 × 3.25 | Ø 2.79 | 1.22 + 0.70 = 1.92 | 0.62 | (4) Ø.125 on 2.25 × 2.25 | (2) 1/4-28, 1.50 apart |
-| 4-1/2" | 1329 | 4.70 × 4.70 | Ø 2.81 | 1.20 + 0.70 = 1.90 | 0.64 | (4) Ø.156 on 4.00 × 4.00 | (2) 1/4-28, 1.50 apart |
-
-Scale length: 2.30" (1227), 3.14" (1327), 3.93" (1329). Response ≤1.5 s. Overload 10× FS for 1 s, 1.5× continuous.
-
-**DC microammeter movements (self-shielding), catalog no. by size 1227 / 1327 / 1329:**
-0-50 µA, 1800 Ω — **04310 / 04380 / 04480**. 0-100 µA, 1800 Ω — 04320 / 04390 / 04490. 0-1 mA, 43 Ω — 06175 / 06310 / 06470.
-Taut-band (no pivot friction, better linearity) 0-50 µA, 960 Ω — 04311 / 04381 / 04481.
 Soul upgrade (one-off): Weston NOS microammeter (Model 1/301/1921), 0-100µA/0-1mA — eBay, ~$50-150, ~3.5" cream Bakelite face, engraved serif scale. Pre-war patina no repro touches.
 Hi-fi look (audio-cal, backlit): Sifam Tinsley AL29WF Presentor — don-audio.com, ~$65, 46×40mm, built-in overhead LED. The Urei 1176 meter; order to a sensitivity or bypass the cal resistor to drive as DC.
-Each raw DC meter needs a small op-amp current-driver stage (design later).
 
-## Rotary controls — THE FEEL (v1 = 3 controls)
+## Rotary controls — THE FEEL (v1 = 2 controls)
 
 Photoperiod hours (detented): Bourns PEC11H-4225F-S0024 — Mouser, ~$3-4, 6mm D-shaft, 24-pos endless encoder, HIGH-detent (~210 gf-cm, 3× the standard PEC11R). Crisp weighted snap every 15°, no mush; reads position (no wiper wear).
-  Splurge-feel alt (discrete positions): ELMA 04-series rotary switch — Newark, ~$27-58, steel shaft, 30° detent, up to 20 Ncm. A heavy mechanical "chunk," the boutique reference. True switch: each position needs its own wired contact.
 Setpoint trims (smooth ×2): ALPS RK27 "Blue Velvet" — theaudiocrafts/eBay, ~$15-25, 6mm knurled or D-shaft. The DIY-audio reference for buttery, scratch-free, medium-light glide.
-  Showpiece upgrade (one trim): TKD 2CP-601 — PartsConnexion, ~$100-160, 6mm round, conductive plastic. Heavier, viscous, damped — rated above Alps for tactile refinement.
 
 ## Knobs (set-screw, to pair with D-shaft pots/encoders)
 
 Hero: ELMA K1 metal knob series — don-audio.com, ~$7-8, turned satin-anodized aluminum, SET-SCREW sized to 6mm/D. Real machined weight — the "expensive click" of high-end consoles.
-Tube-amp register: Davies Molding 1900H — Mouser, ~$2-4, phenolic skirted pointer, 6mm/¼" set-screw. The literal Fender/Marshall knob.
-Synth look: Rogan RB-67 — Amplified Parts, USA-made, spun-aluminum inlay in a dark skirt, ¼" set-screw. The Buchla knob.
-NOTE: true ELMA Classic Collet knobs are gorgeous but need a plain-round-shaft pot + collet bushing — NOT compatible with the D-shaft PEC11H/RK27 above. Choose collet-shaft pots if collet knobs become non-negotiable.
 
 ## e-ink — the quiet face
 
 Pimoroni Inky Impression 7.3" (7-colour) — already in the standards; slow unlabeled state transitions, holds frame unpowered.
-
-## Still to design
-- Op-amp current-driver stage for the raw DC meters (scale sensor → meter full-scale).
-- Which two "vitals" the meters show (default: pH + moisture — confirm with Jared).
-- Panel material/finish + engraving (Material Non-Artifice, Transparent light register).
 
 ## Meter driver stage (drives the two vitals meters)
 
@@ -490,7 +399,7 @@ milliamp design — retracted. **Trust the lettering on the instrument, not the 
 
 At tens of microamps the MCP4728 drives each meter directly through fixed series resistors.
 The op-amp voltage-to-current stage this section once specified is **not needed** and is
-dropped from the meter path; the MCP6004 stays in the BOM only if some later stage wants it.
+dropped from the meter path.
 
 Each meter sits between two DAC channels, one fixed resistor per leg:
 
@@ -579,4 +488,4 @@ pH centres at 6.0, span ±1.0 (5.0–7.0), putting the 5.8–6.2 band at ±20% o
 scale law is arbitrary — the Pi computes the DAC code — so it can be expanded around centre if
 ±1.0 proves coarse. See the dial-face section in `INSTRUMENT_HEAD_PLANS.md`.
 
-Movement data above is from the Simpson datasheet; R_sense is now fixed by it. Remaining leads (jewel, VCC indicator, Sifam, Weston) are still researched-not-verified — check listing, price and stock before buying.
+Remaining leads (jewel, VCC indicator, Sifam, Weston) are still researched-not-verified — check listing, price and stock before buying.

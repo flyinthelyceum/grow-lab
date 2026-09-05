@@ -2,9 +2,12 @@ name: Pi Inspect
 
 # A fixed set of operations that can be run on the Pi from the Actions tab.
 #
-# Nobody can SSH to the box: no route to the LAN, and the Cloudflare tunnel
-# publishes only HTTP. The self-hosted runner is the only way in, so this makes
-# a curated slice of it available for diagnosis and routine maintenance.
+# The box is reachable: it sits on a Tailscale mesh with Jared's Mac and
+# iPhone, and `ssh jared@100.77.46.126` works. This is not the only way in.
+# It exists because it is a *bounded, audited* way in: a fixed menu that
+# anyone able to dispatch a workflow on this repository can use for diagnosis
+# and routine maintenance without holding SSH credentials for a machine on a
+# home network, from anything with a browser.
 #
 # Deliberately a `choice` input, not a free-form command. Every command that
 # can run is written out below. Nothing else can, whatever is passed in.
@@ -33,8 +36,6 @@ on:
         type: choice
         options:
           - git-status
-          - git-diff
-          - git-log
           - git-unpushed
           - services
           - logs-orchestrator
@@ -47,7 +48,6 @@ on:
           - control-state
           - pytest
           - restart-services
-          - unblock-deploy
 
 permissions:
   contents: read
@@ -88,23 +88,14 @@ jobs:
               echo "## branch and head"
               git status -sb
               echo
-              echo "## last 3 commits"
-              git log --oneline -3
+              echo "## last 25 commits"
+              git --no-pager log --oneline -25
               echo
-              echo "## modified tracked files"
-              git diff --stat
+              echo "## diff of modified tracked files"
+              git --no-pager diff
               echo
               echo "## untracked files"
               git ls-files --others --exclude-standard
-              ;;
-
-            git-diff)
-              echo "## diff of modified tracked files"
-              git --no-pager diff
-              ;;
-
-            git-log)
-              git --no-pager log --oneline -25
               ;;
 
             git-unpushed)
@@ -223,63 +214,6 @@ jobs:
               echo "## health"
               curl -s -o /dev/null -w 'HTTP %{http_code}\n' --max-time 10 \
                 http://127.0.0.1:8000/api/system/status || echo "no answer"
-              ;;
-
-            unblock-deploy)
-              # Clears the two things standing between this clone and a clean
-              # dirty-tree check. Both sets are enumerated so this cannot be
-              # repurposed into a general delete or a general discard.
-
-              echo "## stale leftovers"
-              # Each has a tracked successor. Five predate the move into
-              # static/ and templates/ — no commit has ever touched those loose
-              # paths — and tsl2591.py was removed from git in b7d5664 with the
-              # switch to AS7341.
-              for f in \
-                  pi/dashboard/art.html \
-                  pi/dashboard/art.js \
-                  pi/dashboard/art-core.js \
-                  pi/dashboard/ec-ring.js \
-                  pi/dashboard/ph-ring.js \
-                  pi/drivers/tsl2591.py; do
-                if [ -e "$f" ]; then
-                  if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
-                    echo "REFUSED $f — it is tracked, so this is not a leftover"
-                  else
-                    rm -f "$f" && echo "removed  $f"
-                  fi
-                else
-                  echo "absent   $f"
-                fi
-              done
-
-              echo
-              echo "## mode-only changes on the deploy scripts"
-              # Someone ran chmod +x on these on the box. The diff was checked
-              # on 2026-09-04 and is a mode bit and nothing else -- no content,
-              # so discarding loses no work. Upstream now carries 755 for both,
-              # matching the other two scripts in deploy/, so once this clone
-              # fast-forwards the executable bit comes back and stays.
-              #
-              # Restored only if the diff is STILL mode-only. If someone has
-              # edited the contents since, this refuses and leaves it alone --
-              # discarding a real edit on a box nobody can shell into is the
-              # thing worth being careful about.
-              for f in deploy/push-dashboard.sh deploy/recover-dashboard.sh; do
-                if git diff --quiet -- "$f"; then
-                  echo "clean    $f"
-                elif [ -z "$(git diff --numstat -- "$f" | awk '{print $1+$2}' | grep -v '^0$')" ]; then
-                  git checkout -- "$f" && echo "restored $f (mode only, no content change)"
-                else
-                  echo "REFUSED  $f — it has content changes, not just a mode bit:"
-                  git --no-pager diff --stat -- "$f"
-                fi
-              done
-
-              echo
-              echo "## working tree after"
-              git status --porcelain
-              echo "(empty above means the deploy job will now pass its dirty-tree check)"
               ;;
 
             *)

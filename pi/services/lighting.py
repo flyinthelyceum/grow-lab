@@ -1,7 +1,7 @@
 """Photoperiod lighting scheduler.
 
 Controls light on/off cycles and intensity ramps via the ESP32.
-Supports veg (16h/8h) and flower (12h/12h) modes with configurable
+The photoperiod is set by on_hour/off_hour, with configurable
 sunrise/sunset ramps to reduce plant stress.
 """
 
@@ -125,8 +125,7 @@ class LightingScheduler:
             self._schedule_loop(), name="lighting-scheduler"
         )
         logger.info(
-            "Lighting scheduler started: mode=%s, on=%02d:00, off=%02d:00, intensity=%d",
-            self._config.mode,
+            "Lighting scheduler started: on=%02d:00, off=%02d:00, intensity=%d",
             self._config.on_hour,
             self._config.off_hour,
             self._config.intensity,

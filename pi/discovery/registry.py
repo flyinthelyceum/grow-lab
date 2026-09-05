@@ -10,32 +10,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from pathlib import Path
 
 from pi.config.schema import AppConfig
-from pi.calibration.runtime_estimator import AS7341RuntimeEstimator
 from pi.discovery.scanner import I2CDevice, ScanResult
 from pi.drivers.base import SensorDriver
 
 logger = logging.getLogger(__name__)
 
-
-def _load_as7341_estimator(config: AppConfig) -> AS7341RuntimeEstimator | None:
-    if not config.calibration.enabled or not config.calibration.active_profile:
-        return None
-
-    profile_path = Path(config.calibration.active_profile)
-    if not profile_path.is_absolute():
-        profile_path = config.calibration.profile_dir / profile_path
-    if not profile_path.exists():
-        logger.warning("Calibration profile not found: %s", profile_path)
-        return None
-
-    try:
-        return AS7341RuntimeEstimator.from_path(profile_path)
-    except Exception as exc:
-        logger.error("Failed to load calibration profile %s: %s", profile_path, exc)
-        return None
 
 # Known I²C address -> sensor name mapping
 I2C_ADDRESS_MAP: dict[int, str] = {
@@ -269,8 +250,6 @@ def build_registry(config: AppConfig, scan: ScanResult) -> SensorRegistry:
                 driver = AS7341Driver(
                     bus_number=config.i2c.bus,
                     address=addr,
-                    ppfd_estimator=_load_as7341_estimator(config),
-                    node_id=config.installation.node_id,
                 )
                 statuses.append(
                     SensorStatus("as7341", True, driver, "detected")
@@ -290,20 +269,5 @@ def build_registry(config: AppConfig, scan: ScanResult) -> SensorRegistry:
                     f"not found at 0x{addr:02X}",
                 )
             )
-
-    # ESP32 serial
-    if scan.serial_devices:
-        statuses.append(
-            SensorStatus(
-                "esp32",
-                False,
-                None,
-                f"serial detected at {scan.serial_devices[0].port}, driver pending",
-            )
-        )
-    else:
-        statuses.append(
-            SensorStatus("esp32", False, None, "no serial device found")
-        )
 
     return SensorRegistry(tuple(statuses))

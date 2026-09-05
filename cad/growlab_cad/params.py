@@ -81,42 +81,12 @@ def _knob(name: str, default: float) -> float:
         raise ValueError(f"{var}={raw!r} is not a number (inches expected, e.g. {var}={default:g})") from None
 
 
-def _flag(name: str, default: bool = False) -> bool:
-    """A yes/no design candidate, switchable from the environment the same way."""
-    var = f"GROWLAB_{name}"
-    raw = os.environ.get(var)
-    if not raw:
-        return default
-    if raw.lower() in ("1", "true", "yes", "on"):
-        return True
-    if raw.lower() in ("0", "false", "no", "off"):
-        return False
-    raise ValueError(f"{var}={raw!r} is not a yes/no (use 1 or 0)")
-
-
-# ---------------------------------------------------------------------------
-# Form (design pass, 2026-09-04)
-# Decided: height 36; the clear fascia over a black instrument case (the
-# apparatus on show behind glass, cabling included, the way the Transparent
-# speaker shows its amplifier); and the steel base frame the cabinet floats
-# on, whose members continue into the mast. Both flags default on and both
-# can be turned off — GROWLAB_FASCIA=0, GROWLAB_FRAME=0 — to rebuild the
-# earlier forms for the record.
-# ---------------------------------------------------------------------------
-
-FASCIA = _flag("FASCIA", True)  # decided. A full-width clear band recessed into the
-                                # front over an open console bay; the instrument
-                                # case behind it; the four vertical corners
-                                # chamfered so the sides read as planes meeting.
-FRAME = _flag("FRAME", True)    # decided. The cabinet floats on a welded 1 x 1 steel
-                                # frame rather than a recessed plinth, and the mast
-                                # runs to the floor as one of its members: legs,
-                                # ring, mast, fixture arm and the instrument case
-                                # are then one black register, the ply another.
-
-
 # ---------------------------------------------------------------------------
 # Plinth (cabinet)
+# The form is decided (2026-09-04): height 36; the clear fascia over a black
+# instrument case (the apparatus on show behind glass, cabling included, the
+# way the Transparent speaker shows its amplifier); and the steel base frame
+# the cabinet floats on, whose members continue into the mast.
 # V1_PHYSICAL_BUILD.md § Station geometry
 # ---------------------------------------------------------------------------
 
@@ -127,18 +97,16 @@ PLINTH_H = _knob("PLINTH_H", 36.0)  # CHOICE: "cabinet to necessary height". The
                                     # together; the lift does not change with it. Tray
                                     # floor is at this height. Sweepable: GROWLAB_PLINTH_H.
 
-SHADOW_GAP_H = 6.0 if FRAME else 2.0  # "Recessed base / shadow gap — 0–2 in";
-                                      # on the frame the cabinet floats at 6.
-SHADOW_GAP_INSET = 1.0  # CHOICE: how far the kick steps back under the sides
+SHADOW_GAP_H = 6.0  # the cabinet floats this far off the floor on the frame
 
-# Frame candidate: 1 x 1 HSS legs at the corners, inset under the cabinet so it
+# The frame: 1 x 1 HSS legs at the corners, inset under the cabinet so it
 # overhangs, joined by a ring the cabinet floor sits on. CHOICE throughout.
 FRAME_TUBE = 1.0
 FRAME_LEG_INSET = 1.0  # from the cabinet's outer faces to the legs' outer faces
 
 # The fascia: a clear band across the whole front, recessed behind the front
 # plane, over the open console bay. CHOICE throughout.
-CHAMFER = 0.5 if FASCIA else 0.0  # on the four vertical outer corners
+CHAMFER = 0.5  # on the four vertical outer corners
 FASCIA_T = 0.25  # "1/4 in cast acrylic" — clear
 FASCIA_RECESS = 0.15  # the band's face behind the cabinet's front plane
 FASCIA_POCKET = FASCIA_RECESS + FASCIA_T  # 0.40 cut out of the front for it
@@ -172,7 +140,6 @@ CONSOLE_PARTITION_T = 0.5  # CHOICE: the wall between the console bay and the we
 # the cabinet's width and as high as the rail allows. FACE_WIDTH/HEIGHT come
 # from panel_geometry so the opening and the face cannot disagree.
 FACE_MARGIN = 1.0  # CHOICE: from the plate's top edge up to the rail
-FACE_LIP = 0.5  # box form only: the ply lip behind the face's edge that F1–4 screw into
 
 # Wet bay (reservoir) and dry bay (mast, PSU, driver), behind the console
 # partition, "hard-divided".
@@ -190,8 +157,6 @@ WATER_LOW_ABOVE_SHELF = 2.0  # the docs' low line was 2 in above the shelf (12 �
 WATER_FULL_ABOVE_SHELF = 4.1  # and the full line 4.1 above (12 → 16.1)
 
 SHELF_T = 0.75  # CHOICE: same stock as the carcass
-SHELF_SLOT_PITCH = 1.0  # "slotted supports … moving the shelf an inch afterwards"
-SHELF_SLOT_COUNT = 5  # CHOICE: ±2 in of adjustment around the design height
 
 
 # ---------------------------------------------------------------------------
@@ -206,7 +171,6 @@ TRAY_W = PLINTH_W - 2 * CARCASS_T  # 18.5
 TRAY_D = PLINTH_D - 2 * CARCASS_T  # 14.5
 TRAY_UPSTAND = 2.0  # "Tray upstand" is 2 in above the tray floor
 TRAY_T = 0.0625  # "16 ga" — stainless 16 ga is 0.0625 in (1.59 mm)
-TRAY_CORNER_R = 0.25  # CHOICE: inside bend radius for a formed pan
 
 # "The block sits above its own runoff on 0.75 in pads … pads rise from the
 # cabinet rail through cutouts in the tray floor so the block bears on the
@@ -248,9 +212,7 @@ EMITTER_ABOVE_MEDIA = 0.125  # the docs put discharge 0.1 above the media surfac
 # where the fixture's moment is. "Mast as drawn."
 MAST_W, MAST_D = 2.0, 3.0
 MAST_WALL = 0.120  # CHOICE: 11 ga, the common wall for 2x3 HSS
-MAST_BOTTOM = 0.0 if FRAME else SHADOW_GAP_H + CARCASS_T  # on the frame it IS a
-                                                          # leg; otherwise it stands
-                                                          # on the carcass floor
+MAST_BOTTOM = 0.0  # the mast is one of the frame's legs: it runs to the floor
 MAST_SIDE_CLEARANCE = 0.125  # CHOICE: between the shaft and the divider
 MAST_BOLT_DIA = 0.3125  # CHOICE: 5/16 in through-bolts into the rear panel
 MAST_BOLT_COUNT = 4
@@ -268,7 +230,6 @@ MAST_LINE_PASS_DIA = 0.75  # "Ø 0.75 loom pass, grommeted" — now in the shaft
 # cabinet is the box now.
 # ---------------------------------------------------------------------------
 
-ACRYLIC_T = 0.25  # "1/4 in cast acrylic throughout" — the box form's face, and the fascia
 FACE_SCREW_DIA = 0.135  # "F1–4 … Ø 0.135 c'sunk x4 | M3 flat-head"
 
 # The instrument case (fascia form): a black metal box the meters, Inky, i3,
@@ -292,10 +253,6 @@ CASE_TAP_DIA = 2.5 / 25.4  # M3 tap drill in the flanges
 # circle at the bezel OD and do not cut. Supply a measured value to cut.
 DIAL_CUT_DIAMETER: float | None = None
 WITNESS_DEPTH = 0.02  # CHOICE: engraving depth for reference marks
-
-# What lives behind the face, as a reference envelope: the face footprint,
-# CONSOLE_D deep. If this touches the partition the console is too shallow.
-CONSOLE_ELECTRONICS_D = CONSOLE_D  # box form; the fascia form has the case instead
 
 
 # ---------------------------------------------------------------------------
@@ -342,10 +299,9 @@ FACE_X0 = -FACE_WIDTH / 2
 FACE_Z1 = RAIL_BOTTOM_Z - FACE_MARGIN
 FACE_Z0 = FACE_Z1 - FACE_HEIGHT  # 22.19
 PANEL_CENTRE_Z = (FACE_Z0 + FACE_Z1) / 2  # 28.19 — read standing, looking down
-# The plate sits behind the fascia by CASE_GAP; the box form's acrylic face is
-# flush with the front instead.
-FACE_Y0 = FASCIA_POCKET + CASE_GAP if FASCIA else 0.0  # 0.50 behind the front plane
-FACE_T = PLATE_T if FASCIA else ACRYLIC_T
+# The plate sits behind the fascia by CASE_GAP.
+FACE_Y0 = FASCIA_POCKET + CASE_GAP  # 0.50 behind the front plane
+FACE_T = PLATE_T
 CASE_Y0 = FACE_Y0
 CASE_Y1 = FACE_Y0 + CASE_D  # 3.25 — the cable gap behind is CONSOLE_Y1 − this
 

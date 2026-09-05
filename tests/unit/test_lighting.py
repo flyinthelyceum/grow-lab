@@ -24,7 +24,7 @@ class TestIsLightOn:
     """Test light-on/off schedule determination."""
 
     def _config(self, on: int, off: int) -> LightingConfig:
-        return LightingConfig(mode="veg", on_hour=on, off_hour=off, intensity=255)
+        return LightingConfig(on_hour=on, off_hour=off, intensity=255)
 
     def test_normal_schedule_on(self) -> None:
         # 6:00 to 22:00 — check at noon
@@ -63,7 +63,7 @@ class TestComputeRampIntensity:
     """Test sunrise/sunset ramp calculations."""
 
     def _config(self, on: int = 6, off: int = 22, intensity: int = 200, ramp: int = 30) -> LightingConfig:
-        return LightingConfig(mode="veg", on_hour=on, off_hour=off, intensity=intensity, ramp_minutes=ramp)
+        return LightingConfig(on_hour=on, off_hour=off, intensity=intensity, ramp_minutes=ramp)
 
     def test_off_period_returns_zero(self) -> None:
         assert compute_ramp_intensity(self._config(), time(23, 0)) == 0
@@ -117,7 +117,7 @@ def _make_scheduler(config: LightingConfig | None = None) -> tuple[LightingSched
     esp32 = MagicMock()
     esp32.set_light.return_value = _ok_response()
     repo = AsyncMock()
-    cfg = config or LightingConfig(mode="veg", on_hour=6, off_hour=22, intensity=200)
+    cfg = config or LightingConfig(on_hour=6, off_hour=22, intensity=200)
     scheduler = LightingScheduler(esp32, repo, cfg)
     return scheduler, esp32, repo
 

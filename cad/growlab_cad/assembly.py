@@ -6,14 +6,12 @@ component names in Fusion.
 
 Two kinds of part:
 
-* **Fabricated** — plinth, base, rear door, tray, pads, mast, and the
-  instrument case, fascia and backplate (or the acrylic face in the box
-  form). These must not interfere. ``interferences()`` checks every pair and is what the test suite
-  asserts on.
-* **Reference** — the CMU, its media, the reservoir, the LED fixture, the
-  console electronics. Bought or undimensioned; present so the composition
-  reads and clearances can be judged, excluded from the interference check
-  but checked against the fabricated parts as design conflicts.
+* **Fabricated** — plinth, base frame, rear door, tray, pads, mast, and the
+  instrument case, fascia and backplate. These must not interfere.
+  ``interferences()`` checks every pair and is what the test suite asserts on.
+* **Reference** — the CMU, the reservoir, the LED fixture. Bought or
+  undimensioned; present so the composition reads and clearances can be
+  judged, and excluded from the interference check.
 """
 
 from __future__ import annotations
@@ -22,43 +20,30 @@ from itertools import combinations
 
 from build123d import Compound, Part
 
-from . import case, cmu, face, fixture, mast, plinth, tray
+from . import case, cmu, fixture, mast, plinth, tray
 from .params import IN
 
 
 def fabricated() -> dict[str, Part]:
-    from . import params as P
-
-    parts = {
+    return {
         "plinth": plinth.build(),
-        "base_frame" if P.FRAME else "base_recess": plinth.build_base(),
+        "base_frame": plinth.build_frame(),
         "rear_door": plinth.build_rear_door(),
         "tray": tray.build(),
         "pads": tray.build_pads(),
         "mast": mast.build(),
+        "case": case.build(),
+        "fascia": plinth.build_fascia(),
+        "backplate": plinth.build_backplate(),
     }
-    if P.FASCIA:
-        parts["case"] = case.build()
-        parts["fascia"] = plinth.build_fascia()
-        parts["backplate"] = plinth.build_backplate()
-    else:
-        parts["face"] = face.build()
-    return parts
 
 
 def reference() -> dict[str, Part]:
-    from . import params as P
-
-    parts = {
+    return {
         "cmu": cmu.build(),
-        "media": cmu.media(),
         "reservoir": plinth.build_reservoir(),
         "fixture": fixture.build(),
     }
-    if not P.FASCIA:
-        # The box form has no case; an envelope stands in for the electronics.
-        parts["console"] = plinth.build_console_electronics()
-    return parts
 
 
 def _shared_in3(a: Part, b: Part) -> float:
@@ -84,22 +69,6 @@ def interferences(parts: dict[str, Part], *, tolerance_in3: float = 0.001) -> li
         shared = _shared_in3(a, b)
         if shared > tolerance_in3:
             found.append((na, nb, round(shared, 4)))
-    return found
-
-
-def reference_clashes(fab: dict[str, Part], ref: dict[str, Part], *, tolerance_in3: float = 0.001) -> list[tuple[str, str, float]]:
-    """Reference envelopes overlapping fabricated parts.
-
-    Not a build error — the envelopes are bought parts and placeholders — but
-    a design conflict worth surfacing: a reservoir that runs into a partition
-    is a cabinet that is too shallow, not a modelling mistake.
-    """
-    found = []
-    for nr, r in ref.items():
-        for nf, f in fab.items():
-            shared = _shared_in3(r, f)
-            if shared > tolerance_in3:
-                found.append((nr, nf, round(shared, 4)))
     return found
 
 

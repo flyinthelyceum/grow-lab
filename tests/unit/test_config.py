@@ -14,7 +14,6 @@ class TestAppConfigDefaults:
         assert config.system.log_level == "INFO"
         assert config.i2c.bus == 1
         assert config.serial.baud == 115200
-        assert config.lighting.mode == "veg"
 
     def test_frozen(self):
         config = AppConfig()
@@ -26,7 +25,6 @@ class TestAppConfigDefaults:
         assert config.sensors.bme280.address == 0x76
         assert config.sensors.ezo_ph.address == 0x63
         assert config.sensors.ezo_ec.address == 0x64
-        assert config.sensors.ds18b20.gpio == 4
         assert config.sensors.soil_moisture.address == 0x48
         assert config.sensors.as7341.address == 0x39
         assert config.sensors.soil_moisture_channel == 0
@@ -93,7 +91,6 @@ log_level = "WARNING"
         assert config.system.log_level == "WARNING"
         # Everything else defaults
         assert config.i2c.bus == 1
-        assert config.lighting.mode == "veg"
 
     def test_irrigation_schedules(self, tmp_path: Path):
         toml_path = tmp_path / "config.toml"

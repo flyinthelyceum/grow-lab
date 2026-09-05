@@ -2,10 +2,12 @@
 #
 # Install the GitHub Actions self-hosted runner on the Pi.
 #
-# Why this exists: nobody can shell into the Pi from a Claude Code session --
-# no route to the LAN, and the Cloudflare tunnel publishes only HTTP to the
-# dashboard. This runner is the path by which merged work reaches the hardware
-# without someone walking over to the box.
+# Why this exists: the Pi is reachable over Tailscale (ssh jared@100.77.46.126),
+# so this runner is not the only way to reach it -- it is the bounded, audited
+# way. It lets merged work reach the hardware through a fixed set of reviewed
+# workflow steps, dispatched by anyone with repository access and no SSH
+# credentials for a machine on a home network, with every run recorded in the
+# Actions history. Nobody has to walk over to the box or hold a key to it.
 #
 # Run it on the Pi:
 #

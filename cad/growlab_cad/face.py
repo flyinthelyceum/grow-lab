@@ -3,10 +3,8 @@ the e-ink window and the knobs.
 
 INSTRUMENT_HEAD_PLANS.md § Face — hole schedule.
 
-In the fascia form (the design) this is 1/8 in black aluminium, the front of
-the removable case in ``case.py``, sitting behind the clear fascia. In the box
-form (kept for the record) it is the 1/4 in acrylic face pocketed flush into
-the ply front. Same schedule either way.
+This is 1/8 in black aluminium: the front of the removable case in
+``case.py``, sitting behind the clear fascia.
 
 The layout is not restated here. It is read from
 ``pi.dashboard.panel_geometry`` — the same module the ``/panel`` emulator
@@ -20,8 +18,8 @@ What is and is not cut
 * **Dials: not cut** unless ``params.DIAL_CUT_DIAMETER`` is set. The Weston
   301 bezels are pending calipers and the schedule's Ø 2.79 is a Simpson
   figure. Instead the plate carries a shallow witness ring at the bezel OD on
-  its back — a scribe line on metal, an engraving on acrylic — so the
-  position is on the part and the cut is not guessed.
+  its back — a scribe line on the metal — so the position is on the part and
+  the cut is not guessed.
 * **Dial mounting studs: not cut.** Same reason; their pattern is Simpson's.
 * **Inky standoffs: not cut.** "Transfer from the board in hand — do not
   pre-cut."
@@ -105,16 +103,15 @@ def build_plate(layout: Layout = SCHEDULE) -> Part:
         elif e.kind in ("jewel", "amber", "knob"):
             plate -= _through_y(e.width, wx, wz)
 
-    # F1–4: corner screws — into the case's flanges, or the ply lip in the box form.
+    # F1–4: corner screws — into the case's side flanges.
     for px, py in corner_screw_points():
         wx, wz = panel_to_world(px, py)
         plate -= _through_y(P.FACE_SCREW_DIA, wx, wz)
 
-    label = "instrument_plate_aluminium" if P.FASCIA else "instrument_face_acrylic"
-    return labelled(plate, label)
+    return labelled(plate, "instrument_plate_aluminium")
 
 
-# The box form's name for the same part.
+# The older name for the same part; both are in use.
 build_face = build_plate
 
 

@@ -7,7 +7,7 @@ nothing shared but the SQLite file.
 
 The two halves here stand in for the two systemd units: `growlab-dashboard`
 (the FastAPI app, holding no service objects) and `growlab` (the orchestrator,
-holding the fan and meter services and no web server).
+holding the fan service and no web server).
 """
 
 from __future__ import annotations
@@ -32,7 +32,6 @@ def security_config():
     return SecurityConfig(
         admin_password_sha256=hashlib.sha256(ADMIN_PASSWORD.encode()).hexdigest(),
         session_secret_key="x" * 48,
-        rate_limit_admin="1000/minute",
     )
 
 
@@ -75,17 +74,11 @@ def fan():
 
 
 @pytest.fixture
-def meters():
-    return MagicMock()
-
-
-@pytest.fixture
-def orchestrator(orchestrator_repo, fan, meters):
+def orchestrator(orchestrator_repo, fan):
     return ControlService(
         orchestrator_repo,
         ControlConfig(),
         fan_service=fan,
-        meter_service=meters,
     )
 
 
@@ -124,31 +117,6 @@ class TestFanOverrideReachesTheHardware:
         fan.set_override.assert_called_once_with(35)
 
 
-class TestMeterOverrideReachesTheHardware:
-    async def test_pinning_a_needle(self, web, orchestrator, meters):
-        response = await web.post(
-            "/api/meters/override", json={"meter": "ph", "deflection": -0.75}
-        )
-        assert response.status_code == 200
-
-        await orchestrator.reconcile_once()
-        meters.set_override.assert_called_once_with("ph", -0.75)
-
-    async def test_releasing_a_needle(self, web, orchestrator, meters):
-        await web.post(
-            "/api/meters/override", json={"meter": "ec", "deflection": 1.0}
-        )
-        await orchestrator.reconcile_once()
-
-        # The first reconcile also cleared "ph", which was never set — bringing
-        # every control to a known state on startup is the point of reconciling.
-        meters.clear_override.reset_mock()
-
-        await web.post("/api/meters/override", json={"meter": "ec", "mode": "auto"})
-        await orchestrator.reconcile_once()
-        meters.clear_override.assert_called_once_with("ec")
-
-
 class TestStateIsVisibleFromTheWeb:
     async def test_control_endpoint_reflects_the_override(self, web):
         await web.post("/api/fan/override", json={"duty": 80})
@@ -157,20 +125,10 @@ class TestStateIsVisibleFromTheWeb:
         assert controls["fan.override_duty"]["value"] == "80"
         assert controls["fan.override_duty"]["updated_by"] == "admin"
 
-    async def test_meters_status_reports_the_pinned_needle(self, web):
-        """A pinned needle must not be reported as following its sensor."""
-        await web.post(
-            "/api/meters/override", json={"meter": "ph", "deflection": 0.6}
-        )
-        data = (await web.get("/api/meters/status")).json()
-        assert data["meters"]["ph"]["override"] == 0.6
-        assert data["meters"]["ph"]["deflection"] == 0.6
-        assert data["meters"]["ec"]["override"] is None
-
 
 class TestOrchestratorRestart:
     async def test_override_survives_an_orchestrator_restart(
-        self, web, orchestrator_repo, fan, meters
+        self, web, orchestrator_repo, fan
     ):
         """A fresh ControlService picks up state it never saw set."""
         await web.post("/api/fan/override", json={"duty": 55})
@@ -179,7 +137,6 @@ class TestOrchestratorRestart:
             orchestrator_repo,
             ControlConfig(),
             fan_service=fan,
-            meter_service=meters,
         )
         await restarted.reconcile_once()
         fan.set_override.assert_called_once_with(55)

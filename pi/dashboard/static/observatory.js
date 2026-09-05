@@ -542,11 +542,6 @@
         ws.onmessage = function (event) {
             try {
                 var data = JSON.parse(event.data);
-                // Server-push alert (from ConnectionManager broadcast)
-                if (data.type === "alert") {
-                    showAlert(data.alert);
-                    return;
-                }
                 // Standard poll response
                 if (data.readings) {
                     updateValues(data.readings);
@@ -607,7 +602,7 @@
 
     function initLiveToggle() {
         // Public visitors get this too — the endpoint is rate-limited and
-        // single-concurrency (see /api/stream/live).
+        // single-concurrency (see /api/stream/snapshot).
         var btn = document.getElementById("camera-live-toggle");
         if (!btn) return;
         btn.addEventListener("click", function () {

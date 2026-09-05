@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Turn the station into a self-contained 3D viewer page.
 
-    python cad/viewer.py                       # the form candidates at 36
+    python cad/viewer.py                       # the design at 36
     python cad/viewer.py --heights 36 40 44    # a height sweep instead
-    python cad/viewer.py --variant "Tall frame=PLINTH_H:44,FRAME:1"
+    python cad/viewer.py --variant "Tall=PLINTH_H:44"
 
 The page is one HTML file: every part tessellated and embedded, three.js from
 cdnjs, no server. It exists so a layout decision can be looked at from the
 positions a person will actually occupy — standing in front of the panel,
 leaning over the block — before anyone commits stock to it. Part toggles, a
-section cut, the height stack as datums, and the PLINTH_H variants side by
+section cut, the height stack as datums, and any PLINTH_H variants side by
 side.
 
 Each variant is built in a subprocess with its ``GROWLAB_*`` knobs set, so
@@ -36,7 +36,6 @@ OUT = REPO / "cad" / "out"
 # Colours are the materials': ply, stainless, steel, acrylic, concrete.
 MATERIALS = {
     "plinth": dict(label="Cabinet carcass", colour="#C9A46A", opacity=1.0, group="fabricated"),
-    "base_recess": dict(label="Recessed base", colour="#9C7B4E", opacity=1.0, group="fabricated"),
     "base_frame": dict(label="Steel base frame", colour="#3E4247", opacity=1.0, group="fabricated"),
     "fascia": dict(label="Fascia, clear acrylic", colour="#BFD9E8", opacity=0.28, group="fabricated"),
     "case": dict(label="Instrument case, black aluminium", colour="#26282B", opacity=1.0, group="fabricated"),
@@ -45,21 +44,15 @@ MATERIALS = {
     "tray": dict(label="Tray, 304 16 ga", colour="#C4C9CC", opacity=1.0, group="fabricated"),
     "pads": dict(label="Block pads", colour="#8F7A55", opacity=1.0, group="fabricated"),
     "mast": dict(label="Mast, 2 × 3 HSS", colour="#4A4F55", opacity=1.0, group="fabricated"),
-    "face": dict(label="Instrument face, acrylic (box form)", colour="#9CC3D8", opacity=0.55, group="fabricated"),
     "cmu": dict(label="CMU vessel", colour="#9A9590", opacity=1.0, group="reference"),
-    "media": dict(label="Media", colour="#5E4A38", opacity=1.0, group="reference"),
     "reservoir": dict(label="Reservoir pan", colour="#5C8DB3", opacity=0.5, group="reference"),
     "fixture": dict(label="LED fixture + arm", colour="#D9A83E", opacity=0.9, group="reference"),
-    "console": dict(label="Console electronics envelope", colour="#6FAE7B", opacity=0.35, group="reference"),
 }
 
 
-# The design as decided, and the two forms it came from, for the record.
-DEFAULT_VARIANTS = [
-    ("Design", {}),
-    ("On a plinth", {"GROWLAB_FRAME": "0"}),
-    ("Box (before)", {"GROWLAB_FASCIA": "0", "GROWLAB_FRAME": "0"}),
-]
+# The form is decided; the default is that one build. ``--heights`` and
+# ``--variant`` still sweep ``PLINTH_H``, the one knob params.py exposes.
+DEFAULT_VARIANTS = [("Design", {})]
 
 
 def _dump(out_path: Path, tolerance_mm: float, angular: float) -> None:
@@ -87,7 +80,6 @@ def _dump(out_path: Path, tolerance_mm: float, angular: float) -> None:
     heights = vars(P.HEIGHTS)
     variant = {
         "label": os.environ.get("GROWLAB_VARIANT_LABEL", f"{P.PLINTH_H:g} in"),
-        "form": " + ".join(n for n, on in (("fascia", P.FASCIA), ("frame", P.FRAME)) if on) or "box",
         "plinth_h": P.PLINTH_H,
         "plinth_w": P.PLINTH_W,
         "plinth_d": P.PLINTH_D,
@@ -146,9 +138,9 @@ def render_html(variants: list[dict]) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--heights", type=float, nargs="+", help="build a PLINTH_H sweep instead of the form candidates")
+    ap.add_argument("--heights", type=float, nargs="+", help="build a PLINTH_H sweep instead of the single design")
     ap.add_argument("--variant", action="append", default=[], metavar="LABEL=KEY:VAL,...",
-                    help="an explicit variant, e.g. 'Tall frame=PLINTH_H:44,FRAME:1'; repeatable")
+                    help="an explicit variant, e.g. 'Tall=PLINTH_H:44'; repeatable")
     ap.add_argument("--tolerance", type=float, default=0.6, help="tessellation tolerance, mm")
     ap.add_argument("--angular", type=float, default=0.35, help="angular tolerance, radians")
     ap.add_argument("--dump", type=Path, help=argparse.SUPPRESS)

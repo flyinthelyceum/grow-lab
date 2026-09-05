@@ -8,7 +8,7 @@ This runbook replaces the older software-build-first commissioning flow.
 
 ## Current Software Reality
 
-- Core stack is already built and tested (`284` tests passing locally).
+- Core stack is already built and tested.
 - Drivers/services available now: DS18B20, GPIO relay pump, BME280, ESP32 serial, camera, OLED, polling/irrigation/lighting/capture/display services, dashboard, CLI.
 - Intentionally pending for Phase 3: `ezo_ph`, `ezo_ec`, and `soil_moisture` drivers.
 - Pump control for V0 stays on Pi GPIO relay. ESP32 handles LED PWM only.
@@ -20,110 +20,8 @@ This runbook replaces the older software-build-first commissioning flow.
   2. Arduino `Serial` targets UART0/HWCDC, not the USB-Serial/JTAG controller used by the Freenove board. Firmware rewritten with `JtagSerial` wrapper using low-level FIFO.
   3. pyserial's default DTR assertion resets the S3 into download mode. Driver now opens with `dtr=False, rts=False`.
 - **Fix verified:** All serial commands (`STATUS`, `LIGHT`, `PUMP`) working on Pi via `/dev/ttyACM0`.
+- **Board:** Freenove ESP32-S3 WROOM **N8R8** (8MB flash, 8MB PSRAM), not N16R8 as earlier notes said. BOOT/RESET buttons unresponsive — power cycle via USB cable for resets.
 - **Flash note:** After flashing via esptool, the ESP32 enters download mode. Unplug/replug USB to boot into application firmware. BOOT/RESET buttons on this board are unresponsive.
-
-### Session Handoff (end of day: March 13, 2026)
-
-- Completed:
-  - ESP32-S3 serial blocker fully resolved (3 root causes — see changelog).
-  - Firmware v0.2.1 flashed and validated on Pi. Heartbeat LED (GPIO48) confirms firmware alive.
-  - All serial commands working: STATUS, LIGHT, PUMP.
-  - Python driver updated with DTR/RTS fix.
-  - Phase 1 and Phase 2 serial prerequisite cleared.
-  - DS18B20 reading stable (~22°C reservoir temp).
-  - GPIO17 relay tested — 3× consecutive 5s pump wet tests passed.
-  - `growlab start` soak running on Pi (PID 4484, log at `~/growlab-soak.log`).
-    - 34 readings logged in first ~4 hours, no errors.
-    - Irrigation scheduler active (08:00, 14:00, 20:00 — 10s pulses).
-- Hardware note:
-  - Board is Freenove ESP32-S3 WROOM N8R8 (8MB flash, 8MB PSRAM), not N16R8 as previously noted.
-  - BOOT/RESET buttons unresponsive — power cycle via USB cable for resets.
-
-### Session Handoff (end of day: March 14, 2026)
-
-- Completed:
-  - Pi rewired to RSP-GPIO-8 breakout board.
-  - March 13 soak failure diagnosed: IrrigationService not wired into main.py at time of launch. Fixed in commit `1ae9f9f`.
-  - Phase 2 hardware brought online: BME280, OLED (SH1106), Pi Camera Module 3, 8-channel relay.
-  - OLED driver fixed: GME12864 uses SH1106 controller (not SSD1306). Added configurable `controller` field, `persist=True`.
-  - Camera driver fixed: Pi OS Bookworm uses `rpicam-still` not `libcamera-still`.
-  - GPIO relay driver fixed: SunFounder 8-channel board uses active-low logic.
-  - Display service wired into main loop with 4 rotating pages (values, system, irrigation, sparkline).
-  - Display shows human-readable labels and Fahrenheit (Air, Humidity, H2O Temp).
-  - Camera capture triggers after each pump pulse (no fixed timer).
-  - Full preflight passed: all sensors, pump relay, camera, OLED verified.
-  - Pump-triggered camera capture verified end-to-end.
-  - Overnight soak #2 launched (PID 5199, log at `~/growlab-soak.log`).
-- Pi access: `ssh jared@10.80.1.161`, user `jared`, venv at `~/grow-lab/.venv`.
-- Config on Pi: `~/grow-lab/config.toml` (camera enabled, display enabled with `controller = "sh1106"`).
-- Next session priorities:
-  1. Check soak #2 results: `tail -100 ~/growlab-soak.log` and `growlab db info`.
-  2. Verify pump fired at 08:00, 14:00, 20:00 UTC with camera captures in `~/grow-lab-data/images/`.
-  3. Review BME280 data for stability — compare air temp vs water temp trends.
-  4. Check Phase 2 exit criteria boxes.
-  5. Remaining Phase 2 work: ESP32 LED PWM (waiting on LED strips/Mean Well driver).
-  6. Begin Phase 3 planning if Phase 2 exit criteria met (minus LED, which is hardware-blocked).
-
-### Session Handoff (end of day: March 17, 2026)
-
-- Completed:
-  - Dashboard demo path tightened around the current `GROWLAB` UI.
-  - Route/browser test expectations updated from the older dashboard branding and `p5` assumptions to the current Canvas-based implementation.
-  - Dashboard camera panel now handles empty and file-missing states more gracefully.
-  - ROOT and PLANT panels now explain pending instrumentation instead of presenting unexplained blanks.
-  - Art Mode now exposes lightweight live readouts for temperature, humidity, and last water event to support walkthroughs.
-- Demo checklist:
-  - Observatory route `/` remains the main scientific dashboard.
-  - Art route `/art` renders the radial Canvas visualization.
-  - WebSocket/API behavior stays unchanged for existing clients.
-  - Latest camera image is now served through the dashboard API rather than an assumed static directory.
-- Current blocker:
-  - Remaining pH, EC, and soil moisture hardware is still in shipping transit, so ROOT/PLANT completeness is intentionally deferred.
-  - In this workspace, no `config.toml` is present and the default CLI database path is empty, so local demo commands need the real Pi config/database to show live data.
-- Last known-good commands:
-  - `growlab dashboard --host 0.0.0.0 --port 8000`
-  - `pytest tests/unit/test_dashboard_app.py tests/unit/test_dashboard_api.py tests/unit/test_dashboard_api_downsampled.py tests/unit/test_dashboard_ws.py tests/e2e/test_dashboard_pages.py -q`
-  - `pytest tests/browser/test_browser_dashboard.py -v`
-- Next first step:
-  - Run the dashboard on the Pi with the real `config.toml`, open `/` and `/art`, and capture a short punch-list of anything still awkward in the live demo.
-
-### Session Handoff (end of day: March 18, 2026)
-
-- Completed:
-  - Full repo audit pass completed for off-hardware work.
-  - Default `pytest -q` baseline restored and now passes locally again.
-  - `growlab start --config <path>` now respects the provided config path.
-  - Observatory history fetches now use the documented downsampled API path.
-  - Added `config.demo.toml` for isolated local dashboard/art review using repo-local demo data under `./.demo-data/`.
-  - Retired standalone `demo.html` and `art-demo.html` snapshots in favor of the real app-backed demo workflow.
-- Current blocker:
-  - No Pi network access from the current location, so live deployment, service inspection, and hardware validation are paused until the next on-network session.
-- Last known-good commands:
-  - `growlab --config config.demo.toml db seed-demo --hours 24`
-  - `growlab --config config.demo.toml dashboard --host 127.0.0.1 --port 8000`
-  - `pytest -q`
-- Next first step:
-  - Use the local demo profile to continue observatory/art review loops and screenshot-driven refinement without touching the Pi database.
-
-### Session Handoff (end of day: March 20, 2026)
-
-- Completed:
-  - **Dream Mode** (`/dream`) — Phase A foundation shipped. Anadol-inspired WebGL particle visualization with 50K additive-blended particles, 3D curl noise flow field, UnrealBloomPass glow, and auto-orbit camera. Sensor data drives visuals in real time: temperature→color, humidity→density, pressure→flow amplitude, irrigation→burst events. Three.js loaded as ES module. Nav links added to Observatory and Art views. 7 new e2e tests.
-  - **EZO-pH online** — i3 InterLink HAT installed, EZO circuits switched from UART to I2C via PGND-TX pin short. pH sensor at 0x63, 3-point calibration completed (4.00, 7.00, 10.00 buffers). Now polling every 300s.
-  - **EZO-EC online** — EC sensor at 0x64, 2-point calibration completed (12,880 and 80,000 µS/cm). Now polling every 300s.
-  - **Reservoir readings** — pH 8.3, EC 1,529 µS/cm in plain water. Plausible baseline.
-  - **Tailscale installed** — Pi reachable from anywhere at `100.77.46.126`. Mac and iPhone on same mesh. Attendance-scanner Pi also added (`100.83.65.68`).
-  - **Temperature conversion fix** — Dream Mode was displaying Celsius as Fahrenheit. BME280 unit is `°C` not `"celsius"`. Fixed to assume Celsius unless explicitly Fahrenheit.
-  - `httpx` installed on Pi (was missing, blocked `growlab start` due to NotificationService import).
-- Pi access: `ssh jared@100.77.46.126` (Tailscale) or `ssh jared@10.80.1.161` (local network).
-- Dashboard: `http://100.77.46.126:8000` (Tailscale) — Observatory, Art, and Dream Mode all live.
-- Processes running: `growlab start` (polling all 4 sensors, irrigation, alerts, fan, display), `growlab dashboard` on port 8000.
-- Phase 3 exit criteria: pH and EC done. Soil moisture blocked on hardware delivery.
-- Next session priorities:
-  1. Monitor pH/EC stability over 24h — check for drift or grounding noise from i3 InterLink isolation.
-  2. Begin Phase 4: nutrient introduction once pH/EC stability confirmed.
-  3. Dream Mode refinement — tune particle aesthetics, bloom settings, flow field parameters based on live data.
-  4. Plan Phase B (ML): VAE training pipeline on Pi once sufficient sensor history accumulates (~7 days).
 
 ## Phase 1 (Today): Pi + DS18B20 + Relay + Pump + Fan
 
@@ -353,14 +251,12 @@ sudo i2cdetect -y 1
 
 ### 3.1 Atlas UART -> I2C Mode Switch
 
-Atlas EZO circuits ship in UART mode; switch each to I2C before use. The `growlab sensor ezo-setup` CLI automates this:
+Atlas EZO circuits ship in UART mode; switch each to I2C before use. The procedure —
+both the serial command and the hardware pin-short method, with the decimal-address
+footgun — is in [WIRING_&_BUSES.md](WIRING_&_BUSES.md).
 
 ```bash
-# Connect EZO circuit to USB-UART adapter (or use i3 InterLink UART header)
-growlab sensor ezo-setup --sensor ph --port /dev/ttyUSB0
-growlab sensor ezo-setup --sensor ec --port /dev/ttyUSB0
-
-# Verify on I2C bus
+# Verify on I2C bus afterwards
 sudo i2cdetect -y 1
 # expect 0x63 (pH) and/or 0x64 (EC)
 ```
@@ -462,6 +358,10 @@ ssh jared@<pi-tailscale-ip>
 # Dashboard from anywhere
 open http://<pi-tailscale-ip>:8000
 ```
+
+This Pi: `ssh jared@100.77.46.126` (Tailscale) or `ssh jared@10.80.1.161` (local network);
+dashboard at `http://100.77.46.126:8000`. Mac and iPhone are on the same mesh, as is the
+attendance-scanner Pi (`100.83.65.68`).
 
 Tailscale uses WireGuard encryption, works behind NAT on both sides, and is free for personal use (up to 100 devices). MagicDNS gives the Pi a hostname like `growlab-pi.tail<net>.ts.net` so you don't need to memorize IPs.
 

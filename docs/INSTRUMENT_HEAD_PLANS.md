@@ -55,25 +55,6 @@ border for a few pixels; over-cutting shows a hairline of border. Decide on the 
 behind the panel. Jewel rear body tops at 2.125, pots at 1.81 — ~0.275 in clear. Confirm
 before final cut; if it intrudes, drop the whole rail to Y = 1.50.
 
-## Panel schedule
-
-**Rev B: only the Face row applies.** The rest built the head's box, which the cabinet now
-replaces; kept so the Rev A drawings still read. The face's corner screws go into the front
-panel's lip rather than corner blocks.
-
-| Part | Qty | W | H | Features | Joins |
-|---|---|---|---|---|---|
-| Face | 1 | 9.50 | 12.00 | Hole schedule above | Removable, 4 × M3 c'sunk into corner blocks |
-| Back | 1 | 9.50 | 12.00 | Standoff holes for meter driver, ESP32, terminal block — transfer from boards | Solvent-welded |
-| Side | 2 | 3.00 | 12.00 | Plain | Solvent-welded |
-| Top | 1 | 9.00 | 3.00 | Vent: 8 slots 2.00 × 0.125 at 0.75 pitch, centred | Solvent-welded |
-| Bottom | 1 | 9.00 | 3.00 | Vent as top; 4 × Ø 0.257 on 2.00 × 1.50 for flange bolts; Ø 0.75 loom pass, grommeted | Solvent-welded; bolts to flange |
-| Corner block | 4 | 0.75 | 0.75 | Acrylic, tapped M3 or brass insert | Welded into front corners |
-| Flange | 1 | 6.00 | 4.00 | **1/4 steel.** Shaft welded on; 4 × M6 tapped; arm boss | Structural |
-
-Sizes assume 1/4 in stock and butt joints: sides fit between face and back (3.50 − 0.50), top
-and bottom between the sides (9.50 − 0.50). For tab-and-slot, keep external 9.50 × 12.00 × 3.50.
-
 ## Depth stack (front to back)
 
 | Zone | Element | Depth behind face |
@@ -85,20 +66,9 @@ and bottom between the sides (9.50 − 0.50). For tab-and-slot, keep external 9.
 Both fit inside 3.00 clear. Confirm the i3's 23.6 mm datasheet height includes its header; if
 not, add it and re-check.
 
-## Structure
-
-**The acrylic holds instruments, not loads.** In Rev B that is automatic: the face is a
-panel in a cabinet and carries nothing but itself. The mast is fixture-only — a 2 × 3 in
-shaft bolted through the carcass's rear panel with a welded cap the fixture arm lands on.
-(Rev A ran the cantilever's moment through a flange under the head.)
-
 ## Material and finish
 
-- Face: **clear, reverse-engraved** — scale text, labels and the three band dividers engraved
-  from the back, reading as frosted marks in glass; apparatus visible through the front.
-  Fallback if too busy against the boards: light-grey opaque. Decide on the test piece.
-- Sides, top, bottom, back: clear. Plan the loom and terminal-block layout before assembly.
-- Solvent weld (Weld-On 4 or 16) for the five-sided box. Face on screws for service.
+- Plan the loom and terminal-block layout before assembly.
 - One earned accent: no coloured acrylic, no warm interior LEDs. The lit jewel is the only
   warm thing.
 
@@ -212,8 +182,7 @@ done it before.
 
 1. Test-cut the face in card at full scale; offer up both meters and the Inky.
 2. Have the boards in hand for standoff holes (face: Inky M2 ×4; back: driver, ESP32).
-3. Pump relay moves to GPIO23 the day the Inky goes on the Pi (BCM17 is its BUSY line).
-4. Confirm the i3 stack height against the 3.00 in clear.
+3. Confirm the i3 stack height against the 3.00 in clear.
 
 ## Layout candidates
 

@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-import importlib.util
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-# The CAD form knobs (GROWLAB_FASCIA, GROWLAB_FRAME, GROWLAB_PLINTH_H …) are read
-# by cad.growlab_cad.params at IMPORT time, and the CAD tests import it at module
-# scope to assert the design as documented. A knob left exported in the shell —
-# easy after a viewer sweep — would silently rebuild the station and fail those
-# assertions for a reason that has nothing to do with the change under test.
-# conftest is imported before any test module, so scrubbing here is early enough.
-# test_cad_forms.py sets its own knobs per subprocess and is unaffected.
+# The CAD knob GROWLAB_PLINTH_H is read by cad.growlab_cad.params at IMPORT time,
+# and the CAD tests import it at module scope to assert the design as documented.
+# A knob left exported in the shell — easy after a viewer sweep — would silently
+# rebuild the station and fail those assertions for a reason that has nothing to
+# do with the change under test. conftest is imported before any test module, so
+# scrubbing here is early enough.
 for _var in [k for k in os.environ if k.startswith("GROWLAB_")]:
     del os.environ[_var]
 
@@ -23,24 +21,6 @@ import pytest_asyncio
 from pi.config.schema import AppConfig, SystemConfig
 from pi.data.models import SensorReading, SystemEvent
 from pi.data.repository import SensorRepository
-
-
-_HAS_PLAYWRIGHT = bool(importlib.util.find_spec("pytest_playwright")) and bool(
-    importlib.util.find_spec("playwright")
-)
-
-
-def pytest_collection_modifyitems(config, items) -> None:
-    """Skip browser tests cleanly when Playwright is not installed."""
-    if _HAS_PLAYWRIGHT:
-        return
-
-    skip_browser = pytest.mark.skip(
-        reason="Browser tests require playwright + pytest-playwright"
-    )
-    for item in items:
-        if "tests/browser/" in str(item.fspath):
-            item.add_marker(skip_browser)
 
 
 @pytest.fixture

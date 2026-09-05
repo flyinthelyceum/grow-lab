@@ -207,62 +207,6 @@ def ph_slope(ctx: click.Context) -> None:
         click.echo("  solution first: contaminated solution reads the same way.")
 
 
-@sensor_group.command(name="ezo-setup")
-@click.option(
-    "--sensor",
-    type=click.Choice(["ph", "ec"]),
-    required=True,
-    help="EZO sensor type to switch",
-)
-@click.option("--port", default="/dev/ttyUSB0", help="UART serial port")
-@click.option("--baud", default=9600, type=int, help="UART baud rate (EZO default: 9600)")
-@click.pass_context
-def ezo_setup(ctx: click.Context, sensor: str, port: str, baud: int) -> None:
-    """Switch an Atlas EZO sensor from UART to I2C mode.
-
-    Connect the EZO sensor via a USB-UART adapter, then run this command.
-    The sensor will reboot into I2C mode at its default address.
-    """
-    import time
-
-    from pi.drivers.ezo_uart import EZO_ADDRESSES, switch_to_i2c
-
-    address = EZO_ADDRESSES[sensor]
-    click.echo(f"EZO {sensor.upper()} -> I2C mode at address 0x{address:02X} ({address})")
-    click.echo(f"UART port: {port} @ {baud} baud")
-    click.echo()
-
-    if not click.confirm("This will reboot the sensor into I2C mode. Continue?"):
-        click.echo("Aborted.")
-        return
-
-    try:
-        response = switch_to_i2c(port, baud, address)
-    except Exception as exc:
-        click.echo(f"UART error: {exc}")
-        click.echo("Check that the sensor is connected and the port is correct.")
-        return
-
-    if response in ("*OK", "*RS"):
-        click.echo(f"Sensor responded: {response}")
-        click.echo("Waiting 2s for sensor reboot...")
-        time.sleep(2)
-
-        # Verify on I2C bus
-        config: AppConfig = ctx.obj["config"]
-        from pi.discovery.scanner import scan_i2c
-
-        devices = scan_i2c(config.i2c.bus)
-        found = any(d.address == address for d in devices)
-        if found:
-            click.echo(f"[PASS] EZO {sensor.upper()} detected at 0x{address:02X} on I2C bus")
-        else:
-            click.echo(f"[WARN] EZO {sensor.upper()} not yet visible on I2C bus")
-            click.echo("  The sensor may need a power cycle. Disconnect and reconnect power,")
-            click.echo("  then run: growlab sensor scan")
-    else:
-        click.echo(f"Unexpected response: {response!r}")
-        click.echo("The sensor may not be connected or may already be in I2C mode.")
 
 
 def _c_to_f(c: float) -> float:

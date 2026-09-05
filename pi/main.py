@@ -169,22 +169,12 @@ async def run(config: AppConfig) -> None:
         await display_svc.start()
 
     # Start alert service (threshold monitoring)
-    from pi.dashboard.connections import ConnectionManager
     from pi.services.notifications import NotificationService
 
-    connection_manager = ConnectionManager()
     notification_svc = NotificationService(config.notifications)
 
     async def _on_alert(event):
-        """Push alert events to dashboard clients and notification channels."""
-        await connection_manager.broadcast_json({
-            "type": "alert",
-            "alert": {
-                "timestamp": event.iso_timestamp,
-                "event_type": event.event_type,
-                "description": event.description,
-            },
-        })
+        """Deliver alert events to the notification channels."""
         await notification_svc.dispatch(event)
 
     alert_svc = AlertService(repo, on_alert=_on_alert)
@@ -220,14 +210,13 @@ async def run(config: AppConfig) -> None:
     # Start control reconciler — the dashboard's end of the cross-process
     # channel. It runs here because this is the process that owns the hardware.
     control_svc = None
-    if config.control.enabled and (fan_svc is not None or meter_svc is not None):
+    if config.control.enabled and fan_svc is not None:
         from pi.services.control import ControlService
 
         control_svc = ControlService(
             repo,
             config.control,
             fan_service=fan_svc,
-            meter_service=meter_svc,
         )
         await control_svc.start()
 

@@ -3,6 +3,7 @@
  *
  * Provides:
  *  - AnimationLoop: 30fps requestAnimationFrame with Visibility API pause
+ *  - Ring geometry: clock-angle mapping, smoothing, gap segmentation, padding
  *  - Color scales: temperature→color (3-zone gradient: blue→teal→amber)
  *  - DPI helper: set up canvas for retina displays
  */
@@ -82,6 +83,121 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
 
         this._rafId = requestAnimationFrame(this._tick);
     };
+
+    // -------------------------------------------------------
+    // Ring geometry helpers — shared by the humidity, pH and EC rings
+    //
+    // Hoisted verbatim out of humidity-ring.js / ph-ring.js / ec-ring.js,
+    // which each carried a byte-identical copy. The rings keep their own
+    // distinct visual design; only this plumbing is shared.
+    // -------------------------------------------------------
+
+    function timeToAngle(date) {
+        var hours = date.getHours() + date.getMinutes() / 60 + date.getSeconds() / 3600;
+        return (hours / 24) * Math.PI * 2 - Math.PI / 2;
+    }
+
+    function normAngle(a) {
+        while (a > Math.PI) a -= Math.PI * 2;
+        while (a < -Math.PI) a += Math.PI * 2;
+        return a;
+    }
+
+    function smoothArray(arr, windowSize) {
+        var half = Math.floor(windowSize / 2);
+        var result = [];
+        for (var i = 0; i < arr.length; i++) {
+            var sum = 0, count = 0;
+            for (var j = i - half; j <= i + half; j++) {
+                if (j < 0 || j >= arr.length) continue;
+                sum += arr[j];
+                count++;
+            }
+            result.push(sum / count);
+        }
+        return result;
+    }
+
+    function getMedianGapMs(points) {
+        var diffs = [];
+        for (var i = 1; i < points.length; i++) {
+            var diff = points[i].time.getTime() - points[i - 1].time.getTime();
+            if (diff > 0) diffs.push(diff);
+        }
+        return diffs.length ? (d3.median(diffs) || 0) : 0;
+    }
+
+    function buildSegments(points, gapThresholdMs) {
+        if (!points || points.length === 0) return [];
+
+        var segments = [];
+        var segment = [];
+        var angleOffset = 0;
+        var prevClockAngle = null;
+
+        function commitSegment() {
+            if (segment.length > 0) {
+                segments.push(segment);
+                segment = [];
+            }
+            angleOffset = 0;
+            prevClockAngle = null;
+        }
+
+        for (var i = 0; i < points.length; i++) {
+            var point = points[i];
+            var prevPoint = segment.length ? segment[segment.length - 1] : null;
+
+            if (prevPoint && (point.time.getTime() - prevPoint.time.getTime()) > gapThresholdMs) {
+                commitSegment();
+            }
+
+            if (prevClockAngle !== null && point.clockAngle < prevClockAngle - Math.PI) {
+                angleOffset += Math.PI * 2;
+            }
+
+            point.renderAngle = point.clockAngle + angleOffset;
+            segment.push(point);
+            prevClockAngle = point.clockAngle;
+        }
+
+        commitSegment();
+        return segments;
+    }
+
+    function padToWindow(points, windowMs, valueKey) {
+        if (!points || points.length === 0) return [];
+
+        var endTime = new Date();
+        var startTime = new Date(endTime.getTime() - windowMs);
+        var padded = points.slice();
+        var first = padded[0];
+        var last = padded[padded.length - 1];
+
+        if (first.time.getTime() > startTime.getTime()) {
+            var firstClone = {};
+            for (var key in first) firstClone[key] = first[key];
+            firstClone.time = startTime;
+            firstClone.clockAngle = timeToAngle(startTime);
+            firstClone.angle = firstClone.clockAngle;
+            firstClone.synthetic = true;
+            firstClone[valueKey] = first[valueKey];
+            padded.unshift(firstClone);
+        }
+
+        if (last.time.getTime() < endTime.getTime()) {
+            var lastClone = {};
+            for (var key2 in last) lastClone[key2] = last[key2];
+            lastClone.time = endTime;
+            lastClone.clockAngle = timeToAngle(endTime);
+            lastClone.angle = lastClone.clockAngle;
+            lastClone.synthetic = true;
+            lastClone[valueKey] = last[valueKey];
+            padded.push(lastClone);
+        }
+
+        return padded;
+    }
 
     // -------------------------------------------------------
     // DPI-aware canvas setup (uses window dimensions directly)
@@ -240,5 +356,11 @@ window.GrowLab.ArtMode = window.GrowLab.ArtMode || {};
     window.GrowLab.ArtMode.ecToRGB = ecToRGB;
     window.GrowLab.ArtMode.ecColorRGBA = ecColorRGBA;
     window.GrowLab.ArtMode.cToF = cToF;
+    window.GrowLab.ArtMode.timeToAngle = timeToAngle;
+    window.GrowLab.ArtMode.normAngle = normAngle;
+    window.GrowLab.ArtMode.smoothArray = smoothArray;
+    window.GrowLab.ArtMode.getMedianGapMs = getMedianGapMs;
+    window.GrowLab.ArtMode.buildSegments = buildSegments;
+    window.GrowLab.ArtMode.padToWindow = padToWindow;
 
 })();

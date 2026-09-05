@@ -110,7 +110,7 @@ The Pi Camera Module 3 captures timestamped images at regular intervals (recomme
 
 Images are stored locally alongside sensor data. Timestamps enable correlation between visual plant state and environmental conditions.
 
-See [SENSOR_STACK.md](SENSOR_STACK.md) for camera specifications and timelapse assembly.
+See [BOM.md](BOM.md) for the camera part and [SENSOR_STACK.md](SENSOR_STACK.md) for focus-lock and timelapse assembly notes.
 
 ---
 
@@ -141,6 +141,10 @@ or
 • SQLite database
 
 Both options allow easy export for analysis.
+
+Camera frames dominate capacity: at 10-minute intervals (~500 KB/frame) the
+timelapse costs ~72 MB/day, ~2.2 GB/month. A 128 GB SD card or USB drive holds
+months of footage.
 
 ---
 
@@ -175,7 +179,7 @@ pump_runtime_seconds: 12
 
 # Sampling Strategy
 
-See [SENSOR_STACK.md](SENSOR_STACK.md) for per-sensor polling intervals. Sensors are not polled continuously — intervals reduce noise while preserving meaningful trends.
+Per-sensor polling intervals are set in `config.example.toml`, which is the executable source of truth. Sensors are not polled continuously — intervals reduce noise while preserving meaningful trends.
 
 ---
 
@@ -233,12 +237,6 @@ Design references: [UI_UX_DESIGN_REFERENCE.md](UI_UX_DESIGN_REFERENCE.md)
 
 SH1106 128×64 OLED rotates through 4 pages every 5 seconds showing current values, system status, irrigation schedule, and sparkline trends.
 
-## Future Expansion
-
-• Grafana dashboards
-• Time-series databases (InfluxDB)
-• Remote monitoring interfaces
-
 ---
 
 # Data Use
@@ -252,20 +250,6 @@ Collected data supports several goals:
 • exploring relationships between environment and growth
 
 Over time the dataset becomes a record of the interaction between biological life and engineered systems.
-
----
-
-# Future Data Expansion
-
-Later versions of the system may incorporate:
-
-• light intensity sensors (PAR / PPFD)  
-• per-node calibration drift checks for installed AS7341 commissioning profiles
-• CO₂ monitoring  
-• machine learning analysis  
-• automated control loops based on sensor feedback
-
-The architecture is intentionally simple for V0 but structured so more advanced data systems can be layered on later.
 
 ---
 

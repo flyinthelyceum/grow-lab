@@ -10,8 +10,7 @@ runs the actual JS module under node and compares every output to the actual
 Python, across a sweep that includes the endpoints and the exact-half cases
 where rounding rules diverge.
 
-Skipped cleanly when node is unavailable, the same way the browser tests skip
-without Playwright.
+Skipped cleanly when node is unavailable, rather than failing the suite.
 """
 
 from __future__ import annotations

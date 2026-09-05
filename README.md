@@ -53,12 +53,6 @@ sudo systemctl enable --now growlab-dashboard
 sudo systemctl status growlab-dashboard
 ```
 
-Push dashboard-only changes from your Mac and restart the Pi services:
-
-```bash
-./deploy/push-dashboard.sh
-```
-
 Recover the dashboard stack directly on the Pi:
 
 ```bash
@@ -85,7 +79,6 @@ Good local-only tasks:
 - observatory and art-mode UI/UX refinement
 - seeded-data review loops and screenshot critique
 - docs, tests, and CLI/config cleanup
-- browser coverage once Playwright is installed
 
 Still Pi-dependent:
 
@@ -93,27 +86,17 @@ Still Pi-dependent:
 - service and camera-path debugging
 - hardware bus discovery and ESP32 runtime verification
 
-Browser tests are optional and require both `playwright` and `pytest-playwright`:
-
-```bash
-pip install pytest-playwright playwright
-playwright install chromium
-pytest tests/browser/test_browser_dashboard.py -v
-```
-
 ## Documentation
 
 - [System Architecture](docs/SYSTEM_ARCHITECTURE.md)
 - [Data Architecture](docs/DATA_ARCHITECTURE.md)
 - [Sensor Stack](docs/SENSOR_STACK.md)
-- [AS7341 Calibration Protocol](docs/AS7341_CALIBRATION_PROTOCOL.md)
 - [Wiring & Buses](docs/WIRING_&_BUSES.md)
 - [Irrigation System](docs/IRRIGATION_SYSTEM.md)
 - [Lighting System](docs/LIGHTING_SYSTEM.md)
 - [UI/UX Design Reference](docs/UI_UX_DESIGN_REFERENCE.md)
 - [BOM](docs/BOM.md)
 - [V0 Bench Prototype](docs/V0_BENCH_PROTOTYPE.md)
-- [Phase 1 Walkthrough](docs/PHASE1_RASPBERRY_PI_WALKTHROUGH.md)
 - [Changelog](CHANGELOG.md)
 
 ## Before the next hardware order

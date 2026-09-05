@@ -8,6 +8,8 @@ parity test. No build123d needed: this is arithmetic.
 
 from __future__ import annotations
 
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -73,10 +75,6 @@ class TestTheCabinetFloatsOnTheFrame:
 
 class TestTheInstrumentIsBehindTheGlass:
     """The design: a clear fascia over an open bay, the metal case behind it."""
-
-    def test_the_design_is_the_default(self):
-        assert P.FASCIA is True
-        assert P.FRAME is True
 
     def test_plate_is_centred_on_the_cabinet(self):
         assert P.FACE_X0 == pytest.approx(-FACE_WIDTH / 2)
@@ -183,3 +181,18 @@ class TestTheReservoirFits:
     def test_water_lines_follow_the_shelf(self):
         assert P.WATER_LOW == P.SHELF_H + 2.0
         assert P.WATER_FULL == pytest.approx(P.SHELF_H + 4.1)
+
+
+def test_a_bad_knob_names_itself():
+    """``_knob()`` refuses a value it cannot read, and says which variable and
+    what it was. A knob that silently fell back to its default would build a
+    station nobody asked for and report the design's numbers for it."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GROWLAB_")}
+    env["GROWLAB_PLINTH_H"] = "tall"
+    r = subprocess.run(
+        [sys.executable, "-c", "import sys; sys.path.insert(0, '.'); import cad.growlab_cad.params"],
+        env=env, cwd=str(Path(__file__).resolve().parents[2]),
+        capture_output=True, text=True,
+    )
+    assert r.returncode != 0
+    assert "GROWLAB_PLINTH_H='tall'" in r.stderr

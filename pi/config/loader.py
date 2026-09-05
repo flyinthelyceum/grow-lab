@@ -16,10 +16,8 @@ from pi.config.schema import (
     MetersConfig,
     AppConfig,
     CameraConfig,
-    CalibrationConfig,
     ControlConfig,
     DisplayConfig,
-    EmailConfig,
     FanConfig,
     I2CConfig,
     InstallationConfig,
@@ -81,7 +79,6 @@ def _build_system(raw: dict[str, Any]) -> SystemConfig:
 def _build_sensor_entry(data: dict[str, Any]) -> SensorEntry:
     return SensorEntry(
         address=data.get("address", 0),
-        gpio=data.get("gpio", 0),
         interval_seconds=data.get("interval_seconds", 120),
         enabled=data.get("enabled", True),
     )
@@ -93,8 +90,6 @@ def _build_installation(raw: dict[str, Any]) -> InstallationConfig:
     return InstallationConfig(
         node_id=data.get("node_id", defaults.node_id),
         fixture_id=data.get("fixture_id", defaults.fixture_id),
-        fixture_model=data.get("fixture_model", defaults.fixture_model),
-        sensor_board_id=data.get("sensor_board_id", defaults.sensor_board_id),
     )
 
 
@@ -223,11 +218,6 @@ def _build_camera(raw: dict[str, Any]) -> CameraConfig:
 def _build_notifications(raw: dict[str, Any]) -> NotificationConfig:
     data = raw.get("notifications", {})
     wh = data.get("webhook", {})
-    em = data.get("email", {})
-
-    to_addrs = em.get("to_addresses", ())
-    if isinstance(to_addrs, list):
-        to_addrs = tuple(to_addrs)
 
     muted = data.get("muted_sensors", ())
     if isinstance(muted, str):
@@ -243,27 +233,7 @@ def _build_notifications(raw: dict[str, Any]) -> NotificationConfig:
             timeout_seconds=wh.get("timeout_seconds", 10.0),
             format=_webhook_format(wh.get("format", "raw")),
         ),
-        email=EmailConfig(
-            enabled=em.get("enabled", False),
-            smtp_host=em.get("smtp_host", ""),
-            smtp_port=em.get("smtp_port", 587),
-            smtp_user=em.get("smtp_user", ""),
-            smtp_password=em.get("smtp_password", ""),
-            use_tls=em.get("use_tls", True),
-            from_address=em.get("from_address", ""),
-            to_addresses=to_addrs,
-        ),
         cooldown_seconds=data.get("cooldown_seconds", 300),
-    )
-
-
-def _build_calibration(raw: dict[str, Any]) -> CalibrationConfig:
-    data = raw.get("calibration", {})
-    defaults = CalibrationConfig()
-    return CalibrationConfig(
-        enabled=data.get("enabled", defaults.enabled),
-        profile_dir=_to_path(data.get("profile_dir", defaults.profile_dir)),
-        active_profile=data.get("active_profile", defaults.active_profile),
     )
 
 
@@ -309,7 +279,6 @@ def _build_security(raw: dict[str, Any]) -> SecurityConfig:
         session_secret_key=secret_key,
         session_max_age_seconds=data.get("session_max_age_seconds", defaults.session_max_age_seconds),
         rate_limit_default=data.get("rate_limit_default", defaults.rate_limit_default),
-        rate_limit_admin=data.get("rate_limit_admin", defaults.rate_limit_admin),
         log_requests=data.get("log_requests", defaults.log_requests),
         log_user_agents=data.get("log_user_agents", defaults.log_user_agents),
     )
@@ -346,7 +315,6 @@ def load_config(path: Path | None = None) -> AppConfig:
         sensors=_build_sensors(raw),
         camera=_build_camera(raw),
         lighting=LightingConfig(
-            mode=lighting_data.get("mode", "veg"),
             on_hour=lighting_data.get("on_hour", 6),
             off_hour=lighting_data.get("off_hour", 22),
             intensity=lighting_data.get("intensity", 200),
@@ -370,7 +338,6 @@ def load_config(path: Path | None = None) -> AppConfig:
             address=display_data.get("address", 0x3C),
             controller=display_data.get("controller", "sh1106"),
         ),
-        calibration=_build_calibration(raw),
         notifications=_build_notifications(raw),
         security=_build_security(raw),
     )
