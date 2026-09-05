@@ -45,6 +45,45 @@ class TestCameraAvailability:
         assert cam.is_available is True
 
 
+class TestTheCameraIsGivenBack:
+    """The orchestrator and the dashboard share one camera device.
+
+    The orchestrator used to open picamera2 on its first availability probe
+    — which happens inside the pump-active handler, i.e. at the first
+    watering of the day — and hold it until shutdown. The dashboard's
+    rpicam-vid could then never acquire it, so Live View died silently and
+    permanently at that first pulse. Nothing asserted the release, which is
+    why it shipped.
+    """
+
+    def test_capture_releases_the_device(self, tmp_path: Path) -> None:
+        cam = CameraDriver()
+        mock_picam = MagicMock()
+        cam._picamera2 = mock_picam
+
+        assert cam.capture(tmp_path / "a.jpg") is True
+
+        mock_picam.stop.assert_called_once()
+        mock_picam.close.assert_called_once()
+        assert cam._picamera2 is None, "the device must not be held between captures"
+
+    def test_device_released_even_when_the_capture_fails(self, tmp_path: Path) -> None:
+        cam = CameraDriver()
+        mock_picam = MagicMock()
+        mock_picam.capture_file.side_effect = RuntimeError("sensor fell off")
+        cam._picamera2 = mock_picam
+
+        assert cam.capture(tmp_path / "b.jpg") is False
+        assert cam._picamera2 is None, "a failed capture must still release the device"
+
+    def test_probing_availability_does_not_claim_the_device(self) -> None:
+        cam = CameraDriver()
+        with patch.object(cam, "_open_picamera2", return_value=True):
+            assert cam.is_available is True
+        assert cam._picamera2 is None, "a probe is a question, not a claim on the hardware"
+        assert cam._backend == "picamera2"
+
+
 class TestCameraCapture:
     def test_capture_via_picamera2(self, tmp_path: Path) -> None:
         cam = CameraDriver()
