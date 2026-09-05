@@ -122,9 +122,10 @@ schedule and the cap must change, or the plant is not watered.
 0. **Measure the lift first** — reservoir **low** water line to the highest point the
    tubing reaches (design for nearly-empty; the surface drops as it drains). Target
    ≤ 1.4 ft; 1.4–1.9 ft is workable but sensitive; above 2.8 ft nothing flows at all.
-   The resolved geometry puts this at **17 in / 1.42 ft** — see "Station geometry" in
+   The resolved geometry puts this at **13 in / 1.08 ft** — see "Station geometry" in
    V1_PHYSICAL_BUILD.md. Since V1 does not recirculate, the reservoir does not sit below
-   the vessel; it sits on a shelf at 12 in. **Build that shelf adjustable** so this can be
+   the vessel; it sits on a shelf at 28 in, behind the console bay rather than under it,
+   which is what buys the lift back. **Build that shelf adjustable** so this can be
    tuned by an inch or two once measured.
 1. Assemble reservoir → pump (lowest setting) → bypass tee → filter → manifold → both
    emitters, discharging into two measuring jugs. Keep both runs the same length and height.
@@ -267,9 +268,10 @@ curl -s localhost:8000/api/fan/status
 
 The station runs without this. Do it once the plant is stable.
 
-- Fabricate the plinth per "Station geometry" in V1_PHYSICAL_BUILD.md: 20 x 14 x 24 in,
+- Fabricate the cabinet per "Station geometry" in V1_PHYSICAL_BUILD.md: 20 x 16 x 36 in,
   wet bay and dry bay hard-divided, wet bay vented, reservoir on an adjustable shelf at
-  12 in.
+  28 in. `cad/` is the authority on every dimension here; `python cad/fabrication.py`
+  writes the cut list.
 - Fabricate the tray in 304 stainless, 16 ga: bare bead-blast inside, white powder-coat on
   the outer face only. Cutouts in the floor for load pads rising from the cabinet rail.
 - Electronics mount above the water line and to the side, never over the reservoir.
@@ -280,7 +282,8 @@ The station runs without this. Do it once the plant is stable.
 - Cable glands on every penetration, drip loops on every cable into the wet zone.
 - Mains separated from DC and signal inside; EZO isolator leads kept clean.
 - GX16 bulkheads per run so the station can be disassembled without cutting wire.
-- Front panel (meters, e-ink, knobs, pilot) on the door — see the panel and meter-driver docs.
+- Front panel (meters, e-ink, knobs, pilot) set into the cabinet's **front face**, behind
+  the clear fascia; service doors are at the **rear**. See the panel and meter-driver docs.
 - Ventilation for PSU and driver heat, drawn away from the wet zone.
 
 ---

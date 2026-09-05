@@ -26,12 +26,35 @@ def _clean_env(**knobs: str) -> dict:
     env.update(knobs)
     return env
 
+# Both knobs are set explicitly in every entry, never left to the default.
+# They were once left to it, and the suite quietly tested half of what it named:
+# with FASCIA and FRAME both defaulting True, "design" and "design+frame"
+# resolved to the same build, as did "box" and "box+frame", and no entry ever
+# set GROWLAB_FRAME=0 — so the plinth form was never built at all.
 FORMS = {
-    "design": {},
-    "design+frame": {"GROWLAB_FRAME": "1"},
-    "box": {"GROWLAB_FASCIA": "0"},
-    "box+frame": {"GROWLAB_FASCIA": "0", "GROWLAB_FRAME": "1"},
+    "design":             {"GROWLAB_FASCIA": "1", "GROWLAB_FRAME": "1"},
+    "design on a plinth": {"GROWLAB_FASCIA": "1", "GROWLAB_FRAME": "0"},
+    "box on a frame":     {"GROWLAB_FASCIA": "0", "GROWLAB_FRAME": "1"},
+    "box":                {"GROWLAB_FASCIA": "0", "GROWLAB_FRAME": "0"},
 }
+
+
+def test_the_named_forms_are_four_distinct_builds():
+    """Four names must mean four builds, whatever the knobs default to.
+
+    This is the guard the collapse got past: it is cheap, needs no kernel, and
+    fails loudly if anyone reintroduces an entry that relies on a default.
+    """
+    resolved = {frozenset(knobs.items()) for knobs in FORMS.values()}
+    assert len(resolved) == len(FORMS), "two named forms resolve to the same build"
+
+    for name, knobs in FORMS.items():
+        assert set(knobs) == {"GROWLAB_FASCIA", "GROWLAB_FRAME"}, (
+            f"{name!r} leaves a knob to its default; set both explicitly"
+        )
+
+    assert {k["GROWLAB_FASCIA"] for k in FORMS.values()} == {"0", "1"}
+    assert {k["GROWLAB_FRAME"] for k in FORMS.values()} == {"0", "1"}
 
 
 @pytest.mark.parametrize("form", FORMS, ids=list(FORMS))
