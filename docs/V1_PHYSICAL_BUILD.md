@@ -166,8 +166,11 @@ reached the same way. The face itself is removable on its own (F1–4) for the i
 - **304 stainless.** Fertiliser salts pit aluminium, and this pan sits in dilute nutrient
   permanently.
 - **Do not paint the wetted surface.** Paint in constant salt contact lifts at the edges
-  and creeps. Bare bead-blast inside; white powder-coat the **outer** face only, which
-  never touches water.
+  and creeps. Bare bead-blast inside; white on the **outer** face only, which never touches
+  water. **This is the one part that stays powder-coated** rather than DTM — it lives in
+  the wet zone, its rim is the boundary between painted and bare, and powder is the tougher
+  finish exactly where a lifting edge would start. The rim shows barely at all under the
+  block, so the sheen difference costs nothing here.
 - **The tray carries water, never weight.** Pads rise from the cabinet rail through
   cutouts in the tray floor so the block bears on the carcass. ~50 lb on 16 ga sheet would
   dimple it and destroy the drain fall.
@@ -219,8 +222,8 @@ Ours, inverted from the first fascia candidate, and now inverted again in value:
 casework is white and the apparatus inside it is the dark thing.
 
 **Every metal part in the piece is white.** Frame, mast, carriage, arm, case, plate,
-backplate — one register, in white DTM acrylic on the steel and powder-coat on the
-aluminium. Warm ply is the other register and is unchanged. What this costs is set out
+backplate — one register, all of it in the same **white DTM acrylic**. One product, one
+batch, one sheen. Warm ply is the other register and is unchanged. What this costs is set out
 under *The white register* below; it is not free, and the place it costs most is the
 console.
 
@@ -394,8 +397,9 @@ under the cap. The drip line does not move, because the emitters are at a fixed 
 than a hanging service loop — a black loop down a white mast is the same mistake the fan
 was.
 
-**Finish: white DTM acrylic**, direct-to-metal, on the tube, the collar and the arm. Two
-coats over a scuffed and degreased surface, and it goes on *before* the collar is fitted —
+**Finish: white DTM acrylic**, direct-to-metal, on the tube, the collar and the arm — the
+same paint as every other metal part in the piece (§ *The white register*). Two coats over
+a scuffed and degreased surface, and it goes on *before* the collar is fitted —
 paint in the bore is 0.002–0.004 in of the 0.020 slip fit, and paint on the pinch faces is
 what the clamp grips. Mask the bore and the arm's weld pads, or expect to hone.
 
@@ -429,18 +433,32 @@ lot.
    about the face looking native to its own meter and still stands. What is new is the
    relationship between face and plate, and that cannot be settled from a scan; it wants
    the printed face held against the finished plate.
-3. **Anodising is out.** There is no true white anodise — the dye process does not reach
-   it. The case is powder-coated or wet-painted, which is a shop constraint the black
-   version did not have.
-4. **It shows dirt.** A white cabinet beside coco coir, perlite and nutrient solution will
-   show every splash. DTM acrylic and powder both wash; matte white shows more than satin
-   and hides fingerprints worse. Satin, and keep a rattle-can of the DTM for the frame,
-   which is at floor level and will take the knocks.
+3. **One paint, not two processes — decided 2026-09-05.** The first version of this had
+   DTM on the steel and powder-coat on the aluminium case, on the reasoning that powder is
+   the tougher finish and the case sits behind glass "where a sheen difference reads
+   least". That last clause was wishful. Glass adds its own specular layer; it does not
+   hide the sheen of the object behind it, and the console is lit and looked into more
+   closely than anything else in the piece. Two processes were never going to match. It is
+   all DTM now, which also removes the anodising question — there is no true white anodise
+   anyway, the dye process cannot reach it.
 
-**One batch, one sheen, for the steel.** The mast and the frame are read against each other
-over the whole height of the piece. The powder on the aluminium will not match the DTM
-exactly and does not need to — the case sits behind glass, which is where a sheen
-difference reads least.
+   **What that costs:** DTM acrylic is softer than powder. The plate carries two meters
+   bolted through it and is handled every time the case comes out for service, so it will
+   mark where powder would not. That is the price of one register that actually matches,
+   and a rattle-can of the same paint fixes a mark, which powder cannot.
+
+   **And it needs the right prep on the aluminium.** Most DTM acrylics are formulated for
+   ferrous substrates. Aluminium carries an oxide layer that paint will not key to: scuff
+   it and use a self-etching primer, or buy a DTM explicitly rated for non-ferrous. Read
+   the data sheet before assuming direct-to-metal means direct to *this* metal.
+4. **It shows dirt.** A white cabinet beside coco coir, perlite and nutrient solution will
+   show every splash. DTM washes; matte white shows more than satin and hides fingerprints
+   worse. Satin, and keep a rattle-can of the DTM — for the frame, which is at floor level
+   and will take the knocks, and now for the plate as well.
+
+**One batch, one sheen, for all of it.** The mast and the frame are read against each other
+over the whole height of the piece, and the case is read against both through the glass.
+Buy the paint in one go.
 
 ---
 
@@ -499,15 +517,13 @@ see *The plan, in phases* in V1_STATION_BUILD_PROCEDURE.md.
       in, which is half the reason for it.
 - [ ] **Mast hardware:** 3 x U-bolts for Ø 1.5 tube, 1/4-20, with nuts and washers; 2 x
       1/4-20 socket cap screws for the collar's pinch bolts.
-- [ ] **White DTM acrylic**, 1 gal, plus a rattle-can of the same for touch-up. Covers the
-      mast, the collar, the arm and the **base frame** — every steel part in the piece.
-      One gallon rather than one quart: the frame roughly triples the area. Get all of it
-      from one batch and one sheen, because the mast and the frame are read against each
-      other across the whole height of the piece.
-- [ ] **Powder-coat, white**, for the instrument case, its front plate and the backplate —
-      a shop job, quoted with the case fabrication rather than bought. Match the sheen to
-      the DTM as closely as the two processes allow; they will not match exactly, and the
-      case sits behind glass where the difference reads least.
+- [ ] **White DTM acrylic, satin**, 1 gal, plus a rattle-can of the same for touch-up.
+      Covers **every metal part**: mast, collar, arm, base frame, instrument case, front
+      plate, backplate. One batch — they are all read against each other. Check the data
+      sheet covers **non-ferrous**; the case, plate and backplate are aluminium, and a DTM
+      sold for steel needs a self-etching primer under it on bare aluminium.
+- [ ] **Self-etching primer**, 1 rattle-can, unless the DTM is rated for aluminium on its
+      own. Cheap insurance; decided by reading the tin, not here.
 
 ### Struck from the list
 
@@ -586,10 +602,10 @@ use. Fail it and leach longer or add a second coat before planting.
   levelling feet in the legs. Whether the mast is welded to the ring or bolted through it
   is a fabricator's call — welded is stiffer, bolted lets the cabinet come off the frame.
 - **Case fabrication.** The development is drawn: one 15.50 x 17.00 blank in 16 ga, six
-  bends, `cad/out/fab/case_body.dxf`. **Powder-coat white — anodising is not an option any
-  more.** There is no true white anodise; the dye process cannot reach it, and the nearest
-  results are a chalky off-grey. Powder or wet paint. Confirm the shop is happy with folded
-  corners or wants them welded.
+  bends, `cad/out/fab/case_body.dxf`. **Take it raw from the shop — the finish is ours.**
+  White DTM acrylic, satin, with the rest of the metal register; not powder, not anodise
+  (there is no true white anodise, the dye process cannot reach it). Confirm the shop is
+  happy with folded corners or wants them welded.
 - **Fascia edge finish.** Polished or flame-polished edges on the acrylic, and whether the
   two knob holes want a chamfer.
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;

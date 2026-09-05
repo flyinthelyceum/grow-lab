@@ -38,16 +38,17 @@ MATERIALS = {
     "plinth": dict(label="Cabinet carcass", colour="#C9A46A", opacity=1.0, group="fabricated"),
     "base_frame": dict(label="Steel base frame, white DTM", colour="#D8DBD7", opacity=1.0, group="fabricated"),
     "fascia": dict(label="Fascia, clear acrylic", colour="#BFD9E8", opacity=0.28, group="fabricated"),
-    "case": dict(label="Instrument case, white aluminium", colour="#E9EBE8", opacity=1.0, group="fabricated"),
-    "backplate": dict(label="Console backplate, white", colour="#DCDFDB", opacity=1.0, group="fabricated"),
+    "case": dict(label="Instrument case, white DTM", colour="#E9EBE8", opacity=1.0, group="fabricated"),
+    "backplate": dict(label="Console backplate, white DTM", colour="#DCDFDB", opacity=1.0, group="fabricated"),
     "rear_door": dict(label="Rear door (wet bay)", colour="#B8925A", opacity=1.0, group="fabricated"),
     "tray": dict(label="Tray, 304 16 ga", colour="#C4C9CC", opacity=1.0, group="fabricated"),
     "pads": dict(label="Block pads", colour="#8F7A55", opacity=1.0, group="fabricated"),
     # Every steel and aluminium part in the piece is white now — the frame, the
-    # mast, the head, the case and the backplate. Not paper white: painted metal
+    # mast, the head, the case and the backplate — and all in the same DTM
+    # acrylic, so they really are one colour. Not paper white: painted metal
     # under room light reads a shade cooler and darker than paper, and the five
-    # are separated by a few points of value so a flat-shaded render still tells
-    # them apart. The ply body is the other register and is unchanged.
+    # are separated here by a few points of value only so a flat-shaded render
+    # still tells them apart. The ply body is the other register, unchanged.
     "mast": dict(label="Mast, Ø1.5 tube, white DTM", colour="#EDEEEC", opacity=1.0, group="fabricated"),
     "canopy_carriage": dict(label="Canopy carriage + arm, white DTM", colour="#E4E6E3", opacity=1.0, group="fabricated"),
     "cmu": dict(label="CMU vessel", colour="#9A9590", opacity=1.0, group="reference"),

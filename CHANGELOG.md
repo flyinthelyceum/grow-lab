@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-05 (one paint, and the viewer gets a URL)
+
+### Decided
+- **DTM acrylic on every metal part**, steel and aluminium alike — one product, one batch, one sheen. The white register shipped this morning with DTM on the steel and powder-coat on the aluminium case, justified by "the case sits behind glass, where a sheen difference reads least". That clause was wishful: glass adds its own specular layer, it does not hide the sheen of the object behind it, and the console is lit and looked into more closely than anything else in the piece. Two processes were never going to match.
+- **What it costs, named rather than discovered:** DTM is softer than powder, and the front plate carries two movements bolted through it and is handled at every service — it will mark where powder would not. Accepted: one register that actually matches is worth more, and a rattle-can of the same paint fixes a mark, which powder cannot.
+- **And it needs the right prep.** Most DTM acrylics are formulated for ferrous substrates; aluminium's oxide layer is not something paint keys to. Scuff and use a self-etching primer, or buy a DTM rated for non-ferrous. Added to the order list as a decided-by-reading-the-tin item.
+- **One exception: the tray stays powder-coated.** It lives in the wet zone, its rim is the boundary between painted and bare, and powder is tougher exactly where a lifting edge would start. The rim barely shows under the block, so the sheen difference costs nothing there.
+
+### Added
+- **The viewer has a hosted URL**, so it opens on a phone and can be sent to a fabricator: `https://claude.ai/code/artifact/63885d8d-4d40-4814-aa53-0f2135c84a8e`. No conversion was needed — `viewer_template.html` has never had a doctype or an `<html>`/`<head>`/`<body>` wrapper, three.js is inlined, and its only external request is the Google Fonts stylesheet, so the generated file publishes as-is. Verified by wrapping it in the host's own skeleton locally and rendering it: canvas at full viewport, no horizontal scroll, no page errors.
+- `cad/README.md` records the link **and that it is a snapshot, not a build output** — nothing republishes it when `cad/` changes. The viewer prints its commit SHA under the title; check that against `main` before trusting a hosted copy for anything that gets cut.
+
 ## 2026-09-05 (everything metal goes white)
 
 ### Decided
