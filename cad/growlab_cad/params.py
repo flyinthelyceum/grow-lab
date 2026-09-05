@@ -265,6 +265,14 @@ FIXTURE_ABOVE_MEDIA = 15.0  # CHOICE: the docs' 46 − 30.9, rounded
 FIXTURE_W = 16.0  # CHOICE: spans the 15.625 block, per the section drawing
 FIXTURE_D = 6.0  # CHOICE: envelope for two boards on a heatsink
 FIXTURE_H = 1.5  # CHOICE
+# --- canopy fan ------------------------------------------------------------
+# Noctua NF-A12x25. Bought, so these two are catalogue figures, not choices.
+FAN_SIZE = 120.0 / 25.4  # 4.724
+FAN_THICK = 25.0 / 25.4  # 0.984
+FAN_ABOVE_MEDIA = 7.0  # CHOICE: mid-canopy, between the media and the fixture
+FAN_BRACKET_W = 1.25  # CHOICE: depth of the bar carrying it off the mast
+FAN_BRACKET_T = 0.25  # CHOICE
+
 FIXTURE_ARM_W = 1.5  # CHOICE: the arm forward from the mast
 FIXTURE_ARM_T = 0.5  # CHOICE
 FIXTURE_BAR_D = 1.0  # CHOICE: the cross bar along the fixture's back edge
@@ -335,6 +343,13 @@ CMU_X = 0.0
 CMU_Y = PLINTH_D / 2  # 8.0
 
 # Fixture: centred over the block. The moment arm at the mast is derived.
+# The fan is centred on the block, not the mast: a fan on the mast's centreline
+# would favour one end of a 15.6 in block. It blows -Y across the short axis so
+# both cores get the same air rather than one breathing the other's exhaust.
+FAN_X = CMU_X
+FAN_Y = (MAST_Y - MAST_D / 2) - FAN_THICK / 2
+FAN_Z = MEDIA_SURFACE_Z + FAN_ABOVE_MEDIA  # 49.875 — the fan's AXIS, not its underside
+
 FIXTURE_X = CMU_X
 FIXTURE_Y = CMU_Y
 FIXTURE_CANTILEVER = MAST_Y - FIXTURE_Y  # 5.75 — mast centreline to fixture centreline
