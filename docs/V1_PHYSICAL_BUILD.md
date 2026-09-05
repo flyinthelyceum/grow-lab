@@ -19,9 +19,9 @@ Visual companion (layout, harness, plumbing): the build-map artifact —
   no divider to build. Corm 1 (Julia) in one core, corm 3 (Jared) in the other.
 - **Seal each core — no liners.** Raw CMU leaches lime and drives pH sharply alkaline,
   hostile to the reservoir and the plant. Leach the block, then coat the core interiors
-  with a potable-rated epoxy so media and roots never touch bare cement. See *Note on the
-  cores* below for the product and the method. The seal is invisible; the block stays
-  honest.
+  then plant in it and let the runoff pH say whether anything more is needed. See *Note on
+  the cores* below. If it does drift, a nursery pot in each core is the cheap answer and a
+  potable-rated epoxy the thorough one; the block stays honest either way.
 - **Media:** coco coir + perlite. Mesh screen over each drain hole.
 
 ## Water loop (runoff-to-tray, no recirculation)
@@ -174,7 +174,7 @@ reached the same way. The face itself is removable on its own (F1–4) for the i
 - **The block sits above its own runoff** on 0.75 in pads. Standing in it wicks salts back
   up and defeats the point of runoff-to-tray.
 - **No glued-on grate.** Media is retained by the mesh over each core's drain hole, inside
-  the sealed core. Runoff falls clear; lift the tray straight out and nothing moves. An adhesive
+  each core. Runoff falls clear; lift the tray straight out and nothing moves. An adhesive
   joint in a permanently wet salty seam would fail anyway.
 - Size for the worst case: a full `max_runtime_seconds` pulse, not a normal event.
 
@@ -337,26 +337,42 @@ pressure-compensating emitters x2, bypass tee + throttle valve, measuring jugs.
 
 ### To buy
 
-- [x] **Inline filter** — Rain Bird RBY075MPTX, 3/4" MPT x MPT, **200 mesh (75 micron)
-      stainless element**, o-ring sealed cap. 200 mesh (not 120) because 1 GPH emitter
-      orifices are small. Rated 0.20–12.0 GPM against a ~2 GPH need, so it is enormously
-      oversized — the point being negligible pressure drop when clean, and a long interval
-      before a clog can starve a system with only ~1.2 PSI. At this flow there is no
-      scouring velocity, so **flush it manually on a schedule**. Needs adapters from
-      3/4" MPT down to the main line.
-- [ ] **Stainless mesh screen** for the core drain holes, ~20 mesh — coarse enough to drain
-      freely, fine enough to hold perlite; a layer of coarse perlite at the bottom of each
-      core does the real filtering. Stainless so it does not corrode in nutrient solution.
-- [ ] **Acrylic stock** for the instrument enclosure (fabricate in-house).
-- [ ] **PPG AquataPoxy A-6**, 1 qt kit (~$91) — potable-rated core sealer, see note below.
-      No liners.
-- [ ] Standard CMU (cinder block)
-- [ ] Coco coir + perlite
-- [ ] GFCI outlet / adapter
-- [ ] Cable glands (size to actual cable OD)
-- [ ] **Fresh pH 4.00 / 7.00 / 10.00 buffers and EC 12,880 uS standard.** The probes were
-      calibrated in March; opened buffers drift (pH 10 especially, from CO2 absorption).
-      Re-calibrate before go-live rather than trusting six-month-old solution.
+Finalised 2026-09-05. Confirmed on hand: CMU, coco coir, GFCI outlet, calibration
+solutions, plus everything in the *On hand* list above. Ordered by what blocks a phase —
+see *The plan, in phases* in V1_STATION_BUILD_PROCEDURE.md.
+
+**Order now — these block phases B and D:**
+
+- [ ] **Adapters, 3/4" MPT down to 1/4" main line**, for the Rain Bird filter. The filter
+      is bought and cannot be plumbed without them. *Blocks Phase B, which blocks
+      everything downstream of dose calibration.*
+- [ ] **Perlite.** Coco coir is on hand; perlite is not. ~70/30 coir/perlite.
+- [ ] **Stainless mesh screen, ~20 mesh**, for the core drain holes — coarse enough to
+      drain freely, fine enough to hold perlite. Stainless so it survives nutrient
+      solution. A layer of coarse perlite at the bottom of each core does the real
+      filtering.
+- [ ] **Ranunculus corms x2.** There is no plant. Nothing downstream of Phase D can be
+      tested without one, and corms are seasonal — order early or accept a substitute.
+
+**Conditional — do not order until the measurement says so:**
+
+- [ ] **pH probe replacement** (~$100, Atlas ENV-40-pH) — only if the probe fails its
+      slope check *after* fresh calibration in Phase A. It is currently failing on
+      six-month-old calibration, which is not the same thing. Long lead; decide at Phase A,
+      not at Phase D.
+- [ ] **Core barrier — buy nothing yet.** Leach, plant, watch runoff pH. Only if it
+      drifts: a nursery pot per core (~$2), or PPG AquataPoxy A-6 (1 qt, ~$91) if you want
+      the block sealed and the cores bare. See *Note on the cores*.
+- [ ] **Fresh buffers** — only if the ones on hand are open and old. pH 10 drifts fastest,
+      from CO2 absorption. A stale buffer reads exactly like a dying probe, so this is
+      worth being sure about before spending $100 on the probe above.
+
+**Deferred to Phase F (the enclosure) — do not order yet:**
+
+- [ ] **Acrylic stock** for the fascia (fabricate in-house).
+- [ ] **Cable glands**, sized to actual cable OD. Sealed pass-throughs that clamp round a
+      cable where it enters the enclosure, so water cannot track along the jacket and
+      follow it in. Sizes are unknowable until the loom exists.
 
 ### Struck from the list
 
@@ -376,7 +392,9 @@ pressure-compensating emitters x2, bypass tee + throttle valve, measuring jugs.
 ### Note on the cores — sealed, not lined
 
 **No liners.** A bag in a hole is the wrong answer for a piece whose block is meant to stay
-honest. Seal the block itself instead; the seal is invisible and the CMU reads as CMU.
+honest. Leach the block instead and let the runoff pH decide whether it needs more; any
+barrier that does prove necessary goes inside the cores, where it is invisible and the CMU
+still reads as CMU.
 
 The problem being solved is unchanged: raw CMU leaches free lime and drives pH sharply
 alkaline, which would poison both the plant and the chemistry data the piece exists to make
@@ -386,19 +404,26 @@ legible. Two steps, in order:
    for half an hour, then flush repeatedly with water over a week or two — several rinses a
    day. This pulls out the bulk of the free lime and surface alkalinity. Free, and it works
    on the whole block rather than a coating.
-2. **Then seal the core interiors** with **PPG AquataPoxy A-6** (1 qt kit, ~$91) — NSF/ANSI
-   61 potable-water rated and, unusually, rated for application to *damp* concrete, which
-   matters here because the leach in step 1 leaves the block saturated for weeks. Two coats
-   over both cores, the drain-hole edges and the underside; ~8 h cure between coats.
-   *Alternate:* Pond Armor Pond Shield (1.5 qt, ~$90) — colour-matched, but it needs an acid
-   etch and a genuinely dry substrate, so it fights step 1.
+2. **Then plant in it and measure.** Do not coat anything yet. A yard-aged block that has
+   been leached has already shed most of its free alkalinity, and the station monitors
+   reservoir and runoff pH continuously — which is the whole point of having the
+   instrument. Let it tell you whether there is a problem instead of paying to prevent one
+   that may not exist. Sources genuinely conflict on how much lime an aged CMU keeps
+   shedding; this is cheaper to settle by measurement than by reading.
 
-   **Cloth liners were evaluated and rejected.** Fabric pots that drop into a CMU core do
-   exist (247Garden 1.5 gal square, 8 × 7 in, food-safe, ~$0.25). But cloth is a filter, not
-   a barrier: it does nothing about lime leaching, and the air-pruning that justifies fabric
-   pots is void when the fabric is pressed against damp concrete instead of air. It also
-   leaves the block wicking, which puts efflorescence on the visible face of a piece whose
-   whole point is that the block reads as block.
+3. **Only if runoff pH actually drifts**, in ascending order of effort:
+   - **A nursery pot in each core**, ~$2 the pair. A 1 gal plastic pot or a fabric pot
+     (247Garden 1.5 gal square, 8 x 7 in, food-safe, ~$0.25) drops straight into a core.
+     Nothing to cure, reversible, and the plants lift out for inspection.
+   - **A potable-rated epoxy** if you want the block itself sealed and the cores bare:
+     PPG AquataPoxy A-6, 1 qt, ~$91, NSF/ANSI 61 and rated for damp concrete, which
+     matters because the leach leaves the block saturated for weeks. Two coats, ~8 h
+     between. This is the spec-grade answer and it is priced like one.
+
+   Note what a permeable liner does and does not do: cloth is a filter, not a barrier, so
+   it will not stop lime leaching, and a fabric pot pressed against damp concrete loses the
+   air-pruning that justifies fabric pots in the first place. A plastic pot is the honest
+   cheap barrier; cloth is neither barrier nor pruning here.
 
 **The existing gate still validates it.** Stage 2's wet test — 24 h with the filled block,
 runoff pH compared against a plain-water control, within ~0.3 — tests whatever method you

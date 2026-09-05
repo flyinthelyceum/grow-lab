@@ -4,7 +4,7 @@
 
 Take the running bench station (nursery pot, 5 gal reservoir, relay fan) to the V1
 object described in [V1_PHYSICAL_BUILD.md](V1_PHYSICAL_BUILD.md): CMU vessel with two
-sealed cores, 2.5 gal reservoir, runoff-to-tray drip with pressure-compensating emitters,
+leached cores, 2.5 gal reservoir, runoff-to-tray drip with pressure-compensating emitters,
 PWM canopy fan on a 12V rail, dry enclosure to the side.
 
 `V1_PHYSICAL_BUILD.md` says *what the station is*. This says *what order to build it in*.
@@ -16,12 +16,79 @@ nursery pot, single emitter. That build is done and its system has been running 
 It stays as the record of that milestone. This procedure covers the rebuild into the
 CMU station and supersedes the April runbook's plumbing and fan steps.
 
-## Build doctrine: the system is alive
+## Where this actually stands — 2026-09-05
 
-A plant is growing and the rig is watering it. Every hour the station is torn down is an
-hour the plant is not being watered and the telemetry has a hole in it.
+Read this before the stages. The bench is **not** a running grow:
 
-So: **build and prove every new subsystem at the bench, beside the running rig, before
+- **There is no plant.** No corms are planted and nothing is being watered.
+- **The pump sits in a bucket with no tubing.** The drip line, emitters, filter, bypass
+  tee and manifold are on hand but not assembled, so nothing can be dosed and Stage 0.2
+  cannot be run as written until they are.
+- **The sensor stack is live and logging** — BME280, DS18B20, EZO-pH, EZO-EC, SEN0308 +
+  ADS1115, AS7341, camera — and that telemetry is the thing worth not breaking.
+- **The pH probe is failing.** Last calibration gives acid slope 85.2 %, base slope 77.3 %
+  (healthy ≥ 95) and a zero offset of −34.78 mV against a ±10 degraded limit. It reads a
+  steady 7.00, which is what a dead electrode does. **EC is swinging**, with the pump in
+  the same bucket as the probes. Neither is trustworthy until Phase A below.
+
+Earlier versions of this document asserted a growing plant and an irrigating rig. That was
+inherited from the April runbook and never revised; it is corrected here rather than in the
+historical record, which stays as written.
+
+## The plan, in phases
+
+The six stages below are the procedure. This is the order to do them in given where things
+actually stand, what each one is waiting on, and what it costs.
+
+| Phase | What | Stages | Blocked on | Buy |
+|---|---|---|---|---|
+| **A** | **Instrument triage** — get the probes trustworthy | — | nothing | nothing |
+| **B** | **Plumbing + dose calibration** — assemble the drip line, measure real delivery | 0.2 | filter adapters | adapters |
+| **C** | **Fan rail** — 12V rail, PWM, gust field on hardware | 1 | nothing | nothing |
+| **D** | **Vessel** — leach, drain screens, media, wet test, plant | 2 | **Phase A**, corms | perlite, mesh, corms |
+| **E** | **Assembly and go-live** — plumb to the block, migrate, soak | 3, 4, 6 | B, C, D | nothing |
+| **F** | **Enclosure** — cabinet, tray, panel, harness | 5 | caliper the meters | acrylic, glands |
+
+**A comes first and it is not optional.** Phase D's gate is *runoff pH within ~0.3 of a
+control*. That gate is meaningless read through a failing electrode, and the pH probe is
+currently failing its slope check while EC swings with the pump in the same bucket. Doing D
+before A means measuring a block with a broken ruler and believing the answer.
+
+**A, B and C are independent of each other** and none of them needs a plant, so they can be
+done in any order or in parallel as parts arrive. E needs all three. F is genuinely
+deferred — the station runs without it, and it is gated on measurements that need the
+Weston movements in hand.
+
+### Phase A — instrument triage
+
+Everything downstream is measurement, so fix the instruments first. No purchases.
+
+1. **Unplug the pump and watch EC for five minutes.** A submersible pump in the same vessel
+   as the probes puts both electrical noise and fine bubbles into the water, and EC is a
+   conductivity measurement across two electrodes in that water — isolation on the circuit
+   side does not help with interference in the solution. If EC settles, that was the whole
+   story.
+2. **Confirm the DS18B20 is in the same water as the EC probe.** Conductivity moves ~2 %/°C
+   and the driver compensates from that reading; a probe dangling in air makes the
+   compensation wrong. This causes drift, not wild swings, so check it after step 1.
+3. **Recalibrate both probes with fresh solution.** Contaminated buffer reads exactly like a
+   dying probe, so this has to happen before condemning anything. pH 4.00 / 7.00 / 10.00 and
+   the EC 12,880 uS standard.
+4. **Re-run `growlab sensor ph-slope`.** It reports the *last* calibration, so only now does
+   the number mean anything.
+5. **If pH still fails**, recondition (`docs/BOM.md`, pH probe maintenance) or replace.
+   Budget ~$100 and a lead time; decide here rather than discovering it at Phase D.
+
+**Gate:** both probes calibrated within datasheet limits, EC stable with the pump running.
+
+---
+
+## Build doctrine: don't break the instrument
+
+The telemetry is the asset. Every hour the stack is torn down is a hole in the record, and
+the sensor chain is the part that took months to get working.
+
+So: **build and prove every new subsystem at the bench, beside the running stack, before
 disturbing anything.** Only Stage 4 touches the live system, and it should be a single
 short window with everything already tested. Stages 0–3 are non-disruptive. Stage 5 can
 happen weeks later while the station runs.
@@ -112,7 +179,7 @@ would be:
 **The existing 10 s schedule delivers about 10 mL per core — effectively nothing.** And
 `IrrigationService.pulse()` silently clamps to `max_runtime_seconds` (`pi/services/irrigation.py:103`),
 so with the cap at 30 s no schedule change alone can dose more than ~32 mL. Both the
-schedule and the cap must change, or the plant is not watered.
+schedule and the cap must change, or a plant put in this vessel will not be watered.
 
 **Calibrate:**
 
@@ -131,7 +198,7 @@ schedule and the cap must change, or the plant is not watered.
 3. Run the pump 5 minutes, then measure each jug. **Do not assume ~1 GPH** — the measured
    figure is the real one. The two jugs should be within ~10 % of each other; a wider split
    means asymmetric plumbing or a partly blocked emitter.
-4. Measure the sealed core's usable media volume (fill the core with water, pour into a jug).
+4. Measure the core's usable media volume (fill the core with water, pour into a jug).
 5. Target roughly 5–15 % of media volume per event, aiming for 10–20 % runoff.
 6. Pulse seconds = target mL ÷ your measured mL-per-second.
 
@@ -215,17 +282,17 @@ unit to unit. Once the service is back up, `/api/fan/status` reports the same pi
 ## Stage 2 — Vessel preparation (offline, non-disruptive)
 
 1. Drill or confirm a drain hole per core; mesh screen over each.
-2. **Leach, then seal the cores — no liners.** Soak the block in dilute vinegar (~1/4 cup
-   per gallon) for half an hour, then flush repeatedly over a week or two. Then coat both
-   core interiors, the drain-hole edges and the underside with **PPG AquataPoxy A-6**
-   (NSF/ANSI 61 potable-rated, and rated for damp concrete — which the leach leaves you
-   with). Two coats, ~8 h cure between. **No media or root may touch bare cement** — raw
-   CMU leaches lime and drives pH alkaline. Check the cured film for holidays and thin
-   spots; it is the whole reason the block is safe to plant in.
-3. Measure and record the sealed usable volume per core (needed by 0.2 step 4).
+2. **Leach the block. Coat nothing yet.** Soak it in dilute vinegar (~1/4 cup per gallon)
+   for half an hour, then flush repeatedly over a week or two. That pulls out the bulk of
+   the free lime, costs nothing, and treats the whole block rather than a surface. Raw CMU
+   drives pH alkaline; a leached, yard-aged block has usually shed most of it already.
+   **Whether a barrier is needed at all is decided by the gate in step 5, not in advance** —
+   see *Note on the cores* in V1_PHYSICAL_BUILD.md for the two options if it fails.
+3. Measure and record the usable media volume per core (needed by 0.2 step 4).
 4. Hydrate coco coir, mix ~70/30 with perlite, fill both cores to 1–2 in below the rim.
 5. Leave the filled block to sit wet for a day. Check runoff pH against a plain-water
-   control. Drifting alkaline means the seal is incomplete — fix before planting.
+   control. Drifting alkaline means the block is still shedding lime — add a barrier and
+   re-test before planting (nursery pot per core, or epoxy; see *Note on the cores*).
 
 **Gate:** runoff pH from the filled block tracks the control within ~0.3.
 
@@ -257,7 +324,7 @@ Do this in one sitting, with Stages 0–3 already passed. Budget 2–3 hours.
 
 1. Photograph the running rig's wiring before disturbing it.
 2. `sudo systemctl stop growlab` — stop the scheduler so nothing fires mid-move.
-3. Transplant the corms from the nursery pot into the two sealed cores. Keep the root ball
+3. Transplant the corms into the two prepared cores. Keep the root ball
    intact; plant at the depth they were at, claws down.
 4. Move the reservoir to the 2.5 gal stainless pan. Mix to the same pH/EC as the old one —
    the plant should not get a chemistry step change and a physical move on the same day.
@@ -282,7 +349,7 @@ curl -s localhost:8000/api/fan/status
 
 ## Stage 5 — Enclosure and harness (deferred, non-blocking)
 
-The station runs without this. Do it once the plant is stable.
+The station runs without this. Do it once the planting is established.
 
 - Fabricate the cabinet per "Station geometry" in V1_PHYSICAL_BUILD.md: 20 x 16 x 36 in,
   wet bay and dry bay hard-divided, wet bay vented, reservoir on an adjustable shelf at
@@ -328,7 +395,7 @@ Watch it for 72 hours before calling V1 built.
 
 ## What Not To Do
 
-- Do not tear down the running rig before Stages 0–3 pass. The plant is on it.
+- Do not tear down the running stack before Stages 0–3 pass. The telemetry record is on it.
 - Do not set a schedule without doing 0.2. A 10 s pulse waters nothing now.
 - Do not raise `max_runtime_seconds` arbitrarily to compensate. It is the stuck-pump
   guard, and the catch tray has to hold whatever it allows.
