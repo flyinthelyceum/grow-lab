@@ -35,6 +35,7 @@ on:
           - git-status
           - git-diff
           - git-log
+          - git-unpushed
           - services
           - logs-orchestrator
           - logs-dashboard
@@ -104,6 +105,43 @@ jobs:
 
             git-log)
               git --no-pager log --oneline -25
+              ;;
+
+            git-unpushed)
+              # Work left on the box that origin has never seen. The runner is
+              # read-only and the Pi has no key that can push, so anything
+              # committed here — a brief, a note, a fix made at the keyboard —
+              # is stranded until someone reads it out. This reads it out.
+              #
+              # Bounded by construction: it can only ever show commits that
+              # origin does not have. It cannot be pointed at an arbitrary file.
+              branch="$(git rev-parse --abbrev-ref HEAD)"
+              echo "## branch: $branch"
+              if ! git fetch --quiet --prune origin "$branch" 2>/dev/null; then
+                echo "(could not reach origin; comparing against the last fetch)"
+              fi
+              base="origin/$branch"
+              if ! git rev-parse --verify --quiet "$base" >/dev/null; then
+                echo "::warning::no $base — this branch has never been pushed"
+                base="$(git rev-list --max-parents=0 HEAD | tail -1)"
+              fi
+              n="$(git rev-list --count "$base..HEAD")"
+              echo "## $n commit(s) here that $base does not have"
+              echo
+              if [ "$n" = "0" ]; then
+                echo "(nothing stranded — the box is in sync)"
+              else
+                git --no-pager log --oneline "$base..HEAD"
+                echo
+                echo "## and what is in them"
+                git --no-pager log --patch --stat --max-count=20 "$base..HEAD"
+                echo
+                echo "------------------------------------------------------------------"
+                echo "To land these: copy them into a branch from a machine that can"
+                echo "push, or re-author them there. Then on the box:"
+                echo "    git -C $GROWLAB_DIR reset --hard origin/$branch"
+                echo "which also clears the deploy job's fast-forward check."
+              fi
               ;;
 
             services)
