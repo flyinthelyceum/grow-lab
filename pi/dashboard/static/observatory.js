@@ -315,6 +315,7 @@
         for (var i = 0; i < nodes.length; i++) {
             var node = nodes[i];
             if (node.nodeType !== 1) continue;
+            if (node.classList && node.classList.contains("camera-live-frame")) continue;
             if (node.tagName === "IMG" ||
                 (node.classList && node.classList.contains("camera-placeholder"))) {
                 container.removeChild(node);
@@ -488,6 +489,10 @@
 
     // --- Latest image ---
     function refreshImage() {
+        // A live session owns the <img>. The 60s refresh timer used to tear it
+        // out of the DOM mid-session and drop a static capture in its place,
+        // killing roughly half of all GO LIVE clicks. stopLive() re-runs this.
+        if (liveState && liveState.active) return;
         apiLatestImage().then(function (data) {
             if (!data || !data.filename) {
                 renderCameraPlaceholder("CAMERA STANDBY", "Waiting for the next logged capture.");
@@ -624,6 +629,7 @@
             img.alt = "Live feed";
             container.insertBefore(img, container.firstChild);
         }
+        img.classList.add("camera-live-frame");
         liveState.previousSrc = img.src;
         liveState.active = true;
         liveState.endsAt = Date.now() + 30000;
@@ -645,6 +651,7 @@
 
     function pollSnapshot(img) {
         if (!liveState.active) return;
+        if (!img.isConnected) { stopLive("detached"); return; }
         fetch("/api/stream/snapshot", { cache: "no-store" })
             .then(function (resp) {
                 if (!resp.ok) {
@@ -684,8 +691,13 @@
         var container = document.getElementById("camera-feed");
         if (container) {
             var img = container.querySelector("img");
-            if (img && liveState.previousSrc) {
-                img.src = liveState.previousSrc;
+            if (img) {
+                // Give the frame back to clearCameraContent, or the next refresh
+                // would be unable to replace it.
+                img.classList.remove("camera-live-frame");
+                if (liveState.previousSrc) {
+                    img.src = liveState.previousSrc;
+                }
             }
         }
         if (liveState.lastBlobUrl) {

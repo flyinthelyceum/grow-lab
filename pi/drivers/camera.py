@@ -3,13 +3,23 @@
 Captures still images at configurable resolution. Falls back to
 rpicam-still (or legacy libcamera-still) if picamera2 is unavailable.
 Returns None when no camera hardware is detected.
+
+**The camera is held only for the duration of a capture.** It used to be
+opened on the first availability probe and kept open until the orchestrator
+shut down, which meant the dashboard's ``rpicam-vid`` could never acquire it:
+Live View worked until the first irrigation pulse of the day and then failed
+silently, forever, because the probe runs inside ``_on_pump_active``. Two
+processes share this device, so whoever holds it must give it back.
 """
 
 from __future__ import annotations
 
 import logging
 import subprocess
+import time
 from pathlib import Path
+
+_SETTLE_SECONDS = 2.0
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +35,7 @@ class CameraDriver:
         self._picamera2 = None
         self._still_cmd: str = "rpicam-still"
         self._available: bool | None = None
+        self._backend: str | None = None
 
     @property
     def is_available(self) -> bool:
@@ -42,8 +53,14 @@ class CameraDriver:
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if self._picamera2 is not None:
-            return self._capture_picamera2(output_path)
+        if self._picamera2 is not None or self._backend == "picamera2":
+            try:
+                if self._picamera2 is None and not self._open_picamera2():
+                    return False
+                return self._capture_picamera2(output_path)
+            finally:
+                # Hand the device back; the dashboard's rpicam-vid needs it too.
+                self.close()
 
         return self._capture_libcamera(output_path)
 
@@ -58,7 +75,18 @@ class CameraDriver:
             self._picamera2 = None
 
     def _try_init_picamera2(self) -> bool:
-        """Try to initialize picamera2. Returns True on success."""
+        """Probe for picamera2, releasing the device again before returning.
+
+        Availability is a question, not a claim on the hardware.
+        """
+        if not self._open_picamera2():
+            return False
+        self._backend = "picamera2"
+        self.close()
+        return True
+
+    def _open_picamera2(self) -> bool:
+        """Open and start the camera. Returns True on success."""
         try:
             from picamera2 import Picamera2
 
@@ -68,8 +96,11 @@ class CameraDriver:
             )
             cam.configure(config)
             cam.start()
+            # Auto-exposure and white balance need a moment; the old code got
+            # this for free by never stopping the camera.
+            time.sleep(_SETTLE_SECONDS)
             self._picamera2 = cam
-            logger.info(
+            logger.debug(
                 "Camera initialized via picamera2 (%dx%d)",
                 self._resolution[0],
                 self._resolution[1],

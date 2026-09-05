@@ -161,6 +161,17 @@ stuck-pump guard. Do not set it arbitrarily high.
 
 Goal: the Noctua running under software speed control on the new rail, off the relay.
 
+> **The SH1106 OLED stays through this stage.** Ruled 2026-09-05: the subtract pass
+> proposed removing the OLED display subsystem, and it is gated rather than cut, because
+> until the Inky Impression is in hand it is the station's **only physical readout** —
+> removing it would leave nothing to look at but a browser. Retire it when the Inky is
+> installed and its driver works, not before. The pin collision that move creates is
+> already recorded below in Stage 5 (the Inky hard-wires BCM17, which is the pump relay).
+
+**The fan is for canopy strength, not cooling.** Air movement thickens stems
+(thigmomorphogenesis); it is not thermal management, so its ramp is tuned for steady
+movement rather than a temperature target.
+
 1. Bring up the 12V rail from the fan's own 12V adapter. Verify **12V under load**
    before the fan is connected.
 2. Wire the fan's 4-pin connector — GND to common ground, +12V to the rail, PWM to

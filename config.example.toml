@@ -14,9 +14,6 @@ port = "/dev/ttyACM0"  # ESP32-S3 native USB CDC; classic ESP32 uses /dev/ttyUSB
 baud = 115200
 timeout = 2.0
 
-[installation]
-node_id = "growlab-v0"
-fixture_id = "bench-fixture-a"
 
 [sensors.bme280]
 address = 0x76

@@ -36,12 +36,6 @@ class SerialConfig:
 
 
 @dataclass(frozen=True)
-class InstallationConfig:
-    node_id: str = "growlab-node"
-    fixture_id: str = ""
-
-
-@dataclass(frozen=True)
 class SensorEntry:
     address: int = 0
     interval_seconds: int = 120
@@ -254,7 +248,6 @@ class AppConfig:
     system: SystemConfig = field(default_factory=SystemConfig)
     i2c: I2CConfig = field(default_factory=I2CConfig)
     serial: SerialConfig = field(default_factory=SerialConfig)
-    installation: InstallationConfig = field(default_factory=InstallationConfig)
     sensors: SensorsConfig = field(default_factory=SensorsConfig)
     camera: CameraConfig = field(default_factory=CameraConfig)
     lighting: LightingConfig = field(default_factory=LightingConfig)

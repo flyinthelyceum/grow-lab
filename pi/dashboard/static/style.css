@@ -443,7 +443,7 @@ body {
 }
 
 /* Mobile-nav admin variant: subtler than primary nav so admin links read
-   as a grouped trailer rather than competing with ART. */
+   as a grouped trailer. */
 .mobile-nav-admin {
     color: var(--text-dim, #8a8a8a) !important;
     font-size: 0.85em;
@@ -618,7 +618,7 @@ body {
     color: var(--text-secondary);
 }
 
-.status-art-link {
+.status-nav-link {
     margin-left: auto;
     font-size: 11px;
     letter-spacing: 3px;
@@ -627,7 +627,7 @@ body {
     transition: color 0.3s;
 }
 
-.status-art-link:hover {
+.status-nav-link:hover {
     color: var(--text-secondary);
 }
 
@@ -681,7 +681,7 @@ body {
         gap: 16px;
     }
 
-    .status-art-link {
+    .status-nav-link {
         display: none;
     }
 
@@ -777,7 +777,7 @@ body {
         gap: 8px;
     }
 
-    .status-art-link {
+    .status-nav-link {
         margin-left: 0;
     }
 

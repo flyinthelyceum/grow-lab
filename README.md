@@ -15,12 +15,11 @@ Actuators: GPIO relay pump, GPIO18 PWM canopy fan, ESP32 LED dimmer.
 
 ## Web Dashboard
 
-FastAPI serves two views at `http://<pi-ip>:8000`:
+FastAPI serves the dashboard at `http://<pi-ip>:8000`:
 
 - **Observatory** (`/`) — 5-panel layout (LIGHT, WATER, AIR, ROOT, PLANT) with D3.js charts backed by downsampled history, live WebSocket values, time window selection (1H / 24H / 7D), and per-subsystem range indicators.
-- **Art Mode** (`/art`) — full-screen generative visualization. 24h environmental and reservoir data rendered as a radial composition: thermal ring, humidity breathing ring, pH ring, EC ring, water pulse markers, pressure atmosphere, and ambient particle field. Hover reveals context-sensitive detail in the center disc.
 
-Data stored in SQLite on the Pi. Observatory and art mode both query downsampled history via REST API and receive live values over WebSocket.
+Data stored in SQLite on the Pi. The observatory queries downsampled history via REST API and receives live values over WebSocket.
 
 ## OLED Display
 
@@ -76,7 +75,7 @@ The demo profile writes to `./.demo-data/` and keeps hardware polling/display di
 
 Good local-only tasks:
 
-- observatory and art-mode UI/UX refinement
+- observatory UI/UX refinement
 - seeded-data review loops and screenshot critique
 - docs, tests, and CLI/config cleanup
 

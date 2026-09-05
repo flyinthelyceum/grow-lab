@@ -20,7 +20,6 @@ from pi.config.schema import (
     DisplayConfig,
     FanConfig,
     I2CConfig,
-    InstallationConfig,
     IrrigationConfig,
     IrrigationScheduleEntry,
     LightingConfig,
@@ -81,15 +80,6 @@ def _build_sensor_entry(data: dict[str, Any]) -> SensorEntry:
         address=data.get("address", 0),
         interval_seconds=data.get("interval_seconds", 120),
         enabled=data.get("enabled", True),
-    )
-
-
-def _build_installation(raw: dict[str, Any]) -> InstallationConfig:
-    data = raw.get("installation", {})
-    defaults = InstallationConfig()
-    return InstallationConfig(
-        node_id=data.get("node_id", defaults.node_id),
-        fixture_id=data.get("fixture_id", defaults.fixture_id),
     )
 
 
@@ -311,7 +301,6 @@ def load_config(path: Path | None = None) -> AppConfig:
             baud=serial_data.get("baud", 115200),
             timeout=serial_data.get("timeout", 2.0),
         ),
-        installation=_build_installation(raw),
         sensors=_build_sensors(raw),
         camera=_build_camera(raw),
         lighting=LightingConfig(

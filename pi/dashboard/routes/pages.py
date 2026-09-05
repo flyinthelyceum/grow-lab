@@ -22,15 +22,6 @@ async def observatory(request: Request) -> HTMLResponse:
     )
 
 
-@router.get("/art", response_class=HTMLResponse)
-async def art_mode(request: Request) -> HTMLResponse:
-    """Serve the Art Mode generative visualization page."""
-    templates = request.app.state.templates
-    return templates.TemplateResponse(
-        request, "art.html", {"is_admin": is_admin(request)}
-    )
-
-
 @router.get("/panel", response_class=HTMLResponse)
 async def panel_emulator(request: Request) -> HTMLResponse:
     """Serve the instrument head panel emulator.
