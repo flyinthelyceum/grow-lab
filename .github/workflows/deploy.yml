@@ -109,10 +109,21 @@ jobs:
 
       - name: Fetch and fast-forward
         id: update
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           cd "$GROWLAB_DIR"
           TARGET="${{ inputs.ref || 'main' }}"
-          git fetch --prune origin "$TARGET"
+          # Fetch with this job's token instead of through the clone's own
+          # remote. The clone on the Pi has an SSH remote and the box holds no
+          # key GitHub accepts -- deliberately, since it is the least defended
+          # machine here -- so `git fetch origin` dies with "Permission denied
+          # (publickey)" and every deploy after #31 failed there, silently
+          # leaving the hardware on old code. The token is read-only, scoped to
+          # this run, and never written to disk on the Pi.
+          git -c "http.extraheader=Authorization: Basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" \
+            fetch --prune "https://github.com/${GITHUB_REPOSITORY}.git" \
+            "+refs/heads/$TARGET:refs/remotes/origin/$TARGET"
           git checkout -q "$TARGET" 2>/dev/null || git checkout -q -B "$TARGET" "origin/$TARGET"
           # ff-only, so a diverged local branch fails loudly instead of merging.
           git merge --ff-only "origin/$TARGET"
