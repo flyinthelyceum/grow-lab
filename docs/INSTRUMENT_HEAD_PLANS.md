@@ -1,17 +1,16 @@
 # Instrument Head Plans — Rev C (2026-09-04)
 
-**Rev C: the face is the front plate of a white aluminium instrument case, behind a clear
+**Rev C: the face is the front plate of a white steel instrument case, behind a clear
 acrylic fascia in the cabinet's front.** See V1_PHYSICAL_BUILD.md § Mast → *The console*.
-What stands from Rev A: the face hole schedule (now cut in 1/8 in aluminium), the depth
+What stands from Rev A: the face hole schedule (now cut in 1/8 in mild steel), the depth
 stack, the dial-face conversion, and the layout candidates. What is superseded: the acrylic
 box, the corner blocks, the flange, the mast loom pass, the 46–58 height stack, and Rev B's
 ply lip. The plate is the front of a 9.50 × 12.00 × 2.75 folded 16 ga box (`cad/case.py`);
 F1–4 fasten the plate to the box's front flanges. The case sits 0.1 in behind the fascia,
 which has holes only for the two knob shafts. Panel centre **28.2 in**. **White
 (2026-09-05): DTM acrylic, satin**, the same paint as every other metal part in the piece.
-Not powder, and not anodise — there is no true white anodise, the dye process cannot reach
-it. On bare aluminium the DTM wants a scuff and a self-etching primer unless its data sheet
-covers non-ferrous.
+No powder-coating in V1. The plate is ferrous, which is what DTM acrylic is formulated
+for — scuff and degrease, no primer.
 Reverse-engraving no longer applies; the witness rings are scribe lines on the back of the
 plate.
 
@@ -21,11 +20,14 @@ Design study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b2
 **These tables are the authority; the drawings illustrate them.**
 
 - Units: inches unless marked mm. Origin: panel bottom-left, X right, Y up.
-- Material (Rev C): plate 1/8 in aluminium, box 16 ga aluminium, both in white DTM acrylic
-  (black until 2026-09-05 — the whole metal register went white; see V1_PHYSICAL_BUILD.md
-  § *The white register*). **The plate will mark.** DTM is softer than powder and this
-  plate carries two movements bolted through it and is handled at every service. That is
-  accepted: one paint across the whole piece matters more, and a mark touches up. The fascia in front of them is 1/4 in **cast** acrylic, clear
+- Material (Rev C): plate 1/8 in **mild steel**, box 16 ga **mild steel**, both in white
+  DTM acrylic (black until 2026-09-05 — the whole metal register went white, then went
+  aluminium-free; see V1_PHYSICAL_BUILD.md § *The white register*). Steel rather than the
+  aluminium first drawn: **2.9x the bending stiffness at the same 1/8 in**, which is the
+  right direction for a plate carrying two movements, at 2.9x the weight — 4.05 lb rather
+  than 1.40. **The plate will mark.** DTM is softer than powder and this plate is handled
+  at every service. Accepted: one paint across the whole piece matters more, and a mark
+  touches up. The fascia in front of them is 1/4 in **cast** acrylic, clear
   (not extruded — it crazes).
 - Meters: **Weston 301, 3-1/2 in centre-zero**, two — 30-0-30 uA and 100-0-100 uA.
   The Simpson Wide-Vue 1327 this schedule was drawn for is **not** what is being
@@ -164,7 +166,10 @@ pegging. The needle then breathes visibly with the watering rhythm.
    band markings.
 5. **Print on matte stock and match the cream.** A bright white face behind an aged Bakelite
    ring looks wrong; sample the colour off the scan. Mount to the original backing plate if it
-   survives stripping, otherwise to new aluminium of the same thickness.
+   survives stripping, otherwise to new **aluminium** of the same thickness. This is the
+   one place aluminium is still specified, and for a reason: it sits inside a moving-coil
+   movement, where a ferrous backing plate would be in the field of the magnet. Non-magnetic
+   is the requirement; brass or thin plastic do the job equally well if aluminium is awkward.
 
    **Check it against the finished plate, not only against the meter.** This instruction was
    written when the plate was black, where the cream face was the bright thing and the dark

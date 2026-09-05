@@ -41,10 +41,10 @@ MATERIALS = {
     "case": dict(label="Instrument case, white DTM", colour="#E9EBE8", opacity=1.0, group="fabricated"),
     "backplate": dict(label="Console backplate, white DTM", colour="#DCDFDB", opacity=1.0, group="fabricated"),
     "rear_door": dict(label="Rear door (wet bay)", colour="#B8925A", opacity=1.0, group="fabricated"),
-    "tray": dict(label="Tray, 304 16 ga", colour="#C4C9CC", opacity=1.0, group="fabricated"),
+    "tray": dict(label="Tray, 304 16 ga, bare", colour="#C4C9CC", opacity=1.0, group="fabricated"),
     "pads": dict(label="Block pads", colour="#8F7A55", opacity=1.0, group="fabricated"),
-    # Every steel and aluminium part in the piece is white now — the frame, the
-    # mast, the head, the case and the backplate — and all in the same DTM
+    # Every metal part in the piece is white now — the frame, the mast, the
+    # head, the case and the backplate — all steel, all in the same DTM
     # acrylic, so they really are one colour. Not paper white: painted metal
     # under room light reads a shade cooler and darker than paper, and the five
     # are separated here by a few points of value only so a flat-shaded render

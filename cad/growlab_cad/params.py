@@ -264,7 +264,17 @@ FACE_SCREW_DIA = 0.135  # "F1–4 … Ø 0.135 c'sunk x4 | M3 flat-head"
 # The instrument case (fascia form): a white metal box the meters, Inky, i3,
 # Pi and meter driver live in, its front plate carrying the hole schedule.
 # Removable forward as a unit once the fascia is off and the knob caps are
-# pulled. Sheet aluminium in white DTM acrylic, as every metal part is. CHOICE throughout.
+# pulled. Mild steel sheet in white DTM acrylic, as every metal part is —
+# no aluminium anywhere in V1. CHOICE throughout.
+#
+# The thicknesses below are unchanged from the aluminium version, which makes
+# the plate STIFFER, not weaker: steel's modulus is 29 Msi against 10, so
+# 1/8 in steel is about 2.9x the bending stiffness of the 1/8 in aluminium it
+# replaces. It is also 2.9x the weight (4.05 lb against 1.40). If that ever
+# matters, 13 ga (0.090) steel still matches the original aluminium plate's
+# stiffness; it is not the reason to change anything today.
+# 0.0625 is nominal for the folded box: 16 ga steel is 0.0598, and 0.003 in is
+# well inside the bend allowance the shop owns anyway.
 PLATE_T = 0.125  # 1/8 in front plate — stiff enough to carry two movements
 CASE_SHEET_T = 0.0625  # 16 ga folded box behind the plate
 CASE_D = 2.75  # plate front to case back; INSTRUMENT_HEAD_PLANS.md: "inside 3.00 clear"

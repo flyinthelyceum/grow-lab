@@ -3,7 +3,7 @@ the e-ink window and the knobs.
 
 INSTRUMENT_HEAD_PLANS.md § Face — hole schedule.
 
-This is 1/8 in aluminium in white DTM acrylic: the front of the removable case
+This is 1/8 in mild steel in white DTM acrylic: the front of the removable case
 in ``case.py``, sitting behind the clear fascia.
 
 The layout is not restated here. It is read from
@@ -108,7 +108,7 @@ def build_plate(layout: Layout = SCHEDULE) -> Part:
         wx, wz = panel_to_world(px, py)
         plate -= _through_y(P.FACE_SCREW_DIA, wx, wz)
 
-    return labelled(plate, "instrument_plate_aluminium")
+    return labelled(plate, "instrument_plate_steel")
 
 
 # The older name for the same part; both are in use.

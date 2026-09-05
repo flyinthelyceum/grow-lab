@@ -165,12 +165,17 @@ reached the same way. The face itself is removable on its own (F1–4) for the i
 
 - **304 stainless.** Fertiliser salts pit aluminium, and this pan sits in dilute nutrient
   permanently.
-- **Do not paint the wetted surface.** Paint in constant salt contact lifts at the edges
-  and creeps. Bare bead-blast inside; white on the **outer** face only, which never touches
-  water. **This is the one part that stays powder-coated** rather than DTM — it lives in
-  the wet zone, its rim is the boundary between painted and bare, and powder is the tougher
-  finish exactly where a lifting edge would start. The rim shows barely at all under the
-  block, so the sheen difference costs nothing here.
+- **The tray is not painted at all — bare bead-blast 304, inside and out.** Paint in
+  constant salt contact lifts at the edges and creeps, and on this part the rim *is* the
+  edge: it is the boundary between the wetted inside and the dry outside, exactly where a
+  lifting edge would start. The earlier answer was powder-coat on the outer face only,
+  which is the tough finish that survives that boundary — but **there is no powder-coating
+  in V1**, and DTM at a salt boundary is the thing this bullet has always warned against.
+  So the tray stays bare, and is the one metal part outside the white register.
+  It is not a compromise. Bead-blast 304 is a pale, matte, cool grey that sits beside
+  white without arguing with it, the rim shows barely at all under the block, and a
+  stainless pan reading as a stainless pan is honest about what it is. If V2 ever gets a
+  powder booth, the outer face is the first thing to go through it.
 - **The tray carries water, never weight.** Pads rise from the cabinet rail through
   cutouts in the tray floor so the block bears on the carcass. ~50 lb on 16 ga sheet would
   dimple it and destroy the drain fall.
@@ -231,7 +236,7 @@ console.
   recessed 0.15 in behind the front plane, between 0.5 in chamfers on the cabinet's corners.
   The only holes in it are two for the knob shafts; the dials and the e-ink are read through
   it. Screws through its margins into the sides' front edges and the ledge. Removable.
-- **Instrument case: white aluminium**, 9.50 x 12.00 x 2.75. A 1/8 in front plate carrying
+- **Instrument case: white mild steel**, 9.50 x 12.00 x 2.75. A 1/8 in front plate carrying
   INSTRUMENT_HEAD_PLANS.md's hole schedule (dials, window, jewel, amber, knobs, F1–4), and
   a 16 ga folded box behind it the meters, Inky, i3, Pi and meter driver mount in, closed at
   the back with a Ø 0.75 grommeted loom pass. The plate sits 0.1 in behind the acrylic; the
@@ -289,6 +294,46 @@ is emulated at `/panel`.
   LM301H white full-spectrum is an excellent grow light; the plant will thrive.
 - **The LED boards mount to an aluminum heatsink with free airflow.** Thermal is
   LED-life critical; no bare-board mounting.
+
+### The lightbox has never been specified — OPEN
+
+**Nobody has ever said what the fixture is made of, and it is the second most visible
+object in the piece.** Everything above describes the *electronics*: which boards, which
+driver, that they need a heatsink. The thing a person actually looks at — the body that
+hangs over the block at eye level and casts the light — has no material, no finish and no
+construction anywhere in these documents. In `cad/` it is a 16.0 x 6.0 x 1.5 box, all three
+numbers marked CHOICE, filed as a **reference** part: bought or undimensioned, and therefore
+excluded from the interference check. That classification has been quietly true and quietly
+wrong — the fixture is not a bought part, it is a thing we have not designed.
+
+What is already fixed, and constrains whatever it becomes:
+
+| Constraint | Value | Where from |
+|---|---|---|
+| Envelope as modelled | 16.0 W x 6.0 D x 1.5 H | `params.py`, all CHOICE |
+| Weight budget | ~5.4 lb of the head's 12 | boards ~0.7 + heatsink ~4.7 |
+| What 12 lb bought | 0.16 in sway, a clamp that holds by friction | § *The canopy mechanism* |
+| Thermal | heatsink + free airflow, no bare board | this section, `LIGHTING_SYSTEM.md` |
+| Visual | hangs in the most looked-at volume in the piece | the fan, § 12b |
+
+**The tension is real and it is new.** No aluminium in V1 meets LED thermal management,
+where aluminium is the standard answer and the bar is already on hand. Steel conducts at
+roughly a quarter of aluminium's rate, so an all-steel heatsink wants several times the
+area to shed the same watts — which means a physically bigger object hanging over the
+plant, which is precisely the mistake the fan taught. The three ways out are: paint the
+on-hand aluminium bar white and let it be the fixture; wrap it in a white steel body so
+the aluminium is present but never seen and steel is what is specified and shown; or go
+all-steel and accept the size. **Not decided here.**
+
+Two consequences to handle when it is decided:
+
+1. **The weight budget is an estimate that was never weighed.** `CARRIAGE_H`, the clamp's
+   grip and the tube's sway all answer to the head's real mass. A heavier fixture does not
+   threaten the mast — it runs at 3% of allowable — but it does threaten the clamp's
+   friction and the sway figure, which are the actual limits.
+2. **It should stop being a reference part.** If the body is fabricated, it belongs in
+   `assembly.fabricated()` so the interference check sees it. Filing a fabricated steel arm
+   as reference is a mistake this project has already made once.
 - **The red/blue color-register has no hardware and is deferred.** The concept
   (blue = dormancy/moon, amber = flowering/fire) can't be expressed by a fixed white
   board — it's dimmable, not tunable in hue.
@@ -433,24 +478,32 @@ lot.
    about the face looking native to its own meter and still stands. What is new is the
    relationship between face and plate, and that cannot be settled from a scan; it wants
    the printed face held against the finished plate.
-3. **One paint, not two processes — decided 2026-09-05.** The first version of this had
-   DTM on the steel and powder-coat on the aluminium case, on the reasoning that powder is
-   the tougher finish and the case sits behind glass "where a sheen difference reads
-   least". That last clause was wishful. Glass adds its own specular layer; it does not
-   hide the sheen of the object behind it, and the console is lit and looked into more
-   closely than anything else in the piece. Two processes were never going to match. It is
-   all DTM now, which also removes the anodising question — there is no true white anodise
-   anyway, the dye process cannot reach it.
+3. **One material and one paint — settled 2026-09-05, in three passes.** It went DTM on
+   the steel plus powder-coat on the aluminium case; then all-DTM, because two processes
+   were never going to match and the excuse for the mismatch ("the case sits behind glass,
+   where a sheen difference reads least") was wishful — glass adds its own specular layer,
+   it does not hide the sheen of what is behind it, and the console is looked into more
+   closely than anything else in the piece. Then **no aluminium and no powder-coating in
+   V1 at all**, which is where it lands: every fabricated metal part is mild steel or 304,
+   and every painted one takes the same white DTM.
 
-   **What that costs:** DTM acrylic is softer than powder. The plate carries two meters
-   bolted through it and is handled every time the case comes out for service, so it will
-   mark where powder would not. That is the price of one register that actually matches,
-   and a rattle-can of the same paint fixes a mark, which powder cannot.
+   **This is simpler than the version before it, not more complicated.** DTM acrylic is
+   formulated for ferrous substrates. With the aluminium gone, the self-etching primer,
+   the read-the-data-sheet caveat and the anodising question all go with it — the paint is
+   on its home material everywhere it is used.
 
-   **And it needs the right prep on the aluminium.** Most DTM acrylics are formulated for
-   ferrous substrates. Aluminium carries an oxide layer that paint will not key to: scuff
-   it and use a self-etching primer, or buy a DTM explicitly rated for non-ferrous. Read
-   the data sheet before assuming direct-to-metal means direct to *this* metal.
+   **What steel costs, and what it buys.** The case's metal goes from about 3.0 lb to
+   8.7 lb: the plate 1.40 → 4.05, the folded body 1.61 → 4.68. The case pulls forward onto
+   a bench for service, so that is a two-handed lift now rather than one; the ply ledge it
+   sits on is untroubled by it. In exchange the plate gets **2.9x stiffer** — steel's
+   modulus is 29 Msi against aluminium's 10 — which is the right direction for a plate
+   carrying two 3-1/2 in movements and being handled at every service. Thicknesses are
+   unchanged, so nothing in the model or the DXFs moves. If the weight ever does matter,
+   13 ga (0.090) steel still matches the original aluminium plate's stiffness.
+
+   **DTM is still softer than powder**, and the plate will mark where powder would not.
+   Accepted, and now unavoidable rather than chosen: a rattle-can of the same paint fixes
+   a mark, which powder never could.
 4. **It shows dirt.** A white cabinet beside coco coir, perlite and nutrient solution will
    show every splash. DTM washes; matte white shows more than satin and hides fingerprints
    worse. Satin, and keep a rattle-can of the DTM — for the frame, which is at floor level
@@ -520,10 +573,11 @@ see *The plan, in phases* in V1_STATION_BUILD_PROCEDURE.md.
 - [ ] **White DTM acrylic, satin**, 1 gal, plus a rattle-can of the same for touch-up.
       Covers **every metal part**: mast, collar, arm, base frame, instrument case, front
       plate, backplate. One batch — they are all read against each other. Check the data
-      sheet covers **non-ferrous**; the case, plate and backplate are aluminium, and a DTM
-      sold for steel needs a self-etching primer under it on bare aluminium.
-- [ ] **Self-etching primer**, 1 rattle-can, unless the DTM is rated for aluminium on its
-      own. Cheap insurance; decided by reading the tin, not here.
+      is on its home substrate everywhere — every painted part is ferrous, so no
+      self-etching primer and no non-ferrous rating to check.
+- [ ] **Steel sheet for the console:** 1/8 in for the instrument plate (9.50 x 12.00
+      blank) and 16 ga for the case body (15.50 x 17.00 blank) and the backplate. Cold-
+      rolled; it is getting painted, so surface finish only has to take a scuff.
 
 ### Struck from the list
 
@@ -601,11 +655,12 @@ use. Fail it and leach longer or add a second coat before planting.
 - **Frame fabrication.** 1 x 1 HSS or solid square bar; welded or bolted at the corners;
   levelling feet in the legs. Whether the mast is welded to the ring or bolted through it
   is a fabricator's call — welded is stiffer, bolted lets the cabinet come off the frame.
-- **Case fabrication.** The development is drawn: one 15.50 x 17.00 blank in 16 ga, six
-  bends, `cad/out/fab/case_body.dxf`. **Take it raw from the shop — the finish is ours.**
-  White DTM acrylic, satin, with the rest of the metal register; not powder, not anodise
-  (there is no true white anodise, the dye process cannot reach it). Confirm the shop is
-  happy with folded corners or wants them welded.
+- **Case fabrication.** The development is drawn: one 15.50 x 17.00 blank in **16 ga mild
+  steel**, six bends, `cad/out/fab/case_body.dxf`. **Take it raw from the shop — the
+  finish is ours.** White DTM acrylic, satin, with the rest of the metal register; no
+  powder-coating in V1. Confirm the shop is happy with folded corners or wants them
+  welded — steel folds harder than the aluminium this was drawn for, and a 16 ga steel
+  corner may want a weld where an aluminium one would not.
 - **Fascia edge finish.** Polished or flame-polished edges on the acrylic, and whether the
   two knob holes want a chamfer.
 - Verify the SICCE at lowest flow + bypass actually holds ~2 GPH at the emitters;
