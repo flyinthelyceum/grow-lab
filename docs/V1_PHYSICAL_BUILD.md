@@ -295,45 +295,52 @@ is emulated at `/panel`.
 - **The LED boards mount to an aluminum heatsink with free airflow.** Thermal is
   LED-life critical; no bare-board mounting.
 
-### The lightbox has never been specified — OPEN
+### The lightbox — a steel channel over the aluminium bar (decided 2026-09-05)
 
-**Nobody has ever said what the fixture is made of, and it is the second most visible
-object in the piece.** Everything above describes the *electronics*: which boards, which
-driver, that they need a heatsink. The thing a person actually looks at — the body that
-hangs over the block at eye level and casts the light — has no material, no finish and no
-construction anywhere in these documents. In `cad/` it is a 16.0 x 6.0 x 1.5 box, all three
-numbers marked CHOICE, filed as a **reference** part: bought or undimensioned, and therefore
-excluded from the interference check. That classification has been quietly true and quietly
-wrong — the fixture is not a bought part, it is a thing we have not designed.
+**Until today nobody had ever said what the fixture was made of, and it is the second most
+visible object in the piece.** Every lighting document above describes the *electronics*:
+which boards, which driver, that they need a heatsink. The thing a person actually looks at
+— the body hanging at eye level over the block — had no material, no finish and no
+construction anywhere. In `cad/` it was a 16.0 x 6.0 x 1.5 box, all three numbers marked
+CHOICE, filed as a **reference** part: bought or undimensioned, and therefore excluded from
+the interference check. That was quietly wrong. The fixture is not a bought part; it was a
+thing nobody had designed. It is fabricated now, and checked like anything else we cut.
 
-What is already fixed, and constrains whatever it becomes:
+**What it is: a folded 16 ga mild steel channel, white DTM, open at the bottom, over the
+aluminium heatsink bar already on hand.**
 
-| Constraint | Value | Where from |
-|---|---|---|
-| Envelope as modelled | 16.0 W x 6.0 D x 1.5 H | `params.py`, all CHOICE |
-| Weight budget | ~5.4 lb of the head's 12 | boards ~0.7 + heatsink ~4.7 |
-| What 12 lb bought | 0.16 in sway, a clamp that holds by friction | § *The canopy mechanism* |
-| Thermal | heatsink + free airflow, no bare board | this section, `LIGHTING_SYSTEM.md` |
-| Visual | hangs in the most looked-at volume in the piece | the fan, § 12b |
+| | |
+|---|---|
+| Shell | 16.0 W x 6.0 D x 1.5 H, 0.0625 mild steel, white DTM, 2.6 lb |
+| Aperture | the whole bottom face — nothing to fabricate, nothing to obstruct |
+| Venting | 9 slots 0.375 x 3.5 along the top over the fins, plus an open slot in each end |
+| Heatsink | the aluminium bar on hand, inside, unseen. ~4.7 lb, **unmeasured** |
+| Hangs from | the cross bar along its back edge, welded to the collar (§ *The canopy mechanism*) |
 
-**The tension is real and it is new.** No aluminium in V1 meets LED thermal management,
-where aluminium is the standard answer and the bar is already on hand. Steel conducts at
-roughly a quarter of aluminium's rate, so an all-steel heatsink wants several times the
-area to shed the same watts — which means a physically bigger object hanging over the
-plant, which is precisely the mistake the fan taught. The three ways out are: paint the
-on-hand aluminium bar white and let it be the fixture; wrap it in a white steel body so
-the aluminium is present but never seen and steel is what is specified and shown; or go
-all-steel and accept the size. **Not decided here.**
+**Why steel outside and aluminium inside.** No aluminium is *fabricated* for V1, and steel
+is what is specified, shown and painted. But steel conducts at roughly a quarter of
+aluminium's rate, so an all-steel heatsink would want several times the area to shed the
+same watts — a physically bigger object hanging over the plant, which is exactly the mistake
+the fan taught. The bar does the conducting; the shell does the looking. The aluminium is a
+bought thermal component, like the driver or the Pi, and it is never seen once the channel
+is on.
 
-Two consequences to handle when it is decided:
+**Open at the bottom and slotted at the top on purpose.** `LIGHTING_SYSTEM.md` asks for free
+airflow around the heatsink, and a closed box would be an oven. An open-bottomed channel with
+slots above the fins is a chimney: in at the aperture, out at the top and the ends. Thermal
+is LED-life critical, and the venting is the part of this that is not decoration.
 
-1. **The weight budget is an estimate that was never weighed.** `CARRIAGE_H`, the clamp's
-   grip and the tube's sway all answer to the head's real mass. A heavier fixture does not
-   threaten the mast — it runs at 3% of allowable — but it does threaten the clamp's
-   friction and the sway figure, which are the actual limits.
-2. **It should stop being a reference part.** If the body is fabricated, it belongs in
-   `assembly.fabricated()` so the interference check sees it. Filing a fabricated steel arm
-   as reference is a mistake this project has already made once.
+**Every dimension is a choice against an unmeasured part.** Nobody has put a rule on the
+heatsink bar or the LM301H boards. The shell is drawn to clear a plausible bar with margin,
+and a test asserts the clearance rather than assuming it — but **caliper both before cutting
+steel.** This is now on the cut list's *measure first* section with the Weston bezels.
+
+**The head comes to about 12.6 lb** — carriage weldment 4.6, shell 2.6, heatsink ~4.7,
+boards ~0.7 — against the 12.0 lb estimate the mast and the clamp were sized to. The mast
+does not care: that is 3.3% of allowable against 3.2%. The clamp holds by friction, so the
+head's real mass is the number that matters, and **it has still never been on a scale.**
+If it comes in heavy, 18 ga on the shell takes 0.7 lb straight back out.
+
 - **The red/blue color-register has no hardware and is deferred.** The concept
   (blue = dormancy/moon, amber = flowering/fire) can't be expressed by a fixed white
   board — it's dimmable, not tunable in hue.

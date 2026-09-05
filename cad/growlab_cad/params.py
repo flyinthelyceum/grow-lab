@@ -47,9 +47,10 @@ Two things are deliberately *not* asserted:
 * **The dial cut diameter.** The Weston 301 bezels are pending calipers; the
   drawings' Ø 2.79 is a Simpson figure that does not apply. ``face.py``
   engraves a witness circle at the bezel OD unless a measured cut is supplied.
-* **The LED fixture.** Two LM301H boards on a heatsink, cantilevered forward of
-  the mast. No dimensions exist for the heatsink; the fixture here is an
-  envelope so the assembly reads correctly, not a part to fabricate.
+* **The lightbox's internals.** The heatsink bar and the LM301H boards it carries
+  have never been measured. The steel shell around them is a real fabricated
+  part and a test asserts it clears the bar — but the bar it clears is a
+  plausible guess. Caliper both before cutting steel.
 """
 
 from __future__ import annotations
@@ -295,7 +296,7 @@ WITNESS_DEPTH = 0.02  # CHOICE: engraving depth for reference marks
 
 
 # ---------------------------------------------------------------------------
-# LED fixture — envelope only
+# LED fixture — the envelope, and (below) the lightbox that fills it
 # V1_PHYSICAL_BUILD.md § Mast: "hangs … at 46 in, cantilevered forward to
 # centre over the block". 46 was 15.1 above the media; that distance is kept.
 # ---------------------------------------------------------------------------
@@ -319,6 +320,37 @@ FIXTURE_ABOVE_MEDIA = _knob("FIXTURE_ABOVE_MEDIA", FIXTURE_ABOVE_MEDIA_MIN)
 FIXTURE_W = 16.0  # CHOICE: spans the 15.625 block, per the section drawing
 FIXTURE_D = 6.0  # CHOICE: envelope for two boards on a heatsink
 FIXTURE_H = 1.5  # CHOICE
+
+# --- the lightbox ----------------------------------------------------------
+# A folded steel channel, open at the bottom, over the on-hand aluminium
+# heatsink bar. Decided 2026-09-05 after the fixture had gone the whole project
+# with no material at all: every lighting document specified the electronics and
+# none of them said what the body was.
+#
+# Steel is what is shown and specified; the aluminium stays because physics
+# wants it and it is already bought. Steel conducts at roughly a quarter of
+# aluminium's rate, so an all-steel heatsink would need several times the area
+# — a bigger object hanging over the plant, which is the mistake the fan
+# taught. The bar does the conducting inside a shell that does the looking.
+#
+# Open at the bottom because that is the light aperture; slotted along the top
+# and open at the ends so the channel is a chimney rather than an oven.
+#
+# EVERY NUMBER HERE IS A CHOICE AGAINST AN UNMEASURED PART. Nobody has put a
+# rule on the heatsink bar or the boards. Caliper both before cutting steel —
+# this is the same class of pending measurement as the Weston bezels.
+LIGHTBOX_T = 0.0625  # CHOICE: 16 ga, as the instrument case. 18 ga saves 0.7 lb
+                     # and is the lever to pull if the head comes in heavy.
+LIGHTBOX_VENT_N = 9  # CHOICE: slots along the top, over the heatsink's fins
+LIGHTBOX_VENT_W = 0.375  # CHOICE
+LIGHTBOX_VENT_L = 3.5  # CHOICE: along the depth, inside the cross bar's landing
+LIGHTBOX_END_INSET = 0.75  # CHOICE: the end slots' inset from each end
+
+# The heatsink bar, as an inner volume to check the shell clears it. Plausible,
+# not measured — see above.
+HEATSINK_W = 14.0  # CHOICE
+HEATSINK_D = 4.0  # CHOICE
+HEATSINK_H = 1.0  # CHOICE
 FIXTURE_ARM_W = 1.5  # CHOICE: the arm forward from the mast
 FIXTURE_ARM_T = 0.5  # CHOICE
 FIXTURE_BAR_D = 1.0  # CHOICE: the cross bar along the fixture's back edge

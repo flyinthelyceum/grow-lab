@@ -27,7 +27,7 @@ station is arranged the way it is.
 | `case.py` | The black aluminium instrument case: the plate plus the folded box behind it |
 | `tray.py` | 16 ga stainless pan nesting inside the carcass top, with pad cutouts and the mast notch; and the four pads |
 | `mast.py` | 2 × 3 HSS from the carcass floor to its cap, in the dry bay, bolted through the rear panel |
-| `fixture.py` | The LED fixture envelope — reference |
+| `fixture.py` | The lightbox: a folded steel channel over the aluminium heatsink, and the heatsink as reference |
 | `canopy.py` | The head's split clamp collar, and the arm and cross bar welded to it |
 | `cmu.py` | The block, at actual size with two cores — reference |
 | `assembly.py` | Everything, labelled, plus the interference check |
@@ -57,8 +57,10 @@ after measuring and the holes appear.
 **The dial mounting studs and Inky standoffs.** Same reason for the studs; the
 plans say to transfer the Inky's from the board in hand.
 
-**The LED fixture.** Two LM301H boards on a heatsink with no published
-dimensions. An envelope, at the right place, so the assembly reads.
+**The lightbox's internals.** The aluminium heatsink bar and the LM301H boards
+have never been measured. The steel shell around them is real and fabricated —
+and a test asserts it clears the bar — but the bar it clears is a plausible
+guess. Caliper both before cutting.
 
 **Bend radii, chamfers, hinges, hardware.** Fusion's job.
 
@@ -94,8 +96,9 @@ glass:
 
 - **Steel base frame** — the cabinet floats 6 in on a welded 1 × 1 frame,
   legs inset an inch so it overhangs, and the mast runs to the floor as one
-  of its members. Legs, ring, mast, fixture arm and case are one black
-  register; the ply body is the other.
+  of its members. Legs, ring, mast, fixture arm, lightbox and case are one
+  register — white DTM acrylic since 2026-09-05, black before that; the ply
+  body is the other.
 
 ## Looking at it
 

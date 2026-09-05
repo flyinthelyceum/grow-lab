@@ -9,9 +9,13 @@ Two kinds of part:
 * **Fabricated** — plinth, base frame, rear door, tray, pads, mast, and the
   instrument case, fascia and backplate. These must not interfere.
   ``interferences()`` checks every pair and is what the test suite asserts on.
-* **Reference** — the CMU, the reservoir, the LED fixture. Bought or
+* **Reference** — the CMU, the reservoir, the LED heatsink. Bought or
   undimensioned; present so the composition reads and clearances can be
-  judged, and excluded from the interference check.
+  judged, and excluded from the interference check. Being here is a claim that
+  a part is not ours to cut, and it is worth re-reading occasionally: the
+  fixture sat in this list for months on the strength of nobody having decided
+  what it was, and the fixture arm was here once too, which meant a fabricated
+  steel part went unchecked.
 """
 
 from __future__ import annotations
@@ -36,6 +40,12 @@ def fabricated() -> dict[str, Part]:
         "fascia": plinth.build_fascia(),
         "backplate": plinth.build_backplate(),
         "canopy_carriage": canopy.build_carriage(),
+        # The lightbox is fabricated, not bought. It spent the whole project
+        # filed as reference — a box of plausible size, excluded from the
+        # interference check — because nobody had decided what it was made of.
+        # Now that it is a folded steel channel it is checked like anything
+        # else we cut.
+        "lightbox": fixture.build(),
     }
 
 
@@ -43,7 +53,7 @@ def reference() -> dict[str, Part]:
     return {
         "cmu": cmu.build(),
         "reservoir": plinth.build_reservoir(),
-        "fixture": fixture.build(),
+        "led_heatsink": fixture.build_heatsink(),
     }
 
 
