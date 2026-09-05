@@ -264,7 +264,7 @@ FACE_SCREW_DIA = 0.135  # "F1–4 … Ø 0.135 c'sunk x4 | M3 flat-head"
 # The instrument case (fascia form): a white metal box the meters, Inky, i3,
 # Pi and meter driver live in, its front plate carrying the hole schedule.
 # Removable forward as a unit once the fascia is off and the knob caps are
-# pulled. Sheet aluminium, powder-coated white. CHOICE throughout.
+# pulled. Sheet aluminium in white DTM acrylic, as every metal part is. CHOICE throughout.
 PLATE_T = 0.125  # 1/8 in front plate — stiff enough to carry two movements
 CASE_SHEET_T = 0.0625  # 16 ga folded box behind the plate
 CASE_D = 2.75  # plate front to case back; INSTRUMENT_HEAD_PLANS.md: "inside 3.00 clear"

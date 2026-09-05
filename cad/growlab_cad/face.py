@@ -3,7 +3,7 @@ the e-ink window and the knobs.
 
 INSTRUMENT_HEAD_PLANS.md § Face — hole schedule.
 
-This is 1/8 in aluminium, powder-coated white: the front of the removable case
+This is 1/8 in aluminium in white DTM acrylic: the front of the removable case
 in ``case.py``, sitting behind the clear fascia.
 
 The layout is not restated here. It is read from

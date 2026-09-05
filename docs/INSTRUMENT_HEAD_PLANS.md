@@ -7,8 +7,11 @@ stack, the dial-face conversion, and the layout candidates. What is superseded: 
 box, the corner blocks, the flange, the mast loom pass, the 46–58 height stack, and Rev B's
 ply lip. The plate is the front of a 9.50 × 12.00 × 2.75 folded 16 ga box (`cad/case.py`);
 F1–4 fasten the plate to the box's front flanges. The case sits 0.1 in behind the fascia,
-which has holes only for the two knob shafts. Panel centre **28.2 in**. **White (2026-09-05):
-powder-coat.** Not anodise — there is no true white anodise, the dye process cannot reach it.
+which has holes only for the two knob shafts. Panel centre **28.2 in**. **White
+(2026-09-05): DTM acrylic, satin**, the same paint as every other metal part in the piece.
+Not powder, and not anodise — there is no true white anodise, the dye process cannot reach
+it. On bare aluminium the DTM wants a scuff and a self-etching primer unless its data sheet
+covers non-ferrous.
 Reverse-engraving no longer applies; the witness rings are scribe lines on the back of the
 plate.
 
@@ -18,9 +21,11 @@ Design study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b2
 **These tables are the authority; the drawings illustrate them.**
 
 - Units: inches unless marked mm. Origin: panel bottom-left, X right, Y up.
-- Material (Rev C): plate 1/8 in aluminium, box 16 ga aluminium, both powder-coated white
+- Material (Rev C): plate 1/8 in aluminium, box 16 ga aluminium, both in white DTM acrylic
   (black until 2026-09-05 — the whole metal register went white; see V1_PHYSICAL_BUILD.md
-  § *The white register*). The fascia in front of them is 1/4 in **cast** acrylic, clear
+  § *The white register*). **The plate will mark.** DTM is softer than powder and this
+  plate carries two movements bolted through it and is handled at every service. That is
+  accepted: one paint across the whole piece matters more, and a mark touches up. The fascia in front of them is 1/4 in **cast** acrylic, clear
   (not extruded — it crazes).
 - Meters: **Weston 301, 3-1/2 in centre-zero**, two — 30-0-30 uA and 100-0-100 uA.
   The Simpson Wide-Vue 1327 this schedule was drawn for is **not** what is being

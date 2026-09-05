@@ -107,6 +107,17 @@ is the fast way to look before deciding; `PLINTH_H` variants are built by
 setting `GROWLAB_PLINTH_H` in the environment, which `params.py` honours for
 that one knob.
 
+The generated file is **already artifact-shaped** — no doctype, no
+`<html>`/`<head>`/`<body>` wrapper, three.js inlined, and its only external
+request is the Google Fonts stylesheet — so it can be published as-is to a
+hosted URL without editing. The current one is
+`https://claude.ai/code/artifact/63885d8d-4d40-4814-aa53-0f2135c84a8e`.
+
+**That link is a snapshot, not a build output.** Nothing republishes it when
+`cad/` changes, so it is as current as the last person who pushed it. The
+commit SHA is printed under the title in the viewer itself — check it against
+`main` before trusting a hosted copy for anything that gets cut.
+
 ## The fabrication pack
 
 `python cad/fabrication.py` writes `cad/out/fab/` — see its own README. Two
