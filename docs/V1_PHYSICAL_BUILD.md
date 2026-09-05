@@ -93,7 +93,7 @@ a real consideration for a gallery piece, where the submersible is near-silent).
 
 ## Station geometry (console layout, 2026-09-04)
 
-Model: `cad/` (build123d → STEP); elevations in the `growlab-v1-station-cad` CI artifact.
+Model: `cad/` (build123d → STEP); `viewer.html` in the `growlab-v1-station-cad` CI artifact.
 Supersedes the mast-and-head layout of 2026-09-03 (section drawing
 `https://claude.ai/code/artifact/fe1e9c0e-2688-4afb-bc32-4b36c4d76261`), kept for the record.
 
