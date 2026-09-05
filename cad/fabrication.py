@@ -5,7 +5,7 @@
 
 Outputs
 -------
-fab/plate.dxf          the instrument plate, 1/8 aluminium, full hole schedule
+fab/plate.dxf          the instrument plate, 1/8 mild steel, full hole schedule
 fab/case_body.dxf      the case's flat development, 16 ga, with bend lines
 fab/fascia.dxf         the clear acrylic band
 fab/cutlist.md         ply panels, frame members, sheet and bought stock
@@ -88,7 +88,7 @@ def _write(path: Path, cut, bend=None, mark=None) -> None:
 
 
 # ---------------------------------------------------------------------------
-# The instrument plate — 1/8 in aluminium, white DTM acrylic.
+# The instrument plate — 1/8 in mild steel, white DTM acrylic.
 # Origin at the plate's bottom-left, which is how the hole schedule is written.
 # ---------------------------------------------------------------------------
 
@@ -287,12 +287,13 @@ def cutlist() -> dict:
             ],
         },
         "sheet": [
-            {"part": "Instrument plate", "material": f"{P.PLATE_T} aluminium, white DTM",
+            {"part": "Instrument plate", "material": f"{P.PLATE_T} mild steel, white DTM",
              "blank": [FACE_WIDTH, FACE_HEIGHT], "file": "plate.dxf"},
-            {"part": "Instrument case body", "material": "16 ga aluminium, white DTM",
+            {"part": "Instrument case body", "material": "16 ga mild steel, white DTM",
              "blank": [m["blank_w"], m["blank_h"]], "file": "case_body.dxf",
-             "note": "6 bends; see the drawing"},
-            {"part": "Console backplate", "material": f"{P.BACKPLATE_T} sheet, white DTM",
+             "note": "6 bends; see the drawing. 0.0625 is modelled; 16 ga steel is "
+                     "0.0598, inside the bend allowance"},
+            {"part": "Console backplate", "material": f"{P.BACKPLATE_T} mild steel, white DTM",
              "blank": [P.INSIDE_X1 - P.INSIDE_X0, plinth._fascia_band()[1] - plinth._fascia_band()[0]],
              "note": "plain rectangle, no DXF — the blank is the part"},
             {"part": "Fascia", "material": f"{P.FASCIA_T} clear cast acrylic",
@@ -348,7 +349,7 @@ model. If a number here disagrees with the STEP, the STEP is stale — rebuild.
 
 | File | What |
 |---|---|
-| `plate.dxf` | Instrument plate, {plate_t} aluminium. Hole schedule from `panel_geometry.py`. |
+| `plate.dxf` | Instrument plate, {plate_t} mild steel. Hole schedule from `panel_geometry.py`. |
 | `case_body.dxf` | Case body flat, 16 ga. Blank {cbw:.3f} × {cbh:.3f}, six bends. |
 | `fascia.dxf` | Clear cast acrylic band, {fascia_t}. Two knob holes, ten fixings. |
 | `cutlist.md` | Ply, steel, sheet and glazing, with quantities. |

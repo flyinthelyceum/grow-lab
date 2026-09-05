@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-05 (no aluminium, no powder-coat)
+
+### Decided
+- **No aluminium in V1.** The instrument case body, its front plate and the backplate were the only aluminium in the fabrication spec; all three are **mild steel** now, at unchanged thicknesses. The case's metal goes 3.0 lb → 8.7 lb (plate 1.40 → 4.05, folded body 1.61 → 4.68), so pulling the case forward for service is a two-handed lift; the ply ledge is untroubled. In exchange the plate is **2.9x stiffer** — steel's modulus is 29 Msi against 10 — which is the right direction for a plate carrying two 3-1/2 in movements and handled at every service. Nothing in the model or the DXFs moves. If weight ever matters, 13 ga (0.090) steel still matches the original aluminium plate's stiffness.
+- **This simplified the finish rather than complicating it.** DTM acrylic is formulated for ferrous substrates. With the aluminium gone, yesterday's self-etching-primer line, the read-the-data-sheet caveat and the anodising digression all go with it: the paint is on its home material everywhere it is used.
+- **No powder-coating in V1**, which forced the tray. It was the one part carved out to stay powder-coated — its rim is the boundary between wetted inside and dry outside, exactly where a painted edge lifts, and powder is the finish that survives that. DTM there is the thing that bullet has always warned against. **So the tray is bare bead-blast 304 inside and out**, and is the one metal part outside the white register. Not a compromise: bead-blast 304 is a pale matte cool grey that sits beside white without arguing, the rim barely shows under the block, and a stainless pan reading as a stainless pan is honest. The viewer has been drawing it bare all along and is now correct.
+- **One aluminium exception, and it is deliberate:** the dial-face backing plate *inside* each Weston movement. A ferrous plate there would sit in the field of the magnet. Non-magnetic is the requirement; brass or thin plastic serve equally.
+
+### Open
+- **The lightbox has never been specified, and it is the second most visible object in the piece.** Every lighting document describes the electronics — which boards, which driver, that they need a heatsink. Nothing anywhere says what the *body* is: no material, no finish, no construction. In `cad/` it is a 16.0 x 6.0 x 1.5 box with all three numbers marked CHOICE, filed as a **reference** part and therefore excluded from the interference check — a classification that has been quietly wrong, because the fixture is not a bought part, it is a thing nobody designed. Recorded in `V1_PHYSICAL_BUILD.md` § *The lightbox has never been specified*, with the constraints that bound it and the three ways out. **No aluminium meets LED thermal management here:** steel conducts at about a quarter of aluminium's rate, so an all-steel heatsink wants several times the area to shed the same watts — a bigger object hanging over the plant, which is the mistake the fan taught. Not decided.
+
 ## 2026-09-05 (one paint, and the viewer gets a URL)
 
 ### Decided

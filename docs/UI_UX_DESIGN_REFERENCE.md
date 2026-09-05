@@ -458,7 +458,7 @@ structure. But one white object among black ones reads as an error. One departur
 consistent rule is a mistake; a whole register is a decision.
 
 **So the whole register goes white.** Frame, mast, carriage, arm, case, plate, backplate.
-One white DTM acrylic over all of it, steel and aluminium alike. The ply is unchanged and the
+One white DTM acrylic over all of it — and all of it is steel now. The ply is unchanged and the
 palette is still two registers — it is the same structure with the value inverted.
 
 **What that costs is not in the CAD, and it is worth naming here rather than in the build
