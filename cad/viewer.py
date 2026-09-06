@@ -5,8 +5,8 @@
     python cad/viewer.py --heights 36 40 44    # a height sweep instead
     python cad/viewer.py --variant "Tall=PLINTH_H:44"
 
-The page is one HTML file: every part tessellated and embedded, three.js from
-cdnjs, no server. It exists so a layout decision can be looked at from the
+The page is one HTML file: every part tessellated and embedded, three.js
+inlined, no server, no network. It exists so a layout decision can be looked at from the
 positions a person will actually occupy — standing in front of the panel,
 leaning over the block — before anyone commits stock to it. Part toggles, a
 section cut, the height stack as datums, and any PLINTH_H variants side by

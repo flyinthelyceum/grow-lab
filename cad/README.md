@@ -121,6 +121,10 @@ hosted URL without editing. The current one is
 commit SHA is printed under the title in the viewer itself — check it against
 `main` before trusting a hosted copy for anything that gets cut.
 
+**`VIEWER.md` is the full handoff** — architecture, the subprocess-per-variant
+rule, the knob gotchas, the inlining assert, and the known warts. Read it before
+changing `viewer.py` or `viewer_template.html`.
+
 ## The fabrication pack
 
 `python cad/fabrication.py` writes `cad/out/fab/` — see its own README. Two
