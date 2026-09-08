@@ -20,85 +20,107 @@ drives everything below.
 
 | | | Consequence |
 |---|---|---|
-| Substrate | **Composted** straw/manure; a secondary decomposer, not a wood-rotter | No sawdust block. Bought-in finished compost — see below |
-| Casing layer | **Required** — peat + lime, 1–2 in, kept moist | The casing surface is the visible ground plane and the thing being lit |
-| Spawn run | ~77–86 °F | |
-| **Fruiting** | **~73–81 °F**, optimum 78–80 | **The house is already at the setpoint** |
-| Fruiting RH | 80–90% | |
+| Substrate | **Composted** straw/manure; a secondary decomposer, not a wood-rotter | Standard *A. bisporus* compost works — see below |
+| Casing layer | **Required** — peat + limestone + fine sand | The casing surface is the visible ground plane and the thing being lit. **Deeper casing measurably improves yield and time to fruiting** |
+| Spawn run | 68–82 °F | The house at 79 °F is already in band — no intervention |
+| **Induction** | **Temperature must be LOWERED below 77 °F**; some sources say 68 °F | **The house is too warm to pin. This needs cooling** |
+| Fruiting | 73–79 °F | |
+| RH, growing air | **75–85%** | Corrected from 80–90 |
+| RH, compost | 60–70% | Wetness of the substrate, not the air |
 | Light | **Not required — fruits in darkness** | Lighting is a display decision, free of horticulture |
 | FAE | Needed to drop CO₂ for pinning | |
 | Habit | 4–8 in tall, tan scaly cap, distinct ring | Upright, not a shelf |
 | Aroma | Almond / marzipan | |
 
-Verify the fruiting temperature and RH bands against the spawn supplier's strain
-sheet before anything is cut. Both are load-bearing below.
+**Provenance note, and it matters.** The first two versions of this brief got the
+thermal design wrong in opposite directions, both times because the numbers came
+from recollection. They now come from cultivation literature and supplier
+documentation, cited at the foot. **The induction requirement is the single
+load-bearing claim in this document** — it decides whether a cooling subsystem
+exists — and it should be read in the primary papers, not taken from here, before
+any hardware is bought.
 
 ---
 
-## The decisive fact: the house sits at 79 °F
+## Climate: the house is not a constant, and that decides everything
 
-This is the single most consequential number in the project and it makes two
-things in the first draft of this brief **wrong**. Both are corrected here.
+**79 °F is a summer number in a hundred-year-old house with drafts both
+directions.** The design target is therefore not a setpoint offset from ambient —
+it is a chamber that holds its own setpoint across a moving room. Full climate
+control, both ways.
 
-### Correction 1 — the chamber is single-glazed, not double
+This section has been wrong twice. The first draft specified heating as "the
+largest new subsystem"; the second removed it entirely on the grounds that the
+room was already at the setpoint. Both errors have the same cause: computing a
+single operating point instead of the range. **A drafty house is a range**, and
+every number below is computed across one — assumed **50–90 °F** ambient.
 
-The brief specified double glazing on a condensation calculation done for a
-70 °F room. At 79 °F the calculation comes out differently:
+### Why cooling is mandatory, not optional
 
-| Room | Single pane, inner surface | Margin over 75.1 °F dew point | Double pane | Margin |
-|---|---|---|---|---|
-| 65 °F | 73.4 °F | −1.7 **fogs** | 76.1 °F | +1.0 |
-| 70 °F | 75.6 °F | +0.5 | 77.4 °F | +2.3 |
-| **79 °F** | **79.6 °F** | **+4.5** | 79.7 °F | +4.7 |
+The induction step is the reason. Fruiting is not triggered by holding a
+temperature; it is triggered by **lowering** it, together with RH and CO₂:
 
-At 79 °F the second pane buys **0.2 °F**. It is pointless, and it costs a second
-set of reflections between the viewer and the subject, more weight, more edge to
-seal, and a sealed cavity that will eventually fog on the inside where nobody can
-clean it. **Single 1/4 in cast acrylic**, and the margin is comfortable.
-
-The condensation problem was real; it was a problem *for a 70 °F house*.
-
-### Correction 2 — the thermal problem is rejection, not addition
-
-The brief called heating "the largest new subsystem." That is backwards.
-
-A glazed chamber at a 1 °F delta to the room sheds almost nothing. For an
-illustrative 20 × 16 × 20 in internal volume, the glass conducts **2.6 W per °F**
-of delta. Any equipment inside it therefore cooks it:
-
-| Equipment inside the glass | Load | Chamber settles at |
+| Phase | Chamber | Against a 79 °F house |
 |---|---|---|
-| Fogger + light + fan all inside | 36 W | **92.7 °F** — far over the ceiling |
-| Light inside, fogger piped in from the base | 12 W | **83.6 °F** — over the ceiling |
-| Everything outside; radiant fraction only | 4 W | **80.5 °F** — mid-band |
+| Spawn run | 68–82 °F | Passive. Floats about 1.5 °F over ambient |
+| **Induction** | **below 77 °F, some sources 68 °F** | **Unreachable without cooling** |
+| Fruiting | 73–79 °F | Reachable in winter, not in summer |
 
-Air exchange cannot fix this. Holding +1 °F against 36 W by FAE alone needs
-**118 CFM** through a box this size, which would strip the casing dry and drop
-the RH to room ambient. Against even 12 W it needs 39 CFM. FAE is sized for CO₂,
-and it cannot double as a heat sink at these deltas.
+A chamber that floats with a 79 °F room sits at 80.5 °F and **never pins**. This
+is the finding that brings the thermal subsystem back, and it is why it must
+cool rather than heat.
 
-**So: nothing hot and nothing wet goes inside the glass.**
+### One device, both directions
 
-- The **fogger lives in the base** and is piped in as fog. That is 24 W removed
-  from the chamber and a maintenance item put where hands can reach it.
-- The **light lives outside the glazing**. This is now a thermal requirement, not
-  a preference, and it decides the lighting question below more than taste does.
-- The Pi, PSU, driver and pump were always going to be in the base.
+A **thermoelectric (Peltier) assembly** is the obvious answer: reversing its
+polarity turns cooling into heating, so a single unit covers the whole envelope,
+with no compressor, no refrigerant and no moving part but two fans. Sizing:
 
-**The room is the thermostat.** With the internal load near 4 W the chamber
-floats about 1.5 °F above ambient — 80.5 °F in a 79 °F house, dead centre of the
-fruiting band. There is no heating subsystem, no thermostat loop and no heater
-safety cutout. An entire subsystem disappears because of where the house sits.
+| Enclosure | UA | Heat, 50 °F room → 80 °F chamber | Cool, 90 °F room → 72 °F chamber |
+|---|---|---|---|
+| All glass, single | 4.73 W/K | 74.9 W | 51.3 W |
+| All glass, double | 2.81 W/K | 42.9 W | 32.1 W |
+| Front + top single, rest insulated | 2.44 W/K | 36.7 W | 28.4 W |
+| **Front + top double, rest insulated** | **1.77 W/K** | **25.6 W** | **21.7 W** |
 
-**The headroom is thin in the other direction, and that is the real risk.**
-The fruiting ceiling is 81 °F and the chamber runs ~1.5 °F over ambient, so the
-house has perhaps 79–80 °F of usable range before the chamber is out of band. If
-the house climbs in summer, fruiting stalls. Levers, in order of preference:
-boost FAE temporarily (cheap, already present, costs RH), shade or move the piece,
-or accept that the piece has a season. **Confirm whether 79 °F is year-round or a
-summer figure** — that answer decides whether this needs designing for at all.
+**Glaze only what you look through.** The chamber does not need six glass faces —
+it needs a front and a top. Insulating the back, sides and floor with 1 in of
+rigid foam cuts the load by more than half and turns a serious cooling problem
+into a 60 W Peltier module with comfortable margin.
 
----
+### Glazing: double, and this time for the right reason
+
+The glazing spec has moved twice and lands back where it started, for a reason
+that has nothing to do with the original argument. Inner-surface temperature
+against the chamber's dew point, chamber at 80 °F / 80% RH (dew point 73.3 °F):
+
+| Room | Single | | Double | |
+|---|---|---|---|---|
+| 50 °F | 66.8 °F | **−6.5 fogs** | 72.1 °F | −1.1 fogs |
+| 55 °F | 69.0 °F | **−4.3 fogs** | 73.4 °F | +0.2 |
+| 60 °F | 71.2 °F | **−2.1 fogs** | 74.8 °F | +1.5 |
+| 65 °F | 73.4 °F | +0.1 | 76.1 °F | +2.8 |
+| 79 °F | 79.6 °F | +6.3 | 79.7 °F | +6.5 |
+
+**Single glazing fogs whenever the room is below about 65 °F** — which in a
+draughty old house is most of the heating season, and precisely when you would
+most want to see into the piece. Double is clear to about 55 °F and marginal at
+50. **Double-glazed**, with the understanding that a genuinely cold snap will
+still mist the glass and that this is a winter phenomenon, not a summer one.
+
+The summer worry that started all of this turns out to be the easy case: at
+79 °F ambient every configuration is comfortably clear, and a *cooled* chamber
+is clearer still, because the glass then sits above the chamber air rather than
+below it.
+
+### Nothing hot or wet inside the glass — this still holds
+
+At small deltas the glazing sheds very little, so internal equipment dominates.
+Fogger, light and fan inside a sealed chamber settle it above 92 °F. The fogger
+therefore lives in the base and is piped in; the light lives outside the glazing;
+the Pi, PSU, driver and pump were always going to be in the base. Internal load
+stays near 4 W, and the Peltier is then sizing against the enclosure rather than
+against its own equipment.
 
 ## Form: a vitrine, and no mast
 
@@ -110,19 +132,22 @@ owes V1 no silhouette.
 What replaces it is the form the contents actually ask for: **a glass case on a
 base.**
 
-- **The base** carries everything that is hot, wet, loud or serviceable —
-  reservoir, fogger, pump, FAE fan and filter, Pi, PSU, driver — and presents
-  the instrument panel on its front face. This is V1's wet-bay/dry-bay
-  architecture and its console language, which both earned their place.
+- **The base** carries everything hot, wet, loud or serviceable — reservoir,
+  fogger, pump, FAE fan and filter, Peltier hot side, Pi, PSU, driver — and
+  presents the instrument panel on its front face. This is V1's wet-bay/dry-bay
+  architecture and its console language, both of which earned their place.
 - **The case** is the growing volume and nothing else: substrate, casing surface,
-  the mushrooms, air. Single-glazed, doored, drained, fly-screened.
+  the mushrooms, air. **Double-glazed on the front and top; insulated panel on
+  the back, sides and floor.** Doored, drained, fly-screened. The asymmetry is
+  not a compromise — it halves the climate load and it gives the piece a front.
 - **The light** sits in the case's top frame, outside the glass.
+- **The Peltier assembly** breaches one insulated face, cold side in, hot side
+  finned into the base with its own fan. It is the one component that must cross
+  the envelope, and it should cross an opaque face rather than a glazed one.
 
-Heights are open. The subject is 4–8 in standing on a casing surface, and where
-that surface sits relative to a standing eye is the composition decision that
-replaces V1's height stack. It wants deciding deliberately rather than inherited.
-
----
+Heights are open. The subject is 4–8 in standing on a casing surface with 8–10 in
+of substrate beneath it, and where that surface sits relative to a standing eye is
+the composition decision that replaces V1's height stack.
 
 ## Lighting — three options, all outside the glass
 
@@ -144,28 +169,45 @@ it as a museum object. Keeps the chamber absolutely pure and is the only option
 that preserves anything mast-like. Risk: reintroduces the vertical element V2
 just removed, and puts a fixture in the room.
 
-**Recommendation: A**, possibly with B as a low-level back fill for depth. It is
-the only one where the light source disappears and the subject is what you see.
+**Decided 2026-09-08: A — cove down-light in the top frame.** The source
+disappears and the subject is what you see. The top pane will collect condensate
+on its inside face in cold weather and diffuse the light; treat that as weather,
+not a fault.
 
 ---
 
-## Substrate — buy it finished
+## Substrate — what is actually purchasable
 
-Phase I composting is an outdoor, smelly, turned-heap activity and is not worth
-attempting for one vitrine. Buy **finished, pasteurised Agaricus compost**,
-spawned or ready to spawn, from a mushroom supply house.
+Researched 2026-09-08. Two corrections to the first draft.
 
-**This is a design input, not a shopping note: the supplier's block or bag size
-should set the chamber's internal volume, not the other way round.** Sizing a
-chamber first and then hunting for substrate to fit it is how you end up
-repacking bags by hand forever. Establish what is actually purchasable, in what
-increment, before any dimension is fixed.
+**There is no ready-to-fruit product for this species.** Unlike oysters or lion's
+mane, nobody in the US sells a colonised, ready-to-case *A. subrufescens* block.
+The supply chain sells **sawdust spawn**, and you supply the compost. So the
+earlier instruction — "the supplier's block size sets the chamber volume" — has no
+referent. The chamber can be sized freely, which is better news than it sounds.
 
-Casing mix is peat + hydrated lime to about pH 7.5, which is the third time this
-project has found that alkalinity — V1's central problem — is this organism's
-friend.
+**Pasteurisation is not required**, contrary to the first draft. North Spore say
+so explicitly, and it is one of this species' advantages over the button mushroom
+it resembles.
 
----
+| | |
+|---|---|
+| Spawn | Sawdust spawn in 5 lb bags. **One bag covers 4 × 4 ft** — vastly more than a vitrine needs |
+| Substrate | Fully finished compost. Standard *A. bisporus* compost (wheat straw + horse manure) is documented to work |
+| Bed depth | 3–4 in compost, spawn, then 3–4 in more on top |
+| Casing | Lime-treated peat, or peat + limestone + fine sand. **Deeper casing measurably improves both yield and time to fruiting** |
+| Timing | Case ~13 days after spawning; fruiting ~40 days after inoculation |
+
+So the substrate column is roughly **8–10 in deep** — 6–8 of compost plus 1.5–2 of
+casing — and that, not a supplier's bag, sets the case's internal height below the
+growing surface.
+
+**One honest caveat.** Every US supplier positions this as an *outdoor bed* crop.
+Mushroom Mountain say trays, tubs and buckets work indoors, but their indoor guide
+is "coming soon". Small-scale indoor cultivation is well documented in the
+cultivation literature and is the standard commercial method in Brazil and Asia —
+it is simply not the beaten path in the US hobby supply chain. Expect to work from
+papers rather than from a supplier's instruction card.
 
 ## Software
 
@@ -181,7 +223,14 @@ Mostly re-pointing existing machinery. V2 runs the same stack.
 - **The two Weston movements change subject** — air temperature and humidity are
   the numbers that matter now, and they are the two that move. Nothing has been
   printed yet, which is lucky.
-- **No thermal control service.** See above; the room is the thermostat.
+- **A thermal control service**, and it is the largest new piece of software.
+  Bidirectional: drive the Peltier's polarity and duty from a setpoint that
+  changes by phase — 80 °F through the spawn run, then a commanded *drop* to
+  induce. Induction is a scheduled state change, not a steady-state hold, which
+  is unlike anything V1 does.
+- **Phase state.** V1 had one regime. V2 has spawn run → casing → induction →
+  fruiting → rest, each with its own temperature, RH and FAE setpoints. That is a
+  state machine, and it is the piece's actual subject.
 - **FAE control** joins the fan service, sized for CO₂ and available as a
   temporary heat lever.
 
@@ -189,11 +238,30 @@ Mostly re-pointing existing machinery. V2 runs the same stack.
 
 ## Open decisions
 
-1. **Lighting: A, B or C.** Decides the case's top frame and therefore its
-   proportions.
-2. **Is 79 °F year-round?** Decides whether summer heat rejection needs designing
-   for or merely noting.
-3. **What substrate is actually purchasable, in what increment?** Blocks the
-   chamber's internal volume, which blocks every other dimension.
-4. **How high does the casing surface sit?** The composition decision that
+1. **How cold does the house actually get in winter?** Double glazing is clear to
+   about 55 °F ambient and fogs below 50. If the answer is "it has hit 45", the
+   front needs a third pane or a warmed inner surface, and that is worth knowing
+   before the frame is designed.
+2. **How high does the casing surface sit?** The composition decision that
    replaces V1's height stack.
+3. **Where does the Peltier cross the envelope**, and does its hot-side fan noise
+   matter in the room the piece lives in?
+
+Settled 2026-09-08: new build, own object, Object A untouched · mast deleted ·
+cove down-light in the top frame · double glazing front and top, insulated
+elsewhere · bidirectional Peltier climate control · buy spawn, supply compost.
+
+---
+
+## Sources
+
+Cultivation parameters come from the following and should be read directly before
+hardware is committed — the induction requirement in particular, since it is what
+brings the cooling subsystem into existence.
+
+- [Optimization of cultivation techniques improves the agronomic behavior of *Agaricus subrufescens*](https://www.nature.com/articles/s41598-020-65081-2) — Scientific Reports
+- [*Agaricus subrufescens*: A review](https://www.sciencedirect.com/science/article/pii/S1319562X12000046) — ScienceDirect
+- [Optimization of the cultivation conditions … European wild strains and Brazilian cultivars](https://pubmed.ncbi.nlm.nih.gov/23633302/) — PubMed
+- [North Spore — Almond Agaricus sawdust spawn](https://northspore.com/products/almond-agaricus-sawdust-spawn) — bed depth, casing, no pasteurisation, 4 × 4 ft per bag
+- [Field & Forest — Almond Agaricus](https://fieldforest.net/almond-agaricus-agaricus-subrufescens-sawdust-spawn/) — mycelial range, greenhouse suitability, 5 lb bags
+- [Mushroom Mountain — Almond Portabella](https://shop.mushroommountain.com/products/almond-portabella-sawdust-spawn-agaricus-blazei-a-braziliensis-5lb) — indoor trays/tubs, 70–90 °F fruiting
