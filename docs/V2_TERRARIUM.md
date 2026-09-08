@@ -44,16 +44,20 @@ any hardware is bought.
 
 ## Climate: the house is not a constant, and that decides everything
 
-**79 °F is a summer number in a hundred-year-old house with drafts both
-directions.** The design target is therefore not a setpoint offset from ambient —
-it is a chamber that holds its own setpoint across a moving room. Full climate
-control, both ways.
+**Phoenix, in a hundred-year-old house with drafts both directions.** 79 °F is
+the summer figure; the winter minimum is about **60 °F**. The design target is
+therefore not a setpoint offset from ambient — it is a chamber that holds its own
+setpoint across a **60–79 °F** room, with an AC-failure case at 95 °F that should
+not destroy a crop.
+
+That range is narrower and warmer than the 50–90 °F this section first assumed,
+and it makes the whole envelope comfortable.
 
 This section has been wrong twice. The first draft specified heating as "the
 largest new subsystem"; the second removed it entirely on the grounds that the
 room was already at the setpoint. Both errors have the same cause: computing a
 single operating point instead of the range. **A drafty house is a range**, and
-every number below is computed across one — assumed **50–90 °F** ambient.
+every number below is computed across the real one.
 
 ### Why cooling is mandatory, not optional
 
@@ -72,46 +76,49 @@ cool rather than heat.
 
 ### One device, both directions
 
-A **thermoelectric (Peltier) assembly** is the obvious answer: reversing its
-polarity turns cooling into heating, so a single unit covers the whole envelope,
-with no compressor, no refrigerant and no moving part but two fans. Sizing:
+A **thermoelectric (Peltier) assembly** is the answer: reversing polarity turns
+cooling into heating, so a single unit covers the whole envelope, with no
+compressor, no refrigerant and nothing moving but two fans.
 
-| Enclosure | UA | Heat, 50 °F room → 80 °F chamber | Cool, 90 °F room → 72 °F chamber |
-|---|---|---|---|
-| All glass, single | 4.73 W/K | 74.9 W | 51.3 W |
-| All glass, double | 2.81 W/K | 42.9 W | 32.1 W |
-| Front + top single, rest insulated | 2.44 W/K | 36.7 W | 28.4 W |
-| **Front + top double, rest insulated** | **1.77 W/K** | **25.6 W** | **21.7 W** |
+**Glaze only what you look through.** The chamber needs a front and a top, not
+six glass faces. Double-glazing those two and insulating the back, sides and
+floor with 1 in of rigid foam gives **UA = 1.70 W/K** for the 20 × 14 × 22 in
+internal volume derived below:
 
-**Glaze only what you look through.** The chamber does not need six glass faces —
-it needs a front and a top. Insulating the back, sides and floor with 1 in of
-rigid foam cuts the load by more than half and turns a serious cooling problem
-into a 60 W Peltier module with comfortable margin.
+| Case | Room → chamber | Load |
+|---|---|---|
+| Winter minimum, spawn run | 60 °F → 80 °F | **14.9 W heating** |
+| Summer, induction | 79 °F → 72 °F | **10.6 W cooling** |
+| AC failure, induction | 95 °F → 72 °F | 25.8 W cooling |
 
-### Glazing: double, and this time for the right reason
+A 60 W module carries all three with better than 2× margin. The insulated faces
+are what make that true — all-glass would have put the same chamber at 4.73 W/K
+and turned this into a refrigeration problem.
 
-The glazing spec has moved twice and lands back where it started, for a reason
-that has nothing to do with the original argument. Inner-surface temperature
-against the chamber's dew point, chamber at 80 °F / 80% RH (dew point 73.3 °F):
+**Where it crosses the envelope:** low in the **back** insulated panel, cold side
+in so its air falls onto the bed rather than blowing across the caps, hot side
+finned into the base with its own fan and a path out the back. It crosses an
+opaque face, never a glazed one.
+
+### Glazing: double, and 60 °F is what decides it
+
+Inner-surface temperature against the chamber's dew point, chamber at 80 °F /
+80% RH (dew point 73.3 °F):
 
 | Room | Single | | Double | |
 |---|---|---|---|---|
-| 50 °F | 66.8 °F | **−6.5 fogs** | 72.1 °F | −1.1 fogs |
-| 55 °F | 69.0 °F | **−4.3 fogs** | 73.4 °F | +0.2 |
-| 60 °F | 71.2 °F | **−2.1 fogs** | 74.8 °F | +1.5 |
+| **60 °F — winter minimum** | 71.2 °F | **−2.1 fogs** | 74.8 °F | **+1.5 ok** |
+| 62 °F | 72.1 °F | −1.2 fogs | 75.3 °F | +2.0 |
 | 65 °F | 73.4 °F | +0.1 | 76.1 °F | +2.8 |
-| 79 °F | 79.6 °F | +6.3 | 79.7 °F | +6.5 |
+| 79 °F — summer | 79.6 °F | +6.3 | 79.7 °F | +6.5 |
 
-**Single glazing fogs whenever the room is below about 65 °F** — which in a
-draughty old house is most of the heating season, and precisely when you would
-most want to see into the piece. Double is clear to about 55 °F and marginal at
-50. **Double-glazed**, with the understanding that a genuinely cold snap will
-still mist the glass and that this is a winter phenomenon, not a summer one.
-
-The summer worry that started all of this turns out to be the easy case: at
-79 °F ambient every configuration is comfortably clear, and a *cooled* chamber
-is clearer still, because the glass then sits above the chamber air rather than
-below it.
+**Single glazing fogs on the coldest nights of a Phoenix winter and double does
+not.** +1.5 °F is a real but modest margin, so expect the front to mist briefly
+on a cold morning during the spawn run, when the chamber is at its warmest and
+wettest. It clears as the room warms. During induction and fruiting the chamber
+is *cooler* than the room and the glass is warmer than the air inside it, so
+there is no interior condensation at all — the fruiting phase, the one you
+actually look at, is the clear one.
 
 ### Nothing hot or wet inside the glass — this still holds
 
@@ -145,9 +152,63 @@ base.**
   finned into the base with its own fan. It is the one component that must cross
   the envelope, and it should cross an opaque face rather than a glazed one.
 
-Heights are open. The subject is 4–8 in standing on a casing surface with 8–10 in
-of substrate beneath it, and where that surface sits relative to a standing eye is
-the composition decision that replaces V1's height stack.
+The height stack is derived below.
+
+## Dimensions — derived 2026-09-08
+
+Heights were delegated, so they are derived rather than chosen. Two things drive
+everything: the **substrate column**, which the literature fixes, and the **angle
+you look down at the casing surface**, which is the composition decision.
+
+### What sets the casing surface
+
+The casing surface is the ground plane of the piece — the thing the mushrooms
+stand on and the thing the cove light falls on. Too low and you look down *into*
+a box; too high and the surface disappears and you see only stems. At a standing
+eye of 62 in and a comfortable approach of 33 in:
+
+| Casing surface | Look-down angle | |
+|---|---|---|
+| 42 in | 31.2° | looking down into it |
+| 46 in | 25.9° | works |
+| **48 in** | **23.0°** | **chosen — surface reads as ground, caps read in profile** |
+| 52 in | 16.9° | |
+| 56 in | 10.3° | surface disappears |
+
+### The stack
+
+| Element | Height from floor |
+|---|---|
+| Floor to base underside — shadow gap | 5.0 in |
+| **Instrument panel centre** | **28.0 in** — V1's own figure, read standing |
+| Base top; the case sits here | 37.5 in |
+| Case internal floor | 39.0 in |
+| Compost, lower layer | → 42.5 in |
+| Compost, upper layer (spawn between) | → 46.0 in |
+| **Casing surface — the ground plane** | **48.0 in** |
+| A mature 8 in cap | 56.0 in |
+| Case internal ceiling / top pane | 61.0 in |
+| **Top of the piece** | **62.5 in** |
+
+Base 32.5 in tall, case 22.0 in internal, **5.0 in clear above a mature cap.**
+
+For comparison: V1 is 81.4 in with its mast and was 59.9 in before it. V2 lands
+between them — a vitrine on a plinth, with the glass occupying the top third.
+
+### Footprint and what it consumes
+
+Case internal **20 W × 14 D × 22 H in**. The bed is **18 × 12 in**, leaving a 1 in
+air margin all round so the casing never touches the glass.
+
+| | |
+|---|---|
+| Compost | 0.88 cu ft — 25 L, about 31 lb damp |
+| Casing mix | 0.25 cu ft — 7 L |
+| Spawn | The bed is **9% of what one 5 lb bag covers**. One bag does ~11 beds, and spawn keeps six months at room temperature |
+
+The substrate column is 9.0 in: 3.5 in of compost, spawn, 3.5 in more, then 2.0 in
+of casing. Casing is at the top of the documented range deliberately — depth
+measurably improves both yield and time to fruiting.
 
 ## Lighting — three options, all outside the glass
 
@@ -238,18 +299,23 @@ Mostly re-pointing existing machinery. V2 runs the same stack.
 
 ## Open decisions
 
-1. **How cold does the house actually get in winter?** Double glazing is clear to
-   about 55 °F ambient and fogs below 50. If the answer is "it has hit 45", the
-   front needs a third pane or a warmed inner surface, and that is worth knowing
-   before the frame is designed.
-2. **How high does the casing surface sit?** The composition decision that
-   replaces V1's height stack.
-3. **Where does the Peltier cross the envelope**, and does its hot-side fan noise
-   matter in the room the piece lives in?
+Design decisions are closed. What remains is verification, and it is all
+empirical:
 
-Settled 2026-09-08: new build, own object, Object A untouched · mast deleted ·
-cove down-light in the top frame · double glazing front and top, insulated
-elsewhere · bidirectional Peltier climate control · buy spawn, supply compost.
+1. **Read the induction requirement in the primary papers** before buying a
+   Peltier. It is the claim that brings the entire climate subsystem into
+   existence, and it is here on the strength of search summaries.
+2. **Confirm the fruiting band with the spawn supplier** for the strain actually
+   bought. 73–79 °F is the literature; strains vary.
+3. **Check the front pane with an IR thermometer** on the built chamber during a
+   cold-morning spawn run. +1.5 °F is a real margin but not a generous one, and
+   edges run colder than pane centres.
+
+Settled: new build, own object, Object A untouched · mast deleted · vitrine on a
+base · casing surface at 48 in, top of piece 62.5 in · case internal
+20 × 14 × 22 in · double glazing front and top, 1 in foam elsewhere · cove
+down-light in the top frame · bidirectional Peltier through the back panel, low ·
+buy spawn, supply compost.
 
 ---
 
