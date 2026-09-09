@@ -76,49 +76,65 @@ cool rather than heat.
 
 ### One device, both directions
 
-A **thermoelectric (Peltier) assembly** is the answer: reversing polarity turns
-cooling into heating, so a single unit covers the whole envelope, with no
-compressor, no refrigerant and nothing moving but two fans.
+A **thermoelectric (Peltier) assembly**: reversing polarity turns cooling into
+heating, so a single unit covers the whole envelope, with no compressor, no
+refrigerant and nothing moving but two fans.
 
-**Glaze only what you look through.** The chamber needs a front and a top, not
-six glass faces. Double-glazing those two and insulating the back, sides and
-floor with 1 in of rigid foam gives **UA = 1.70 W/K** for the 20 × 14 × 22 in
-internal volume derived below:
+**Glaze only what you look through** — a front and a top, not six glass faces.
+The other four are cork-faced insulated panel, which is both the thermal envelope
+and the set; see *Staging* below. With a curtained single pane and 0.5 in cork
+over 1 in foam, the 20 × 18 × 22 in internal volume comes to **UA 3.20 W/K**:
 
 | Case | Room → chamber | Load |
 |---|---|---|
-| Winter minimum, spawn run | 60 °F → 80 °F | **14.9 W heating** |
-| Summer, induction | 79 °F → 72 °F | **10.6 W cooling** |
-| AC failure, induction | 95 °F → 72 °F | 25.8 W cooling |
+| Winter minimum, spawn run | 60 °F → 80 °F | 31.6 W heating |
+| Summer, induction | 79 °F → 72 °F | 16.5 W cooling |
+| **AC failure, induction** | 95 °F → 72 °F | **44.9 W cooling — the sizing case** |
 
-A 60 W module carries all three with better than 2× margin. The insulated faces
-are what make that true — all-glass would have put the same chamber at 4.73 W/K
-and turned this into a refrigeration problem.
+A 60 W module carries all three. The insulated faces are what make that true;
+all-glass would be 4.73 W/K and a refrigeration problem.
 
-**Where it crosses the envelope:** low in the **back** insulated panel, cold side
-in so its air falls onto the bed rather than blowing across the caps, hot side
-finned into the base with its own fan and a path out the back. It crosses an
+**Where it crosses the envelope:** low in the **back** panel, cold side in, hot
+side finned into the base with its own fan and a path out the back. It crosses an
 opaque face, never a glazed one.
 
-### Glazing: double, and 60 °F is what decides it
+### Glazing: single, and here is how it stays clear
 
-Inner-surface temperature against the chamber's dew point, chamber at 80 °F /
-80% RH (dew point 73.3 °F):
+**Reversed 2026-09-09, and this is the third position this spec has taken.** The
+earlier reasoning was sound but lazy: single glazing fogs at the 60 °F winter
+minimum, so I reached for a second pane instead of asking *why the inner surface
+was cold*. Two answers, either of which nearly solves it and which together
+settle it.
 
-| Room | Single | | Double | |
-|---|---|---|---|---|
-| **60 °F — winter minimum** | 71.2 °F | **−2.1 fogs** | 74.8 °F | **+1.5 ok** |
-| 62 °F | 72.1 °F | −1.2 fogs | 75.3 °F | +2.0 |
-| 65 °F | 73.4 °F | +0.1 | 76.1 °F | +2.8 |
-| 79 °F — summer | 79.6 °F | +6.3 | 79.7 °F | +6.5 |
+**1. The spawn run does not need humid air.** Colonisation happens *inside* the
+compost, which sits at 60–70% moisture; the air only has to be humid at fruiting.
+Run the spawn-run air at 65% and the dew point falls far enough that a single
+pane is clear even on the coldest night.
 
-**Single glazing fogs on the coldest nights of a Phoenix winter and double does
-not.** +1.5 °F is a real but modest margin, so expect the front to mist briefly
-on a cold morning during the spawn run, when the chamber is at its warmest and
-wettest. It clears as the room warms. During induction and fruiting the chamber
-is *cooler* than the room and the glass is warmer than the air inside it, so
-there is no interior condensation at all — the fruiting phase, the one you
-actually look at, is the clear one.
+**2. A gentle air curtain down the inside of the glass.** Still air against glass
+forms an insulating boundary layer, and it is that layer — not the glass — that
+lets the surface fall below the dew point. Moving air across it drags the surface
+back up toward the chamber's own temperature. This is exactly what a supermarket
+display fridge does to keep its doors clear.
+
+| Phase | Chamber | RH | Room | Still air | With a curtain |
+|---|---|---|---|---|---|
+| Spawn run | 80 °F | 80% | 60 °F | 71.2 °F **−2.1 fogs** | 75.2 °F +1.9 |
+| Spawn run, drier air | 80 °F | 65% | 60 °F | 71.2 °F +4.0 | 75.2 °F +8.0 |
+| Fruiting | 72 °F | 85% | 60 °F | 66.7 °F **−0.5 fogs** | 69.1 °F +1.9 |
+| Fruiting | 72 °F | 85% | 70 °F | 71.1 °F +3.9 | 71.5 °F +4.3 |
+| Fruiting | 72 °F | 85% | 79 °F | 75.1 °F +7.8 | 73.7 °F +6.4 |
+
+**Every phase is clear in every condition.** Single 1/4 in cast acrylic.
+
+**The curtain must be aimed at the glass, not at the bed.** A slot along the top
+of the pane blowing down its inner face and returning low — a drift, not a
+breeze. Airflow across a casing layer dries it out, and a dry casing is the
+classic reason a cased bed refuses to pin. This is the one detail in the whole
+enclosure where getting the direction wrong costs a crop.
+
+It also costs a little: thinning the inside film raises U_glass from 3.53 to
+4.80, and the loads above already include it.
 
 ### Nothing hot or wet inside the glass — this still holds
 
@@ -143,10 +159,11 @@ base.**
   fogger, pump, FAE fan and filter, Peltier hot side, Pi, PSU, driver — and
   presents the instrument panel on its front face. This is V1's wet-bay/dry-bay
   architecture and its console language, both of which earned their place.
-- **The case** is the growing volume and nothing else: substrate, casing surface,
-  the mushrooms, air. **Double-glazed on the front and top; insulated panel on
-  the back, sides and floor.** Doored, drained, fly-screened. The asymmetry is
-  not a compromise — it halves the climate load and it gives the piece a front.
+- **The case** is the growing volume and the staged scene it sits in. **Single-
+  glazed on the front and top; cork-faced insulated panel on the back, sides and
+  floor.** Doored, drained, fly-screened. The asymmetry is not a compromise — it
+  halves the climate load, it gives the piece a front, and the opaque faces are
+  what the scene is built against.
 - **The light** sits in the case's top frame, outside the glass.
 - **The Peltier assembly** breaches one insulated face, cold side in, hot side
   finned into the base with its own fan. It is the one component that must cross
@@ -197,8 +214,9 @@ between them — a vitrine on a plinth, with the glass occupying the top third.
 
 ### Footprint and what it consumes
 
-Case internal **20 W × 14 D × 22 H in**. The bed is **18 × 12 in**, leaving a 1 in
-air margin all round so the casing never touches the glass.
+Case internal **20 W × 18 D × 22 H in**. The bed is **18 × 12 in**, sitting
+forward with a 1 in air margin at the front and sides so the casing never touches
+the glass; the 5 in behind it is staged background, not substrate.
 
 | | |
 |---|---|
@@ -209,6 +227,70 @@ air margin all round so the casing never touches the glass.
 The substrate column is 9.0 in: 3.5 in of compost, spawn, 3.5 in more, then 2.0 in
 of casing. Casing is at the top of the documented range deliberately — depth
 measurably improves both yield and time to fruiting.
+
+## Staging — a planted scene, not a compost tray
+
+The brief was never "grow mushrooms indoors"; it was that spartan mushroom
+growing is exactly what this must not look like. So the interior is staged as a
+terrarium, and one decision makes that cheap.
+
+### The envelope and the set are the same part
+
+**Cork bark faces the insulated panels.** Cork is the standard vivarium
+background material, it is rot-resistant in permanent humidity, it looks like
+forest floor, and it is a genuine insulator — so the thermal requirement and the
+scenic one are answered by one material.
+
+| Build | U |
+|---|---|
+| 1 in cork alone | 1.13 W/m²K |
+| 0.5 in cork + 0.5 in foam | 1.01 |
+| **0.5 in cork + 1.0 in foam** | **0.71 — chosen** |
+
+Cork veneer over a foam core insulates *better* than the plain foam originally
+specified, and the face you see is bark.
+
+### Stage the periphery, keep the bed clear
+
+The rule that makes this work horticulturally:
+
+- **Cork bark walls** — back and sides, textured and vertical, rising behind the
+  bed.
+- **Moss on the margins and up the walls.** Sheet and cushion moss want precisely
+  what this chamber provides — 85% RH, low indirect light, no soil depth. It is
+  the one companion organism whose requirements are the mushroom's requirements.
+- **A piece or two of hardscape** — wood or stone — to break the plane and give
+  the eye a middle distance.
+- **The casing bed stays open in the centre.** A clearing. That is where the
+  mushrooms erupt, and it is where you water, ruffle and harvest.
+
+**Never stage on the casing itself.** Moss or decor over the fruiting surface
+blocks pinning and gas exchange, and the casing has to be reachable — it gets
+watered, ruffled at induction, and picked. Staging goes *around* the bed, not on
+it.
+
+### The depth is for the scene
+
+Internal depth goes **14 → 18 in**. The bed stays 18 × 12, so the extra four
+inches are not substrate — they are background. Depth is the difference between a
+landscape and a diorama pressed against the glass: foreground bed, middle
+hardscape, mossed cork bank behind. It costs 0.36 W/K and about 4 W at the
+extremes, which the module has.
+
+### What staging costs, honestly
+
+**Contamination risk goes up, and this is not a small caveat.** A cased bed is a
+semi-sterile environment whose whole defence is that the casing colonises before
+anything else arrives. Moss, wood and stone carry competitors — *Trichoderma*
+above all. Bake or soak the hardscape, use cleaned moss, and accept that a staged
+piece will occasionally lose a flush to something green. That is the price of it
+not looking like a plastic tub.
+
+**Companion plants are a later question.** Ferns, fittonia and selaginella would
+love the humidity, but they need more light than a display level provides, want
+their own drained soil pocket, and are a third contamination vector. **Moss only
+for V2**, and revisit once the environment has proven itself over a couple of
+flushes.
 
 ## Lighting — three options, all outside the glass
 
@@ -307,15 +389,18 @@ empirical:
    existence, and it is here on the strength of search summaries.
 2. **Confirm the fruiting band with the spawn supplier** for the strain actually
    bought. 73–79 °F is the literature; strains vary.
-3. **Check the front pane with an IR thermometer** on the built chamber during a
-   cold-morning spawn run. +1.5 °F is a real margin but not a generous one, and
-   edges run colder than pane centres.
+3. **Tune the air curtain on the built chamber.** It has to be strong enough to
+   keep the pane clear at the 60 °F winter minimum and gentle enough not to dry
+   the casing. Those are the two failure modes and they pull in opposite
+   directions; an IR thermometer on the glass and a finger on the casing settle
+   it, not a calculation.
 
 Settled: new build, own object, Object A untouched · mast deleted · vitrine on a
 base · casing surface at 48 in, top of piece 62.5 in · case internal
-20 × 14 × 22 in · double glazing front and top, 1 in foam elsewhere · cove
-down-light in the top frame · bidirectional Peltier through the back panel, low ·
-buy spawn, supply compost.
+20 × 18 × 22 in · **single** glazing front and top with an internal air curtain ·
+cork-faced foam on the other four faces, doubling as the set · staged periphery
+with a clear bed, moss only · cove down-light in the top frame · bidirectional
+Peltier through the back panel, low · buy spawn, supply compost.
 
 ---
 
