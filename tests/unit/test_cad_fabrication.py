@@ -256,7 +256,7 @@ def test_the_pack_builds_from_a_clean_shell(tmp_path):
         env=env, cwd=str(REPO), capture_output=True, text=True, timeout=600,
     )
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "SCRIBE RINGS" in r.stdout
+    assert "SCRIBE RINGS" not in r.stdout
     for name in ("plate.dxf", "case_body.dxf", "fascia.dxf",
                  "cutlist.md", "cutlist.json", "README.md"):
         assert (tmp_path / name).exists(), name
