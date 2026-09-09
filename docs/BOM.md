@@ -386,10 +386,16 @@ Pimoroni Inky Impression 7.3" (7-colour) — already in the standards; slow unla
 
 **Meters confirmed from the dials, 2026-09-03 — both MICROAMPERES D.C.:**
 
-| Meter | Movement | Coil (Weston selector) | Reads |
+| Meter | Movement | Coil (measured) | Reads |
 |---|---|---|---|
-| Weston 301 | **30-0-30 µA** centre-zero | ~5,500 Ω | pH |
-| Weston 301 | **100-0-100 µA** centre-zero | ~1,230 Ω | EC |
+| Weston 301 | **30-0-30 µA** centre-zero | 800 Ω | pH |
+| Weston 301 | **100-0-100 µA** centre-zero | 640 Ω | EC |
+
+Coil resistance measured 2026-09-09 by voltage method (PSU + series resistor + pot,
+DMM in mV mode across the coil, R = V/I at two needle positions per movement).
+Both are much lower than the Weston selector chart estimates (~5,500 / ~1,230 Ω)
+that sized the original series resistors. The series resistors still protect both
+movements — see the fault-current table below.
 
 Earlier purchase listings said "milliamperes" and were wrong; the printed dials say
 microamperes. A cross-check in this repo briefly propagated that listing error into a
@@ -415,8 +421,8 @@ Running the DAC from 3.3 V with VDD as reference:
 
 | Meter | R_LEFT | R_RIGHT | I at full opposite-rail fault |
 |---|---|---|---|
-| 30-0-30 µA | 56.2 kΩ | 56.2 kΩ | ~28.0 µA (with 5.5 kΩ coil) |
-| 100-0-100 µA | 16.9 kΩ | 16.9 kΩ | ~94.2 µA (with 1.23 kΩ coil) |
+| 30-0-30 µA | 56.2 kΩ | 56.2 kΩ | ~29.2 µA (with 800 Ω coil) |
+| 100-0-100 µA | 16.9 kΩ | 16.9 kΩ | ~95.8 µA (with 640 Ω coil) |
 
 **These deliberately land just under full scale.** No DAC output state — including a firmware
 fault that slams one channel to each rail — can overdrive a historic movement. Prefer leaving
@@ -456,8 +462,8 @@ endpoint currents the procedure asks for, so size the fixed leg to approach full
 
 | Meter | R_fixed | Pot | Reaches |
 |---|---|---|---|
-| 30-0-30 µA | 47 kΩ | 1 MΩ | ~28.6 µA |
-| 100-0-100 µA | 15 kΩ | 1 MΩ | ~92.5 µA |
+| 30-0-30 µA | 47 kΩ | 1 MΩ | ~31 µA |
+| 100-0-100 µA | 15 kΩ | 1 MΩ | ~96 µA |
 
 Photograph everything before disassembly. Set mechanical zero with no connection, in the
 meter's final mounting orientation. Never put a DMM's continuity or diode mode across a

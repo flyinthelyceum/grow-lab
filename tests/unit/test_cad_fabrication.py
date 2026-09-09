@@ -101,26 +101,14 @@ class TestThePlate:
         for px, py in corner_screw_points():
             assert (round(px, 5), round(py, 5), round(P.FACE_SCREW_DIA, 5)) in cut
 
-    def test_the_dials_are_scribed_not_cut(self, pack):
-        """Pending calipers: a ring on `mark`, and no hole on `cut`."""
-        assert P.DIAL_CUT_DIAMETER is None
+    def test_the_dials_are_cut_not_scribed(self, pack):
+        """Calipered 2026-09-09: holes at the measured diameter, no witness rings."""
+        assert P.DIAL_CUT_DIAMETER == 2.75
         doc = read(pack, "plate.dxf")
-        dials = [e for e in SCHEDULE.elements if e.kind == "dial"]
-        marks = entities(doc, "mark")
-        assert len(marks) == len(dials)
-        for m in marks:
-            assert round(m.dxf.radius * 2, 5) == round(DIAL_BEZEL_OD, 5)
-        for d in dials:
-            assert not [c for c in circles(doc) if abs(c[0] - d.x) < 1e-6 and abs(c[1] - d.y) < 1e-6]
-
-    def test_a_measured_diameter_turns_the_rings_into_holes(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(P, "DIAL_CUT_DIAMETER", 3.0)
-        assert F.main(["--out", str(tmp_path)]) == 0
-        doc = ezdxf.readfile(str(tmp_path / "plate.dxf"))
         assert entities(doc, "mark") == []
         cut = circles(doc)
         for d in (e for e in SCHEDULE.elements if e.kind == "dial"):
-            assert (round(d.x, 5), round(d.y, 5), 3.0) in cut
+            assert (round(d.x, 5), round(d.y, 5), round(P.DIAL_CUT_DIAMETER, 5)) in cut
 
 
 class TestTheCaseBlankFoldsBackIntoThePart:
@@ -268,7 +256,7 @@ def test_the_pack_builds_from_a_clean_shell(tmp_path):
         env=env, cwd=str(REPO), capture_output=True, text=True, timeout=600,
     )
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "SCRIBE RINGS" in r.stdout
+    assert "SCRIBE RINGS" not in r.stdout
     for name in ("plate.dxf", "case_body.dxf", "fascia.dxf",
                  "cutlist.md", "cutlist.json", "README.md"):
         assert (tmp_path / name).exists(), name

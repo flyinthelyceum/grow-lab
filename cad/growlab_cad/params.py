@@ -44,9 +44,8 @@ Conventions
 
 Two things are deliberately *not* asserted:
 
-* **The dial cut diameter.** The Weston 301 bezels are pending calipers; the
-  drawings' Ø 2.79 is a Simpson figure that does not apply. ``face.py``
-  engraves a witness circle at the bezel OD unless a measured cut is supplied.
+* **The dial cut diameter** is now measured (Ø 2.75, calipered 2026-09-09).
+  ``face.py`` cuts holes at this diameter.
 * **The lightbox's internals.** The heatsink bar and the LM301H boards it carries
   have never been measured. The steel shell around them is a real fabricated
   part and a test asserts it clears the bar — but the bar it clears is a
@@ -289,9 +288,8 @@ CASE_FLANGE = 0.5  # CHOICE: return flanges folded inward from the LEFT and RIGH
                    # 0.25 of it. Side flanges clear every layout (tightest: WIDE, 0.06).
 CASE_TAP_DIA = 2.5 / 25.4  # M3 tap drill in the flanges
 
-# The dial cut diameter is pending calipers. None means: engrave a witness
-# circle at the bezel OD and do not cut. Supply a measured value to cut.
-DIAL_CUT_DIAMETER: float | None = None
+# Weston 301 bezel OD, calipered 2026-09-09 — both meters identical.
+DIAL_CUT_DIAMETER: float | None = 2.75
 WITNESS_DEPTH = 0.02  # CHOICE: engraving depth for reference marks
 
 

@@ -373,9 +373,7 @@ both the tag and a coordinate.
 **Bends** are drawn at the theoretical fold with no bend allowance; the
 K-factor is the shop's. The blank is the sum of the flat faces.
 
-**The dials are not cut.** The plate carries scribe rings at the bezel OD and
-nothing else, until the Weston 301s are measured. Set
-`params.DIAL_CUT_DIAMETER` and regenerate; the rings become holes.
+**The dials are cut** at Ø 2.75, calipered from the Weston 301 bezels.
 
 **Order of assembly** for the console, which is the only fiddly part: fold and
 finish the case body, fit the electronics to it on the bench, screw the plate

@@ -94,15 +94,14 @@ class TestSchedule:
 
 
 class TestCutDiameter:
-    def test_is_not_asserted(self):
-        """The Weston cut is unmeasured. Inventing one would put a second
-        wrong dimension into the drawings alongside the Simpson figures."""
-        assert DIAL_CUT_DIAMETER is None
+    def test_is_measured(self):
+        """Calipered 2026-09-09, both bezels identical."""
+        assert DIAL_CUT_DIAMETER == 2.75
 
-    def test_payload_flags_it_as_pending(self):
+    def test_payload_reports_measured_cut(self):
         payload = geometry_payload()
-        assert payload["dial"]["cut_pending_calipers"] is True
-        assert payload["dial"]["cut_diameter"] is None
+        assert payload["dial"]["cut_pending_calipers"] is False
+        assert payload["dial"]["cut_diameter"] == 2.75
 
 
 class TestPayload:

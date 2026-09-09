@@ -580,9 +580,10 @@ class TestPanelGeometryEndpoint:
         assert data["meters"]["channels"]["ph"]["span"] == 0.8
         assert data["meters"]["channels"]["ec"]["scale"] == 0.001
 
-    async def test_flags_the_pending_cut_diameter(self, client):
+    async def test_reports_the_measured_cut_diameter(self, client):
         data = (await client.get("/api/panel/geometry")).json()
-        assert data["dial"]["cut_pending_calipers"] is True
+        assert data["dial"]["cut_pending_calipers"] is False
+        assert data["dial"]["cut_diameter"] == 2.75
         assert data["dial"]["bezel_od"] == 3.5
 
 

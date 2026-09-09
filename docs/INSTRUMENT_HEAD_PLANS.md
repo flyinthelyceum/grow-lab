@@ -41,9 +41,9 @@ Design study: `https://claude.ai/code/artifact/c18075c9-9ca8-4f42-8ba3-2066474b2
 
 | ID | X | Y | Cut | For |
 |---|---|---|---|---|
-| M1 | 2.750 | 9.500 | Ø **pending calipers** (was Ø 2.79) | Weston 301 — pH |
+| M1 | 2.750 | 9.500 | Ø 2.75 | Weston 301 — pH |
 | M1a–d | *pending* | *pending* | Ø 0.125 thru ×4 | M1 studs — pattern was Simpson 2.25 sq |
-| M2 | 6.750 | 9.500 | Ø **pending calipers** (was Ø 2.79) | Weston 301 — EC |
+| M2 | 6.750 | 9.500 | Ø 2.75 | Weston 301 — EC |
 | M2a–d | *pending* | *pending* | Ø 0.125 thru ×4 | M2 studs — pattern was Simpson 2.25 sq |
 | W | 4.750 | 5.360 | 6.30 × 3.78 rect, r 0.02 | Inky Impression 7.3" active area (160 × 96 mm) |
 | J | 1.625 | 1.625 | Ø 1.00 thru | NOS Dialco 1" jewel pilot |
@@ -91,9 +91,8 @@ Already purchased; this is no longer an order table.
 | pH | Weston 301, 30-0-30 µA centre-zero | 56.2 kΩ |
 | EC | Weston 301, 100-0-100 µA centre-zero | 16.9 kΩ |
 
-**Caliper both bezels on arrival** and recut the face hole schedule from the measurement.
-Matched faces were the point of the hunt; the 100-0-100 ring reads chunkier in the seller's
-photos, so confirm the two are the same size before committing to a symmetric pair.
+Both bezels calipered 2026-09-09: **Ø 2.75 in**, identical. The 100-0-100 ring that looked
+chunkier in the seller's photos is the same size — symmetric pair confirmed.
 
 The Simpson Wide-Vue 1327 order table this section used to hold (catalog 04380 / 04381,
 0-50 µA, 40.96 kΩ R_sense) is superseded and has been removed to stop it being ordered from.
