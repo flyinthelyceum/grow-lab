@@ -11,6 +11,32 @@ Numbers get provenance before they get geometry.
 
 ---
 
+## Where this stands — paused 2026-09-09
+
+**Every design decision is closed. Nothing has been built and no geometry
+exists.** Work stopped here deliberately to return to V1; this section is the
+resumption point.
+
+| | |
+|---|---|
+| Decided | Species, form, dimensions, glazing, climate strategy, lighting, staging, substrate approach |
+| Written | This document, and only this document |
+| Not started | `params_v2.py`, any CAD, any V2 code, any purchase |
+| V1 impact | **None.** No V1 file, part or decision was changed for V2 |
+
+**To resume:** the next step is `params_v2.py` and a CAD package, built the way
+V1's was — every number traceable to the height stack in *Dimensions* below, and
+`CHOICE` marked where a number is invented rather than derived. The viewer takes
+a second station without modification; `cad/VIEWER.md` explains how variants work.
+
+**Three things must be verified before any hardware is bought**, and they are
+listed in full under *Open decisions*: the induction temperature requirement read
+in the primary papers, the fruiting band confirmed with the actual spawn
+supplier, and the air curtain tuned on the built chamber. The first of those is
+load-bearing — it is the claim that puts a cooling system in the piece at all.
+
+---
+
 ## The organism
 
 **_Agaricus subrufescens_** — almond mushroom, sun mushroom, *cogumelo do sol*;
