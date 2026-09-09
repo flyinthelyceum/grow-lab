@@ -657,8 +657,8 @@ use. Fail it and leach longer or add a second coat before planting.
 
 ## Open items
 
-- **Weston 301 depth and bezel** — caliper on arrival; sets `DIAL_CUT_DIAMETER` and confirms
-  the 3.00 console depth.
+- **Weston 301 depth** — still unmeasured; confirms the 3.00 console depth.
+  (Bezel OD calipered 2026-09-09: Ø 2.75, both meters identical; `DIAL_CUT_DIAMETER` is set.)
 - **Frame fabrication.** 1 x 1 HSS or solid square bar; welded or bolted at the corners;
   levelling feet in the legs. Whether the mast is welded to the ring or bolted through it
   is a fabricator's call — welded is stiffer, bolted lets the cabinet come off the frame.

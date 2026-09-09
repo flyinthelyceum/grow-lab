@@ -263,28 +263,25 @@ class TestTheFaceReadsThePanelGeometry:
     def _probe(self, wx, wz):
         return box(0.2, P.FACE_T * 2, 0.2, at=(wx, face.FACE_MID_Y, wz - 0.1))
 
-    def test_face_without_dial_cuts_is_nearly_solid(self):
-        """Dials are witness rings, not holes, until calipers arrive."""
-        assert P.DIAL_CUT_DIAMETER is None
+    def test_face_has_dial_holes(self):
+        """Dial cuts at measured Ø 2.75 remove material from the face."""
+        assert P.DIAL_CUT_DIAMETER == 2.75
         f = face.build_face()
         plate = FACE_WIDTH * FACE_HEIGHT * P.FACE_T * P.IN**3
         window = next(e for e in SCHEDULE.elements if e.kind == "window")
+        dials = [e for e in SCHEDULE.elements if e.kind == "dial"]
+        import math
         removed = window.width * window.height * P.FACE_T * P.IN**3
-        assert f.volume < plate - removed
-        assert f.volume > (plate - removed) * 0.97
+        for _d in dials:
+            removed += math.pi * (P.DIAL_CUT_DIAMETER / 2) ** 2 * P.FACE_T * P.IN**3
+        assert f.volume < plate - removed * 0.95
 
     def test_window_is_cut_where_the_schedule_puts_it(self):
         window = next(e for e in SCHEDULE.elements if e.kind == "window")
         wx, wz = face.panel_to_world(window.x, window.y)
         assert (face.build_face() & self._probe(wx, wz)).volume < 1.0
 
-    def test_dial_witness_ring_marks_the_bezel_but_does_not_cut(self):
-        dial = next(e for e in SCHEDULE.elements if e.kind == "dial")
-        wx, wz = face.panel_to_world(dial.x, dial.y)
-        assert (face.build_face() & self._probe(wx, wz)).volume > 1.0
-
-    def test_a_measured_cut_diameter_opens_the_dial(self, monkeypatch):
-        monkeypatch.setattr(P, "DIAL_CUT_DIAMETER", 3.0)
+    def test_dial_hole_is_cut_where_the_schedule_puts_it(self):
         dial = next(e for e in SCHEDULE.elements if e.kind == "dial")
         wx, wz = face.panel_to_world(dial.x, dial.y)
         assert (face.build_face() & self._probe(wx, wz)).volume < 1.0

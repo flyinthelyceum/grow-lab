@@ -31,10 +31,9 @@ from dataclasses import dataclass, field
 FACE_WIDTH = 9.50
 FACE_HEIGHT = 12.00
 
-# Weston 301, 3-1/2 in: nominal bezel outside diameter. Definitional for the
-# size class, so safe to draw. The panel cut is pending calipers.
+# Weston 301, 3-1/2 in: nominal bezel outside diameter.
 DIAL_BEZEL_OD = 3.50
-DIAL_CUT_DIAMETER: float | None = None
+DIAL_CUT_DIAMETER: float | None = 2.75  # calipered 2026-09-09
 
 # Inky Impression 7.3 in: stated active area 160 x 96 mm, and its pixel grid.
 WINDOW_WIDTH = 6.30
@@ -241,10 +240,9 @@ LAYOUT_NOTES = (
     "A stacked-dial column does not fit the stock: two 3.50 in movements plus the "
     "3.78 in window plus roughly 1.5 in of rail is 12.28 in against 12.00 in of "
     "face. Drawn and discarded rather than shown at an impossible spacing.",
-    "Dial cut diameter is pending calipers on the Weston 301 bezels. The drawings "
-    "still carry Simpson Wide-Vue 1327 numbers (2.79 in cut, 2.25 in square stud "
-    "pattern), which do not apply to these movements. Bezel OD of 3.50 in is "
-    "nominal for the size class and is what these drawings show.",
+    "Dial cut diameter is Ø 2.75 in, calipered from the Weston 301 bezels "
+    "(both meters identical). The Simpson Wide-Vue 1327 numbers (2.79 in cut, "
+    "2.25 in square stud pattern) do not apply.",
 )
 
 

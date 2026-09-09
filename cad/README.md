@@ -49,13 +49,9 @@ one set of numbers.
 
 ## What is deliberately not modelled
 
-**The dial cut diameter.** The Weston 301 bezels are pending calipers, and the
-schedule's Ø 2.79 is a Simpson figure. The face carries a witness ring at the
-bezel OD, engraved from the back, and no hole. Set `params.DIAL_CUT_DIAMETER`
-after measuring and the holes appear.
-
-**The dial mounting studs and Inky standoffs.** Same reason for the studs; the
-plans say to transfer the Inky's from the board in hand.
+**The dial mounting studs and Inky standoffs.** The studs' pattern is Simpson's
+and doesn't apply to these Westons; the plans say to transfer the Inky's from
+the board in hand. (The dial cut itself is now measured — Ø 2.75.)
 
 **The lightbox's internals.** The aluminium heatsink bar and the LM301H boards
 have never been measured. The steel shell around them is real and fabricated —

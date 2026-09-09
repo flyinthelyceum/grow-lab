@@ -15,11 +15,9 @@ there and it moves in all three.
 What is and is not cut
 ----------------------
 * Window, jewel, amber, knobs, corner screws: cut, from the schedule.
-* **Dials: not cut** unless ``params.DIAL_CUT_DIAMETER`` is set. The Weston
-  301 bezels are pending calipers and the schedule's Ø 2.79 is a Simpson
-  figure. Instead the plate carries a shallow witness ring at the bezel OD on
-  its back — a scribe line on the metal — so the position is on the part and
-  the cut is not guessed.
+* **Dials: cut** at ``params.DIAL_CUT_DIAMETER`` (Ø 2.75, calipered 2026-09-09).
+  If that param is set to ``None``, the plate carries a shallow witness ring
+  at the bezel OD on its back instead.
 * **Dial mounting studs: not cut.** Same reason; their pattern is Simpson's.
 * **Inky standoffs: not cut.** "Transfer from the board in hand — do not
   pre-cut."

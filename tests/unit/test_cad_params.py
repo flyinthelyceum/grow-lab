@@ -174,9 +174,9 @@ class TestDerivedGeometry:
         assert P.PAD_Y_OFFSET < P.CMU_W / 2
         assert P.PAD_Y_OFFSET > P.CMU_W / 2 - P.CMU_FACE_SHELL
 
-    def test_dial_cut_is_not_asserted(self):
-        """Pending calipers. A number here would be a guess in the drawings."""
-        assert P.DIAL_CUT_DIAMETER is None
+    def test_dial_cut_is_measured(self):
+        """Calipered 2026-09-09, both bezels identical."""
+        assert P.DIAL_CUT_DIAMETER == 2.75
 
 
 class TestTheReservoirFits:
