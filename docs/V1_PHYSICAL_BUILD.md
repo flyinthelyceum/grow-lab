@@ -277,11 +277,10 @@ is emulated at `/panel`.
   installed, move the pump relay to a free GPIO** — GPIO23 (pin 16) is plain, unused, and
   clear of PWM (12/13/18/19), SPI (8-11) and the Inky buttons. One config line; until then
   the bench keeps running on 17 (code takes precedence; the Inky is not on the bench yet).
-- **Console depth is 3.00 clear** (the old head's inside dimension). The figures this was
-  sized on (a Simpson 1327 at 1.92 in behind the panel) no longer apply — the movements are
-  **Weston 301s, and their depth is pending measurement on arrival**. Pi + stacked HATs
-  ~1.5 in sit beside the movements, not behind. The console bay is full width, so there is
-  room beside the face if the Westons run deep; confirm before cutting the partition.
+- **Console depth is 3.00 clear** (the old head's inside dimension). The Weston 301s extend
+  **1.735 in behind the plate** (0.975 to the body rear, 1.735 to the terminal bolts,
+  calipered 2026-09-09) — well within the case's 2.56 in interior depth. Pi + stacked HATs
+  ~1.5 in sit beside the movements, not behind. Confirmed: 3.00 console depth clears.
 - **Meters: Weston 301, 3-1/2", centre-zero — 30-0-30 µA and 100-0-100 µA.** The face is
   9.50 wide for two 3.50 in bezels with margins, and the e-ink (6.85 board, 6.30 window)
   sits inside that span. Face height 12.00. **The panel cut and stud pattern in
@@ -657,8 +656,8 @@ use. Fail it and leach longer or add a second coat before planting.
 
 ## Open items
 
-- **Weston 301 depth** — still unmeasured; confirms the 3.00 console depth.
-  (Bezel OD calipered 2026-09-09: Ø 2.75, both meters identical; `DIAL_CUT_DIAMETER` is set.)
+- ~~Weston 301 depth~~ — **done**: 0.975 in body, 1.735 in to terminal bolts (calipered
+  2026-09-09). Case interior is 2.56 in — 0.83 in clearance behind the bolts.
 - **Frame fabrication.** 1 x 1 HSS or solid square bar; welded or bolted at the corners;
   levelling feet in the legs. Whether the mast is welded to the ring or bolted through it
   is a fabricator's call — welded is stiffer, bolted lets the cabinet come off the frame.
