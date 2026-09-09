@@ -96,7 +96,9 @@ class TestTheInstrumentIsBehindTheGlass:
         """INSTRUMENT_HEAD_PLANS.md § Depth stack: meters, Inky, i3 and Pi 'both
         fit inside 3.00 clear' — of a head 3.50 deep. The case is shallower;
         the Pi stack sits beside the movements, not behind."""
-        assert P.CASE_D - P.PLATE_T - P.CASE_SHEET_T >= 2.5
+        interior = P.CASE_D - P.PLATE_T - P.CASE_SHEET_T
+        assert interior >= 2.5
+        assert interior > P.DIAL_TERMINAL_DEPTH + 0.5, "terminal bolts need clearance behind"
 
     def test_ledge_leaves_the_chase_open(self):
         assert P.LEDGE_CHASE >= 0.5

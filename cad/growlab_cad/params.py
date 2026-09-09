@@ -290,6 +290,8 @@ CASE_TAP_DIA = 2.5 / 25.4  # M3 tap drill in the flanges
 
 # Weston 301 bezel OD, calipered 2026-09-09 — both meters identical.
 DIAL_CUT_DIAMETER: float | None = 2.75
+DIAL_BODY_DEPTH = 0.975   # bezel rear face to body rear face, calipered 2026-09-09
+DIAL_TERMINAL_DEPTH = 1.735  # bezel rear face to terminal bolt rear, calipered 2026-09-09
 WITNESS_DEPTH = 0.02  # CHOICE: engraving depth for reference marks
 
 

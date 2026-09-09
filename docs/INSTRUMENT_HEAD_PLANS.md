@@ -69,12 +69,13 @@ before final cut; if it intrudes, drop the whole rail to Y = 1.50.
 
 | Zone | Element | Depth behind face |
 |---|---|---|
-| Upper | Weston 301 body + terminal studs — **pending measurement** (Simpson 1327 was 1.22 + 0.70 = 1.92) | ? |
+| Upper | Weston 301 body (0.975) + terminal bolts (0.76) | 1.735 |
 | Middle | Inky (standoff 0.25 + board ~0.25) + i3 (~0.93) + Pi (~0.80) | ~2.2 |
 | Back panel | Meter driver (MCP4728 only — the MCP6004 stage was dropped when the movements proved to be microamperes), ESP32, terminal block | on the back |
 
-Both fit inside 3.00 clear. Confirm the i3's 23.6 mm datasheet height includes its header; if
-not, add it and re-check.
+Both fit inside 3.00 clear — the Westons' 1.735 in behind the plate is the deepest element in
+the upper zone, well within the case's 2.56 in interior. Confirm the i3's 23.6 mm datasheet
+height includes its header; if not, add it and re-check.
 
 ## Material and finish
 

@@ -138,7 +138,7 @@ The right-hand taps were first computed from the wrong bend and landed 8 in off 
 
 ### Still open
 - `PLINTH_H` (36) is a choice. 28.2 in panel centre reads looking down; decide at the mock-up.
-- Weston 301 depth and bezel, pending calipers — sets `DIAL_CUT_DIAMETER` and confirms the 3.00 console depth.
+- ~~Weston 301 depth and bezel~~ — both done. Bezel Ø 2.75; depth 1.735 in to terminal bolts, well within the case's 2.56 in interior.
 
 ## 2026-09-04 (the station in CAD)
 
