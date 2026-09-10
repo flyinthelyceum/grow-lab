@@ -236,7 +236,7 @@ class TestTheCutList:
 
     def test_it_says_what_is_still_unmeasured(self):
         pending = " ".join(F.cutlist()["pending"]).lower()
-        assert "weston" in pending and "inky" in pending
+        assert "studs" in pending and "inky" in pending
 
     def test_the_markdown_renders_every_row(self):
         data = F.cutlist()

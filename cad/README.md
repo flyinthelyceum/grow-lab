@@ -53,10 +53,9 @@ one set of numbers.
 and doesn't apply to these Westons; the plans say to transfer the Inky's from
 the board in hand. (The dial cut itself is now measured — Ø 2.75.)
 
-**The lightbox's internals.** The aluminium heatsink bar and the LM301H boards
-have never been measured. The steel shell around them is real and fabricated —
-and a test asserts it clears the bar — but the bar it clears is a plausible
-guess. Caliper both before cutting.
+**The lightbox's internals** are now measured (15.5 × 1.575 × 0.525, calipered
+2026-09-10). The heatsink bar is modelled as a reference volume and a test
+asserts the shell clears it.
 
 **Bend radii, chamfers, hinges, hardware.** Fusion's job.
 
