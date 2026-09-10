@@ -26,11 +26,9 @@ Decided 2026-09-05: **a white steel channel over the aluminium bar.**
 It hangs from the cross bar that runs along its back edge — see ``canopy.py``,
 where the arm and bar are welded to the collar as one weldment.
 
-**Every dimension here is a choice against an unmeasured part.** Nobody has put
-a rule on the heatsink bar or on the LM301H boards. The shell is drawn to clear
-a plausible bar with margin, and the clearance is asserted rather than assumed,
-but *caliper both before cutting steel* — the same standing measurement as the
-Weston bezels.
+The heatsink bar with LM301H boards was calipered 2026-09-10: 15.5 × 1.575
+× 0.525 in. Much smaller than the original guesses (14 × 4 × 1); the shell
+clears it with wide margin and the head is well under its weight budget.
 """
 
 from __future__ import annotations
@@ -84,7 +82,7 @@ def build_shell() -> Part:
 
 
 def build_heatsink() -> Part:
-    """Reference: the aluminium bar already on hand. Bought, and unmeasured."""
+    """Reference: the aluminium bar already on hand, calipered 2026-09-10."""
     return labelled(
         box(P.HEATSINK_W, P.HEATSINK_D, P.HEATSINK_H,
             at=(P.FIXTURE_X, P.FIXTURE_Y, heatsink_z0())),

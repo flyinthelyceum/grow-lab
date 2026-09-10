@@ -331,7 +331,7 @@ class TestTheLightbox:
             assert (probe & parts["lightbox"]).volume < 1.0, f"slot at x={x:.2f}"
 
     def test_the_shell_clears_the_heatsink(self, parts, refs):
-        """Drawn against an UNMEASURED bar. Caliper it before cutting steel."""
+        """Calipered 2026-09-10: 15.5 x 1.575 x 0.525."""
         assert assembly._shared_in3(parts["lightbox"], refs["led_heatsink"]) < 0.001
         hs, shell = bbox_in(refs["led_heatsink"]), bbox_in(parts["lightbox"])
         for axis in ("x", "y"):
@@ -347,7 +347,7 @@ class TestTheLightbox:
         """
         steel = 0.284  # lb/in3
         head = (parts["canopy_carriage"].volume + parts["lightbox"].volume) / P.IN**3 * steel
-        head += 4.7 + 0.7  # heatsink and boards, both estimates
+        head += 1.25 + 0.7  # heatsink (calipered 2026-09-10, ~12.8 in³ Al) and boards
         assert head < 14.0, f"head is {head:.1f} lb against a 12.0 lb budget"
 
 

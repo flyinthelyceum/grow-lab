@@ -303,8 +303,7 @@ def cutlist() -> dict:
              "blank": [P.FIXTURE_W + 2 * P.FIXTURE_H, P.FIXTURE_D + 2 * P.FIXTURE_H],
              "file": "(from the STEP)",
              "note": "folded channel, open bottom; blank is a nominal cruciform bounding "
-                     "box, the shop develops it. DRAWN AGAINST AN UNMEASURED HEATSINK — "
-                     "caliper the bar and the boards before cutting"},
+                     "box, the shop develops it"},
             {"part": "Tray", "material": "304 stainless, 16 ga",
              "blank": [P.TRAY_W - 2 * P.TRAY_T + 2 * P.TRAY_UPSTAND,
                        P.TRAY_D - 2 * P.TRAY_T + 2 * P.TRAY_UPSTAND],
@@ -313,13 +312,8 @@ def cutlist() -> dict:
                      "and the mast notch are in the STEP."},
         ],
         "pending": [
-            "Dial cut diameter — the plate ships with scribe rings only until the "
-            "Weston 301 bezels are calipered.",
             "Dial mounting studs — Simpson pattern, does not apply.",
             "Inky standoffs — transfer from the board in hand.",
-            "Lightbox internals — the aluminium heatsink bar and the LM301H boards "
-            "have never been measured. The shell is drawn to clear a plausible bar; "
-            "caliper both before cutting it.",
         ],
     }
 

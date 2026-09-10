@@ -42,14 +42,10 @@ Conventions
   made here to produce a buildable model; the person finishing this in Fusion
   should treat them as proposals, not canon.
 
-Two things are deliberately *not* asserted:
-
-* **The dial cut diameter** is now measured (Ø 2.75, calipered 2026-09-09).
-  ``face.py`` cuts holes at this diameter.
-* **The lightbox's internals.** The heatsink bar and the LM301H boards it carries
-  have never been measured. The steel shell around them is a real fabricated
-  part and a test asserts it clears the bar — but the bar it clears is a
-  plausible guess. Caliper both before cutting steel.
+The dial cut diameter (Ø 2.75, calipered 2026-09-09) and the heatsink bar
+with LM301H boards (15.5 × 1.575 × 0.525, calipered 2026-09-10) are both
+measured. The steel shell clears the real bar and the head is well under
+its weight budget.
 """
 
 from __future__ import annotations
@@ -336,21 +332,20 @@ FIXTURE_H = 1.5  # CHOICE
 # Open at the bottom because that is the light aperture; slotted along the top
 # and open at the ends so the channel is a chimney rather than an oven.
 #
-# EVERY NUMBER HERE IS A CHOICE AGAINST AN UNMEASURED PART. Nobody has put a
-# rule on the heatsink bar or the boards. Caliper both before cutting steel —
-# this is the same class of pending measurement as the Weston bezels.
-LIGHTBOX_T = 0.0625  # CHOICE: 16 ga, as the instrument case. 18 ga saves 0.7 lb
-                     # and is the lever to pull if the head comes in heavy.
+# The heatsink bar and boards were unmeasured until 2026-09-10 — the shell was
+# drawn against plausible guesses and a test asserted clearance. The real bar is
+# much smaller than the guess: 15.5 x 1.575 x 0.525 vs 14 x 4 x 1. The shell
+# still clears it; the head drops from ~12.6 lb to ~8.2 lb.
+LIGHTBOX_T = 0.0625  # CHOICE: 16 ga, as the instrument case
 LIGHTBOX_VENT_N = 9  # CHOICE: slots along the top, over the heatsink's fins
 LIGHTBOX_VENT_W = 0.375  # CHOICE
 LIGHTBOX_VENT_L = 3.5  # CHOICE: along the depth, inside the cross bar's landing
 LIGHTBOX_END_INSET = 0.75  # CHOICE: the end slots' inset from each end
 
-# The heatsink bar, as an inner volume to check the shell clears it. Plausible,
-# not measured — see above.
-HEATSINK_W = 14.0  # CHOICE
-HEATSINK_D = 4.0  # CHOICE
-HEATSINK_H = 1.0  # CHOICE
+# The heatsink bar with LM301H boards, calipered 2026-09-10.
+HEATSINK_W = 15.5   # along the fixture width
+HEATSINK_D = 1.575  # front to back
+HEATSINK_H = 0.525  # height/thickness
 FIXTURE_ARM_W = 1.5  # CHOICE: the arm forward from the mast
 FIXTURE_ARM_T = 0.5  # CHOICE
 FIXTURE_BAR_D = 1.0  # CHOICE: the cross bar along the fixture's back edge
