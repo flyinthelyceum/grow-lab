@@ -13,8 +13,8 @@ All notable changes to this project are documented in this file.
 - **The fixture is a fabricated part now, not a reference one.** It sat in `assembly.reference()` for months — "bought or undimensioned", and so excluded from the interference check — on the strength of nobody having decided what it was. It is in `fabricated()` with the rest of what we cut, and its clash with the carriage weldment is checked for the first time. The fixture *arm* made the same trip earlier in the project; `assembly.py`'s docstring now says out loud that being in the reference list is a claim worth re-reading.
 
 ### Numbers
-- Shell 2.6 lb of steel. **The head comes to about 8.2 lb** — carriage weldment 4.6, shell 2.6, heatsink ~1.25, boards ~0.7 — against the 12.0 lb the mast and clamp were sized to. Plenty of margin. (Originally estimated ~12.6 lb with a guessed 4.7 lb heatsink; the real bar is much lighter at ~1.25 lb, calipered 2026-09-10.)
-- Heatsink bar with LM301H boards calipered 2026-09-10: **15.5 × 1.575 × 0.525 in** — much smaller than the original guesses (14 × 4 × 1). The shell clears it; the pending-measurement note is closed.
+- Shell 2.6 lb of steel. **The head comes to about 10.4 lb** — carriage weldment 4.6, shell 2.6, heatsink ~2.5 (two modules at ~1.25 each), boards ~0.7 — against the 12.0 lb the mast and clamp were sized to. Still under budget. (Originally estimated ~12.6 lb with a guessed 4.7 lb heatsink.)
+- Each LM301H + heatsink module calipered 2026-09-10: **15.5 × 1.575 × 0.525 in**; two modules side by side → **15.5 × 3.15 × 0.525 combined**. Much smaller than the original guesses (14 × 4 × 1). The shell clears the pair; the pending-measurement note is closed.
 
 ## 2026-09-05 (no aluminium, no powder-coat)
 

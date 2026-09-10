@@ -42,10 +42,11 @@ Conventions
   made here to produce a buildable model; the person finishing this in Fusion
   should treat them as proposals, not canon.
 
-The dial cut diameter (Ø 2.75, calipered 2026-09-09) and the heatsink bar
-with LM301H boards (15.5 × 1.575 × 0.525, calipered 2026-09-10) are both
-measured. The steel shell clears the real bar and the head is well under
-its weight budget.
+The dial cut diameter (Ø 2.75, calipered 2026-09-09) and the LM301H +
+heatsink modules (each 15.5 × 1.575 × 0.525, calipered 2026-09-10; two
+modules side by side → 15.5 × 3.15 × 0.525 combined) are both measured.
+The steel shell clears the pair and the head is well under its weight
+budget.
 """
 
 from __future__ import annotations
@@ -332,20 +333,21 @@ FIXTURE_H = 1.5  # CHOICE
 # Open at the bottom because that is the light aperture; slotted along the top
 # and open at the ends so the channel is a chimney rather than an oven.
 #
-# The heatsink bar and boards were unmeasured until 2026-09-10 — the shell was
-# drawn against plausible guesses and a test asserted clearance. The real bar is
-# much smaller than the guess: 15.5 x 1.575 x 0.525 vs 14 x 4 x 1. The shell
-# still clears it; the head drops from ~12.6 lb to ~8.2 lb.
+# Each LM301H board has its own heatsink bar — two modules, each calipered
+# 2026-09-10 at 15.5 x 1.575 x 0.525. Arranged side by side (parallel, LEDs
+# down), the combined envelope is 15.5 x 3.15 x 0.525. The original guesses
+# (14 x 4 x 1) overestimated the height and underestimated the width.
 LIGHTBOX_T = 0.0625  # CHOICE: 16 ga, as the instrument case
 LIGHTBOX_VENT_N = 9  # CHOICE: slots along the top, over the heatsink's fins
 LIGHTBOX_VENT_W = 0.375  # CHOICE
 LIGHTBOX_VENT_L = 3.5  # CHOICE: along the depth, inside the cross bar's landing
 LIGHTBOX_END_INSET = 0.75  # CHOICE: the end slots' inset from each end
 
-# The heatsink bar with LM301H boards, calipered 2026-09-10.
-HEATSINK_W = 15.5   # along the fixture width
-HEATSINK_D = 1.575  # front to back
-HEATSINK_H = 0.525  # height/thickness
+# Two LM301H + heatsink modules side by side, calipered 2026-09-10.
+# Each module: 15.5 x 1.575 x 0.525; combined envelope below.
+HEATSINK_W = 15.5        # along the fixture width (one module's length)
+HEATSINK_D = 2 * 1.575   # two modules side by side, front to back
+HEATSINK_H = 0.525       # height/thickness of one module
 FIXTURE_ARM_W = 1.5  # CHOICE: the arm forward from the mast
 FIXTURE_ARM_T = 0.5  # CHOICE
 FIXTURE_BAR_D = 1.0  # CHOICE: the cross bar along the fixture's back edge

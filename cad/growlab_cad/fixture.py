@@ -26,9 +26,10 @@ Decided 2026-09-05: **a white steel channel over the aluminium bar.**
 It hangs from the cross bar that runs along its back edge — see ``canopy.py``,
 where the arm and bar are welded to the collar as one weldment.
 
-The heatsink bar with LM301H boards was calipered 2026-09-10: 15.5 × 1.575
-× 0.525 in. Much smaller than the original guesses (14 × 4 × 1); the shell
-clears it with wide margin and the head is well under its weight budget.
+Each LM301H + heatsink module was calipered 2026-09-10: 15.5 × 1.575 ×
+0.525 in. Two modules sit side by side (15.5 × 3.15 × 0.525 combined).
+Much smaller than the original guesses (14 × 4 × 1); the shell clears the
+pair with wide margin and the head is well under its weight budget.
 """
 
 from __future__ import annotations
