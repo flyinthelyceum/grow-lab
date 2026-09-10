@@ -347,7 +347,7 @@ class TestTheLightbox:
         """
         steel = 0.284  # lb/in3
         head = (parts["canopy_carriage"].volume + parts["lightbox"].volume) / P.IN**3 * steel
-        head += 1.25 + 0.7  # heatsink (calipered 2026-09-10, ~12.8 in³ Al) and boards
+        head += 2.5 + 0.7  # two heatsink modules (calipered 2026-09-10, ~1.25 lb each) and boards
         assert head < 14.0, f"head is {head:.1f} lb against a 12.0 lb budget"
 
 

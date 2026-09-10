@@ -313,7 +313,7 @@ aluminium heatsink bar already on hand.**
 | Shell | 16.0 W x 6.0 D x 1.5 H, 0.0625 mild steel, white DTM, 2.6 lb |
 | Aperture | the whole bottom face — nothing to fabricate, nothing to obstruct |
 | Venting | 9 slots 0.375 x 3.5 along the top over the fins, plus an open slot in each end |
-| Heatsink | aluminium bar with LM301H boards: 15.5 × 1.575 × 0.525, calipered 2026-09-10. ~1.25 lb |
+| Heatsink | two aluminium bars with LM301H boards, side by side: each 15.5 × 1.575 × 0.525, combined 15.5 × 3.15 × 0.525, calipered 2026-09-10. ~2.5 lb total |
 | Hangs from | the cross bar along its back edge, welded to the collar (§ *The canopy mechanism*) |
 
 **Why steel outside and aluminium inside.** No aluminium is *fabricated* for V1, and steel
@@ -329,13 +329,14 @@ airflow around the heatsink, and a closed box would be an oven. An open-bottomed
 slots above the fins is a chimney: in at the aperture, out at the top and the ends. Thermal
 is LED-life critical, and the venting is the part of this that is not decoration.
 
-The heatsink bar with LM301H boards was calipered 2026-09-10: **15.5 × 1.575 × 0.525 in** —
-much smaller than the original guesses (14 × 4 × 1). The shell clears it with wide margin.
+Each LM301H + heatsink module was calipered 2026-09-10: **15.5 × 1.575 × 0.525 in** —
+two modules side by side give a combined envelope of **15.5 × 3.15 × 0.525 in**, much
+smaller than the original guesses (14 × 4 × 1). The shell clears the pair with wide margin.
 
-**The head comes to about 8.2 lb** — carriage weldment 4.6, shell 2.6, heatsink ~1.25,
-boards ~0.7 — against the 12.0 lb estimate the mast and the clamp were sized to. Plenty of
-margin. The clamp holds by friction, so **put the head on a scale** before the final
-assembly to confirm the number, but the budget concern is gone.
+**The head comes to about 10.4 lb** — carriage weldment 4.6, shell 2.6, heatsink ~2.5
+(two modules at ~1.25 each), boards ~0.7 — against the 12.0 lb estimate the mast and the
+clamp were sized to. Still under budget. The clamp holds by friction, so **put the head on
+a scale** before the final assembly to confirm the number.
 
 - **The red/blue color-register has no hardware and is deferred.** The concept
   (blue = dormancy/moon, amber = flowering/fire) can't be expressed by a fixed white
