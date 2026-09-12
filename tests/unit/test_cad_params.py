@@ -132,6 +132,37 @@ class TestDerivedGeometry:
         assert (P.MAST_OD, P.MAST_WALL) == (1.5, 0.065)
         assert P.MAST_W == P.MAST_D == P.MAST_OD
 
+    def test_the_cable_slot_spans_the_travel_and_no_more(self):
+        """Every inch of slot is an inch of open section, and open section is
+        what costs torsional stiffness. It covers the carriage band at both
+        extremes plus a small margin, and stops there."""
+        assert P.MAST_SLOT_Z0 <= P.CARRIAGE_Z_MIN
+        assert P.MAST_SLOT_Z1 >= P.CARRIAGE_Z_MAX
+        overrun = (P.CARRIAGE_Z_MIN - P.MAST_SLOT_Z0) + (P.MAST_SLOT_Z1 - P.CARRIAGE_Z_MAX)
+        assert overrun == pytest.approx(2 * P.MAST_SLOT_MARGIN)
+        assert P.MAST_SLOT_LEN < P.FIXTURE_TRAVEL + 1.0
+
+    def test_the_slot_ends_are_drilled_round(self):
+        """An undrilled slot end is a crack starter. The top one also has to
+        pass an HDMI connector so the welded cap is never disturbed."""
+        assert P.MAST_SLOT_END_DIA >= P.MAST_SLOT_W
+        assert P.MAST_SLOT_KEYHOLE_DIA > P.MAST_SLOT_W
+        assert P.MAST_SLOT_KEYHOLE_DIA < P.MAST_OD - 2 * P.MAST_WALL
+
+    def test_the_line_pass_takes_the_camera_connector_without_a_gash(self):
+        """The camera lives in the lightbox now, so its HDMI connector has to get
+        into the bore — but the entry is stretched along the tube's axis, not
+        opened out across it. Width sets how far the hole wraps the circumference,
+        and a hole that wraps far enough breaks out tangential."""
+        assert P.MAST_LINE_PASS_H > P.MAST_LINE_PASS_DIA, "an obround, not a circle"
+        assert P.MAST_LINE_PASS_H >= 0.75, "passes the connector lengthwise"
+        assert P.MAST_LINE_PASS_DIA == 0.50, "width is unchanged — the wrap is unchanged"
+
+        import math
+
+        half_wrap = math.degrees(math.asin(P.MAST_LINE_PASS_DIA / P.MAST_OD))
+        assert half_wrap < 30.0, f"{half_wrap:.0f}° each side is heading for tangential"
+
     def test_mast_clears_the_rear_door(self):
         """The door is the wet bay's width; the mast is in the dry bay."""
         door_x1 = P.DIVIDER_X - P.DIVIDER_T / 2

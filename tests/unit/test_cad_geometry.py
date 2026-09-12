@@ -365,12 +365,15 @@ class TestMastDetails:
         for z in mast.strap_heights():
             assert P.MAST_BOTTOM < z < P.RAIL_BOTTOM_Z
 
-    def test_nothing_is_drilled_through_the_mast_but_the_line_pass(self):
-        """The tube is painted and shows, so it carries exactly one hole.
+    def test_the_only_cuts_are_the_line_pass_and_the_cable_slot(self):
+        """The tube is painted and shows, so account for every cut in it.
 
-        Compare the built shaft against a plain length of tube: the difference
-        has to be the line pass and nothing else. The U-bolts go round the tube
-        precisely so this stays true.
+        Compare the built shaft against a plain length of tube. The difference
+        is bracketed: at least the line pass plus the slot's rectangle, at most
+        that plus both end holes taken as whole circles — they overlap the
+        rectangle, so the true figure sits inside. Anything outside the bracket
+        means a cut nobody decided on. The U-bolts go round the tube precisely
+        so this stays tight.
         """
         import math
 
@@ -378,14 +381,47 @@ class TestMastDetails:
         plain = (math.pi / 4
                  * (P.MAST_OD**2 - (P.MAST_OD - 2 * P.MAST_WALL) ** 2)
                  * length)
-        one_hole = math.pi / 4 * P.MAST_LINE_PASS_DIA**2 * P.MAST_WALL
         removed = plain - mast.build_shaft().volume / P.IN**3
-        assert removed == pytest.approx(one_hole, rel=0.25)
+
+        straight = P.MAST_LINE_PASS_H - P.MAST_LINE_PASS_DIA
+        line_pass = (math.pi / 4 * P.MAST_LINE_PASS_DIA**2
+                     + P.MAST_LINE_PASS_DIA * straight) * P.MAST_WALL
+        slot = P.MAST_SLOT_W * P.MAST_SLOT_LEN * P.MAST_WALL
+        ends = (math.pi / 4
+                * (P.MAST_SLOT_KEYHOLE_DIA**2 + P.MAST_SLOT_END_DIA**2)
+                * P.MAST_WALL)
+
+        assert line_pass + slot <= removed * 1.02
+        assert removed <= (line_pass + slot + ends) * 1.02
+
+    def test_the_slot_reaches_neither_end_of_the_tube(self):
+        """The structural claim: the section is opened in the middle only.
+
+        A slot running out of either end would leave the tube unclosed there and
+        cost far more torsional stiffness than the span alone does. The welded
+        cap is the top closure and stays welded — a removable one would be worse.
+        """
+        assert mast.shaft_top() - P.MAST_SLOT_Z1 > 3.0, "closed tube under the cap"
+        assert P.MAST_SLOT_Z0 - P.MAST_BOTTOM > 12.0, "closed tube below the slot"
+
+    def test_the_slot_covers_the_whole_carriage_travel(self):
+        """The lead leaves the bore at the collar's mid-height, so the slot has
+        to cover the carriage band — not the fixture's — at both extremes."""
+        assert P.MAST_SLOT_Z0 <= P.CARRIAGE_Z_MIN
+        assert P.MAST_SLOT_Z1 >= P.CARRIAGE_Z_MAX
+
+    def test_the_slot_is_cut_in_the_rear_wall_only(self):
+        """Cut from behind, three walls deep, centred in the rear wall. It must
+        not reach the front wall or the tube becomes two half-shells."""
+        reach = mast.slot_y() - P.MAST_WALL * 1.5
+        front_wall_inside = P.MAST_Y - P.MAST_OD / 2 + P.MAST_WALL
+        assert reach > front_wall_inside
+        assert mast.slot_y() + P.MAST_WALL * 1.5 > P.MAST_Y + P.MAST_OD / 2
 
     def test_line_pass_is_over_the_pan_rim_and_under_the_rail(self):
         y, z = mast.line_pass()
-        assert z - P.MAST_LINE_PASS_DIA / 2 > P.SHELF_H + P.RESERVOIR_H
-        assert z + P.MAST_LINE_PASS_DIA / 2 < P.RAIL_BOTTOM_Z
+        assert z - P.MAST_LINE_PASS_H / 2 > P.SHELF_H + P.RESERVOIR_H
+        assert z + P.MAST_LINE_PASS_H / 2 < P.RAIL_BOTTOM_Z
         assert P.PARTITION_Y1 < y < P.REAR_INSIDE_Y
 
 

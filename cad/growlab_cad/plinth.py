@@ -272,7 +272,10 @@ def build_divider() -> Part:
         DIVIDER_X - P.DIVIDER_T / 2, DIVIDER_X + P.DIVIDER_T / 2,
         P.PARTITION_Y0, IY1, FLOOR_TOP, RAIL_BOTTOM,
     )
-    divider -= cyl_x(P.MAST_LINE_PASS_DIA, P.DIVIDER_T * 3, at=(DIVIDER_X, LINE_PASS_Y, LINE_PASS_Z))
+    # Sized to the mast's obround height, not its width: the divider is flat ply
+    # with no circumference to wrap, so a plain round hole can pass the camera
+    # connector that forced the mast's pass to stretch.
+    divider -= cyl_x(P.MAST_LINE_PASS_H, P.DIVIDER_T * 3, at=(DIVIDER_X, LINE_PASS_Y, LINE_PASS_Z))
     return labelled(divider, "bay_divider")
 
 

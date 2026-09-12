@@ -246,6 +246,40 @@ MAST_CAP_T = 0.25  # CHOICE: a disc welded over the top. Nothing lands on it any
 MAST_LINE_PASS_DIA = 0.50  # was 0.75, which is half the diameter of this tube
                            # and would have been a gash rather than a hole. The
                            # drip line and the LED cable both pass 0.50.
+MAST_LINE_PASS_H = 1.00  # The entry is an **obround**, 0.50 wide x 1.00 tall, not
+                         # a bigger circle. The camera moved into the lightbox on
+                         # 2026-09-12 and its HDMI connector will not pass a half
+                         # inch — but opening the hole to Ø1.00 would wrap 84° of
+                         # this tube's circumference and break out tangentially,
+                         # the exact gash Ø0.75 was rejected for. Wrap is set by
+                         # the width across the circumference, so stretching the
+                         # hole *along the tube's axis* costs nothing: same 0.50
+                         # width, same ±19.5° of wrap, and the connector passes
+                         # lengthwise.
+
+# The cable slot (2026-09-12). The LED pair, the camera's HDMI and the fixture
+# fans' lead run up the bore and out to the moving collar through a longitudinal
+# slot in the *rear* face, so no cable is ever visible on the mast. It spans the
+# collar's travel and nothing more: the tube stays closed for 3.75 in below the
+# cap and for 56 in below the slot's lower end, so neither end of the section is
+# opened and the welded cap keeps its job as an end closure.
+#
+# **The cost is torsion, and it is real.** An open section is ~365x less stiff in
+# torsion than a closed one (J 0.151 -> 0.00041 in^4), so a sideways shove at the
+# fixture twists the mast elastically where it used to be rigid — about 6 deg
+# under a casual bump, 20 deg under a hard one, worst at full lift where the
+# whole slot lies between the collar and closed tube. It returns; nothing yields.
+# Bending is untouched in any way that matters: 3.1% of allowable against 2.7%.
+# This buys the invisibility the piece is built on, and it is the reason the
+# coiled external lead `canopy.py` used to describe is gone.
+MAST_SLOT_W = 0.25  # CHOICE: passes the cable, not its connector
+MAST_SLOT_MARGIN = 0.375  # CHOICE: slot beyond the collar's travel at each end so
+                          # the lead is never pinched at either extreme
+MAST_SLOT_KEYHOLE_DIA = 0.625  # CHOICE: at the top end. Passes an HDMI connector at
+                               # assembly so the cap is never unwelded, and is a
+                               # far better crack arrest than the slot's own width.
+MAST_SLOT_END_DIA = 0.25  # the bottom end, drilled round. An undrilled slot end is
+                          # a crack starter; this is not optional.
 
 
 # ---------------------------------------------------------------------------
@@ -374,7 +408,15 @@ FIXTURE_TRAVEL = FIXTURE_Z_MAX - FIXTURE_Z_MIN  # 21.0
 
 # The arm's top face, which is where the carriage is centred.
 CARRIAGE_Z = FIXTURE_Z + FIXTURE_H
-CARRIAGE_Z_MAX = FIXTURE_Z_MAX + FIXTURE_H
+CARRIAGE_Z_MIN = FIXTURE_Z_MIN + FIXTURE_H  # 56.375
+CARRIAGE_Z_MAX = FIXTURE_Z_MAX + FIXTURE_H  # 77.375
+
+# The cable slot spans the collar's travel, plus a margin at each end. The cable
+# leaves the bore at the collar's mid-height, so it is the *carriage* band the
+# slot has to cover, not the fixture's.
+MAST_SLOT_Z0 = CARRIAGE_Z_MIN - MAST_SLOT_MARGIN  # 56.0
+MAST_SLOT_Z1 = CARRIAGE_Z_MAX + MAST_SLOT_MARGIN  # 77.75
+MAST_SLOT_LEN = MAST_SLOT_Z1 - MAST_SLOT_Z0  # 21.75
 
 # The mast is now as tall as the travel needs, not as tall as one fixed head
 # position. It stops a little above the collar at full lift — enough that the
