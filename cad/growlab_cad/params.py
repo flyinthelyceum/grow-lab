@@ -246,7 +246,7 @@ MAST_CAP_T = 0.25  # CHOICE: a disc welded over the top. Nothing lands on it any
 MAST_LINE_PASS_DIA = 0.50  # was 0.75, which is half the diameter of this tube
                            # and would have been a gash rather than a hole. The
                            # drip line and the LED cable both pass 0.50.
-MAST_LINE_PASS_H = 1.00  # The entry is an **obround**, 0.50 wide x 1.00 tall, not
+MAST_LINE_PASS_H = 0.85  # The entry is an **obround**, 0.50 wide x 0.85 tall, not
                          # a bigger circle. The camera moved into the lightbox on
                          # 2026-09-12 and its HDMI connector will not pass a half
                          # inch — but opening the hole to Ø1.00 would wrap 84° of
@@ -256,6 +256,15 @@ MAST_LINE_PASS_H = 1.00  # The entry is an **obround**, 0.50 wide x 1.00 tall, n
                          # hole *along the tube's axis* costs nothing: same 0.50
                          # width, same ±19.5° of wrap, and the connector passes
                          # lengthwise.
+                         #
+                         # 0.85 rather than 1.00 because the pass lives in a
+                         # 1.29 in window — pan rim below, rail above — and the
+                         # obround grows *upward only* so the bottom edge keeps
+                         # the clearance over the rim the old hole had. See
+                         # ``plinth.LINE_PASS_Z``. It passes a slim HDMI
+                         # connector (~0.60 x 0.30); the booted kind on a thick
+                         # cable will not go, and that cable is wrong for the
+                         # bore's slack anyway.
 
 # The cable slot (2026-09-12). The LED pair, the camera's HDMI and the fixture
 # fans' lead run up the bore and out to the moving collar through a longitudinal
@@ -428,6 +437,14 @@ MAST_TOP = CARRIAGE_Z_MAX + CARRIAGE_H / 2 + MAST_HEAD
 # the slotted supports read as a sensible range. The pan must clear the rail
 # by RESERVOIR_LIFT_CLEARANCE to be lifted off the shelf and slid out.
 SHELF_H = float(math.floor(RAIL_BOTTOM_Z - RESERVOIR_LIFT_CLEARANCE - RESERVOIR_H))  # 28
+
+# Where the mast's line pass sits, in the 1.29 in window between the pan's rim
+# and the rail. The obround grows **upward only** from where the old Ø0.50
+# hole's bottom edge was, because that edge's 0.15 in clearance over the rim is
+# what keeps the loom above the water line. Growing it symmetrically put the
+# lower edge below the rim.
+MAST_LINE_PASS_BOTTOM_Z = SHELF_H + RESERVOIR_H + 0.4 - MAST_LINE_PASS_DIA / 2  # 34.05
+MAST_LINE_PASS_Z = MAST_LINE_PASS_BOTTOM_Z + MAST_LINE_PASS_H / 2  # 34.475
 WATER_LOW = SHELF_H + WATER_LOW_ABOVE_SHELF  # 30.0
 WATER_FULL = SHELF_H + WATER_FULL_ABOVE_SHELF  # 32.1
 

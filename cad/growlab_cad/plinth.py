@@ -47,7 +47,10 @@ DOOR_Z0, DOOR_Z1 = FLOOR_TOP, RAIL_BOTTOM
 
 # Where the drip line and the LED cable leave the wet bay for the mast: over
 # the pan's rim, through the divider, into the shaft's side. CHOICE.
-LINE_PASS_Z = P.SHELF_H + P.RESERVOIR_H + 0.4
+# Derived in params.py with the rest of the numbers — see MAST_LINE_PASS_Z for
+# why the obround grows upward only.
+LINE_PASS_BOTTOM_Z = P.MAST_LINE_PASS_BOTTOM_Z
+LINE_PASS_Z = P.MAST_LINE_PASS_Z
 LINE_PASS_Y = P.RESERVOIR_Y1 - 1.0
 
 

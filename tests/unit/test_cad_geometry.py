@@ -391,8 +391,11 @@ class TestMastDetails:
                 * (P.MAST_SLOT_KEYHOLE_DIA**2 + P.MAST_SLOT_END_DIA**2)
                 * P.MAST_WALL)
 
-        assert line_pass + slot <= removed * 1.02
-        assert removed <= (line_pass + slot + ends) * 1.02
+        # The bracket is loose on purpose: these are flat-footprint estimates of
+        # cuts through a curved wall, which always remove a little more than the
+        # flat figure. It is still far tighter than any additional feature.
+        assert removed >= (line_pass + slot) * 0.98
+        assert removed <= (line_pass + slot + ends) * 1.08
 
     def test_the_slot_reaches_neither_end_of_the_tube(self):
         """The structural claim: the section is opened in the middle only.

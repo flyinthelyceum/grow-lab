@@ -163,6 +163,21 @@ class TestDerivedGeometry:
         half_wrap = math.degrees(math.asin(P.MAST_LINE_PASS_DIA / P.MAST_OD))
         assert half_wrap < 30.0, f"{half_wrap:.0f}° each side is heading for tangential"
 
+    def test_the_obround_still_fits_between_the_pan_rim_and_the_rail(self):
+        """The pass lives in a 1.29 in window and the obround takes most of it.
+
+        Growing it symmetrically put the lower edge below the pan rim, which is
+        what holds the loom above the water line. It grows upward only, so the
+        bottom edge sits where the old Ø0.50 hole's did. Asserted here as well as
+        in the geometry suite because it is pure arithmetic and should fail fast.
+        """
+        rim = P.SHELF_H + P.RESERVOIR_H
+        assert P.MAST_LINE_PASS_BOTTOM_Z > rim, "the loom stays above the pan rim"
+        assert P.MAST_LINE_PASS_Z - P.MAST_LINE_PASS_H / 2 == pytest.approx(
+            P.MAST_LINE_PASS_BOTTOM_Z
+        )
+        assert P.MAST_LINE_PASS_Z + P.MAST_LINE_PASS_H / 2 < P.RAIL_BOTTOM_Z, "under the rail"
+
     def test_mast_clears_the_rear_door(self):
         """The door is the wet bay's width; the mast is in the dry bay."""
         door_x1 = P.DIVIDER_X - P.DIVIDER_T / 2
