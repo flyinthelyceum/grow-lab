@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-12 (the wiring becomes finish work)
+
+### Added
+- **`MOUNTING_&_CABLING.md` — the physical half of the electrical story.** `WIRING_&_BUSES.md` has always said what connects to what; nothing said where it bolts, what it plugs into, or how the cable gets there. The station puts its apparatus behind a clear fascia on a white ground, so the loom is finish work rather than housekeeping, and the instrument case is supposed to come out on a bench in under a minute — which only happens if the disconnect is designed. Six mounting zones, a connector standard, a conductor schedule for the case umbilical, routing and lacing, a colour code, and a bench-to-station migration order that never leaves the prototype dead.
+
+### Decided
+- **No Dupont jumpers anywhere in the station.** No retention, no strain relief, no keying, no label. The I²C bus moves to JST-SH (STEMMA QT) — the AS7341, BME280 and ADS1115 already carry the connector — and every screw terminal gets a bootlace ferrule. These two changes are most of the visible improvement and most of the reliability one.
+- **Two standards, not one.** Inside the instrument case, optimise for service speed and labelling; nobody sees it. In the console bay behind the glass, it is finish work: white or grey sleeving, planned runs, waxed lacing rather than zip ties, and no visible slack. Most bench-to-station mistakes are applying the first standard to the second zone.
+- **Power takes Path A in V1:** commercial sealed adapters, retained and mounted, one cord to the GFCI, DC distributed on a 35 mm DIN rail. Nothing at mains potential is hand-terminated. The IEC-inlet-and-DIN-supplies version is better and is deferred, because it puts hand-terminated mains in a metal cabinet beside 13 litres of water.
+
+### Found
+- **A rear disconnect does not fit.** The docs imply the case unplugs at the back, but there is **under half an inch behind it** (3.00 in bay, 2.75 in case). A mated D-sub with a hood needs about an inch. The bay is the full 20 in of cabinet width against a 9.50 in case, so there is ~5 in clear either side: **the umbilical goes on the side wall with a right-angle hood**, turning down toward the chase the loom already uses. It is visible through the fascia, so it needs to look like instrument hardware. This is a `cad/case.py` change and it is wanted before the case blank is cut.
+- **Standard bulkhead BNCs would silently undo the i3's isolation.** `BOM.md` struck the ~$56 inline isolators because the i3 InterLink already carries two isolated EZO slots, which is correct. But bulkheading both probe coaxes through the steel case with panel-grounding connectors bonds both shields to the case and therefore to each other — exactly the condition the isolated slots exist to prevent. Fit **isolated** bulkhead BNCs, or pass each cable uninterrupted through its own gland. The symptom of getting this wrong is pH that moves when EC is read, and a week spent looking for it in software.
+- **Tapped M3 in 16 ga is about three threads**, carrying a 4.05 lb plate that is removed at every service. Use M3 self-clinching nuts in the case flanges, or form-tap; do not cut threads in sheet and hope. Contradicts what `V1_PHYSICAL_BUILD.md` currently specifies — flagged, not yet resolved.
+- **"The sensor loom never leaves the cabinet" is no longer true.** The AS7341 mounts at canopy height (~43 in against a 36 in cabinet top), the BME280 reads canopy air, and the camera has to see the plant. Three runs leave. The mast bore is the obvious path and its stated contents need amending.
+- **The canopy I²C leg is the run most likely to fail** — ~1.5 m of thin untwisted cable on a bus designed to cross a PCB. Run it at 100 kHz on Cat5e (each signal paired with a ground) before reaching for an active extender, and suspect the cable before the driver when a sensor drops out.
+- **The DC rails are unfused.** Not specified anywhere until now; a DIN fuse holder per rail, sized just above measured draw.
+
 ## 2026-09-05 (the lightbox gets a material)
 
 ### Decided

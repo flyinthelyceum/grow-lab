@@ -380,6 +380,10 @@ slice behind the instrument face, partitioned from the wet bay.
   console bay's vents are on the far side from the wet bay's.
 - **Cable glands** on every penetration; drip loops on all external cables.
 - **Mains and DC/signal separated** inside; keep the EZO probe leads clean.
+- **Mounting, connectors and the loom:** [MOUNTING_&_CABLING.md](MOUNTING_&_CABLING.md).
+  It proposes the case umbilical on the side wall rather than the back (there is under
+  half an inch behind the case), isolated bulkhead BNCs for the probes, and clinch nuts
+  rather than tapped 16 ga in the case flanges.
 - **Ventilation** for PSU + LED-driver heat, drawn away from the wet zone.
 - Houses: Raspberry Pi, ESP32, relay board, PSU (5V), 12V fan adapter, PWM-120-24 driver,
   meter driver — behind the face and below it; the dry bay behind the partition takes
