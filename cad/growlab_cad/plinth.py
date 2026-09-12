@@ -47,7 +47,10 @@ DOOR_Z0, DOOR_Z1 = FLOOR_TOP, RAIL_BOTTOM
 
 # Where the drip line and the LED cable leave the wet bay for the mast: over
 # the pan's rim, through the divider, into the shaft's side. CHOICE.
-LINE_PASS_Z = P.SHELF_H + P.RESERVOIR_H + 0.4
+# Derived in params.py with the rest of the numbers — see MAST_LINE_PASS_Z for
+# why the obround grows upward only.
+LINE_PASS_BOTTOM_Z = P.MAST_LINE_PASS_BOTTOM_Z
+LINE_PASS_Z = P.MAST_LINE_PASS_Z
 LINE_PASS_Y = P.RESERVOIR_Y1 - 1.0
 
 
@@ -272,7 +275,10 @@ def build_divider() -> Part:
         DIVIDER_X - P.DIVIDER_T / 2, DIVIDER_X + P.DIVIDER_T / 2,
         P.PARTITION_Y0, IY1, FLOOR_TOP, RAIL_BOTTOM,
     )
-    divider -= cyl_x(P.MAST_LINE_PASS_DIA, P.DIVIDER_T * 3, at=(DIVIDER_X, LINE_PASS_Y, LINE_PASS_Z))
+    # Sized to the mast's obround height, not its width: the divider is flat ply
+    # with no circumference to wrap, so a plain round hole can pass the camera
+    # connector that forced the mast's pass to stretch.
+    divider -= cyl_x(P.MAST_LINE_PASS_H, P.DIVIDER_T * 3, at=(DIVIDER_X, LINE_PASS_Y, LINE_PASS_Z))
     return labelled(divider, "bay_divider")
 
 

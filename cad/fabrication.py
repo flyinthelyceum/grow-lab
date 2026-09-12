@@ -267,12 +267,16 @@ def cutlist() -> dict:
                 {"part": "Frame ring, front/back", "qty": 2, "length": ring_x,
                  "note": "back member notched for the mast"},
                 {"part": "Mast", "qty": 1, "length": P.MAST_TOP,
-                 "note": f"floor to cap; one Ø{P.MAST_LINE_PASS_DIA} side line pass, "
-                         f"grommeted. No other hole — {P.MAST_STRAP_COUNT} U-bolts go "
-                         "round it"},
+                 "note": f"floor to cap. Side line pass {P.MAST_LINE_PASS_DIA} x "
+                         f"{P.MAST_LINE_PASS_H} obround, grommeted. Rear cable slot "
+                         f"{P.MAST_SLOT_W} wide, {P.MAST_SLOT_Z0}-{P.MAST_SLOT_Z1}, "
+                         f"BOTH ENDS DRILLED ROUND (Ø{P.MAST_SLOT_KEYHOLE_DIA} top, "
+                         f"Ø{P.MAST_SLOT_END_DIA} foot) — an undrilled end cracks. "
+                         f"Deburr the slot. {P.MAST_STRAP_COUNT} U-bolts go round it"},
                 {"part": "Mast cap", "qty": 1, "length": P.MAST_OD,
-                 "note": f"Ø{P.MAST_OD} disc, {P.MAST_CAP_T} plate, welded; "
-                         f"Ø{P.MAST_LINE_PASS_DIA} grommet for the LED lead"},
+                 "note": f"Ø{P.MAST_OD} disc, {P.MAST_CAP_T} plate, welded solid — "
+                         "no grommet, no removable cap. It is the tube's end "
+                         "closure and the slot stops short of it"},
                 {"part": "Carriage collar", "qty": 1, "length": P.CARRIAGE_H,
                  "note": f"Ø{_canopy.collar_od():.3f} over Ø{_canopy.collar_id():.3f} bore, "
                          f"{P.CARRIAGE_WALL} wall; front pad for the arm, rear boss "

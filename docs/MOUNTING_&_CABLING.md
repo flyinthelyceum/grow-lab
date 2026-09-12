@@ -44,7 +44,8 @@ Six zones. Each has one environment, one access method, and one cable discipline
 | **3 — Console bay** | Nothing mounted. The loom crosses it | Fascia off | Dry, on show |
 | **4 — Lower cabinet** | PWM-120-24 driver, 5 V PSU, 12 V adapter, pump relay | Removable lower ply front | Dry, hot |
 | **5 — Wet bay** | Pan, pump, pH / EC / DS18B20 probes | Rear door | **Wet** |
-| **6 — Mast and canopy** | LED boards + heatsinks, AS7341, BME280, camera, fan | Ladder, collar released | Dry, high, hard to reach |
+| **6 — Lightbox** | LED boards + heatsinks, camera, gust fans | Ladder, collar released | Dry, high, hard to reach |
+| **7 — The block** | AS7341, BME280, ADS1115, moisture probe | Lift the printed bar off | Damp, drip, lit |
 
 Two consequences worth stating plainly.
 
@@ -149,7 +150,9 @@ anything that gets closed up.
 
 | Class | Connector | Why |
 |---|---|---|
-| I²C to sensor breakouts | **JST-SH 4-pin (STEMMA QT / Qwiic)** | Keyed, polarised, daisy-chainable, already fitted to the AS7341, BME280 and ADS1115. Removes the largest single source of loose wire |
+| I²C at each sensor | **JST-XH 4-pin pigtail** | The boards here are generic 0.1 in-header parts, not Adafruit — they have no Qwiic socket, so the connector gets added rather than assumed. Keyed, latching, ~$20 for the crimp tool |
+| I²C distribution | **A four-rail bus: SDA / SCL / 3V3 / GND** | No usable off-the-shelf hub exists for 0.1 in boards; every Qwiic hub assumes JST-SH. Four multi-way push-in blocks on the case back panel, one feed in from the Pi, every branch landing with ferrules. ~$12, and adding a sensor later is four push-ins |
+| Atlas pH / EC probes | **Nothing — the i3 already has BNCs** | Three BNCs are soldered to the i3's own board edge, one per EZO slot. The probe mates directly. It is the cleanest termination in the build |
 | Pi GPIO to discrete loads | **Screw terminal breakout + bootlace ferrules** | The RSP-GPIO-8 is already in the build. Ferrules are what make it look made |
 | Case ↔ station umbilical | **One multipin, side wall, right-angle hood** — see below | Makes "unplugged at one terminal block" literally true |
 | pH and EC probes | **Isolated bulkhead BNC** — see below | Standard BNC here silently destroys the i3's isolation |
@@ -232,13 +235,12 @@ status by being cut from calipered parts, and this has not been yet.
 | 1 | Pi supply | 5 V, GND (×2 each) | Zone 4 PSU | 18 AWG. Double the pins |
 | 2 | Pump relay | GPIO, 5 V, GND | Zone 4 relay | **GPIO23, not 17** — see below |
 | 3 | LED driver dim | PWM, GND | Zone 4 driver | From the ESP32, in the case |
-| 4 | Canopy fan | PWM, TACH, GND | Zone 6 | 12 V reaches the fan from Zone 4 directly, not through the case |
-| 5 | Canopy I²C | SDA, SCL, 3V3, GND | Zone 6 | AS7341 + BME280 daisy-chained |
+| 4 | Gust fans | PWM, TACH, GND | Zone 6 | In the lightbox. 12 V reaches them from Zone 4, not through the case |
+| 5 | Block I²C | SDA, SCL, 3V3, GND | Zone 7 | **One run.** AS7341, BME280 and ADS1115 all live in the block's printed bar |
 | 6 | Reservoir temp | DATA, 3V3, GND | Zone 5 | DS18B20, 4.7 kΩ pull-up stays at the Pi end |
-| 7 | Media moisture | SIG, VCC, GND | Zone 5 | SEN0308 analog, if the ADS1115 stays in the case |
-| 8 | pH probe | coax | Zone 5 | Isolated bulkhead — see above |
-| 9 | EC probe | coax | Zone 5 | Isolated bulkhead — see above |
-| 10 | Camera | CSI ribbon | Zone 6 | **Own path.** No connector above carries this |
+| 7 | pH probe | coax | Zone 5 | Plugs straight into the i3's own BNC — gland it through, don't bulkhead |
+| 8 | EC probe | coax | Zone 5 | Same. Bulkheading both would bond the two isolated domains |
+| 9 | Camera | HDMI | Zone 6 | Arducam CSI-over-HDMI pair. **Own path** — no connector above carries this |
 
 ≈ 22 conductors plus two coax plus one ribbon. Hence DB-37 plus two BNCs plus a
 ribbon slot on the case's side wall — a legible, buildable back-of-instrument face.
@@ -266,18 +268,22 @@ to bundle them. In the station that means:
   the run furthest from the driver and the pump, and do not coil the slack — a coil is
   an antenna. Fold excess flat in a long S.
 
-### The canopy I²C run is the risky one
+### The run out to the block is the risky one
 
-I²C was designed to cross a PCB, not a room. The run to the AS7341 and BME280 at canopy
-height is on the order of a metre and a half, and STEMMA QT cable is thin 28 AWG with no
-twisting. It will probably work; it is the leg most likely to produce intermittent
-sensor dropouts that look like software bugs.
+I²C was designed to cross a PCB, not a room. The run from the case to the block's printed
+bar is roughly a metre. It will probably work; it is the leg most likely to produce
+intermittent sensor dropouts that look like software bugs.
+
+It got shorter and simpler when the sensors moved into the block: the AS7341, BME280 and
+ADS1115 share one bar, so they daisy-chain locally and **one four-conductor cable** leaves
+it. Three runs collapsed into one, and the moisture probe's analog lead now stays short,
+which is worth more than it sounds — analog over a long lead is the fragile part.
 
 Mitigations, in the order to try them:
 
 1. Run the bus at **100 kHz**, not 400.
 2. Use **Cat5e for the long leg** — SDA with a ground in one pair, SCL with a ground in
-   another — and adapt to STEMMA QT at each end. The pairing is what buys the margin.
+   another. The pairing is what buys the margin.
 3. If it still misbehaves, fit an active extender (LTC4311 or P82B715) rather than
    lowering the clock further.
 
@@ -394,7 +400,9 @@ Nothing here blocks a phase; all of it is Phase F (the enclosure). Rough figures
 | Item | Approx. | Note |
 |---|---|---|
 | Bootlace ferrule kit + crimper | $25 | Non-negotiable. Buy first |
-| STEMMA QT / Qwiic cables, assorted | $15 | 50 mm, 100 mm, 200 mm |
+| JST-XH crimp tool + connector kit | $25 | One pigtail per generic sensor board |
+| Push-in terminal blocks for the four-rail I²C bus | $12 | SDA / SCL / 3V3 / GND |
+| Arducam CSI-to-HDMI extender pair (B0091) | $28 | **Camera Module 3 is supported** — verified. Ships as a pack of two, which is one set |
 | DB-37 panel connector pair + right-angle hoods | $25 | Solder-cup is fine at this count |
 | **Isolated** bulkhead BNC ×2 | $20 | Isolated, not standard — see above |
 | M3 self-clinching nuts + M2.5 / M2 standoff kit | $20 | Clinch nuts for the case flanges |
@@ -420,8 +428,9 @@ each step, so there is never a day where nothing works.
 
 1. **Label what exists, before touching it.** Every conductor, both ends, today. The
    current wiring is only fully understood while it is in front of you.
-2. **Convert the I²C bus to STEMMA QT.** Biggest visual win, lowest risk, entirely
-   reversible. `i2cdetect` proves it before and after.
+2. **Build the four-rail I²C bus and crimp a JST-XH pigtail onto every sensor.**
+   Biggest visual win, lowest risk, entirely reversible. `i2cdetect` proves it before
+   and after.
 3. **Ferrule every screw terminal** on the GPIO breakout. An hour's work.
 4. **Build the Zone 4 rail** on the bench as a standalone assembly and swap the power
    over to it in one session. It is the only step with a real down-window.
@@ -443,20 +452,31 @@ Things this document raises that it cannot settle.
 - **The umbilical is a CAD change.** A side-wall connector cutout does not exist in
   `cad/case.py` and the Ø 0.75 rear grommet pass may be redundant once it does.
   Model before the case blank is cut.
-- **The i3's probe termination is unverified** — on-board BNC or flying leads. It
-  decides the inside jumper and possibly the bulkhead choice.
+- ~~**The i3's probe termination is unverified.**~~ **Settled 2026-09-12** from the
+  datasheet drawings: **three BNCs soldered to the board edge**, one per EZO slot, with
+  the circuits on 3-pin headers and a 40-pin pass-through along the top. The probe mates
+  directly — nothing to design. It also makes the isolation warning concrete rather than
+  theoretical: the barrier sits *upstream* of those BNCs, so bulkheading both through a
+  common steel panel bonds the two isolated domains to each other. **Gland the probe
+  cables through instead** and let them plug straight into the board.
 - **The i3's isolated slot seating is unverified.** Already flagged in `BOM.md` and
   still open. It is the whole basis for striking the inline isolators.
-- **"The sensor loom never leaves the cabinet" is no longer true.** `V1_PHYSICAL_BUILD.md`
-  § Mast asserts it, but the AS7341 mounts at canopy height (~43 in, against a 36 in
-  cabinet top), the BME280 monitors canopy air, and the camera must see the plant.
-  Three sensor runs leave the cabinet. Either the sentence needs amending or the mast
-  bore's stated contents do — right now the doc and the sensor stack disagree, and the
-  mast bore is the obvious path for all three.
+- ~~**"The sensor loom never leaves the cabinet" is no longer true.**~~ **Resolved by
+  moving the sensors, not the sentence.** The AS7341, BME280 and ADS1115 now live in a
+  printed bar on the block's centre-rear, and the camera lives inside the lightbox. The
+  mast carries only fixture services. No sensor is mounted on the mast, and the canopy
+  gained no visible hardware.
 - **The case flange fixing method** (tapped versus clinch nuts) contradicts what
   `V1_PHYSICAL_BUILD.md` currently specifies. Resolve before the flanges are made.
-- **Conductor count is a draft.** Verify against boards in hand before buying a
-  connector, particularly whether the ADS1115 stays in the case or moves to the media.
+- **Conductor count is a draft.** Verify against the boards in hand before buying a
+  connector.
+- **Slack inside the mast bore is not proven.** At the bottom of travel there is ~21 in
+  of spare cable inside a 1.37 in bore. This project already has history with something
+  jamming in that bore — the counterweight. **Mock it up with the real cables before the
+  slot is cut**, and use thin, flexible stock: ultra-slim HDMI, silicone-jacket 18 AWG.
+- **Keep drip-line joints out of 34–45 in.** Below the slot the bore is shared between the
+  drip line and three electrical runs. A joint that weeps inside a tube full of cable is
+  the one failure this arrangement invites.
 
 ---
 

@@ -27,11 +27,15 @@ bolts, take the head's weight, slide, re-tighten. Twelve pounds at chest height
 is a lift, not a nudge. It is also something that happens perhaps twice in a
 growing season.
 
-**The loom.** With the slug gone the bore is the loom's again: drip line and LED
-cable up the inside, out under the cap. The drip line does not move — the
-emitters are at a fixed height. The LED cable does, over the full 21 in of
-travel, and takes up the slack in a coiled lead from the cap to the arm. That is
-noted in the build docs, not modelled here.
+**The loom.** With the slug gone the bore is the loom's again: drip line, LED
+pair, the camera's HDMI and the fixture fans' lead all up the inside. The drip
+line does not move — the emitters are at a fixed height — and leaves well below
+the travel. The other three follow the collar over the full 21 in, and leave the
+bore through the **rear cable slot** (``mast.py``) rather than the coiled lead
+from the cap this docstring used to describe. Nothing shows on the mast; the
+slack lives inside the bore. A printed shoe on the collar carries the leads from
+the slot round to the arm so they never bear on a cut steel edge — noted in the
+build docs, not modelled here.
 """
 
 from __future__ import annotations

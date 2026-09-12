@@ -196,10 +196,25 @@ The instrument head is gone from the top of the mast; the panel is in the cabine
 - **Shaft: Ø 1.5 x 0.065 round tube** (16 ga), finished in **white DTM acrylic**. Stands on
   the carcass floor in the dry bay, held to the **full-height rear panel** by 3 x 1/4-20
   U-bolts beside the divider, passes up through a notch in the rail and the tray, and ends
-  at a welded disc at 81.4 in. **The bore carries the loom:** drip line and LED cable up the
-  inside, entering through a grommeted Ø 0.50 pass in the side facing the divider, over the
-  pan's rim, and out under the cap. **The sensor loom never leaves the cabinet** — probes in
-  the tray and the pan, Pi in the console bay.
+  at a welded disc at 81.4 in. **The bore carries the loom:** drip line, the LED pair, the
+  camera's HDMI and the fixture fans' lead, entering through a grommeted **0.50 × 1.00
+  obround** in the side facing the divider, over the pan's rim. The three fixture leads
+  leave through the **rear cable slot** (below); the drip line exits lower, at the emitters.
+  **The sensor loom never leaves the cabinet** — probes in the tray and the pan, canopy
+  sensors on the block, Pi in the console bay.
+- **The rear cable slot (2026-09-12).** A 0.25 in longitudinal slot in the mast's rear face,
+  spanning 56.0 to 77.75 in — the collar's travel and a margin, nothing more. It lets the
+  fixture's leads reach a moving collar with no cable showing anywhere on the mast, and it
+  replaces the coiled external lead from the cap. Both ends are drilled round (Ø 0.625 at the
+  top, which also passes the camera connector at assembly so the cap is never unwelded;
+  Ø 0.25 at the foot). A printed shoe on the collar carries the leads through so they never
+  bear on a cut edge. **The cap stays welded** — it is the tube's end closure, and the slot
+  deliberately stops 3.75 in short of it with 56 in of closed tube below.
+  **The cost is torsion and it is real:** an open section is ~365× less stiff in torsion, so
+  a sideways shove at the fixture twists the mast elastically — roughly 6° under a casual
+  bump, 20° under a hard one, worst at full lift. It springs back and nothing yields. Bending
+  is untouched (3.1% of allowable against 2.7%). Accepted, because a visible cable on the
+  mast costs more than a twist nobody applies in normal use.
 - **Why a tube, and why this one.** The 2 x 3 hollow section this replaces was inherited
   from a spec line and never calculated. The head is 12 lb at a 5.75 in offset — 69 in-lb
   against a section modulus of 0.94 in³, so **73 psi in steel good for 21,600**: three
@@ -353,9 +368,18 @@ a scale** before the final assembly to confirm the number.
 ## Airflow
 
 - **Noctua NF-A12x25 PWM chromax.black.swap** — 120mm, 4-pin PWM, 12V, ~0.06A.
-- Driven by **25 kHz PWM on Pi GPIO18** (FanService, temperature-triggered ramp) —
-  **not a relay**. The V0 bench ran the fan always-on through a relay on GPIO6; V1
-  retires that relay. WIRING_&_BUSES.md and SYSTEM_ARCHITECTURE.md now agree on PWM.
+- Driven by **25 kHz PWM on Pi GPIO18** (FanService, **a gust field — not a
+  thermostat**) — and not a relay. The V0 bench ran the fan always-on through a
+  relay on GPIO6; V1 retires that relay. WIRING_&_BUSES.md and
+  SYSTEM_ARCHITECTURE.md now agree on PWM.
+- **The fan is for stem strength, not cooling.** `pi/drivers/fan_pwm.py` runs a
+  fractal gust field scaled by the photoperiod and stops the fan outright below a
+  calm threshold, so the air gusts rather than drones — thigmomorphogenesis, which
+  wants intermittent mechanical stimulation. It takes no temperature input by
+  design: a thermostat would still the air exactly when a cool day made it
+  unnecessary, and the plant would grow leggy in the calm. This line previously
+  read "temperature-triggered ramp", which was wrong and contradicted both the
+  code and `WIRING_&_BUSES.md`. Corrected 2026-09-12.
 - Optional tach wire back to a Pi GPIO for RPM.
 
 ## Power domains
