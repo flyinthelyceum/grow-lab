@@ -5,7 +5,7 @@ the V1 physical build moves that electronics stack into a real cinder-block vess
 with a living plant. Physical-build parts (vessel, reservoir, pump, enclosure) and
 the loop design live in [V1_PHYSICAL_BUILD.md](V1_PHYSICAL_BUILD.md).
 
-For detailed specifications see: [LIGHTING_SYSTEM.md](LIGHTING_SYSTEM.md), [IRRIGATION_SYSTEM.md](IRRIGATION_SYSTEM.md), [SENSOR_STACK.md](SENSOR_STACK.md), [WIRING_&_BUSES.md](WIRING_&_BUSES.md)
+For detailed specifications see: [LIGHTING_SYSTEM.md](LIGHTING_SYSTEM.md), [IRRIGATION_SYSTEM.md](IRRIGATION_SYSTEM.md), [SENSOR_STACK.md](SENSOR_STACK.md), [WIRING_&_BUSES.md](WIRING_&_BUSES.md), [MOUNTING_&_CABLING.md](MOUNTING_&_CABLING.md)
 
 ---
 

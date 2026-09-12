@@ -14,6 +14,10 @@ The goal is to make the hardware:
 
 The system separates **power distribution**, **sensor communication**, and **actuator control** into distinct layers.
 
+This document is the **schematic**: what connects to what, at which address, on which
+pin. For where it physically bolts, what connector it plugs into and how the cable
+gets there, see [MOUNTING_&_CABLING.md](MOUNTING_&_CABLING.md).
+
 ---
 
 # System Overview
