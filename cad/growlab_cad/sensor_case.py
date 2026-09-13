@@ -6,8 +6,10 @@ block, so the centre is the one place on it that stays open — and the one plac
 neither canopy shades. That is why it is here rather than beside a core.
 
 It is held by nothing but its own weight and a lip: the rear wall carries on
-down past the floor and bears on the block's rear face, which is all it takes to
-stop the case sliding forward. Nothing is drilled into the block, so the
+down past the floor and bears on the block's rear face from **outside** it,
+which is all it takes to stop the case sliding forward. (Outside, not flush —
+flush puts 0.08 in3 of printed plastic inside the block, which is what the
+interference check against the CMU is there to say.) Nothing is drilled, so the
 position can be lived with for a season before anyone commits a masonry bit.
 
 Two parts
@@ -216,9 +218,13 @@ def build_body() -> "Part":
     # Hollow from below. The top wall stays; the bottom is open to the plate.
     body -= box(2 * ix, 2 * iy, h - P.SC_WALL + 1.0, at=(P.SC_X, P.SC_Y, z0 - 1.0))
 
-    # The rear wall carries on down past the floor and bears on the block.
+    # The lip: the rear wall carries on down past the floor and bears on the
+    # block's rear face. It hangs **outboard** of that face, not flush with it —
+    # flush means inside, and inside means 0.08 in3 of printed plastic sharing
+    # space with the block. It stands 2 mm proud at the back, where nothing
+    # looks. Caught by the interference check against the CMU.
     lip = box(P.SC_LEN, P.SC_WALL, P.SC_LIP_DROP,
-              at=(P.SC_X, P.SC_Y + P.SC_WID / 2 - P.SC_WALL / 2, z0 - P.SC_LIP_DROP))
+              at=(P.SC_X, P.SC_Y + P.SC_WID / 2 + P.SC_WALL / 2, z0 - P.SC_LIP_DROP))
     body += lip
 
     # Diffuser recess from the top face, then the aperture through the rest of
@@ -248,7 +254,7 @@ def build_body() -> "Part":
     # neither, and the cable drops in instead of threading. The rear notch runs
     # on down through the lip, so the loom drops into a channel rather than
     # bending over an edge.
-    body -= box(P.SC_CABLE_W, P.SC_WALL * 3, P.SC_LIP_DROP + P.SC_CABLE_H,
+    body -= box(P.SC_CABLE_W, P.SC_WALL * 4, P.SC_LIP_DROP + P.SC_CABLE_H,
                 at=(P.SC_X, P.SC_Y + P.SC_WID / 2, z0 - P.SC_LIP_DROP))
     body -= box(P.SC_PROBE_W, P.SC_WALL * 3, P.SC_PROBE_H,
                 at=(P.SC_X, P.SC_Y - P.SC_WID / 2, z0))

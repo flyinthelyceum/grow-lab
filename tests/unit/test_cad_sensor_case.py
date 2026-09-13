@@ -285,9 +285,18 @@ class TestTheGeometryBuilds:
 
         bb = bbox_in(parts["body"])
         assert mm(bb["x1"] - bb["x0"]) == pytest.approx(mm(P.SC_LEN), abs=0.01)
-        assert mm(bb["y1"] - bb["y0"]) == pytest.approx(mm(P.SC_WID), abs=0.01)
+        # Deeper than the envelope by one wall: the lip hangs outboard of the
+        # block's rear face rather than flush with it.
+        assert mm(bb["y1"] - bb["y0"]) == pytest.approx(mm(P.SC_WID + P.SC_WALL), abs=0.01)
         assert bb["z1"] == pytest.approx(SC.top_face())
         assert bb["z0"] == pytest.approx(SC.plate_top() - P.SC_LIP_DROP)
+
+    def test_the_lip_hangs_outside_the_block(self, parts):
+        """Flush means inside. The body may reach past the block's rear face but
+        must never reach in front of it below the block's top."""
+        from cad.growlab_cad._shapes import bbox_in
+
+        assert bbox_in(parts["body"])["y1"] > P.CMU_Y + P.CMU_W / 2
 
     def test_the_two_halves_do_not_interfere(self, parts):
         shared = (parts["body"] & parts["base"]).volume / P.IN**3
