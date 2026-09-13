@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-13 (the AS7341 in hand)
+
+### Found
+- **The AS7341 designed to on 2026-09-13 is not the one in hand.** The case was drawn to a vendor datasheet for a 40 × 20 T-shaped breakout with its sensor on a tongue at one end. A photo of the actual board — the small square generic — shows about 21 × 16 with the sensor near mid-height, 3 mm from one edge, and a Ø3 mounting hole on the sensor's own row 6.7 mm inboard. Scaled off the photo by its 0.1 in header-pad pitch, good to about half a millimetre; four numbers to caliper before printing.
+
+### Changed
+- **The case is 56 long, not 78.** The 78 was forced by a board that does not exist here. The length is now set by the ADS1115 on the plate between the inlet vents and the corner bosses.
+- **The AS7341 is screwed, not taped.** One M2.5 up through the board's own hole into a boss hanging from the top wall, with the baffle collar as the second contact. Two points fix position and rotation; a ring of contact stops rocking. The one board whose location changes a reading is now the most precisely located thing in the case.
+- **The boss and the collar merge into one lozenge.** They cannot both fit 6.7 mm apart at the sizes each needs; rather than thin either, they join. The bore is cut last, through the union, and the test now checks that the bore is a clear circle rather than that the two are separate solids.
+- **The BME280 moved up beside the AS7341 and hangs sensor-side down**, facing the cavity's airflow rather than a 2 mm gap of dead air under the ceiling. The ADS1115 alone sits on the plate, centred, which is what lets the corner bosses clear it.
+- **No internal tie posts.** They chopped the plate's clear run. The cable notch is a shade under the Cat5e for a friction fit, and the zip tie goes outside the wall.
+
 ## 2026-09-13 (the canopy sensor case)
 
 ### Added

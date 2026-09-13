@@ -334,12 +334,15 @@ restated because it is the one that gets skipped when you are tired.
 ## The canopy sensor case
 
 Modelled in `cad/growlab_cad/sensor_case.py`; CI writes STLs to `cad/out/print/`.
-**78 × 27 × 18 mm**, matte white, on the CMU's centre-rear. Two printed parts.
+**56 × 27 × 18 mm**, matte white, on the CMU's centre-rear. Two printed parts.
 
-The length is not a style choice. The AS7341 breakout is T-shaped, 40 × 20, with
-its sensor about 5 mm from one end of the board — so with the port centred on the
-sensor, 35 mm of board has to lie on one side of it. The 32 mm of dead space that
-leaves is where the ADS1115 ended up, which is the only reason it fits at all.
+The first cut was 78 long, drawn to a vendor datasheet for a 40 × 20 T-shaped
+AS7341 with its sensor on a tongue at one end. The board actually in hand
+(photographed 2026-09-13) is the small square generic — about 21 × 16, sensor
+near mid-height 3 mm from one edge — and it has a Ø3 mounting hole on the
+sensor's own row. So the one board whose position matters is **screwed** up
+through its own hole into a boss hanging from the top wall, with the baffle
+collar as the second contact. That board took 22 mm off the case.
 
 | | |
 |---|---|
@@ -350,7 +353,7 @@ leaves is where the ADS1115 ended up, which is the only reason it fits at all.
 | Supports | **None.** The only overhang is the 0.9 mm annular ledge the diffuser sits on |
 | Elephant's foot | Set the slicer's first-layer compensation. The bed face is the one on show |
 | Inserts | 4 × M2 heat-set, 5.0 deep into Ø2.6 bosses |
-| Screws | 4 × M2 countersunk, up through the plate |
+| Screws | 4 × M2 countersunk, up through the plate; **1 × M2.5 × 4 pan head** up through the AS7341's own hole into a Ø2.1 pilot |
 | Diffuser | Ø12 × 1 mm PTFE disc, bonded in with clear silicone. Fitted at commissioning, never removed |
 | Feet | 4 × self-adhesive silicone, in the plate's recesses. They grip, and they hold the perimeter open for air |
 
@@ -375,10 +378,14 @@ block's rear face, which is all it takes to stop the case sliding forward.
 Weight and friction do the rest. Nothing is drilled, so the position can be
 lived with for a season before anyone commits a masonry bit to the piece.
 
-**Before printing, caliper one number:** where the AS7341's sensor sits relative
-to the end of its tongue. `SC_AS7341_SENSOR_FROM_END` is scaled off a datasheet
-photo at 5 mm. The port is centred on the sensor, so an error there puts the
-diffuser off the sensor and nothing else in the part can correct it.
+**Before printing, caliper four numbers on the AS7341:** its length and width,
+and the sensor ring's distance from the header edge and from the regulator edge
+— `SC_AS7341_L`, `SC_AS7341_W`, `SC_AS7341_SENSOR_X`, `SC_AS7341_SENSOR_Y`. They
+are scaled off a photo by the header-pad pitch and are good to about half a
+millimetre; the port is centred on the sensor, so that half millimetre is the
+whole error budget. While the calipers are out, confirm the mounting hole is
+Ø3 on the sensor's row 6.7 mm inboard, and that nothing on the sensor face
+stands taller than 1.6 mm.
 
 ## Colour code and labelling
 

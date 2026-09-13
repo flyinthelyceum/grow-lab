@@ -577,18 +577,33 @@ DEPTH = DepthBudget()
 MM = 1.0 / IN  # inches per millimetre
 
 # --- The boards, as bought. Generic modules, not Adafruit. -----------------
-# AS7341 published by the module maker (Ewellite breakout datasheet): a T-shaped
-# board, 40 x 20 overall, with a 10 x 15 tongue at one end carrying the sensor
-# between two illumination LEDs. Those LEDs are why there is a baffle: they sit
-# millimetres from the sensor and would light the diffuser from underneath.
-SC_AS7341_L = 40.0 * MM
-SC_AS7341_W = 20.0 * MM
-SC_AS7341_TONGUE_W = 10.0 * MM
-SC_AS7341_TONGUE_L = 15.0 * MM
-# CALIPER THIS ONE. Everything optical hangs off it: the port is centred on the
-# sensor, so an error here puts the diffuser off the sensor. Scaled off the
-# datasheet photo at roughly 5 mm from the tongue's end; confirm before printing.
-SC_AS7341_SENSOR_FROM_END = 5.0 * MM
+# AS7341: the small square generic, photographed 2026-09-13 — NOT the T-shaped
+# Ewellite board the first cut was drawn to. Scaled off the photo by its own
+# 0.1 in header-pad pitch, so figures are good to about half a millimetre.
+# CALIPER THE FOUR MARKED ONES BEFORE PRINTING. The header edge is -X, and the
+# edge with the regulator (the photo's top) is +Y.
+SC_AS7341_L = 21.0 * MM  # CALIPER — along X
+SC_AS7341_W = 16.0 * MM  # CALIPER — along Y
+SC_AS7341_SENSOR_X = 18.0 * MM  # CALIPER — the sensor ring, from the header edge
+SC_AS7341_SENSOR_Y = 7.9 * MM  # CALIPER — from the +Y edge. Mid-height, near +X
+# The board's own Ø3 mounting hole sits on the sensor's row, 6.7 mm inboard of
+# it. That is the fixing: one M2.5 up through the hole into a boss hanging from
+# the top wall, with the baffle as the second contact. The one board whose
+# position matters gets a screw, not tape.
+SC_AS7341_HOLE_X = 11.3 * MM
+SC_AS7341_HOLE_Y = 7.9 * MM
+SC_AS7341_HOLE_DIA = 3.0 * MM
+SC_AS7341_BOSS_DIA = 6.0 * MM
+SC_AS7341_PILOT = 2.1 * MM  # M2.5 self-tapping in PETG
+SC_AS7341_PILOT_DEPTH = 3.0 * MM  # 2.0 of boss + 1.0 into the top wall, leaving
+                                  # 1.0 of show face over it
+# What is almost certainly a white LED, 5.2 mm below the sensor — the light
+# square at bottom right of the photo. Advisory: the baffle test uses it.
+SC_AS7341_LED_DX = -0.7 * MM
+SC_AS7341_LED_DY = -5.2 * MM
+# Tallest part on the sensor face (the big capacitor, top centre). Sets the
+# minimum baffle drop, because the board hangs component-side up. CHECK IT.
+SC_AS7341_PART_H = 1.6 * MM
 SC_ADS1115_L = 28.0 * MM  # 28 x 18 published for the GY-ADS1115
 SC_ADS1115_W = 18.0 * MM
 SC_BME280_L = 15.4 * MM  # 15.4 x 11.6 published for the GY-BME280-3.3
@@ -597,12 +612,13 @@ SC_BOARD_T = 1.6 * MM
 SC_BOARD_CLEAR = 0.4 * MM  # per side, around a board in its fence
 
 # --- Envelope -------------------------------------------------------------
-# 78 long is set by the AS7341, not by choice: its sensor is 5 mm from one end
-# of a 40 mm board, and the port is centred on the sensor, so 35 mm of board has
-# to sit on one side of the port plus clearance. The 32 mm of dead space on the
-# other side is where the loom lives. Width and height are as tight as the
-# boards allow.
-SC_LEN = 78.0 * MM
+# 56 long. The first cut was 78, forced by a 40 mm T-shaped AS7341 with its
+# sensor at one end; the board actually in hand is 21 mm square and the sensor
+# is near mid-length, so the port centres with 18 mm of board one side and 3 the
+# other. The length is now set by the ADS1115 on the plate (28) between the two
+# inlet vents and the corner bosses. Width and height are as tight as the boards
+# allow.
+SC_LEN = 56.0 * MM
 SC_WID = 27.0 * MM  # inside the CMU's 31.75 face shell with 4.75 to spare
 SC_HGT = 18.0 * MM  # body 15.5 + base plate 2.5
 SC_WALL = 2.0 * MM  # CHOICE: 4 perimeters at 0.50 extrusion width, exactly
@@ -614,12 +630,14 @@ SC_CHAMFER = 1.5 * MM  # the four vertical corners, 45 deg, cut like the plinth'
 SC_PORT_DIA = 12.3 * MM  # recess for a Ø12.0 PTFE disc, 0.3 for FDM
 SC_PORT_DEPTH = 1.0 * MM  # disc thickness, so it finishes flush with the top face
 SC_APERTURE_DIA = 10.5 * MM  # through the rest of the top wall; 0.9 ledge holds the disc
-SC_BAFFLE_ID = 6.0 * MM  # the sensor's field stop
-SC_BAFFLE_OD = 8.0 * MM
-SC_BAFFLE_DROP = 1.5 * MM  # top wall inner face to the board. Doubles as the standoff
+SC_BAFFLE_ID = 6.5 * MM  # the sensor's field stop; narrower than the LED's offset
+SC_BAFFLE_OD = 8.5 * MM
+SC_BAFFLE_DROP = 2.0 * MM  # top wall inner face to the board. Doubles as the standoff
                            # that sets sensor-to-diffuser distance — the one height
-                           # in this part that has to be right.
-SC_POST_DIA = 3.0 * MM  # three more standoffs so the board seats flat
+                           # in this part that has to be right. It is also the
+                           # component clearance: the board hangs sensor-side up, so
+                           # every part on that face lives in this gap.
+SC_POST_DIA = 3.0 * MM  # the BME280's four standoffs
 
 # --- Closure --------------------------------------------------------------
 SC_BOSS_DIA = 6.0 * MM
@@ -635,16 +653,16 @@ SC_SCREW_INSET = 5.0 * MM
 # Both cable entries are notches in the walls' bottom edge rather than holes.
 # A hole through a vertical wall needs a teardrop or a bridge; a notch closed by
 # the base plate needs neither, and the cable drops in instead of threading.
-SC_CABLE_W = 5.6 * MM  # Cat5e, to the case
+SC_CABLE_W = 5.3 * MM  # Cat5e (~5.5 OD), a shade under for a friction fit
 SC_CABLE_H = 6.0 * MM
 SC_PROBE_W = 4.6 * MM  # SEN0308 lead, up from the core
 SC_PROBE_H = 5.0 * MM
-SC_TIE_POST_DIA = 2.5 * MM  # a pair either side of each notch; zip tie between
-SC_TIE_POST_GAP = 3.5 * MM
+# No internal tie posts: they chopped the plate's clear run and the ADS1115
+# would not fit between them and the corner bosses. The notch is sized a shade
+# under the cable for a friction fit, and a zip tie goes on outside the wall.
 SC_VENT_L = 10.0 * MM  # slots in the base plate, under the case, facing the block
 SC_VENT_W = 2.0 * MM
-SC_VENT_N = 3
-SC_VENT_PITCH = 4.0 * MM
+SC_VENT_X = 17.0 * MM  # one slot each end, between the ADS1115 and the bosses
 SC_FOOT_DIA = 8.0 * MM  # recess for a self-adhesive silicone foot
 SC_FOOT_DEPTH = 0.6 * MM
 SC_LIP_DROP = 12.0 * MM  # the rear wall carries on down past the floor and bears
