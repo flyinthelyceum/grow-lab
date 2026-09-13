@@ -598,6 +598,28 @@ class TestTheGeometryBuilds:
                 continue
             assert normal.Z > -0.35, "something on the plate hangs downward"
 
+    def test_no_board_is_inside_the_plastic(self, parts):
+        """The plan tests prove rectangles do not overlap. This proves no part
+        of a board is inside the printed part — which is the same claim in the
+        dimension the plan cannot see, and the one that matters when a boss
+        hangs over a board rather than beside it."""
+        for name, board in SC.boards().items():
+            for half, part in parts.items():
+                shared = (board & part).volume / P.IN**3
+                assert shared < 1e-7, f"{name} is {mm(mm(mm(shared))):.3f} mm3 into the {half}"
+
+    def test_every_board_is_inside_the_case(self, parts):
+        """And that they are in the box at all, rather than clear of it because
+        the layout put them somewhere else entirely."""
+        from cad.growlab_cad._shapes import bbox_in
+
+        body = bbox_in(parts["body"])
+        for name, board in SC.boards().items():
+            bb = bbox_in(board)
+            assert body["x0"] <= bb["x0"] and bb["x1"] <= body["x1"], f"{name} out the end"
+            assert bb["z0"] >= SC.plate_top() - 1e-9, f"{name} is below the plate"
+            assert bb["z1"] <= SC.top_face() + 1e-9, f"{name} stands proud of the top"
+
     def test_the_bed_face_is_big_enough_to_hold_on(self):
         """A part this size with a hole in its bed face still needs the area."""
         pytest.importorskip("build123d")

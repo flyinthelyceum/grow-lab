@@ -1,0 +1,431 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canopy Sensor Case 3D</title>
+<style>
+:root {
+  --ground: #EFF1EC; --panel: #F7F8F5; --ink: #191C19; --ink-2: #4B524B;
+  --ink-3: #767D74; --rule: #D3D7CE; --rule-2: #E2E5DE; --blue: #2E5C7A;
+  --accent: #A3402B; --green: #3D6B4A; --bed: #C8C9C1; --sky: #E6E8E2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #141715; --panel: #1B1F1C; --ink: #E7EAE4; --ink-2: #A9B0A7;
+    --ink-3: #7C837A; --rule: #303631; --rule-2: #252A26; --blue: #7FB0CE;
+    --accent: #E08A70; --green: #7FB48E; --bed: #2A2E29; --sky: #101311;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #141715; --panel: #1B1F1C; --ink: #E7EAE4; --ink-2: #A9B0A7;
+  --ink-3: #7C837A; --rule: #303631; --rule-2: #252A26; --blue: #7FB0CE;
+  --accent: #E08A70; --green: #7FB48E; --bed: #2A2E29; --sky: #101311;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font-family: Archivo, "Helvetica Neue", Arial, sans-serif;
+  display: grid; grid-template-columns: 1fr 20rem; overflow: hidden;
+}
+#stage { position: relative; min-width: 0; }
+#stage canvas { display: block; }
+#hint {
+  position: absolute; left: 0; right: 0; bottom: 0.7rem; text-align: center;
+  font-size: 0.7rem; color: var(--ink-3); pointer-events: none;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+#rail {
+  background: var(--panel); border-left: 1px solid var(--rule);
+  padding: 1.1rem 1.1rem 1.6rem; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 1.25rem;
+}
+h1 { font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+.eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 0.2rem;
+}
+.meta { font-size: 0.74rem; color: var(--ink-2); line-height: 1.45; margin: 0.35rem 0 0; }
+h2 {
+  font-size: 0.62rem; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 600; margin: 0 0 0.55rem;
+  padding-bottom: 0.35rem; border-bottom: 1px solid var(--rule-2);
+}
+section { display: block; }
+.seg { display: flex; flex-direction: column; gap: 0.3rem; }
+.seg button {
+  font: inherit; font-size: 0.78rem; text-align: left; padding: 0.45rem 0.6rem;
+  background: none; color: var(--ink-2); border: 1px solid var(--rule);
+  border-radius: 3px; cursor: pointer;
+}
+.seg button:hover { border-color: var(--ink-3); color: var(--ink); }
+.seg button[aria-pressed="true"] {
+  background: var(--blue); border-color: var(--blue); color: var(--panel); font-weight: 600;
+}
+.seg button .sub { display: block; font-size: 0.68rem; opacity: 0.78; font-weight: 400; }
+.check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem;
+         color: var(--ink-2); padding: 0.24rem 0; cursor: pointer; }
+.check input { accent-color: var(--blue); }
+.swatch { width: 0.7rem; height: 0.7rem; border-radius: 2px; border: 1px solid var(--rule);
+          flex: none; }
+.row { display: flex; align-items: center; gap: 0.5rem; }
+input[type=range] { flex: 1; accent-color: var(--blue); min-width: 0; }
+select { font: inherit; font-size: 0.74rem; background: var(--ground); color: var(--ink);
+         border: 1px solid var(--rule); border-radius: 3px; padding: 0.2rem 0.3rem; }
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.7rem;
+        color: var(--ink-3); font-variant-numeric: tabular-nums; min-width: 3.4rem;
+        text-align: right; }
+dl.readout { display: grid; grid-template-columns: 1fr auto; gap: 0.3rem 0.6rem; margin: 0;
+             font-size: 0.74rem; }
+dl.readout dt { color: var(--ink-2); }
+dl.readout dd { margin: 0; font-family: "JetBrains Mono", ui-monospace, monospace;
+                font-variant-numeric: tabular-nums; text-align: right; color: var(--ink); }
+dl.readout dd.tight { color: var(--accent); }
+footer { font-size: 0.68rem; color: var(--ink-3); line-height: 1.5;
+         border-top: 1px solid var(--rule-2); padding-top: 0.7rem; }
+footer code { font-family: "JetBrains Mono", ui-monospace, monospace; }
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--blue); outline-offset: 2px; }
+@media (max-width: 820px) {
+  body { grid-template-columns: 1fr; grid-template-rows: 58vh 1fr; overflow: auto; }
+  #rail { border-left: none; border-top: 1px solid var(--rule); }
+}
+</style>
+
+<div id="stage"><div id="hint">drag to orbit · wheel to zoom · shift-drag to pan</div></div>
+
+<aside id="rail">
+  <div>
+    <p class="eyebrow">GROWLAB · V1</p>
+    <h1>Canopy sensor case</h1>
+    <p class="meta" id="meta"></p>
+  </div>
+
+  <section>
+    <h2>View</h2>
+    <div class="seg" id="modes" role="group" aria-label="View mode"></div>
+  </section>
+
+  <section id="explode-wrap">
+    <h2>Explode</h2>
+    <div class="row">
+      <input type="range" id="explode" min="0" max="100" value="0" aria-label="Explode">
+      <span class="mono" id="explode-val">0&nbsp;mm</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Section</h2>
+    <div class="row" style="margin-bottom:0.45rem">
+      <select id="cut-axis" aria-label="Section axis">
+        <option value="none">No cut</option>
+        <option value="y">Through the port, across</option>
+        <option value="x">Through the port, along</option>
+        <option value="z">Horizontal</option>
+      </select>
+    </div>
+    <div class="row">
+      <input type="range" id="cut" min="0" max="1000" value="500" aria-label="Section position" disabled>
+      <span class="mono" id="cut-val">—</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Parts</h2>
+    <div id="parts"></div>
+  </section>
+
+  <section>
+    <h2>The numbers that decide it</h2>
+    <dl class="readout" id="readout"></dl>
+  </section>
+
+  <footer id="foot"></footer>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const DATA = /*__CASE_DATA__*/null;
+const MM = 25.4;   // the model is in inches; this page thinks in millimetres
+
+function b64ToBuffer(s) {
+  const bin = atob(s);
+  const u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8.buffer;
+}
+function cssColour(name) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return new THREE.Color(v || '#888888');
+}
+const isDark = () =>
+  document.documentElement.dataset.theme === 'dark' ||
+  (matchMedia('(prefers-color-scheme: dark)').matches &&
+   document.documentElement.dataset.theme !== 'light');
+
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.localClippingEnabled = true;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 4000);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a857c, 0.9));
+const sun = new THREE.DirectionalLight(0xffffff, 0.72);
+sun.position.set(90, -140, 180);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xffffff, 0.26);
+fill.position.set(-120, 90, 60);
+scene.add(fill);
+
+const root = new THREE.Group();
+scene.add(root);
+
+// Z is up in the model, as it is in every drawing of this station.
+root.rotation.x = -Math.PI / 2;
+
+const clipPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+const meshes = {};
+const visible = {};
+
+function makeMaterial(spec) {
+  return new THREE.MeshStandardMaterial({
+    color: new THREE.Color(spec.colour),
+    roughness: spec.roughness ?? 0.85,
+    metalness: 0.02,
+    transparent: spec.opacity < 1,
+    opacity: spec.opacity,
+    side: THREE.DoubleSide,
+    clippingPlanes: [],
+  });
+}
+
+for (const [name, md] of Object.entries(DATA.meshes)) {
+  const spec = DATA.parts[name];
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(
+    new Float32Array(b64ToBuffer(md.positions)), 3));
+  geo.setIndex(new THREE.BufferAttribute(new Uint32Array(b64ToBuffer(md.indices)), 1));
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, makeMaterial(spec));
+  mesh.name = name;
+  meshes[name] = mesh;
+  visible[name] = spec.on !== false;
+  root.add(mesh);
+}
+
+// The bed: a plane the parts sit on in print mode, so "flat on the bed" is a
+// thing you can see rather than a thing the tests assert.
+const bed = new THREE.Mesh(
+  new THREE.PlaneGeometry(220, 220),
+  new THREE.MeshStandardMaterial({ color: cssColour('--bed'), roughness: 1, side: THREE.DoubleSide }));
+bed.position.z = -0.06;
+bed.visible = false;
+root.add(bed);
+const bedGrid = new THREE.GridHelper(220, 22, cssColour('--ink-3'), cssColour('--ink-3'));
+bedGrid.material.opacity = 0.22;
+bedGrid.material.transparent = true;
+bedGrid.rotation.x = Math.PI / 2;
+bedGrid.position.z = -0.05;
+bedGrid.visible = false;
+root.add(bedGrid);
+
+// The block, as a slab under the case, so the lip has something to bear on.
+const blockH = 40;
+const block = new THREE.Mesh(
+  new THREE.BoxGeometry(DATA.block.len, DATA.block.wid, blockH),
+  new THREE.MeshStandardMaterial({ color: cssColour('--bed'), roughness: 1 }));
+block.position.set(DATA.block.x, DATA.block.y, -blockH / 2);
+root.add(block);
+
+/* ---------------------------------------------------------------- modes */
+const MODES = DATA.modes;
+let mode = 'assembled';
+let explode = 0;
+
+function layout() {
+  const m = MODES[mode];
+  for (const [name, mesh] of Object.entries(meshes)) {
+    const spec = DATA.parts[name];
+    const place = m.place[name];
+    if (!place) { mesh.visible = false; continue; }
+    mesh.visible = visible[name] && (m.shows ? m.shows.includes(name) : true);
+    mesh.rotation.set(place.flip ? Math.PI : 0, 0, 0);
+    // A part's explode vector is a direction and a share, in millimetres of
+    // the slider's full span — not a position, so it is scaled by both.
+    const e = m.explodes ? (spec.explode || [0, 0, 0]) : [0, 0, 0];
+    const d = explode * DATA.explodeSpan;
+    mesh.position.set(
+      place.at[0] + e[0] * d,
+      place.at[1] + e[1] * d,
+      place.at[2] + e[2] * d);
+  }
+  block.visible = m.block && visible.block;
+  bed.visible = bedGrid.visible = !!m.bed;
+  frame(m.frameFull ? lerpFrame(m.frame, m.frameFull, explode) : m.frame);
+}
+
+function lerpFrame(a, b, t) {
+  const f = {};
+  for (const k of ['cx', 'cy', 'cz', 'r']) f[k] = a[k] + (b[k] - a[k]) * t;
+  return f;
+}
+
+/* ---------------------------------------------------------------- camera */
+let target = new THREE.Vector3();
+// Front three-quarter, slightly above. The rear wall is where the vents, the
+// notch and the tie holes are, so it is the interesting face to an engineer and
+// the wrong one to open on: the question this object has to answer is how it
+// reads from in front of the piece.
+let radius = 200, theta = 2.3, phi = 1.06;
+
+function frame(box) {
+  target.set(box.cx, box.cy, box.cz);
+  radius = box.r;
+}
+function updateCamera() {
+  const t = new THREE.Vector3(target.x, target.z, -target.y);  // model → view space
+  camera.position.set(
+    t.x + radius * Math.sin(phi) * Math.cos(theta),
+    t.y + radius * Math.cos(phi),
+    t.z + radius * Math.sin(phi) * Math.sin(theta));
+  camera.lookAt(t);
+}
+
+let drag = null;
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  drag = { x: e.clientX, y: e.clientY, pan: e.shiftKey };
+  renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if (drag.pan) {
+    target.x -= dx * radius * 0.0016 * Math.sin(theta + Math.PI / 2);
+    target.y += dx * radius * 0.0016 * Math.cos(theta + Math.PI / 2);
+    target.z += dy * radius * 0.0016;
+  } else {
+    theta -= dx * 0.008;
+    phi = Math.min(Math.PI - 0.05, Math.max(0.05, phi - dy * 0.008));
+  }
+  updateCamera();
+});
+addEventListener('pointerup', () => { drag = null; });
+renderer.domElement.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  radius = Math.min(900, Math.max(18, radius * (1 + Math.sign(e.deltaY) * 0.11)));
+  updateCamera();
+}, { passive: false });
+
+/* ---------------------------------------------------------------- rail */
+const modesEl = document.getElementById('modes');
+for (const [key, m] of Object.entries(MODES)) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.innerHTML = `${m.label}<span class="sub">${m.note}</span>`;
+  b.setAttribute('aria-pressed', String(key === mode));
+  b.addEventListener('click', () => {
+    mode = key;
+    for (const other of modesEl.children) other.setAttribute('aria-pressed', 'false');
+    b.setAttribute('aria-pressed', 'true');
+    document.getElementById('explode-wrap').style.display = m.explodes ? '' : 'none';
+    layout(); updateCamera();
+  });
+  modesEl.appendChild(b);
+}
+
+const partsEl = document.getElementById('parts');
+for (const [name, spec] of Object.entries(DATA.parts)) {
+  const l = document.createElement('label');
+  l.className = 'check';
+  const i = document.createElement('input');
+  i.type = 'checkbox'; i.checked = spec.on !== false; i.id = 'p-' + name;
+  i.addEventListener('change', () => { visible[name] = i.checked; layout(); });
+  const sw = document.createElement('span');
+  sw.className = 'swatch'; sw.style.background = spec.colour;
+  const t = document.createElement('span');
+  t.textContent = spec.label;
+  l.append(i, sw, t);
+  partsEl.appendChild(l);
+}
+{
+  const l = document.createElement('label');
+  l.className = 'check';
+  const i = document.createElement('input');
+  i.type = 'checkbox'; i.checked = true; i.id = 'p-block';
+  visible.block = true;
+  i.addEventListener('change', () => { visible.block = i.checked; layout(); });
+  const sw = document.createElement('span');
+  sw.className = 'swatch';
+  sw.style.background = getComputedStyle(document.documentElement).getPropertyValue('--bed');
+  const t = document.createElement('span');
+  t.textContent = 'The block (reference)';
+  l.append(i, sw, t);
+  partsEl.appendChild(l);
+}
+
+const explodeEl = document.getElementById('explode');
+const explodeVal = document.getElementById('explode-val');
+explodeEl.addEventListener('input', () => {
+  explode = explodeEl.value / 100;
+  explodeVal.textContent = `${(explode * DATA.explodeSpan).toFixed(0)} mm`;
+  layout();
+});
+
+const cutAxis = document.getElementById('cut-axis');
+const cutEl = document.getElementById('cut');
+const cutVal = document.getElementById('cut-val');
+const AXES = { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] };
+
+function applyCut() {
+  const axis = cutAxis.value;
+  const on = axis !== 'none';
+  cutEl.disabled = !on;
+  for (const mesh of Object.values(meshes)) {
+    mesh.material.clippingPlanes = on ? [clipPlane] : [];
+    mesh.material.needsUpdate = true;
+  }
+  if (!on) { cutVal.textContent = '—'; return; }
+  const [ax, ay, az] = AXES[axis];
+  // Model space is Z-up; the scene is rotated, so the plane is too.
+  const n = new THREE.Vector3(ax, az, -ay).normalize();
+  const span = DATA.cut[axis];
+  const at = span[0] + (cutEl.value / 1000) * (span[1] - span[0]);
+  const p = new THREE.Vector3(ax * at, az * at, -ay * at);
+  clipPlane.setFromNormalAndCoplanarPoint(n.clone().negate(), p);
+  cutVal.textContent = `${at.toFixed(1)} mm`;
+}
+cutAxis.addEventListener('change', applyCut);
+cutEl.addEventListener('input', applyCut);
+
+const readout = document.getElementById('readout');
+for (const r of DATA.readout) {
+  const dt = document.createElement('dt'); dt.textContent = r.label;
+  const dd = document.createElement('dd'); dd.textContent = r.value;
+  if (r.tight) dd.className = 'tight';
+  readout.append(dt, dd);
+}
+document.getElementById('meta').textContent = DATA.meta;
+document.getElementById('foot').innerHTML = DATA.foot;
+
+/* ---------------------------------------------------------------- run */
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / Math.max(h, 1);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+function paint() {
+  scene.background = cssColour('--sky');
+  bed.material.color = cssColour('--bed');
+  block.material.color = cssColour('--bed');
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint);
+
+document.getElementById('explode-wrap').style.display = MODES[mode].explodes ? '' : 'none';
+resize(); paint(); layout(); applyCut(); updateCamera();
+renderer.setAnimationLoop(() => renderer.render(scene, camera));
+</script>
