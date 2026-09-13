@@ -66,11 +66,14 @@ more strain relief than feels necessary.
 No hot glue, no board resting on its own connectors, no board held by the
 stiffness of its wiring. Each board gets four standoffs and four screws.
 
-One exception, argued rather than assumed: the two blind boards inside the
-canopy sensor case are **taped**, because their outlines come from vendor
-listings rather than a caliper and a printed fence sized to a wrong number is a
-board that will not go in. Tape tolerates a millimetre; a fence does not. That
-reasoning does not extend to anything whose dimensions are known.
+One exception, argued rather than assumed: the ADS1115 inside the canopy sensor
+case is **taped**, because its outline comes from a vendor listing rather than a
+caliper and a printed fence sized to a wrong number is a board that will not go
+in. Tape tolerates a millimetre; a fence does not. That reasoning does not
+extend to anything whose dimensions are known — and it stopped covering the
+BME280 the moment it was hung upside down, since tape is not what holds an
+inverted board. It has two bosses on its own mounting holes now, like the
+AS7341.
 
 | Board | Thread | Notes |
 |---|---|---|
@@ -292,7 +295,17 @@ ADS1115 share one bar, so they daisy-chain locally and **one four-conductor cabl
 it. Three runs collapsed into one, and the moisture probe's analog lead now stays short,
 which is worth more than it sounds — analog over a long lead is the fragile part.
 
-Mitigations, in the order to try them:
+**Do this one first: remove two of the three pull-up pairs.** Generic GY boards each
+carry their own SDA/SCL pull-ups, and the Pi has 1.8 kΩ of its own on SDA1/SCL1. Three
+boards at 4.7 kΩ in parallel with the Pi's give 0.84 kΩ, which sinks 3.46 mA at 3.3 V —
+over the I²C spec's 3 mA, which is the current every device's low-level voltage is
+guaranteed at. It still decodes; what it spends is the noise margin the metre of Cat5e
+needs. Unsolder the pull-up pair on the ADS1115 and on the BME280, and keep the AS7341's
+— it is at the far end of the run, which is where a pull-up does the most good. That
+leaves 1.3 kΩ and 2.2 mA, with a rise time around 170 ns at 150 pF: comfortable at
+400 kHz and trivial at 100.
+
+Then the mitigations, in the order to try them:
 
 1. Run the bus at **100 kHz**, not 400.
 2. Use **Cat5e for the long leg** — SDA with a ground in one pair, SCL with a ground in
@@ -334,58 +347,100 @@ restated because it is the one that gets skipped when you are tired.
 ## The canopy sensor case
 
 Modelled in `cad/growlab_cad/sensor_case.py`; CI writes STLs to `cad/out/print/`.
-**56 × 27 × 18 mm**, matte white, on the CMU's centre-rear. Two printed parts.
+**58 × 27 × 18 mm**, matte white, on the CMU's centre-rear. Two printed parts.
 
-The first cut was 78 long, drawn to a vendor datasheet for a 40 × 20 T-shaped
-AS7341 with its sensor on a tongue at one end. The board actually in hand
-(photographed 2026-09-13) is the small square generic — about 21 × 16, sensor
-near mid-height 3 mm from one edge — and it has a Ø3 mounting hole on the
-sensor's own row. So the one board whose position matters is **screwed** up
-through its own hole into a boss hanging from the top wall, with the baffle
-collar as the second contact. That board took 22 mm off the case.
+Rev E is what five adversarial reviews left standing, and the short version is
+that Rev D would not have printed. Four of its features were not attached to the
+part: the baffle collar hung over a hole wider than itself, the lip touched the
+body along a single edge, the four insert bosses floated below the ceiling
+tangent to the walls, and the "countersink" was a counterbore leaving 0.3 mm of
+bridged plate under each screw head. The geometry tests passed on all four,
+because they compared bounding boxes and volumes and a bounding box cannot tell
+a part from a pile of parts. The test that now catches every one of them at once
+is that each half is **one solid**.
 
 | | |
 |---|---|
 | Material | Matte white PETG. Not PLA — it creeps under a warm fixture. ASA if it will ever see sun |
-| Orientation | **Body top-face-down**, plate underside-down. The show face is then the bed face, and a textured sheet gives a matte nothing else matches |
+| Orientation | **Both parts top-face-down.** The body's show face is then the bed face, and a textured sheet gives a matte nothing else matches. The plate that way up has no overhang at all |
 | Extrusion width | **0.50 mm**, so the 2.0 walls and 2.5 plate land on whole lines |
 | Layer height | 0.15 mm. The side walls are visible; that is what layer lines show on |
-| Supports | **None.** The only overhang is the 0.9 mm annular ledge the diffuser sits on |
+| Supports | **None**, and the tests say so from the solid rather than from the parameters: the only downward faces in either part are the disc's 3 mm ledge and seven vent roofs of 5.5 mm |
 | Elephant's foot | Set the slicer's first-layer compensation. The bed face is the one on show |
-| Inserts | 4 × M2 heat-set, 5.0 deep into Ø2.6 bosses |
-| Screws | 4 × M2 countersunk, up through the plate; **1 × M2.5 × 4 pan head** up through the AS7341's own hole into a Ø2.1 pilot |
-| Diffuser | Ø12 × 1 mm PTFE disc, bonded in with clear silicone. Fitted at commissioning, never removed |
-| Feet | 4 × self-adhesive silicone, in the plate's recesses. They grip, and they hold the perimeter open for air |
+| Inserts | 4 × M2 heat-set (Ø3.2 body) into **Ø3.0** holes, 5.0 deep. Not Ø2.6 — that is 0.6 mm of interference and 14 mm³ of displaced plastic, and it comes up onto the face the plate lands on |
+| Screws | 4 × M2 countersunk up through the plate into a true 90° cone 1.1 deep, leaving 1.4 of plate under each head; **1 × M2.5 × 3** up through the AS7341's own hole, and 1 × M2.5 × 3 into each of the BME280's two |
+| Diffuser | Ø12 × 1 mm **etched** PTFE disc, etched face down, bonded with **neutral-cure (alkoxy/oxime)** silicone. See below — this is the one place the old sheet was quietly wrong |
+| Feet | 3 × neutral-cure silicone, **cast in place** in the plate's recesses. Three points never rock |
+| Interior | Paint matte black before assembly if the dark-period reading has to be zero. White PETG at 1 mm is a diffuser, not a shield |
 
-**It is vented, not sealed** — deliberately. A sealed box in a humid, lit,
-thermally cycling place is a condensation trap: it collects the water it was
-meant to exclude and holds it against the boards. Air enters under the perimeter,
-crosses through slots in the plate, and leaves through slots high in the rear
-wall. Conformal-coat the boards instead of fitting a gasket. The silicone under
-the diffuser is the only joint that has to keep water out, and it is never
-opened.
+**Silicone does not bond to PTFE.** Untreated PTFE is the reference non-stick
+surface — about 18 mN/m of surface energy — and nothing in a workshop wets it.
+The old sheet called the diffuser joint "the only one that has to keep water
+out" and then specified a joint that cannot form: retention would have been a
+0.15 mm fillet in shear against a surface with no grip on it, running from the
+top face straight down to the sensor. Buy the disc as **one-side chemically
+etched PTFE** (sold for bonding) and put the etched face down. Opal cast acrylic
+1 mm is the alternative that any silicone will hold. Either way the recess is
+Ø12.5 for a Ø12.0 disc, because its mouth is on the bed where elephant's foot
+and hole shrink both eat into it, and PTFE does not compress.
 
-**The baffle is not decoration.** The AS7341 carries two illumination LEDs
-flanking its sensor. In an open cavity they would light the diffuser from
-underneath and the sensor would read its own board. The collar round the sensor
-shadows them, kills reflection off the white walls, sets the field stop, and is
-also the standoff that fixes sensor-to-diffuser distance — one feature doing the
-optical job and the mechanical one. **Keep the LED drive off in firmware
-regardless; the baffle is the second line, not the first.**
+**Conformal coating: mask first.** "Conformal-coat the boards" as written would
+end the humidity channel permanently. The BME280's element is a metal lid with a
+pinhole and it cannot be coated; neither can the AS7341's window. IPA-clean the
+flux first — no-clean residue is hygroscopic and it is where the coating lifts —
+then a Kapton dot over the BME280's lid and one over the AS7341's window, two
+thin coats, dots off.
 
-**Fixing:** none. The rear wall carries on down past the floor and bears on the
-block's rear face, which is all it takes to stop the case sliding forward.
-Weight and friction do the rest. Nothing is drilled, so the position can be
-lived with for a season before anyone commits a masonry bit to the piece.
+**It is vented, not sealed** — deliberately, because the BME280 has to sample
+the air and a sealed box in a humid, lit, thermally cycling place collects the
+water it was meant to exclude. **Both openings are in the rear wall**: inlets low,
+outlets high, and the lid warming under the fixture drives the exchange. Nothing
+opens in the plate. Rev D put the inlets there, facing the block — and the block
+is a planter whose top face stays damp for weeks after a leach, so the case would
+have breathed the block's own boundary layer and dewed on the diffuser every time
+the lamp went off.
 
-**Before printing, caliper four numbers on the AS7341:** its length and width,
-and the sensor ring's distance from the header edge and from the regulator edge
-— `SC_AS7341_L`, `SC_AS7341_W`, `SC_AS7341_SENSOR_X`, `SC_AS7341_SENSOR_Y`. They
+**The baffle is not decoration.** The breakout carries an illumination LED a few
+millimetres from the sensor, pointing the same way. The collar round the sensor
+shadows it, sets the field stop, and is the standoff that fixes sensor-to-diffuser
+distance — one feature doing the optical job and the mechanical one. The bore runs
+through the top wall at the collar's own diameter, so the collar sits on a full
+ring of wall and the field stop is a plain tube: 6.5 across, 2.95 tall, 48° half
+angle, wide enough that the sensor sees the whole disc. **The firmware now puts
+the LED out on every read** (`pi/drivers/as7341.py`), which is the first line;
+the baffle is the second, and at 1 mm of white PETG it attenuates rather than
+blocks.
+
+**Fixing:** three dabs of neutral-cure silicone in the plate's foot recesses,
+pressed onto the brushed dry block and cured under the case's own weight. It
+bonds to concrete and to PETG, fills the block's texture, holds far more than
+adhesive bumpers on a dusty alkaline surface, and cuts free with a blade. The
+lip — the plate's rear edge carried down past the block's top — bears on the
+block's rear face and stops the case walking backwards. **The strain relief is
+the zip tie through the lip**, not the notch: a stiff Cat5e pushes about 0.24 N
+at the case's rear edge and the case weighs 0.25 N, so without the tie the cable
+positions the case rather than the other way round.
+
+**What the AS7341 actually measures.** The block's centre is the open spot
+between the two cores, which is why the case is there — but ranunculus clumps
+reach 25–35 cm across and meet over the web at around week eight. From then on
+the port is under leaves and the reading is **under-canopy light**, not fixture
+output. That is a real quantity and the logs are labelled for it; what it is not
+is a substitute for the commissioning fit, which is made against a PAR meter
+before there is a canopy. If fixture output is what you want to track, that
+sensor has to see the fixture, and no position on the block does.
+
+**Before printing, caliper these.** On the AS7341: its length and width, and the
+sensor ring's distance from the header edge and from the regulator edge —
+`SC_AS7341_L`, `SC_AS7341_W`, `SC_AS7341_SENSOR_X`, `SC_AS7341_SENSOR_Y`. They
 are scaled off a photo by the header-pad pitch and are good to about half a
-millimetre; the port is centred on the sensor, so that half millimetre is the
-whole error budget. While the calipers are out, confirm the mounting hole is
-Ø3 on the sensor's row 6.7 mm inboard, and that nothing on the sensor face
-stands taller than 1.6 mm.
+millimetre. Confirm the mounting hole is Ø3 on the sensor's row 6.7 mm inboard,
+and that nothing on the sensor face stands taller than 1.6 mm. On the BME280:
+`SC_BME280_HOLE_PITCH` and `SC_BME280_HOLE_INSET` — it now hangs on its own two
+holes, and vendor listings agree it has two and disagree on where. Fit no headers
+to any of the three boards: a 10-pin header on the ADS1115 stands 13.6 mm tall
+and the boards above it hang at 12.4.
+
 
 ## Colour code and labelling
 
@@ -497,7 +552,11 @@ each step, so there is never a day where nothing works.
 
 1. **Label what exists, before touching it.** Every conductor, both ends, today. The
    current wiring is only fully understood while it is in front of you.
-2. **Build the four-rail I²C bus and crimp a JST-XH pigtail onto every sensor.**
+2. **Build the four-rail I²C bus and crimp a JST-XH pigtail onto every sensor
+   that has room for one.** The three boards in the canopy sensor case do not:
+   an XH housing is 12.4 × 5.75 × 7.0 mated and the free height over the
+   ADS1115 is 5.8 mm. They daisy-chain on soldered wire inside the case, and the
+   one JST-XH on that leg is at the far end of the Cat5e, at the bus.
    Biggest visual win, lowest risk, entirely reversible. `i2cdetect` proves it before
    and after.
 3. **Ferrule every screw terminal** on the GPIO breakout. An hour's work.
