@@ -63,8 +63,14 @@ more strain relief than feels necessary.
 
 ### PCBs — standoffs on a defined thread, never anything else
 
-No hot glue, no double-sided tape, no board resting on its own connectors, no board
-held by the stiffness of its wiring. Each board gets four standoffs and four screws.
+No hot glue, no board resting on its own connectors, no board held by the
+stiffness of its wiring. Each board gets four standoffs and four screws.
+
+One exception, argued rather than assumed: the two blind boards inside the
+canopy sensor case are **taped**, because their outlines come from vendor
+listings rather than a caliper and a printed fence sized to a wrong number is a
+board that will not go in. Tape tolerates a millimetre; a fence does not. That
+reasoning does not extend to anything whose dimensions are known.
 
 | Board | Thread | Notes |
 |---|---|---|
@@ -132,11 +138,18 @@ The rail is what turns "four things cable-tied to a board" into equipment. It al
 means the 5 V bus exists in exactly one place, which is what stops the spaghetti
 coming back.
 
-### Never mount anything to the tray, the pan, or the block
+### Never mount anything to the tray or the pan — and one exception on the block
 
-Load path and wet zone both. The tray carries water, never hardware; the block
-carries plants. Anything that needs to be near them mounts to the carcass and
-reaches in.
+Load path and wet zone both. The tray carries water, never hardware; the pan
+carries the probes and nothing else. Anything that needs to be near them mounts
+to the carcass and reaches in.
+
+**The block is the exception, and it is deliberate.** The canopy sensor case
+sits on the CMU's centre-rear, because that is the only place on the piece that
+is both unshaded and invisible — see *The canopy sensor case* below. It is held
+by its own weight and a lip over the rear face, drills nothing, and adds about
+40 g to a 50 lb block. The rule that stands is the one underneath it: nothing
+structural, nothing wet, nothing that cannot be lifted straight off.
 
 ---
 
@@ -317,6 +330,55 @@ service until one strand is doing all the work.
 restated because it is the one that gets skipped when you are tired.
 
 ---
+
+## The canopy sensor case
+
+Modelled in `cad/growlab_cad/sensor_case.py`; CI writes STLs to `cad/out/print/`.
+**78 × 27 × 18 mm**, matte white, on the CMU's centre-rear. Two printed parts.
+
+The length is not a style choice. The AS7341 breakout is T-shaped, 40 × 20, with
+its sensor about 5 mm from one end of the board — so with the port centred on the
+sensor, 35 mm of board has to lie on one side of it. The 32 mm of dead space that
+leaves is where the ADS1115 ended up, which is the only reason it fits at all.
+
+| | |
+|---|---|
+| Material | Matte white PETG. Not PLA — it creeps under a warm fixture. ASA if it will ever see sun |
+| Orientation | **Body top-face-down**, plate underside-down. The show face is then the bed face, and a textured sheet gives a matte nothing else matches |
+| Extrusion width | **0.50 mm**, so the 2.0 walls and 2.5 plate land on whole lines |
+| Layer height | 0.15 mm. The side walls are visible; that is what layer lines show on |
+| Supports | **None.** The only overhang is the 0.9 mm annular ledge the diffuser sits on |
+| Elephant's foot | Set the slicer's first-layer compensation. The bed face is the one on show |
+| Inserts | 4 × M2 heat-set, 5.0 deep into Ø2.6 bosses |
+| Screws | 4 × M2 countersunk, up through the plate |
+| Diffuser | Ø12 × 1 mm PTFE disc, bonded in with clear silicone. Fitted at commissioning, never removed |
+| Feet | 4 × self-adhesive silicone, in the plate's recesses. They grip, and they hold the perimeter open for air |
+
+**It is vented, not sealed** — deliberately. A sealed box in a humid, lit,
+thermally cycling place is a condensation trap: it collects the water it was
+meant to exclude and holds it against the boards. Air enters under the perimeter,
+crosses through slots in the plate, and leaves through slots high in the rear
+wall. Conformal-coat the boards instead of fitting a gasket. The silicone under
+the diffuser is the only joint that has to keep water out, and it is never
+opened.
+
+**The baffle is not decoration.** The AS7341 carries two illumination LEDs
+flanking its sensor. In an open cavity they would light the diffuser from
+underneath and the sensor would read its own board. The collar round the sensor
+shadows them, kills reflection off the white walls, sets the field stop, and is
+also the standoff that fixes sensor-to-diffuser distance — one feature doing the
+optical job and the mechanical one. **Keep the LED drive off in firmware
+regardless; the baffle is the second line, not the first.**
+
+**Fixing:** none. The rear wall carries on down past the floor and bears on the
+block's rear face, which is all it takes to stop the case sliding forward.
+Weight and friction do the rest. Nothing is drilled, so the position can be
+lived with for a season before anyone commits a masonry bit to the piece.
+
+**Before printing, caliper one number:** where the AS7341's sensor sits relative
+to the end of its tongue. `SC_AS7341_SENSOR_FROM_END` is scaled off a datasheet
+photo at 5 mm. The port is centred on the sensor, so an error there puts the
+diffuser off the sensor and nothing else in the part can correct it.
 
 ## Colour code and labelling
 

@@ -24,7 +24,7 @@ from itertools import combinations
 
 from build123d import Compound, Part
 
-from . import canopy, case, cmu, fixture, mast, plinth, tray
+from . import canopy, case, cmu, fixture, mast, plinth, sensor_case, tray
 from .params import IN
 
 
@@ -46,6 +46,9 @@ def fabricated() -> dict[str, Part]:
         # Now that it is a folded steel channel it is checked like anything
         # else we cut.
         "lightbox": fixture.build(),
+        # Printed rather than cut, but fabricated all the same — and it sits on
+        # the block, which is the one place nothing else was checked against.
+        "sensor_case": sensor_case.build(),
     }
 
 

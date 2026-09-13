@@ -49,7 +49,7 @@ jobs:
         # The geometry tests assert where every part sits against the docs'
         # height table and that nothing fabricated interferes; the fabrication
         # tests read the written DXFs back.
-        run: pytest -q tests/unit/test_cad_params.py tests/unit/test_cad_geometry.py tests/unit/test_cad_fabrication.py
+        run: pytest -q tests/unit/test_cad_params.py tests/unit/test_cad_geometry.py tests/unit/test_cad_fabrication.py tests/unit/test_cad_sensor_case.py
 
       - name: Build and export
         run: python cad/build.py
