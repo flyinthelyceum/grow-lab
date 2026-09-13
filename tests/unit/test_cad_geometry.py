@@ -37,7 +37,8 @@ def refs():
 class TestEveryPartBuilds:
     def test_fabricated(self, parts):
         assert set(parts) == {"plinth", "base_frame", "rear_door", "tray", "pads", "mast",
-                              "case", "fascia", "backplate", "canopy_carriage", "lightbox"}
+                              "case", "fascia", "backplate", "canopy_carriage", "lightbox",
+                              "sensor_case"}
         for name, p in parts.items():
             assert p.volume > 0, name
 

@@ -8,6 +8,7 @@ Outputs
 -------
 cad/out/growlab_v1_station.step   the full assembly, parts labelled
 cad/out/parts/<name>.step         each fabricated part on its own
+cad/out/print/<name>.stl          the printed parts, flat on the bed, for a slicer
 cad/out/report.json               bounding boxes in inches, interference
                                   check, and the params that were used
 
@@ -27,9 +28,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from build123d import export_step  # noqa: E402
+from build123d import export_step, export_stl  # noqa: E402
 
-from cad.growlab_cad import assembly, params, plinth  # noqa: E402
+from cad.growlab_cad import assembly, params, plinth, sensor_case  # noqa: E402
 from cad.growlab_cad._shapes import bbox_in  # noqa: E402
 
 OUT = REPO / "cad" / "out"
@@ -116,6 +117,17 @@ def main(argv: list[str] | None = None) -> int:
         pp = OUT / "parts" / f"{n}.step"
         export_step(p, str(pp))
         print(f"wrote {pp.relative_to(REPO)}  ({pp.stat().st_size // 1024} KB)")
+
+    # Printed parts get STL as well as STEP, oriented the way they go on the
+    # bed. STEP is for Fusion; a slicer wants a mesh and wants it flat.
+    printed = OUT / "print"
+    printed.mkdir(exist_ok=True)
+    for n, p in sensor_case.for_print().items():
+        sp = printed / f"{n}.stl"
+        export_stl(p, str(sp))
+        st = printed / f"{n}.step"
+        export_step(p, str(st))
+        print(f"wrote {sp.relative_to(REPO)}  ({sp.stat().st_size // 1024} KB)")
 
     (OUT / "report.json").write_text(json.dumps(report, indent=2))
     print(f"wrote {(OUT / 'report.json').relative_to(REPO)}")

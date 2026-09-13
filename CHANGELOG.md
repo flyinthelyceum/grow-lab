@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-13 (the canopy sensor case)
+
+### Added
+- **`cad/growlab_cad/sensor_case.py` — the canopy sensor case, modelled and exportable.** 78 × 27 × 18 mm, matte white, two printed parts, on the CMU's centre-rear carrying the AS7341, BME280 and ADS1115. `cad/build.py` now writes STL and STEP for printed parts to `cad/out/print/`, so the CI artifact contains something a slicer can open.
+- **`tests/unit/test_cad_sensor_case.py`.** Split so the layout and printability classes need no kernel and run anywhere — they are where the collisions live. The printability class turns "printed to best practice" into something that fails a build: walls on whole extrusion lines, no bridge past 6 mm, no unsupported overhang, the insert boss thick enough not to split, the countersink not through the plate.
+
+### Found
+- **The AS7341 breakout is T-shaped, 40 × 20, with its sensor ~5 mm from one end** and two illumination LEDs flanking it. Both facts changed the design. The sensor offset sets the case's length: with the port centred on the sensor, 35 mm of board must lie on one side of it. The LEDs would light the diffuser from beneath in an open cavity, so there is a baffle — which doubles as the standoff setting sensor-to-diffuser distance.
+- **Rev B's 78 × 26 × 16 envelope was too small for the real boards.** It was drawn against guessed footprints. The published figures — ADS1115 28 × 18, BME280 15.4 × 11.6, AS7341 40 × 20 — do not fit that box.
+- **The ADS1115 would not fit on the base plate.** At 28 mm it needs a clear run, and the plate's runs are chopped by the corner screws at one end and the cable tie posts at the other: 26.7 mm against 28. It moved up beside the AS7341 into the dead space the sensor offset creates, where the short bosses pass underneath it.
+- **An M2 countersink is 2.2 deep and the plate was 2.0.** It came through the back, where the case bears on the block. Plate is 2.5 now — still whole extrusion lines.
+- **No printed fences round the boards.** A fence has to be sized to an outline, and these outlines come off vendor listings rather than a caliper: a fence 1 mm wrong is a board that will not go in. Foam tape is 1 mm wrong and does not care.
+
+### Decided
+- **Vented, not sealed.** A sealed box in a humid, lit, thermally cycling place is a condensation trap. Air in under the perimeter, across through the plate, out high in the rear wall; conformal coating instead of a gasket. The silicone under the diffuser is the only joint that must keep water out, and it is never opened.
+- **Printed top-face-down on a textured sheet.** The one face on show is then the bed face, which is the matte this object wants and which no top surface matches.
+- **Held by weight and a lip.** The rear wall carries on past the floor and bears on the block's rear face. Nothing is drilled, so the location stays a decision rather than a commitment.
+
 ## 2026-09-12 (the wiring becomes finish work)
 
 ### Added

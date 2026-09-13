@@ -557,3 +557,102 @@ class DepthBudget:
 
 
 DEPTH = DepthBudget()
+
+
+# ---------------------------------------------------------------------------
+# Canopy sensor case (2026-09-13)
+#
+# A printed block on the CMU's centre-rear carrying the AS7341, BME280 and
+# ADS1115. The two plants grow from the cores at either end, so the block's
+# centre is the one place that stays open — and stays unshaded.
+#
+# **This section is in millimetres.** Every constraint on this part is metric:
+# the boards, the M2 screws and heat-set inserts, the nozzle, the layer height.
+# Inches are the right unit for a cabinet and the wrong one here, so the values
+# below are given in mm and multiplied by MM to reach the inches the geometry
+# helpers take. The comment on each line is the figure you would read on a
+# caliper.
+# ---------------------------------------------------------------------------
+
+MM = 1.0 / IN  # inches per millimetre
+
+# --- The boards, as bought. Generic modules, not Adafruit. -----------------
+# AS7341 published by the module maker (Ewellite breakout datasheet): a T-shaped
+# board, 40 x 20 overall, with a 10 x 15 tongue at one end carrying the sensor
+# between two illumination LEDs. Those LEDs are why there is a baffle: they sit
+# millimetres from the sensor and would light the diffuser from underneath.
+SC_AS7341_L = 40.0 * MM
+SC_AS7341_W = 20.0 * MM
+SC_AS7341_TONGUE_W = 10.0 * MM
+SC_AS7341_TONGUE_L = 15.0 * MM
+# CALIPER THIS ONE. Everything optical hangs off it: the port is centred on the
+# sensor, so an error here puts the diffuser off the sensor. Scaled off the
+# datasheet photo at roughly 5 mm from the tongue's end; confirm before printing.
+SC_AS7341_SENSOR_FROM_END = 5.0 * MM
+SC_ADS1115_L = 28.0 * MM  # 28 x 18 published for the GY-ADS1115
+SC_ADS1115_W = 18.0 * MM
+SC_BME280_L = 15.4 * MM  # 15.4 x 11.6 published for the GY-BME280-3.3
+SC_BME280_W = 11.6 * MM
+SC_BOARD_T = 1.6 * MM
+SC_BOARD_CLEAR = 0.4 * MM  # per side, around a board in its fence
+
+# --- Envelope -------------------------------------------------------------
+# 78 long is set by the AS7341, not by choice: its sensor is 5 mm from one end
+# of a 40 mm board, and the port is centred on the sensor, so 35 mm of board has
+# to sit on one side of the port plus clearance. The 32 mm of dead space on the
+# other side is where the loom lives. Width and height are as tight as the
+# boards allow.
+SC_LEN = 78.0 * MM
+SC_WID = 27.0 * MM  # inside the CMU's 31.75 face shell with 4.75 to spare
+SC_HGT = 18.0 * MM  # body 15.5 + base plate 2.5
+SC_WALL = 2.0 * MM  # CHOICE: 4 perimeters at 0.50 extrusion width, exactly
+SC_BASE_T = 2.5 * MM  # 5 lines. 2.0 looked tidier until the M2 countersink
+                      # turned out to be 2.2 deep and came through the back
+SC_CHAMFER = 1.5 * MM  # the four vertical corners, 45 deg, cut like the plinth's
+
+# --- The optical stack ----------------------------------------------------
+SC_PORT_DIA = 12.3 * MM  # recess for a Ø12.0 PTFE disc, 0.3 for FDM
+SC_PORT_DEPTH = 1.0 * MM  # disc thickness, so it finishes flush with the top face
+SC_APERTURE_DIA = 10.5 * MM  # through the rest of the top wall; 0.9 ledge holds the disc
+SC_BAFFLE_ID = 6.0 * MM  # the sensor's field stop
+SC_BAFFLE_OD = 8.0 * MM
+SC_BAFFLE_DROP = 1.5 * MM  # top wall inner face to the board. Doubles as the standoff
+                           # that sets sensor-to-diffuser distance — the one height
+                           # in this part that has to be right.
+SC_POST_DIA = 3.0 * MM  # three more standoffs so the board seats flat
+
+# --- Closure --------------------------------------------------------------
+SC_BOSS_DIA = 6.0 * MM
+SC_BOSS_H = 6.0 * MM  # deliberately short: the AS7341 lies above the bosses and
+                      # a full-height boss would foul it
+SC_INSERT_HOLE = 2.6 * MM  # M2 heat-set insert (Ø3.2 body)
+SC_INSERT_DEPTH = 5.0 * MM
+SC_SCREW_DIA = 2.2 * MM  # M2 clearance through the base plate
+SC_SCREW_CSK = 4.4 * MM  # countersink, so nothing proud sits against the block
+SC_SCREW_INSET = 5.0 * MM
+
+# --- Entries, vents, seating ----------------------------------------------
+# Both cable entries are notches in the walls' bottom edge rather than holes.
+# A hole through a vertical wall needs a teardrop or a bridge; a notch closed by
+# the base plate needs neither, and the cable drops in instead of threading.
+SC_CABLE_W = 5.6 * MM  # Cat5e, to the case
+SC_CABLE_H = 6.0 * MM
+SC_PROBE_W = 4.6 * MM  # SEN0308 lead, up from the core
+SC_PROBE_H = 5.0 * MM
+SC_TIE_POST_DIA = 2.5 * MM  # a pair either side of each notch; zip tie between
+SC_TIE_POST_GAP = 3.5 * MM
+SC_VENT_L = 10.0 * MM  # slots in the base plate, under the case, facing the block
+SC_VENT_W = 2.0 * MM
+SC_VENT_N = 3
+SC_VENT_PITCH = 4.0 * MM
+SC_FOOT_DIA = 8.0 * MM  # recess for a self-adhesive silicone foot
+SC_FOOT_DEPTH = 0.6 * MM
+SC_LIP_DROP = 12.0 * MM  # the rear wall carries on down past the floor and bears
+                         # on the block's rear face. That is the whole fixing:
+                         # weight, friction and a face that cannot slide forward.
+
+# --- Where it sits --------------------------------------------------------
+SC_X = CMU_X  # centred on the block's length
+SC_Y1 = CMU_Y + CMU_W / 2  # rear face flush with the block's rear face
+SC_Y = SC_Y1 - SC_WID / 2
+SC_Z0 = CMU_TOP_Z  # the base plate's underside, on its silicone feet

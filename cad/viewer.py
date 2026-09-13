@@ -59,6 +59,10 @@ MATERIALS = {
     # shows where the light actually comes from.
     "lightbox": dict(label="Lightbox, white DTM", colour="#E7E9E6", opacity=1.0, group="fabricated"),
     "led_heatsink": dict(label="LED heatsink (alu, on hand)", colour="#D9A83E", opacity=0.9, group="reference"),
+    # Printed, not cut, and not painted — it is its own material register, a
+    # third one after the white metal and the warm ply. Rendered a shade cooler
+    # than the DTM so the two read as different things rather than a mismatch.
+    "sensor_case": dict(label="Canopy sensor case, printed PETG", colour="#F2F4F1", opacity=1.0, group="fabricated"),
 }
 
 
