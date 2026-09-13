@@ -2,6 +2,42 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-13 (the red team)
+
+Five adversarial reviews of the canopy sensor case — printability, optics, assembly, test integrity, environment — with a standing instruction to break it rather than approve it. Rev D did not survive. Rev E is what was left standing.
+
+### Found — the part would not have printed
+
+- **Four features were not attached to the body.** The baffle collar hung over a Ø10.5 aperture while being Ø8.5 itself, so nothing carried it but a 0.55 mm overlap with the screw boss. The lip met the body along a single edge, zero face contact. The four insert bosses stopped 7.5 mm below the ceiling and were exactly tangent to the walls — Ø6 discs starting in mid-air, joined to the shell along a line. The plate's "countersink" was a Ø4.4 counterbore 2.2 deep, leaving a 0.3 mm bridged web for a 90° head to bear on and pull through.
+- **Every one of those passed the geometry tests**, which compared bounding boxes and volumes. A bounding box cannot tell a solid from a pile of parts floating inside it. The test that catches all four at once is that each half is **one solid**, and it is now the first kernel test in the file.
+- **The M2.5 pilot ran to the diffuser recess floor.** The board's mounting hole lies under the recess in plan, and the pilot's blind end was coplanar with the face the disc bonds to — threads into the optical path, and a bump under the disc where flush was the whole point.
+- **Silicone does not bond to PTFE.** The joint called "the only one that has to keep water out" could not have formed: untreated PTFE is the reference non-stick surface. Etched PTFE now, etched face down, with neutral-cure silicone.
+- **The insert holes were 0.6 mm undersized** for the Ø3.2 inserts named on the same line — 14 mm³ of displaced plastic, rising onto the face the plate seats against. The test that passed measured the wall against the pilot hole's radius rather than the insert's.
+- **The bridge test measured the wrong axis.** It checked a 10 mm slot's 2 mm height against a 6 mm limit. Bridges are now measured from the solid, and the only downward faces in either part are the disc's ledge and seven 5.5 mm vent roofs.
+- **The inlet vents faced the block.** The CMU is a planter; its top face stays damp for weeks after a leach and after every irrigation. The case would have breathed the block's own boundary layer through a 1.6 mm plenum and dewed on the diffuser at every lights-off.
+- **Nothing retained the BME280.** Four bare posts, board inverted, gravity pulling it off them onto the ADS1115 below.
+- **A 10-pin header on the ADS1115 stands 13.6 mm tall**; the boards hanging above it are at 12.4. No board in this case may carry a header.
+- **"Conformal-coat the boards" would have blinded two sensors.** The BME280's humidity element and the AS7341's window cannot be coated, and nothing said to mask them.
+- **Three sets of board pull-ups plus the Pi's** put the bus at 3.46 mA against the I²C spec's 3 mA — spending exactly the noise margin the metre of Cat5e needs.
+- **The AS7341 driver discarded the saturation byte.** ASTATUS is byte zero of the same block read as the counts and its top bit says the conversion saturated. Without it a saturated read is indistinguishable from a bright one: counts stop rising, the curve goes flat, and flat is still monotonic — so a commissioning fit accepts it and every reading above that point is a ceiling.
+- **The centre of the block is not permanently unshaded.** Ranunculus clumps reach 25–35 cm and meet over the web by about week eight. The port is under leaves from then on.
+
+### Changed
+
+- **Rev E, 58 × 27 × 18.** The bore runs through the top wall at the collar's own diameter, so the collar sits on a full ring of wall and the disc's ledge is 3 mm of bond area instead of 0.9. The corner bosses hang the full height from the ceiling and are fused into their corners by a web. The lip moved onto the plate, which makes the plate a full-footprint butt joint with no fit to get wrong and no slot at the back. The countersink is a cone.
+- **Both parts print top face down.** The plate that way up has no downward-facing face at all.
+- **The pilot stops 0.3 mm into the wall**, leaving 0.65 under the disc, and the screw is an M2.5 × 3 rather than × 4 — chosen to suit the pilot, because a screw that bottoms out before the board is clamped holds nothing.
+- **The BME280 hangs on its own two mounting holes**, on bosses, like the AS7341.
+- **Both vents moved into the rear wall**, inlets low and outlets high; nothing opens in the plate.
+- **Three cast silicone feet** instead of four adhesive bumpers. Three points never rock, and neutral-cure silicone bonds to concrete where PSA on a dusty alkaline surface does not.
+- **A zip tie through the lip is the strain relief.** A stiff Cat5e pushes about 0.24 N at the case's rear edge; the case weighs 0.25 N.
+- **The AS7341 driver puts the board's LED out on every read** and reports `as7341_saturated` alongside `as7341_lux`. Both control bits power up at zero, so the LED has never bitten — but "nothing has set it" is not "it is off", and one vendor example run on the same bus leaves it on.
+
+### Decided
+
+- **The reading is under-canopy light, and is labelled so.** Relocating the port to somewhere that sees the fixture means putting hardware back into view, which the piece does not allow. Better to measure something real and say what it is than to claim a canopy reference plane the geometry cannot hold.
+- **The gain stays where it is until saturation is observed rather than calculated.** The arithmetic says 64× may already clip under the lightbox, but changing it invalidates any commissioning fit made so far. Measure first: the flag now exists.
+
 ## 2026-09-13 (the AS7341 in hand)
 
 ### Found

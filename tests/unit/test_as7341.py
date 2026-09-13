@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 
 from pi.drivers.as7341 import (
     AS7341Driver,
+    CONFIG_LED_SEL,
     DEVICE_ID,
     ENABLE_PON,
     ENABLE_SMUX_EN,
@@ -11,8 +12,10 @@ from pi.drivers.as7341 import (
     REG_ASTATUS,
     REG_CFG0,
     REG_CFG1,
+    REG_CONFIG,
     REG_ENABLE,
     REG_ID,
+    REG_LED,
     REG_STATUS2,
     STATUS2_AVALID,
     SPECTRAL_CHANNELS,
@@ -20,14 +23,17 @@ from pi.drivers.as7341 import (
 )
 
 
-def _pack_channels(values: tuple[int, int, int, int, int, int]) -> list[int]:
-    payload = [0]
+def _pack_channels(values: tuple[int, int, int, int, int, int],
+                   astatus: int = 0x00) -> list[int]:
+    payload = [astatus]
     for value in values:
         payload.extend([value & 0xFF, (value >> 8) & 0xFF])
     return payload
 
 
-def _make_mock_bus():
+def _make_mock_bus(low_channels=(110, 210, 310, 410, 510, 610),
+                  high_channels=(710, 810, 910, 1010, 1110, 1210),
+                  astatus=0x00):
     """Create a mock bus that can step through low/high SMUX reads."""
     registers = {
         REG_ID: DEVICE_ID << 2,
@@ -37,8 +43,6 @@ def _make_mock_bus():
         REG_STATUS2: STATUS2_AVALID,
     }
     smux_mode = {"value": "low"}
-    low_channels = (110, 210, 310, 410, 510, 610)
-    high_channels = (710, 810, 910, 1010, 1110, 1210)
 
     mock_bus = MagicMock()
 
@@ -58,13 +62,14 @@ def _make_mock_bus():
         if reg == REG_ASTATUS and length == 13:
             if smux_mode["value"] == "low":
                 smux_mode["value"] = "high"
-                return _pack_channels(low_channels)
-            return _pack_channels(high_channels)
+                return _pack_channels(low_channels, astatus)
+            return _pack_channels(high_channels, astatus)
         return [0] * length
 
     mock_bus.read_byte_data.side_effect = read_byte_data
     mock_bus.write_byte_data.side_effect = write_byte_data
     mock_bus.read_i2c_block_data.side_effect = read_i2c_block_data
+    mock_bus.registers = registers
     return mock_bus
 
 
@@ -101,8 +106,57 @@ class TestAS7341Driver:
 
         ids = {reading.sensor_id for reading in readings}
         assert "as7341_lux" in ids
+        assert "as7341_saturated" in ids
         assert set(SPECTRAL_CHANNELS).issubset(ids)
-        assert len(readings) == 1 + len(SPECTRAL_CHANNELS)
+        assert len(readings) == 2 + len(SPECTRAL_CHANNELS)
+
+    async def test_it_puts_the_boards_led_out_on_every_read(self):
+        """The LED points the same way as the sensor from five millimetres
+        away. Both control bits power up at zero, so this has never bitten —
+        but a vendor example run once on the same bus leaves it on, and then
+        the sensor reads its own board for the rest of the season."""
+        mock_bus = _make_mock_bus()
+        driver = AS7341Driver(bus_number=1, address=0x39)
+        driver._bus = mock_bus
+
+        await driver.read()
+
+        assert mock_bus.registers[REG_LED] == 0x00, "LED_ACT left set"
+        assert not mock_bus.registers[REG_CONFIG] & CONFIG_LED_SEL, "LED_SEL left set"
+        assert not mock_bus.registers[REG_CFG0] & 0x10, "left in the low bank"
+
+    async def test_a_saturated_read_says_so(self):
+        """Full scale is (ATIME+1)(ASTEP+1) = 18000 counts. Above that the
+        counts stop rising, which is flat but still monotonic — so a
+        commissioning fit accepts it and never reports the ceiling."""
+        full_scale = (29 + 1) * (599 + 1)
+        mock_bus = _make_mock_bus(high_channels=(710, 810, full_scale, 1010, 1110, 1210))
+        driver = AS7341Driver(bus_number=1, address=0x39)
+        driver._bus = mock_bus
+
+        readings = {r.sensor_id: r.value for r in await driver.read()}
+
+        assert readings["as7341_saturated"] == 1.0
+
+    async def test_the_sensors_own_saturation_flag_is_believed(self):
+        """ASTATUS is byte zero of the same block read as the counts, and its
+        top bit is the analog saturation the part itself reports. The driver
+        used to discard that byte."""
+        mock_bus = _make_mock_bus(astatus=0x80)
+        driver = AS7341Driver(bus_number=1, address=0x39)
+        driver._bus = mock_bus
+
+        readings = {r.sensor_id: r.value for r in await driver.read()}
+
+        assert readings["as7341_saturated"] == 1.0
+
+    async def test_an_ordinary_read_is_not_flagged(self):
+        driver = AS7341Driver(bus_number=1, address=0x39)
+        driver._bus = _make_mock_bus()
+
+        readings = {r.sensor_id: r.value for r in await driver.read()}
+
+        assert readings["as7341_saturated"] == 0.0
 
     async def test_read_returns_empty_on_error(self):
         mock_bus = MagicMock()

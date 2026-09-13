@@ -9,7 +9,7 @@ height off the floor.
 
 from __future__ import annotations
 
-from build123d import Align, Box, Cylinder, Location, Part, Pos, Rot
+from build123d import Align, Box, Cone, Cylinder, Location, Part, Pos, Rot
 
 from .params import IN
 
@@ -36,6 +36,16 @@ def cyl_z(dia: float, length: float, *, at: tuple[float, float, float]) -> Part:
     """A cylinder along Z, centred in X/Y at ``at``, starting at ``at[2]``."""
     return Pos(at[0] * IN, at[1] * IN, at[2] * IN) * Cylinder(
         dia / 2 * IN, length * IN, align=CENTRE_BOTTOM
+    )
+
+
+def cone_z(d0: float, d1: float, length: float, *, at: tuple[float, float, float]) -> Part:
+    """A frustum along Z: diameter ``d0`` at ``at[2]`` tapering to ``d1`` at
+    ``at[2] + length``. Centred in X/Y at ``at``. For countersinks — a
+    countersink is a cone, and a cylinder of the same mouth is a counterbore
+    that leaves a web where the cone would leave a wall."""
+    return Pos(at[0] * IN, at[1] * IN, at[2] * IN) * Cone(
+        d0 / 2 * IN, d1 / 2 * IN, length * IN, align=CENTRE_BOTTOM
     )
 
 

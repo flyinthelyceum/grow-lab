@@ -560,11 +560,13 @@ DEPTH = DepthBudget()
 
 
 # ---------------------------------------------------------------------------
-# Canopy sensor case (2026-09-13)
+# Canopy sensor case (2026-09-13, Rev E after the red team)
 #
 # A printed block on the CMU's centre-rear carrying the AS7341, BME280 and
 # ADS1115. The two plants grow from the cores at either end, so the block's
-# centre is the one place that stays open — and stays unshaded.
+# centre is the one place that stays open early in the season. (It will not
+# stay unshaded — see the changelog. The reading is under-canopy light once the
+# ranunculus close over the web, and is labelled so.)
 #
 # **This section is in millimetres.** Every constraint on this part is metric:
 # the boards, the M2 screws and heat-set inserts, the nozzle, the layer height.
@@ -572,6 +574,14 @@ DEPTH = DepthBudget()
 # below are given in mm and multiplied by MM to reach the inches the geometry
 # helpers take. The comment on each line is the figure you would read on a
 # caliper.
+#
+# Rev E is what five adversarial reviews left standing. Rev D had four print
+# blockers that the kernel tests could not see because they check bounding
+# boxes and volumes, not whether the solid is connected: the baffle collar hung
+# over the aperture with nothing above it, the lip touched the body along one
+# edge, the insert bosses floated 9.5 mm below the ceiling tangent to the walls,
+# and the "countersink" was a counterbore leaving 0.3 mm of plate under the
+# head. Every one of those now has a test that fails on the old geometry.
 # ---------------------------------------------------------------------------
 
 MM = 1.0 / IN  # inches per millimetre
@@ -594,9 +604,19 @@ SC_AS7341_HOLE_X = 11.3 * MM
 SC_AS7341_HOLE_Y = 7.9 * MM
 SC_AS7341_HOLE_DIA = 3.0 * MM
 SC_AS7341_BOSS_DIA = 6.0 * MM
-SC_AS7341_PILOT = 2.1 * MM  # M2.5 self-tapping in PETG
-SC_AS7341_PILOT_DEPTH = 3.0 * MM  # 2.0 of boss + 1.0 into the top wall, leaving
-                                  # 1.0 of show face over it
+SC_AS7341_PILOT = 2.3 * MM  # M2.5 thread-forming in PETG. A Ø2.3 vertical hole
+                            # prints about 2.1; M2.5 minor is 1.95
+SC_AS7341_PILOT_DEPTH = 2.3 * MM  # 2.0 of boss + 0.3 into the top wall. It CANNOT
+                                  # go deeper: the hole lies under the diffuser
+                                  # recess in plan, and the recess floor is only
+                                  # 0.95 above the ceiling. Rev D ran the pilot to
+                                  # exactly that floor — zero skin under the disc.
+SC_AS7341_SCREW_LEN = 3.0 * MM  # M2.5 x 3 pan, NOT the x 4 the earlier sheet said:
+                                # 1.6 of board leaves 1.4 in the pilot, and a x 4
+                                # bottoms out 0.1 before the board is clamped. 1.4
+                                # of M2.5 thread in PETG shears at about 190 N and
+                                # the board weighs three grams; the diffuser skin
+                                # above is the binding constraint, not the thread
 # What is almost certainly a white LED, 5.2 mm below the sensor — the light
 # square at bottom right of the photo. Advisory: the baffle test uses it.
 SC_AS7341_LED_DX = -0.7 * MM
@@ -604,32 +624,49 @@ SC_AS7341_LED_DY = -5.2 * MM
 # Tallest part on the sensor face (the big capacitor, top centre). Sets the
 # minimum baffle drop, because the board hangs component-side up. CHECK IT.
 SC_AS7341_PART_H = 1.6 * MM
+SC_AS7341_PKG_H = 1.0 * MM  # the sensor package itself, above the board
+
 SC_ADS1115_L = 28.0 * MM  # 28 x 18 published for the GY-ADS1115
 SC_ADS1115_W = 18.0 * MM
-SC_BME280_L = 15.4 * MM  # 15.4 x 11.6 published for the GY-BME280-3.3
+SC_ADS1115_PART_H = 2.5 * MM  # tallest part on its top face with NO header fitted
+SC_TAPE_T = 1.0 * MM  # the foam tape under it
+
+# BME280: GY-BME280-3.3, 15.4 x 11.6 published. Two mounting holes, about 10 mm
+# apart, on the edge opposite the pads — CALIPER the pitch and the inset before
+# printing; listings agree on "two holes" and disagree on where. It hangs from
+# two bosses by its own holes, sensor-side down. Rev D sat it on four bare posts
+# with nothing holding it there.
+SC_BME280_L = 15.4 * MM  # the long side. It lies along Y in the case
 SC_BME280_W = 11.6 * MM
+SC_BME280_HOLE_PITCH = 10.0 * MM  # CALIPER — along the board's long side
+SC_BME280_HOLE_INSET = 1.5 * MM  # CALIPER — hole centre from the short edge it is on
+SC_BME280_HOLE_DIA = 3.0 * MM
+SC_BME280_BOSS_DIA = 6.0 * MM
+SC_BME280_PART_H = 1.2 * MM  # tallest part on the pad-side face (it hangs pads-up)
+
 SC_BOARD_T = 1.6 * MM
-SC_BOARD_CLEAR = 0.4 * MM  # per side, around a board in its fence
 
 # --- Envelope -------------------------------------------------------------
-# 56 long. The first cut was 78, forced by a 40 mm T-shaped AS7341 with its
-# sensor at one end; the board actually in hand is 21 mm square and the sensor
-# is near mid-length, so the port centres with 18 mm of board one side and 3 the
-# other. The length is now set by the ADS1115 on the plate (28) between the two
-# inlet vents and the corner bosses. Width and height are as tight as the boards
-# allow.
-SC_LEN = 56.0 * MM
+# 58 long. The first cut was 78, forced by a 40 mm T-shaped AS7341; the second
+# was 56. The two extra millimetres are what the BME280's bosses need to clear
+# the corner bosses now that those hang full height from the ceiling.
+SC_LEN = 58.0 * MM
 SC_WID = 27.0 * MM  # inside the CMU's 31.75 face shell with 4.75 to spare
 SC_HGT = 18.0 * MM  # body 15.5 + base plate 2.5
 SC_WALL = 2.0 * MM  # CHOICE: 4 perimeters at 0.50 extrusion width, exactly
-SC_BASE_T = 2.5 * MM  # 5 lines. 2.0 looked tidier until the M2 countersink
-                      # turned out to be 2.2 deep and came through the back
+SC_BASE_T = 2.5 * MM  # 5 lines. Under a 1.1 mm countersink that leaves 1.4
 SC_CHAMFER = 1.5 * MM  # the four vertical corners, 45 deg, cut like the plinth's
 
 # --- The optical stack ----------------------------------------------------
-SC_PORT_DIA = 12.3 * MM  # recess for a Ø12.0 PTFE disc, 0.3 for FDM
-SC_PORT_DEPTH = 1.0 * MM  # disc thickness, so it finishes flush with the top face
-SC_APERTURE_DIA = 10.5 * MM  # through the rest of the top wall; 0.9 ledge holds the disc
+SC_DISC_DIA = 12.0 * MM  # the PTFE disc as bought
+SC_DISC_T = 1.0 * MM
+SC_PORT_DIA = 12.5 * MM  # recess for it. 0.25 a side: the mouth is on the bed,
+                         # where elephant's foot and hole shrink both take
+SC_PORT_DEPTH = 1.05 * MM  # 7 layers of 0.15. The disc sits 0.05 low, which is
+                           # nothing; 1.0 is not a whole number of layers
+SC_APERTURE_DIA = 6.5 * MM  # == SC_BAFFLE_ID. The bore simply continues through
+                            # the top wall. Rev D opened it to 10.5, which took
+                            # the whole wall out from under the Ø8.5 collar
 SC_BAFFLE_ID = 6.5 * MM  # the sensor's field stop; narrower than the LED's offset
 SC_BAFFLE_OD = 8.5 * MM
 SC_BAFFLE_DROP = 2.0 * MM  # top wall inner face to the board. Doubles as the standoff
@@ -637,40 +674,58 @@ SC_BAFFLE_DROP = 2.0 * MM  # top wall inner face to the board. Doubles as the st
                            # in this part that has to be right. It is also the
                            # component clearance: the board hangs sensor-side up, so
                            # every part on that face lives in this gap.
-SC_POST_DIA = 3.0 * MM  # the BME280's four standoffs
 
 # --- Closure --------------------------------------------------------------
-SC_BOSS_DIA = 6.0 * MM
-SC_BOSS_H = 6.0 * MM  # deliberately short: the AS7341 lies above the bosses and
-                      # a full-height boss would foul it
-SC_INSERT_HOLE = 2.6 * MM  # M2 heat-set insert (Ø3.2 body)
+# Four bosses hang the full height from the ceiling and are fused into the
+# corners by a web, so they are columns in the print, not discs in mid-air.
+SC_BOSS_DIA = 7.0 * MM
+SC_BOSS_INSET_X = 4.5 * MM  # boss centre from the outer face. Ø7 reaches 1.0
+SC_BOSS_INSET_Y = 5.5 * MM  # into the end walls; 1.5 short of the long walls,
+                            # which the web bridges
+SC_INSERT_OD = 3.2 * MM  # M2 heat-set insert body
+SC_INSERT_HOLE = 3.0 * MM  # what its makers ask for. Rev D said 2.6: 0.6 of
+                           # interference and 14 mm3 of spew onto the seating face
 SC_INSERT_DEPTH = 5.0 * MM
 SC_SCREW_DIA = 2.2 * MM  # M2 clearance through the base plate
-SC_SCREW_CSK = 4.4 * MM  # countersink, so nothing proud sits against the block
-SC_SCREW_INSET = 5.0 * MM
+SC_SCREW_CSK = 4.4 * MM  # 90 deg countersink mouth. DIN 963 M2 head is Ø3.8
+SC_SCREW_CSK_DEPTH = (SC_SCREW_CSK - SC_SCREW_DIA) / 2  # 1.1 — a cone, not a bore
 
 # --- Entries, vents, seating ----------------------------------------------
-# Both cable entries are notches in the walls' bottom edge rather than holes.
-# A hole through a vertical wall needs a teardrop or a bridge; a notch closed by
-# the base plate needs neither, and the cable drops in instead of threading.
+# Both cable entries are notches in the walls' bottom edge, closed by the plate
+# the walls stand on. A hole through a vertical wall needs a teardrop or a
+# bridge; a notch needs neither, and the cable drops in instead of threading.
 SC_CABLE_W = 5.3 * MM  # Cat5e (~5.5 OD), a shade under for a friction fit
-SC_CABLE_H = 6.0 * MM
-SC_PROBE_W = 4.6 * MM  # SEN0308 lead, up from the core
+SC_CABLE_H = 6.0 * MM  # above the plate
+SC_TIE_HOLE_DIA = 3.0 * MM  # two through the lip, flanking the notch: a zip tie
+SC_TIE_HOLE_DX = 6.0 * MM  # clamps the cable to the lip. That is the strain relief
+SC_PROBE_W = 4.6 * MM  # SEN0308 lead, into the +X end wall, over that core
 SC_PROBE_H = 5.0 * MM
-# No internal tie posts: they chopped the plate's clear run and the ADS1115
-# would not fit between them and the corner bosses. The notch is sized a shade
-# under the cable for a friction fit, and a zip tie goes on outside the wall.
-SC_VENT_L = 10.0 * MM  # slots in the base plate, under the case, facing the block
+# Ventilation. Inlets low in the END walls (behind the plants), outlets high
+# in the rear wall. Nothing in the plate: Rev D's plate slots drew the block's
+# own boundary layer — damp for weeks after a leach — straight into the box.
+SC_VENT_L = 5.5 * MM  # under the 6 mm bridge the print test allows
 SC_VENT_W = 2.0 * MM
-SC_VENT_X = 17.0 * MM  # one slot each end, between the ADS1115 and the bosses
-SC_FOOT_DIA = 8.0 * MM  # recess for a self-adhesive silicone foot
-SC_FOOT_DEPTH = 0.6 * MM
-SC_LIP_DROP = 12.0 * MM  # the rear wall carries on down past the floor and bears
-                         # on the block's rear face. That is the whole fixing:
-                         # weight, friction and a face that cannot slide forward.
+SC_INLET_Z = 5.0 * MM  # slot centre above the plate's top face
+SC_OUTLET_DROP = 4.0 * MM  # slot centre below the ceiling
+# Feet: cast in place. A dab of neutral-cure silicone in each recess, pressed
+# onto the brushed block and cured under the case's own weight. Bonds to
+# concrete and to PETG, takes up the block's waviness, cuts free with a blade.
+# Three, because three points never rock.
+SC_FOOT_DIA = 7.0 * MM
+SC_FOOT_DEPTH = 1.0 * MM
+SC_LIP_DROP = 12.0 * MM  # the plate's rear edge carries on down past the block's
+                         # top and bears on its rear face from outside it. It is
+                         # part of the PLATE, not the body: a full-footprint plate
+                         # that the walls stand on has no fit to get wrong, and no
+                         # slot at the back for the block's damp air to come
+                         # through. Above the seam the rear wall continues the
+                         # lip's outer face, so it reads as one surface.
 
 # --- Where it sits --------------------------------------------------------
 SC_X = CMU_X  # centred on the block's length
-SC_Y1 = CMU_Y + CMU_W / 2  # rear face flush with the block's rear face
+# The rear wall's INNER face is flush with the block's rear face: the wall is
+# the lip, and the lip is outside the block. Rev D put the outer face flush and
+# then hung a separate strip outboard; the strip touched the body along a line.
+SC_Y1 = CMU_Y + CMU_W / 2 + SC_WALL  # outer rear face
 SC_Y = SC_Y1 - SC_WID / 2
-SC_Z0 = CMU_TOP_Z  # the base plate's underside, on its silicone feet
+SC_Z0 = CMU_TOP_Z  # the base plate's underside, on the block

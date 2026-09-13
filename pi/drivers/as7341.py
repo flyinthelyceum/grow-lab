@@ -17,6 +17,8 @@ from pi.data.models import SensorReading
 
 logger = logging.getLogger(__name__)
 
+REG_CONFIG = 0x70  # low bank
+REG_LED = 0x74  # low bank
 REG_ENABLE = 0x80
 REG_ATIME = 0x81
 REG_ID = 0x92
@@ -33,6 +35,10 @@ ENABLE_SP_EN = 0x02
 ENABLE_SMUX_EN = 0x10
 
 STATUS2_AVALID = 0x40
+
+CONFIG_LED_SEL = 0x08
+LED_ACT = 0x80
+ASTATUS_ASAT = 0x80
 
 CFG6_SMUX_CMD_MASK = 0x18
 CFG6_SMUX_CMD_WRITE = 0x10
@@ -160,6 +166,29 @@ class AS7341Driver:
         self._write_byte(REG_ATIME, self._atime)
         self._write_word(REG_ASTEP_L, self._astep)
         self._write_byte(REG_CFG1, self._gain)
+        self._led_off()
+
+    def _led_off(self) -> None:
+        """Put the breakout's illumination LED out, every read.
+
+        It points the same way as the sensor from a few millimetres away, so
+        lit it is the brightest thing in the sensor's world and the reading is
+        of the board. Both bits are zero at power-on, which is why this has
+        never bitten — but "nothing has set it" is not the same as "it is off",
+        and any vendor example run on this bus leaves it on. The case's baffle
+        is the second line here, not the first: white PETG at a millimetre is a
+        diffuser, not a shield.
+
+        Both registers live in the low bank, which is a different address space
+        over the same pins — so the bank goes back before anything else is
+        touched.
+        """
+        self._set_low_bank(True)
+        try:
+            self._set_bits(REG_CONFIG, CONFIG_LED_SEL, 0x00)
+            self._write_byte(REG_LED, 0x00)
+        finally:
+            self._set_low_bank(False)
 
     def _set_low_bank(self, enabled: bool) -> None:
         self._set_bits(REG_CFG0, 0x10, 0x10 if enabled else 0x00)
@@ -185,12 +214,25 @@ class AS7341Driver:
                 raise RuntimeError("AS7341 data-ready timeout")
             time.sleep(0.005)
 
-    def _read_latched_channels(self) -> tuple[int, int, int, int, int, int]:
+    def _full_scale(self) -> int:
+        """Counts at which the ADC has nothing left to give."""
+        return (self._atime + 1) * (self._astep + 1)
+
+    def _read_latched_channels(self) -> tuple[int, tuple[int, ...]]:
+        """The status byte and the six channels latched with it.
+
+        ASTATUS is byte zero of the same block read, and its top bit says the
+        conversion saturated. Throwing it away — which this driver did — makes
+        a saturated read indistinguishable from a bright one: the counts stop
+        rising and the curve goes flat, which is still monotonic, so a
+        commissioning fit accepts it and every reading above that point is a
+        ceiling rather than a measurement.
+        """
         data = self._get_bus().read_i2c_block_data(self._address, REG_ASTATUS, 13)
         words = []
         for index in range(1, 13, 2):
             words.append(data[index] | (data[index + 1] << 8))
-        return tuple(words)  # type: ignore[return-value]
+        return data[0], tuple(words)
 
     def _read_all_channels(self) -> dict[str, int]:
         self._power_on()
@@ -198,15 +240,27 @@ class AS7341Driver:
 
         self._configure_smux(self._LOW_SMUX)
         self._wait_for_data()
-        low = self._read_latched_channels()
+        low_status, low = self._read_latched_channels()
 
         self._configure_smux(self._HIGH_SMUX)
         self._wait_for_data()
-        high = self._read_latched_channels()
+        high_status, high = self._read_latched_channels()
 
         self._power_off()
 
+        full_scale = self._full_scale()
+        saturated = bool((low_status | high_status) & ASTATUS_ASAT) or any(
+            count >= full_scale for count in low + high
+        )
+        if saturated:
+            logger.warning(
+                "AS7341 saturated at gain index %s, %s counts full scale — "
+                "the spectral readings are a ceiling, not a measurement",
+                self._gain, full_scale,
+            )
+
         return {
+            "as7341_saturated": int(saturated),
             "as7341_415nm": low[0],
             "as7341_445nm": low[1],
             "as7341_480nm": low[2],
@@ -231,7 +285,13 @@ class AS7341Driver:
                     sensor_id="as7341_lux",
                     value=lux,
                     unit="lux",
-                )
+                ),
+                SensorReading(
+                    timestamp=now,
+                    sensor_id="as7341_saturated",
+                    value=float(channels["as7341_saturated"]),
+                    unit="bool",
+                ),
             ]
             readings.extend(
                 SensorReading(

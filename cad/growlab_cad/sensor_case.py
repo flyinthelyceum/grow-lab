@@ -2,77 +2,89 @@
 
 Carries the AS7341, the BME280 and the ADS1115, facing up through a PTFE
 diffuser at its centre. The two plants grow from cores at either end of the
-block, so the centre is the one place on it that stays open — and the one place
-neither canopy shades. That is why it is here rather than beside a core.
+block, so the centre is the one place on it that stays open early in the
+season. It will not stay unshaded: ranunculus close over the web by week eight
+or so, and from then on the AS7341 reads under-canopy light. That is a real
+quantity — see the changelog — but it is not the fixture's output, and the
+docs say so rather than claiming a property the geometry does not have.
 
-It is held by nothing but its own weight and a lip: the rear wall carries on
-down past the floor and bears on the block's rear face from **outside** it,
-which is all it takes to stop the case sliding forward. (Outside, not flush —
-flush puts 0.08 in3 of printed plastic inside the block, which is what the
-interference check against the CMU is there to say.) Nothing is drilled, so the
+It is held by three dabs of neutral-cure silicone cast in place in the plate's
+recesses, and by a lip: the plate's rear edge carries on down past the block's
+top and bears on its rear face from **outside** it. Inside, not outside, is
+where the case would be — 0.08 in3 of printed plastic sharing space with the
+concrete — which is what the interference check against the CMU is there to
+say. Nothing is drilled, and the silicone cuts free with a blade, so the
 position can be lived with for a season before anyone commits a masonry bit.
+
+What the lip cannot do is hold the case against a tug on its cable, so it does
+not have to: the zip tie through the lip clamps the jacket to the lip itself,
+and a pull reaches the block's rear face rather than the solder joints.
 
 Two parts
 ---------
 **Body**, printed *top face down*. The face you see is then the bed face, which
 on a textured sheet is a uniform matte no other method matches — and matte white
-is the whole point of the object. Everything inside it hangs from the top wall,
-so the print has no internal bridge.
+is the whole point of the object. Everything inside it hangs from the top wall:
+the baffle, the AS7341's boss, the BME280's two bosses, and the four corner
+bosses, which run the full height from the ceiling to the plate and are fused
+into their corners by a web. In the print every one of them is a column growing
+from the bed, and the part has no internal bridge longer than a vent slot.
 
-**Base plate**, printed flat, carrying the one board that does not need to see
-or breathe. Wire it on the bench, then bring the two halves together.
+**Base plate**, printed top face down as well, so its countersinks and foot
+recesses open upward and nothing on it bridges. The walls stand on it: it is the
+full footprint, chamfered to match, and it carries the lip. Putting the lip here
+rather than on the body is what makes the plate a plain butt joint with no fit to
+get wrong — and leaves no slot at the back for the block's own damp air. The seam
+is a hairline 2.5 mm above the block, and the rear wall continues the lip's outer
+face above it, so the back reads as one surface.
 
 The AS7341 that is actually in hand
 -----------------------------------
 The first cut was drawn to a vendor datasheet for a 40 × 20 T-shaped board with
-its sensor on a tongue at one end, and that geometry forced a 78 mm case. The
-board in hand (photographed 2026-09-13) is the small square generic: about
-21 × 16, sensor near mid-height 3 mm from one edge, and — usefully — a Ø3
-mounting hole on the sensor's own row 6.7 mm inboard of it. So the one board
-whose position matters is **screwed**, up through its own hole into a boss that
-hangs from the top wall, with the baffle as the second contact. Two points fix
-position and rotation; a ring of contact stops rocking. It is the most precisely
-located thing in the case, which is right, because it is the only thing whose
-location changes a reading.
+its sensor on a tongue at one end. The board in hand (photographed 2026-09-13)
+is the small square generic: about 21 × 16, sensor near mid-height 3 mm from
+one edge, and — usefully — a Ø3 mounting hole on the sensor's own row 6.7 mm
+inboard of it. So the one board whose position matters is **screwed**, up
+through its own hole into a boss that hangs from the top wall, with the baffle
+as the second contact. Two points fix position and rotation; a ring of contact
+stops rocking.
 
-That board shrank the case from 78 to 56. The length is now set by the
-ADS1115 on the plate, between the two inlet vents and the corner bosses.
+That hole lies under the diffuser recess in plan, and the recess floor is only
+0.95 mm above the ceiling. The pilot therefore stops 0.3 mm into the wall and
+no deeper; Rev D ran it to exactly the recess floor.
 
 The baffle
 ----------
-The AS7341 breakout carries an illumination LED a few millimetres from the
-sensor, pointing the same way. With an open cavity it would light the diffuser
-from beneath and the sensor would read its own board. A short collar around the
-sensor blocks it, stops internal reflection off white walls, and sets the field
-stop. It is also the standoff that fixes sensor-to-diffuser distance — so the
-optical fix and the mechanical one are the same feature. The board hangs
-sensor-side up, so the collar's height is also the clearance for every part on
-that face; it is set from the tallest one.
+The breakout carries an illumination LED a few millimetres from the sensor,
+pointing the same way. A short collar round the sensor is its shield, the field
+stop, and the standoff that fixes sensor-to-diffuser distance — so the optical
+fix and the mechanical one are the same feature. The board hangs sensor-side
+up, so the collar's height is also the clearance for every part on that face.
 
-The collar and the screw boss merge into one lozenge. The board puts its hole
-6.7 mm from the sensor, and a Ø6 boss plus a Ø8.5 collar cannot both fit in
-that; rather than thin either, they join. One solid hanging from the ceiling is
-stiffer than two, and the bore is untouched — it is a clean circle with wall on
-every side, which is what the test checks.
+The bore runs straight through the top wall at the collar's own diameter. Rev D
+opened the wall to Ø10.5 — wider than the collar — which took the ceiling out
+from under it: the collar hung from a 0.55 mm overlap with the screw boss and
+would have printed in mid-air. Now the collar sits on a full ring of wall, and
+the disc's ledge is 3 mm wide instead of 0.9, which is bond area.
 
-The sensor is close enough to the board's edge that a quarter of the collar
-overhangs it. That is fine: the screw locates the board, and a collar bearing
-over 270° cannot rock. The shielding is continuous regardless — it is the body,
-not the board, that forms the wall.
-
-**Keep the LED off in firmware regardless.** The baffle is a second line, not
-the first.
+The collar and the screw boss merge into one lozenge; the bore is cut after
+both are added so the union cannot close it. White PETG at 1 mm is a diffuser
+rather than a shield, so the collar attenuates the LED rather than killing it:
+**keep the LED off in firmware regardless**, and paint the interior matte black
+before assembly if the dark-period reading has to be zero.
 
 Sealing, deliberately not
 -------------------------
-This case is **vented, not sealed**. A sealed box in a humid, lit, thermally
-cycling place is a condensation trap — it collects the water it was meant to
-exclude and then holds it against the boards. Air enters under the perimeter
-(the plate stands on four silicone feet), crosses the chamber through slots in
-the plate, and leaves through slots high in the rear wall. Protect the boards
-with conformal coating instead of a gasket, and bond the diffuser in with
-silicone: that joint is the only one that has to keep water out, and it is
-never opened.
+This case is **vented, not sealed** — the BME280 has to sample the air, and a
+sealed box in a humid, lit, thermally cycling place is a condensation trap. Air
+enters through slots low in the rear wall and leaves through slots high in it;
+the lid warms under the fixture and drives the exchange. Nothing opens in the
+plate: Rev D's plate slots faced the block, whose top stays damp for weeks after
+a leach, and would have fed the box the block's own boundary layer. Protect the
+boards with conformal coating instead of a gasket — with the BME280's lid and
+the AS7341's window masked, or the coat blinds both — and bond the diffuser in
+with neutral-cure silicone onto *etched* PTFE, because silicone does not bond to
+the plain kind at all.
 """
 
 from __future__ import annotations
@@ -86,13 +98,15 @@ from . import params as P
 # everywhere instead of only in CI. Annotations are strings (`from __future__`),
 # so naming Part here costs nothing.
 
+_MM = P.MM
+
 
 # --------------------------------------------------------------------------
 # Levels, in world Z
 # --------------------------------------------------------------------------
 
 def plate_top() -> float:
-    """Top face of the base plate — the floor everything below sits on."""
+    """Top face of the base plate — the floor the walls stand on."""
     return P.SC_Z0 + P.SC_BASE_T
 
 
@@ -109,6 +123,21 @@ def ceiling() -> float:
 def board_top() -> float:
     """Top surface of the hanging boards, set by the baffle's length."""
     return ceiling() - P.SC_BAFFLE_DROP
+
+
+def recess_floor() -> float:
+    """The ledge the diffuser sits on. The thinnest part of the top wall."""
+    return top_face() - P.SC_PORT_DEPTH
+
+
+def pilot_top() -> float:
+    """Blind end of the AS7341's screw pilot."""
+    return board_top() + P.SC_AS7341_PILOT_DEPTH
+
+
+def ads1115_stack_top() -> float:
+    """Highest point of the taped board: tape, board, tallest part, no header."""
+    return plate_top() + P.SC_TAPE_T + P.SC_BOARD_T + P.SC_ADS1115_PART_H
 
 
 # --------------------------------------------------------------------------
@@ -155,46 +184,91 @@ def as7341_led() -> tuple[float, float]:
 
 
 def boss_points() -> list[tuple[float, float]]:
-    dx = P.SC_LEN / 2 - P.SC_SCREW_INSET
-    dy = P.SC_WID / 2 - P.SC_SCREW_INSET
+    """The four corner bosses. Ø7, hanging the full height from the ceiling."""
+    dx = P.SC_LEN / 2 - P.SC_BOSS_INSET_X
+    dy = P.SC_WID / 2 - P.SC_BOSS_INSET_Y
     return [(P.SC_X + sx * dx, P.SC_Y + sy * dy)
             for sx in (-1, 1) for sy in (-1, 1)]
 
 
+def web_boxes() -> list[tuple[float, float, float, float]]:
+    """A block from each boss to its outer corner, (cx, cy, lx, ly). It fuses
+    the boss into both walls so the column is part of the shell, not a
+    cylinder touching it along a line. The chamfer cuts its corner off
+    afterwards, like everything else's."""
+    out = []
+    for bx, by in boss_points():
+        sx = 1 if bx > P.SC_X else -1
+        sy = 1 if by > P.SC_Y else -1
+        out.append((bx + sx * P.SC_BOSS_INSET_X / 2, by + sy * P.SC_BOSS_INSET_Y / 2,
+                    P.SC_BOSS_INSET_X, P.SC_BOSS_INSET_Y))
+    return out
+
+
 def bme280_centre() -> tuple[float, float]:
-    """Upper level, beside the AS7341, hung **sensor-side down**.
+    """Upper level, beside the AS7341, hung **sensor-side down**, long side
+    along Y.
 
     The BME280's element is a metal lid with a pinhole on its top face. Hung
     the usual way up it would sit in a 2 mm gap under the ceiling reading dead
     air; inverted, it faces the open cavity and the convection path. Through-
-    hole pads take wire from either side, so nothing is lost.
+    hole pads take wire from either side, so nothing is lost. It lies with its
+    long side across the case because that is the way its two bosses clear the
+    corner bosses.
     """
     _, x1 = as7341_span()
-    return x1 + 3.0 * P.MM + P.SC_BME280_L / 2, P.SC_Y
+    return x1 + 2.0 * _MM + P.SC_BME280_W / 2, P.SC_Y
 
 
-def bme280_standoff_points() -> list[tuple[float, float]]:
+def bme280_span() -> tuple[float, float, float, float]:
+    """(x0, x1, y0, y1) of the board."""
     cx, cy = bme280_centre()
-    dx = P.SC_BME280_L / 2 - 2.2 * P.MM
-    dy = P.SC_BME280_W / 2 - 2.2 * P.MM
-    return [(cx + sx * dx, cy + sy * dy) for sx in (-1, 1) for sy in (-1, 1)]
+    return (cx - P.SC_BME280_W / 2, cx + P.SC_BME280_W / 2,
+            cy - P.SC_BME280_L / 2, cy + P.SC_BME280_L / 2)
+
+
+def bme280_hole_points() -> list[tuple[float, float]]:
+    """Its two mounting holes, on the long edge away from the AS7341."""
+    _, x1, _, _ = bme280_span()
+    cy = P.SC_Y
+    hx = x1 - P.SC_BME280_HOLE_INSET
+    return [(hx, cy - P.SC_BME280_HOLE_PITCH / 2), (hx, cy + P.SC_BME280_HOLE_PITCH / 2)]
 
 
 def ads1115_centre() -> tuple[float, float]:
     """On the plate, centred, taped. Advisory: the tests prove a board of this
-    size lands clear of the screws and the vents, and the build sheet says
-    where to stick it."""
+    size lands clear of the screws, and the build sheet says where to stick
+    it."""
     return P.SC_X, P.SC_Y
 
 
-def vent_xs() -> list[float]:
-    """Inlet slots in the plate, one each end between the ADS and the bosses."""
-    return [P.SC_X - P.SC_VENT_X, P.SC_X + P.SC_VENT_X]
+def inlet_xs() -> list[float]:
+    """Inlet slots, low in the rear wall, either side of the cable notch."""
+    return [P.SC_X - 10.0 * _MM, P.SC_X + 10.0 * _MM]
 
 
-def wall_vent_xs() -> list[float]:
-    """Slots high in the rear wall — the outlet of the convection path."""
-    return [P.SC_X + d * P.MM for d in (-14.0, 0.0, 14.0)]
+def outlet_xs() -> list[float]:
+    """Outlet slots, high in the rear wall."""
+    return [P.SC_X + d * _MM for d in (-18.0, -9.0, 0.0, 9.0, 18.0)]
+
+
+def inlet_z() -> float:
+    return plate_top() + P.SC_INLET_Z
+
+
+def outlet_z() -> float:
+    return ceiling() - P.SC_OUTLET_DROP
+
+
+def rear_wall_y() -> float:
+    """Mid-plane of the rear wall, which is also the lip."""
+    return P.SC_Y1 - P.SC_WALL / 2
+
+
+def foot_points() -> list[tuple[float, float]]:
+    """Three cast feet. Three points never rock."""
+    return [(P.SC_X - 21.0 * _MM, P.SC_Y), (P.SC_X + 21.0 * _MM, P.SC_Y),
+            (P.SC_X, P.SC_Y - 8.0 * _MM)]
 
 
 # --------------------------------------------------------------------------
@@ -206,7 +280,7 @@ def _chamfer_verticals(part: "Part", z0: float, z1: float) -> "Part":
 
     Cut with a rotated box rather than a kernel fillet: this package has no
     edge-selection anywhere, and a chamfer a cutter makes is a chamfer you can
-    reason about.
+    reason about. Runs last, so it also trims the corner webs.
     """
     from build123d import Rot
 
@@ -214,97 +288,104 @@ def _chamfer_verticals(part: "Part", z0: float, z1: float) -> "Part":
 
     s = P.SC_CHAMFER * 2 ** 0.5
     hx, hy = P.SC_LEN / 2, P.SC_WID / 2
+    over = 1.0 * _MM
     for sx in (-1, 1):
         for sy in (-1, 1):
-            cutter = Rot(0, 0, 45) * box(s, s, (z1 - z0) + 2.0, at=(0, 0, 0))
-            part -= location_in(P.SC_X + sx * hx, P.SC_Y + sy * hy, z0 - 1.0) * cutter
+            cutter = Rot(0, 0, 45) * box(s, s, (z1 - z0) + 2 * over, at=(0, 0, 0))
+            part -= location_in(P.SC_X + sx * hx, P.SC_Y + sy * hy, z0 - over) * cutter
     return part
 
 
 def build_body() -> "Part":
-    """The upper half: top face, four walls, the optics, the lip."""
+    """The upper half: top face, four walls, the optics, the bosses, the lip."""
     from ._shapes import CENTRE, box, cyl_z, labelled
 
     z0, z1 = plate_top(), top_face()
     h = z1 - z0
     ix, iy = inner_half()
     px, py = port_centre()
+    over = 0.5 * _MM
 
     body = box(P.SC_LEN, P.SC_WID, h, at=(P.SC_X, P.SC_Y, z0))
-    body = _chamfer_verticals(body, z0, z1)
 
     # Hollow from below. The top wall stays; the bottom is open to the plate.
-    body -= box(2 * ix, 2 * iy, h - P.SC_WALL + 1.0, at=(P.SC_X, P.SC_Y, z0 - 1.0))
+    body -= box(2 * ix, 2 * iy, h - P.SC_WALL + over, at=(P.SC_X, P.SC_Y, z0 - over))
 
-    # The lip: the rear wall carries on down past the floor and bears on the
-    # block's rear face. It hangs **outboard** of that face, not flush with it —
-    # flush means inside, and inside means printed plastic sharing space with
-    # the block. It stands 2 mm proud at the back, where nothing looks.
-    lip = box(P.SC_LEN, P.SC_WALL, P.SC_LIP_DROP,
-              at=(P.SC_X, P.SC_Y + P.SC_WID / 2 + P.SC_WALL / 2, z0 - P.SC_LIP_DROP))
-    body += lip
+    # Corner bosses, ceiling to plate, each fused to its corner by a web.
+    for (bx, by), (wx, wy, wl, ww) in zip(boss_points(), web_boxes()):
+        body += cyl_z(P.SC_BOSS_DIA, ceiling() - z0, at=(bx, by, z0))
+        body += box(wl, ww, ceiling() - z0, at=(wx, wy, z0))
 
-    # Diffuser recess from the top face, then the aperture through the rest of
-    # the top wall. The 0.9 mm ledge between them is what the disc sits on.
-    body -= cyl_z(P.SC_PORT_DIA, P.SC_PORT_DEPTH + 0.5,
-                  at=(px, py, z1 - P.SC_PORT_DEPTH))
-    body -= cyl_z(P.SC_APERTURE_DIA, P.SC_WALL + 1.0,
-                  at=(px, py, z1 - P.SC_WALL - 0.5))
+    # Chamfer the four vertical corners, webs included.
+    body = _chamfer_verticals(body, z0, z1)
+
+    # Insert holes, from the boss's bottom face.
+    for bx, by in boss_points():
+        body -= cyl_z(P.SC_INSERT_HOLE, P.SC_INSERT_DEPTH + over, at=(bx, by, z0 - over))
+
+    # Diffuser recess from the top face. The aperture through the rest of the
+    # wall is the bore's own diameter — see the module docstring for why it is
+    # not wider than the collar.
+    body -= cyl_z(P.SC_PORT_DIA, P.SC_PORT_DEPTH + over, at=(px, py, recess_floor()))
 
     # The baffle: field stop, LED shield and the standoff that sets sensor
-    # height, in one feature.
+    # height, in one feature. Then the AS7341's boss over its own hole, merging
+    # into the collar; then the pilot, stopping short of the recess floor; then
+    # the bore, last, straight through collar and wall so no union can close it.
     body += cyl_z(P.SC_BAFFLE_OD, P.SC_BAFFLE_DROP, at=(px, py, board_top()))
-
-    # The AS7341's fixing: a boss over its own mounting hole, drilled for an
-    # M2.5 coming up through the board. It merges into the baffle's outer wall
-    # (see the module docstring); the bore is cut after both are added, so the
-    # union cannot close it. The pilot runs on into the top wall for thread,
-    # stopping a millimetre short of the show face.
     hx, hy = as7341_hole()
     body += cyl_z(P.SC_AS7341_BOSS_DIA, P.SC_BAFFLE_DROP, at=(hx, hy, board_top()))
-    body -= cyl_z(P.SC_AS7341_PILOT, P.SC_AS7341_PILOT_DEPTH + 0.5,
-                  at=(hx, hy, board_top() - 0.5))
-    # The bore, last, through whatever the union made.
-    body -= cyl_z(P.SC_BAFFLE_ID, P.SC_BAFFLE_DROP + 1.0, at=(px, py, board_top() - 0.5))
+    body -= cyl_z(P.SC_AS7341_PILOT, P.SC_AS7341_PILOT_DEPTH + over,
+                  at=(hx, hy, board_top() - over))
+    body -= cyl_z(P.SC_BAFFLE_ID, P.SC_BAFFLE_DROP + P.SC_WALL + 2 * over,
+                  at=(px, py, board_top() - over))
 
-    for sx, sy in bme280_standoff_points():
-        body += cyl_z(P.SC_POST_DIA, P.SC_BAFFLE_DROP, at=(sx, sy, board_top()))
+    # The BME280's two bosses, on its own holes, same fixing as the AS7341.
+    for mx, my in bme280_hole_points():
+        body += cyl_z(P.SC_BME280_BOSS_DIA, P.SC_BAFFLE_DROP, at=(mx, my, board_top()))
+        body -= cyl_z(P.SC_AS7341_PILOT, P.SC_AS7341_PILOT_DEPTH + over,
+                      at=(mx, my, board_top() - over))
 
-    # Bosses for the heat-set inserts. Deliberately short — the hanging boards
-    # lie above them, and a full-height boss would foul them.
-    for bx, by in boss_points():
-        body += cyl_z(P.SC_BOSS_DIA, P.SC_BOSS_H, at=(bx, by, z0))
-        body -= cyl_z(P.SC_INSERT_HOLE, P.SC_INSERT_DEPTH + 0.5, at=(bx, by, z0 - 0.5))
+    # Cable entry: a notch in the rear wall's bottom edge, closed by the plate
+    # the wall stands on. It lines up with the channel in the plate's lip, so
+    # the loom drops behind the block rather than bending over an edge. A shade
+    # under the cable for a friction fit; the zip tie through the lip is the
+    # strain relief.
+    body -= box(P.SC_CABLE_W, P.SC_WALL * 3, P.SC_CABLE_H + over,
+                at=(P.SC_X, rear_wall_y(), z0 - over))
 
-    # Cable entries: notches in the walls' bottom edge, closed by the plate. A
-    # hole through a vertical wall wants a teardrop or a bridge; a notch wants
-    # neither, and the cable drops in instead of threading. The rear notch runs
-    # on down through the lip so the loom drops into a channel rather than
-    # bending over an edge. Sized a shade under the cable for a friction fit;
-    # the zip tie goes outside the wall.
-    body -= box(P.SC_CABLE_W, P.SC_WALL * 4, P.SC_LIP_DROP + P.SC_CABLE_H,
-                at=(P.SC_X, P.SC_Y + P.SC_WID / 2, z0 - P.SC_LIP_DROP))
-    body -= box(P.SC_PROBE_W, P.SC_WALL * 3, P.SC_PROBE_H,
-                at=(P.SC_X, P.SC_Y - P.SC_WID / 2, z0))
+    # Probe entry: the same, in the +X end wall, over that end's core.
+    body -= box(P.SC_WALL * 3, P.SC_PROBE_W, P.SC_PROBE_H + over,
+                at=(P.SC_X + P.SC_LEN / 2, P.SC_Y, z0 - over))
 
-    # Convection outlet, high in the rear wall. 2 mm tall, so the top edge is a
-    # bridge the length of the slot and nothing more.
-    for vx in wall_vent_xs():
+    # Ventilation, all in the rear wall where nothing looks: inlets low, outlets
+    # high. Each slot's top edge is a bridge the length of the slot.
+    for vx in inlet_xs():
         body -= box(P.SC_VENT_L, P.SC_WALL * 3, P.SC_VENT_W,
-                    at=(vx, P.SC_Y + P.SC_WID / 2, ceiling() - 4.0 * P.MM), align=CENTRE)
+                    at=(vx, rear_wall_y(), inlet_z()), align=CENTRE)
+    for vx in outlet_xs():
+        body -= box(P.SC_VENT_L, P.SC_WALL * 3, P.SC_VENT_W,
+                    at=(vx, rear_wall_y(), outlet_z()), align=CENTRE)
 
     return labelled(body, "sensor_case_body")
 
 
 def build_base() -> "Part":
-    """The lower half: the ADS1115, the inlet vents, the feet."""
-    from ._shapes import box, cyl_z, labelled
+    """The lower half: the plate the walls stand on, the ADS1115, the feet."""
+    from ._shapes import box, cone_z, cyl_y, cyl_z, labelled
 
-    ix, iy = inner_half()
     z0 = P.SC_Z0
-    # Sits inside the body's cavity, with a running clearance so it drops in.
-    clear = 0.2 * P.MM
-    plate = box(2 * (ix - clear), 2 * (iy - clear), P.SC_BASE_T, at=(P.SC_X, P.SC_Y, z0))
+    over = 0.5 * _MM
+    lip_bottom = z0 - P.SC_LIP_DROP
+
+    plate = box(P.SC_LEN, P.SC_WID, P.SC_BASE_T, at=(P.SC_X, P.SC_Y, z0))
+
+    # The lip: the plate's rear edge carries on down past the block's top face
+    # and bears on its rear face from outside it. Its outer face continues as
+    # the body's rear wall above the seam.
+    plate += box(P.SC_LEN, P.SC_WALL, z0 - lip_bottom,
+                 at=(P.SC_X, rear_wall_y(), lip_bottom))
+    plate = _chamfer_verticals(plate, lip_bottom, z0 + P.SC_BASE_T)
 
     # No printed fence round the ADS1115, deliberately. A fence has to be sized
     # to an outline, and this one comes off a vendor listing rather than a
@@ -312,20 +393,27 @@ def build_base() -> "Part":
     # tape is 1 mm wrong and does not care. Nothing here is subject to
     # vibration.
 
-    # Inlet vents, one each end, between where the ADS lands and the bosses.
-    for vx in vent_xs():
-        plate -= box(P.SC_VENT_W, P.SC_VENT_L, P.SC_BASE_T + 1.0,
-                     at=(vx, P.SC_Y, z0 - 0.5))
-
-    # Screw clearance and countersink, so nothing proud bears on the block.
+    # Screw clearance and a true 90-degree countersink, so the head sits below
+    # the face that meets the block and bears on a cone, not on a hole's rim.
     for bx, by in boss_points():
-        plate -= cyl_z(P.SC_SCREW_DIA, P.SC_BASE_T + 1.0, at=(bx, by, z0 - 0.5))
-        plate -= cyl_z(P.SC_SCREW_CSK, P.SC_SCREW_CSK / 2, at=(bx, by, z0 - 0.01))
+        plate -= cyl_z(P.SC_SCREW_DIA, P.SC_BASE_T + 2 * over, at=(bx, by, z0 - over))
+        plate -= cone_z(P.SC_SCREW_CSK + 2 * over, P.SC_SCREW_DIA,
+                        P.SC_SCREW_CSK_DEPTH + over, at=(bx, by, z0 - over))
 
-    # Recesses for four self-adhesive silicone feet. They set the seating plane,
-    # grip the block, and hold the perimeter open so air can get under.
-    for fx, fy in boss_points():
-        plate -= cyl_z(P.SC_FOOT_DIA, P.SC_FOOT_DEPTH, at=(fx, fy, z0 - 0.001))
+    # Recesses for the three cast feet.
+    for fx, fy in foot_points():
+        plate -= cyl_z(P.SC_FOOT_DIA, P.SC_FOOT_DEPTH + over, at=(fx, fy, z0 - over))
+
+    # The cable channel through the lip, in line with the notch in the wall
+    # above it, and two holes flanking it for the zip tie that clamps the jacket
+    # to the lip. That tie is the strain relief: a pull on the cable reaches the
+    # block's rear face, not the solder joints.
+    plate -= box(P.SC_CABLE_W, P.SC_WALL * 3, P.SC_LIP_DROP + over,
+                 at=(P.SC_X, rear_wall_y(), lip_bottom - over))
+    for sx in (-1, 1):
+        plate -= cyl_y(P.SC_TIE_HOLE_DIA, P.SC_WALL * 3,
+                       at=(P.SC_X + sx * P.SC_TIE_HOLE_DX, rear_wall_y(),
+                           lip_bottom + P.SC_LIP_DROP / 2))
 
     return labelled(plate, "sensor_case_base")
 
@@ -344,20 +432,20 @@ def build() -> "Part":
 def for_print() -> dict[str, "Part"]:
     """Each half moved to the origin and turned the way it prints.
 
-    The body goes top-face-down: that face is the only one on show, and a bed
-    face on a textured sheet is the matte this object wants. The plate prints
-    the way it is modelled, underside on the bed, so the face that meets the
-    block is flat and takes the adhesive feet cleanly.
+    Both go top-face-down. For the body that face is the only one on show,
+    and a bed face on a textured sheet is the matte this object wants. For the
+    plate it means the countersinks and the foot recesses open upward, so the
+    part has no bridge at all; its bed face is the inside, where the ADS1115
+    is taped.
     """
     from build123d import Rot
 
     from ._shapes import bbox_in, labelled, location_in
 
     out: dict[str, "Part"] = {}
-    for name, part, flip in (("sensor_case_body", build_body(), True),
-                             ("sensor_case_base", build_base(), False)):
-        if flip:
-            part = Rot(180, 0, 0) * part
+    for name, part in (("sensor_case_body", build_body()),
+                       ("sensor_case_base", build_base())):
+        part = Rot(180, 0, 0) * part
         bb = bbox_in(part)
         placed = location_in(-(bb["x0"] + bb["x1"]) / 2,
                              -(bb["y0"] + bb["y1"]) / 2,
