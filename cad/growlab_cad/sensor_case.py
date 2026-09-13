@@ -19,31 +19,49 @@ on a textured sheet is a uniform matte no other method matches — and matte whi
 is the whole point of the object. Everything inside it hangs from the top wall,
 so the print has no internal bridge.
 
-**Base plate**, printed flat, carrying the two boards that do not need to see
-anything. Populate and wire it on the bench, then bring the two halves together.
+**Base plate**, printed flat, carrying the one board that does not need to see
+or breathe. Wire it on the bench, then bring the two halves together.
 
-Why the boards sit on two levels
---------------------------------
-Laid end to end the three boards come to 83 mm and the case would be 100 long.
-Split across two levels the length is set by the AS7341 alone — and the AS7341
-is the reason for every dimension here. Its sensor sits about 5 mm from one end
-of a 40 mm board, and the port is centred on the *sensor*, so 35 mm of board has
-to lie on one side of the port. The 32 mm of dead space on the other side is
-where the loom lives.
+The AS7341 that is actually in hand
+-----------------------------------
+The first cut was drawn to a vendor datasheet for a 40 × 20 T-shaped board with
+its sensor on a tongue at one end, and that geometry forced a 78 mm case. The
+board in hand (photographed 2026-09-13) is the small square generic: about
+21 × 16, sensor near mid-height 3 mm from one edge, and — usefully — a Ø3
+mounting hole on the sensor's own row 6.7 mm inboard of it. So the one board
+whose position matters is **screwed**, up through its own hole into a boss that
+hangs from the top wall, with the baffle as the second contact. Two points fix
+position and rotation; a ring of contact stops rocking. It is the most precisely
+located thing in the case, which is right, because it is the only thing whose
+location changes a reading.
+
+That board shrank the case from 78 to 56. The length is now set by the
+ADS1115 on the plate, between the two inlet vents and the corner bosses.
 
 The baffle
 ----------
-The AS7341 breakout carries two illumination LEDs flanking the sensor, for
-reflectance work. They are millimetres away and pointing the same way, so with
-an open cavity they would light the diffuser from beneath and the sensor would
-read its own board. A short collar around the sensor blocks them, stops internal
-reflection off white walls, and sets the field stop. It is also the standoff
-that fixes sensor-to-diffuser distance, which is the one height in this part
-that has to be right — so the optical fix and the mechanical one are the same
-feature.
+The AS7341 breakout carries an illumination LED a few millimetres from the
+sensor, pointing the same way. With an open cavity it would light the diffuser
+from beneath and the sensor would read its own board. A short collar around the
+sensor blocks it, stops internal reflection off white walls, and sets the field
+stop. It is also the standoff that fixes sensor-to-diffuser distance — so the
+optical fix and the mechanical one are the same feature. The board hangs
+sensor-side up, so the collar's height is also the clearance for every part on
+that face; it is set from the tallest one.
 
-**Keep the illumination LEDs off in firmware regardless.** The baffle is a
-second line, not the first.
+The collar and the screw boss merge into one lozenge. The board puts its hole
+6.7 mm from the sensor, and a Ø6 boss plus a Ø8.5 collar cannot both fit in
+that; rather than thin either, they join. One solid hanging from the ceiling is
+stiffer than two, and the bore is untouched — it is a clean circle with wall on
+every side, which is what the test checks.
+
+The sensor is close enough to the board's edge that a quarter of the collar
+overhangs it. That is fine: the screw locates the board, and a collar bearing
+over 270° cannot rock. The shielding is continuous regardless — it is the body,
+not the board, that forms the wall.
+
+**Keep the LED off in firmware regardless.** The baffle is a second line, not
+the first.
 
 Sealing, deliberately not
 -------------------------
@@ -89,7 +107,7 @@ def ceiling() -> float:
 
 
 def board_top() -> float:
-    """Top surface of the AS7341, set by the baffle's length."""
+    """Top surface of the hanging boards, set by the baffle's length."""
     return ceiling() - P.SC_BAFFLE_DROP
 
 
@@ -111,11 +129,29 @@ def port_centre() -> tuple[float, float]:
 def as7341_span() -> tuple[float, float]:
     """X extent of the AS7341, placed so its sensor lands under the port.
 
-    The tongue points toward -X, so the board runs from a little before the
-    port out to +35.
+    The header edge points to -X, so the board runs from 18 mm before the
+    port to 3 mm past it.
     """
-    x0 = P.SC_X - P.SC_AS7341_SENSOR_FROM_END
+    x0 = P.SC_X - P.SC_AS7341_SENSOR_X
     return x0, x0 + P.SC_AS7341_L
+
+
+def as7341_y_span() -> tuple[float, float]:
+    """Y extent. The regulator edge (the photo's top) is +Y."""
+    y1 = P.SC_Y + P.SC_AS7341_SENSOR_Y
+    return y1 - P.SC_AS7341_W, y1
+
+
+def as7341_hole() -> tuple[float, float]:
+    """Where the board's own Ø3 mounting hole lands, in world XY."""
+    x0, _ = as7341_span()
+    _, y1 = as7341_y_span()
+    return x0 + P.SC_AS7341_HOLE_X, y1 - P.SC_AS7341_HOLE_Y
+
+
+def as7341_led() -> tuple[float, float]:
+    """Where the illumination LED lands. Advisory: the baffle test uses it."""
+    return P.SC_X + P.SC_AS7341_LED_DX, P.SC_Y + P.SC_AS7341_LED_DY
 
 
 def boss_points() -> list[tuple[float, float]]:
@@ -125,58 +161,40 @@ def boss_points() -> list[tuple[float, float]]:
             for sx in (-1, 1) for sy in (-1, 1)]
 
 
-def standoff_points() -> list[tuple[float, float]]:
-    """Three posts besides the baffle, so the AS7341 seats flat.
+def bme280_centre() -> tuple[float, float]:
+    """Upper level, beside the AS7341, hung **sensor-side down**.
 
-    All three land on the board's 20 mm body, clear of the 10 mm tongue.
+    The BME280's element is a metal lid with a pinhole on its top face. Hung
+    the usual way up it would sit in a 2 mm gap under the ceiling reading dead
+    air; inverted, it faces the open cavity and the convection path. Through-
+    hole pads take wire from either side, so nothing is lost.
     """
     _, x1 = as7341_span()
-    near = P.SC_X + P.SC_AS7341_TONGUE_W  # just past the tongue
-    far = x1 - 3.0 * P.MM
-    dy = P.SC_AS7341_W / 2 - 3.0 * P.MM
-    return [(near, P.SC_Y - dy), (near, P.SC_Y + dy), (far, P.SC_Y)]
+    return x1 + 3.0 * P.MM + P.SC_BME280_L / 2, P.SC_Y
+
+
+def bme280_standoff_points() -> list[tuple[float, float]]:
+    cx, cy = bme280_centre()
+    dx = P.SC_BME280_L / 2 - 2.2 * P.MM
+    dy = P.SC_BME280_W / 2 - 2.2 * P.MM
+    return [(cx + sx * dx, cy + sy * dy) for sx in (-1, 1) for sy in (-1, 1)]
 
 
 def ads1115_centre() -> tuple[float, float]:
-    """Upper level, in the dead space beside the AS7341 — **not on the plate**.
-
-    It started on the plate and would not fit. At 28 mm long it needs a clear
-    run, and the plate's clear runs are chopped up by the corner screw holes at
-    one end and the cable tie posts at the other: 26.7 mm between them, against
-    28 mm of board. Moving it up beside the AS7341 solves it outright, because
-    the bosses are short and both boards simply pass over them. The dead space
-    the AS7341's sensor offset forces is exactly 32 mm — which is what this
-    board needed.
-    """
-    return P.SC_X - 21.0 * P.MM, P.SC_Y
-
-
-def ads1115_standoff_points() -> list[tuple[float, float]]:
-    """Four posts, so the ADS hangs from the top wall like the AS7341."""
-    cx, _ = ads1115_centre()
-    dx = P.SC_ADS1115_L / 2 - 3.0 * P.MM
-    dy = P.SC_ADS1115_W / 2 - 3.0 * P.MM
-    return [(cx + sx * dx, P.SC_Y + sy * dy) for sx in (-1, 1) for sy in (-1, 1)]
-
-
-def bme280_centre() -> tuple[float, float]:
-    """The only board on the plate, at the vented end, in the moving air.
-
-    It is the one that has to read the canopy rather than the box, so it sits
-    lowest, nearest the inlet slots, and furthest from anything that dissipates.
-    """
-    return P.SC_X + 22.0 * P.MM, P.SC_Y
+    """On the plate, centred, taped. Advisory: the tests prove a board of this
+    size lands clear of the screws and the vents, and the build sheet says
+    where to stick it."""
+    return P.SC_X, P.SC_Y
 
 
 def vent_xs() -> list[float]:
-    """Slot centres in the plate, in the clear band between the two boards."""
-    first = P.SC_X + 2.0 * P.MM
-    return [first + i * P.SC_VENT_PITCH for i in range(3)]
+    """Inlet slots in the plate, one each end between the ADS and the bosses."""
+    return [P.SC_X - P.SC_VENT_X, P.SC_X + P.SC_VENT_X]
 
 
 def wall_vent_xs() -> list[float]:
     """Slots high in the rear wall — the outlet of the convection path."""
-    return [P.SC_X + d * P.MM for d in (-30.0, -18.0, -6.0)]
+    return [P.SC_X + d * P.MM for d in (-14.0, 0.0, 14.0)]
 
 
 # --------------------------------------------------------------------------
@@ -220,9 +238,8 @@ def build_body() -> "Part":
 
     # The lip: the rear wall carries on down past the floor and bears on the
     # block's rear face. It hangs **outboard** of that face, not flush with it —
-    # flush means inside, and inside means 0.08 in3 of printed plastic sharing
-    # space with the block. It stands 2 mm proud at the back, where nothing
-    # looks. Caught by the interference check against the CMU.
+    # flush means inside, and inside means printed plastic sharing space with
+    # the block. It stands 2 mm proud at the back, where nothing looks.
     lip = box(P.SC_LEN, P.SC_WALL, P.SC_LIP_DROP,
               at=(P.SC_X, P.SC_Y + P.SC_WID / 2 + P.SC_WALL / 2, z0 - P.SC_LIP_DROP))
     body += lip
@@ -236,15 +253,25 @@ def build_body() -> "Part":
 
     # The baffle: field stop, LED shield and the standoff that sets sensor
     # height, in one feature.
-    baffle = cyl_z(P.SC_BAFFLE_OD, P.SC_BAFFLE_DROP, at=(px, py, board_top()))
-    baffle -= cyl_z(P.SC_BAFFLE_ID, P.SC_BAFFLE_DROP + 1.0, at=(px, py, board_top() - 0.5))
-    body += baffle
+    body += cyl_z(P.SC_BAFFLE_OD, P.SC_BAFFLE_DROP, at=(px, py, board_top()))
 
-    for sx, sy in standoff_points() + ads1115_standoff_points():
+    # The AS7341's fixing: a boss over its own mounting hole, drilled for an
+    # M2.5 coming up through the board. It merges into the baffle's outer wall
+    # (see the module docstring); the bore is cut after both are added, so the
+    # union cannot close it. The pilot runs on into the top wall for thread,
+    # stopping a millimetre short of the show face.
+    hx, hy = as7341_hole()
+    body += cyl_z(P.SC_AS7341_BOSS_DIA, P.SC_BAFFLE_DROP, at=(hx, hy, board_top()))
+    body -= cyl_z(P.SC_AS7341_PILOT, P.SC_AS7341_PILOT_DEPTH + 0.5,
+                  at=(hx, hy, board_top() - 0.5))
+    # The bore, last, through whatever the union made.
+    body -= cyl_z(P.SC_BAFFLE_ID, P.SC_BAFFLE_DROP + 1.0, at=(px, py, board_top() - 0.5))
+
+    for sx, sy in bme280_standoff_points():
         body += cyl_z(P.SC_POST_DIA, P.SC_BAFFLE_DROP, at=(sx, sy, board_top()))
 
-    # Bosses for the heat-set inserts. Deliberately short — the AS7341 lies
-    # above them, and a full-height boss would foul it.
+    # Bosses for the heat-set inserts. Deliberately short — the hanging boards
+    # lie above them, and a full-height boss would foul them.
     for bx, by in boss_points():
         body += cyl_z(P.SC_BOSS_DIA, P.SC_BOSS_H, at=(bx, by, z0))
         body -= cyl_z(P.SC_INSERT_HOLE, P.SC_INSERT_DEPTH + 0.5, at=(bx, by, z0 - 0.5))
@@ -252,19 +279,13 @@ def build_body() -> "Part":
     # Cable entries: notches in the walls' bottom edge, closed by the plate. A
     # hole through a vertical wall wants a teardrop or a bridge; a notch wants
     # neither, and the cable drops in instead of threading. The rear notch runs
-    # on down through the lip, so the loom drops into a channel rather than
-    # bending over an edge.
+    # on down through the lip so the loom drops into a channel rather than
+    # bending over an edge. Sized a shade under the cable for a friction fit;
+    # the zip tie goes outside the wall.
     body -= box(P.SC_CABLE_W, P.SC_WALL * 4, P.SC_LIP_DROP + P.SC_CABLE_H,
                 at=(P.SC_X, P.SC_Y + P.SC_WID / 2, z0 - P.SC_LIP_DROP))
     body -= box(P.SC_PROBE_W, P.SC_WALL * 3, P.SC_PROBE_H,
                 at=(P.SC_X, P.SC_Y - P.SC_WID / 2, z0))
-
-    # Strain relief: a pair of posts inside each notch, zip tie between them.
-    for sy, gap in ((1, P.SC_TIE_POST_GAP), (-1, P.SC_TIE_POST_GAP)):
-        wall_y = P.SC_Y + sy * (iy - P.SC_TIE_POST_DIA)
-        for sx in (-1, 1):
-            body += cyl_z(P.SC_TIE_POST_DIA, P.SC_BOSS_H,
-                          at=(P.SC_X + sx * gap / 2, wall_y, z0))
 
     # Convection outlet, high in the rear wall. 2 mm tall, so the top edge is a
     # bridge the length of the slot and nothing more.
@@ -276,7 +297,7 @@ def build_body() -> "Part":
 
 
 def build_base() -> "Part":
-    """The lower half: the two blind boards, the inlet vents, the feet."""
+    """The lower half: the ADS1115, the inlet vents, the feet."""
     from ._shapes import box, cyl_z, labelled
 
     ix, iy = inner_half()
@@ -285,15 +306,13 @@ def build_base() -> "Part":
     clear = 0.2 * P.MM
     plate = box(2 * (ix - clear), 2 * (iy - clear), P.SC_BASE_T, at=(P.SC_X, P.SC_Y, z0))
 
-    # **No printed fences round the boards, deliberately.** A fence has to be
-    # sized to an outline, and these outlines come off vendor listings rather
-    # than a caliper. A fence that is 1 mm wrong is a board that will not go in;
-    # foam tape is 1 mm wrong and does not care. It also removes every collision
-    # between a fence and a boss — there is no position where a fenced ADS1115
-    # clears both the corner boss and the tie posts. Tape the two blind boards
-    # to the plate; nothing here is subject to vibration.
-    #
-    # Inlet vents, in the clear band between where the two boards land.
+    # No printed fence round the ADS1115, deliberately. A fence has to be sized
+    # to an outline, and this one comes off a vendor listing rather than a
+    # caliper. A fence that is 1 mm wrong is a board that will not go in; foam
+    # tape is 1 mm wrong and does not care. Nothing here is subject to
+    # vibration.
+
+    # Inlet vents, one each end, between where the ADS lands and the bosses.
     for vx in vent_xs():
         plate -= box(P.SC_VENT_W, P.SC_VENT_L, P.SC_BASE_T + 1.0,
                      at=(vx, P.SC_Y, z0 - 0.5))
@@ -322,7 +341,7 @@ def build() -> "Part":
 # Print orientation
 # --------------------------------------------------------------------------
 
-def for_print() -> dict[str, Part]:
+def for_print() -> dict[str, "Part"]:
     """Each half moved to the origin and turned the way it prints.
 
     The body goes top-face-down: that face is the only one on show, and a bed
