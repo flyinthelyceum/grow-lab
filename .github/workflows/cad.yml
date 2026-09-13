@@ -63,6 +63,11 @@ jobs:
         # artifact, no server.
         run: python cad/viewer.py
 
+      - name: Build the sensor case viewer
+        # The same idea for the one part that gets printed rather than cut:
+        # assembled on the block, exploded, and both halves on the bed.
+        run: python cad/sensor_case_viewer.py
+
       - name: Summary
         run: |
           {

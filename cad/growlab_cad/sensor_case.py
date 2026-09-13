@@ -418,6 +418,49 @@ def build_base() -> "Part":
     return labelled(plate, "sensor_case_base")
 
 
+def boards() -> dict[str, "Part"]:
+    """The three boards and the disc, as blocks, where the layout puts them.
+
+    Mock-ups, not models: an outline, a thickness, and for the AS7341 the
+    sensor package, because that is the one part whose height decides the
+    collar's drop. They exist for two reasons. The viewer is the obvious one —
+    an empty box tells you nothing about a case whose whole job is what is
+    inside it. The other is that a kernel intersection against these is a
+    stronger statement than the plan arithmetic that proves the same thing in
+    two dimensions: it is the difference between "these rectangles do not
+    overlap" and "no part of this board is inside that plastic".
+    """
+    from ._shapes import box, cyl_z, labelled
+
+    out: dict[str, "Part"] = {}
+    bt = board_top()
+
+    x0, x1 = as7341_span()
+    y0, y1 = as7341_y_span()
+    as7341 = box(P.SC_AS7341_L, P.SC_AS7341_W, P.SC_BOARD_T,
+                 at=((x0 + x1) / 2, (y0 + y1) / 2, bt - P.SC_BOARD_T))
+    px, py = port_centre()
+    as7341 += box(3.1 * _MM, 2.0 * _MM, P.SC_AS7341_PKG_H, at=(px, py, bt))
+    out["as7341"] = labelled(as7341, "as7341")
+
+    bx0, bx1, by0, by1 = bme280_span()
+    out["bme280"] = labelled(
+        box(bx1 - bx0, by1 - by0, P.SC_BOARD_T,
+            at=((bx0 + bx1) / 2, (by0 + by1) / 2, bt - P.SC_BOARD_T)),
+        "bme280")
+
+    ax, ay = ads1115_centre()
+    out["ads1115"] = labelled(
+        box(P.SC_ADS1115_L, P.SC_ADS1115_W, P.SC_BOARD_T,
+            at=(ax, ay, plate_top() + P.SC_TAPE_T)),
+        "ads1115")
+
+    out["diffuser"] = labelled(
+        cyl_z(P.SC_DISC_DIA, P.SC_DISC_T, at=(px, py, recess_floor())),
+        "diffuser")
+    return out
+
+
 def build() -> "Part":
     """Both halves, assembled, where they sit on the block."""
     from ._shapes import labelled

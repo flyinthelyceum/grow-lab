@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-13 (a viewer for the one printed part)
+
+### Added
+- **`cad/sensor_case_viewer.py` and its template — the canopy sensor case in 3D**, one self-contained HTML file with three.js inlined, the same shape as `cad/viewer.py` but answering this part's questions rather than the station's. Assembled on the block, which is the only way to judge whether it reads as refined geometry on a coarse thing or as a lump. Exploded, because the case is mostly its contents and an empty box shows nothing. And both halves on the bed, top-face-down, because "one solid" is a thing you should be able to look at as well as assert: turn the body over and the collar, the bosses and the webs are either columns standing on the face or they are floating, and the eye catches that in a second. CI builds it beside the station viewer.
+- **`sensor_case.boards()` — the three boards and the disc as blocks**, where the layout functions put them. They exist for the viewer, and they also turn the plan-arithmetic collision tests into kernel intersections: the difference between "these rectangles do not overlap" and "no part of this board is inside that plastic", which is the claim the plan cannot make.
+
+### Found
+- **The meshes carried station coordinates.** The case sits 288 mm off the station's origin in Y and 1127 up in Z, so the first build framed its camera on empty space 288 mm from the part. The viewer now moves the model onto the case's own datum — plan centre, block top — once, at build time, so every number the page handles afterwards is the number on the drawing.
+- **The explode slider moved parts by 0.7 mm while reporting 24.** Each part's explode vector was scaled by the normalised slider and never by the span it was meant to represent.
+- **Exploding the plate downward buried it in the block.** It stays put now and the body lifts off it, which is the way the thing is actually assembled.
+- **The hanging boards stayed hidden under the body for most of the slider's travel.** They sit 11.5 mm above the body's bottom edge, so they only clear it once the body has risen that much further than they have. Their travel is set from that inequality rather than by eye.
+
 ## 2026-09-13 (the red team)
 
 Five adversarial reviews of the canopy sensor case — printability, optics, assembly, test integrity, environment — with a standing instruction to break it rather than approve it. Rev D did not survive. Rev E is what was left standing.
