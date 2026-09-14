@@ -29,8 +29,13 @@ body {
   font-family: Archivo, "Helvetica Neue", Arial, sans-serif;
   display: grid; grid-template-columns: 1fr 20rem; overflow: hidden;
 }
-#stage { position: relative; min-width: 0; background: #B9BEBA; }
-#stage canvas { display: block; }
+#stage { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #B9BEBA; }
+/* Sized by CSS, and only by CSS. setSize(w, h, false) sets the drawing buffer,
+   which on a retina display is twice the CSS size; a canvas with no CSS size
+   displays at its buffer size and comes out twice as big as its container. The
+   station viewer has always had this line. This one did not, and at pixel
+   ratio 2 it showed a quarter of the scene with the rail pushed off-screen. */
+#stage canvas { display: block; width: 100%; height: 100%; }
 /* The bed is nearly black and the ground is mid grey, so the hint cannot take
    its colour from either. It gets its own chip instead. */
 #hint {
@@ -323,13 +328,17 @@ function layout() {
   block.visible = m.block && visible.block;
   floor.visible = !!m.block;
   bed.visible = bedGrid.visible = !!m.bed;
-  frame(m.frameFull ? lerpFrame(m.frame, m.frameFull, explode) : m.frame);
 }
 
-function lerpFrame(a, b, t) {
-  const f = {};
-  for (const k of ['cx', 'cy', 'cz', 'r']) f[k] = a[k] + (b[k] - a[k]) * t;
-  return f;
+// Called on a mode switch and nowhere else. The first cut of this page framed
+// the camera inside layout(), which runs on every part toggle and every slider
+// tick — so zooming in on a boss and then hiding a board snapped the view back
+// to the default. The station viewer only moves the camera when you press
+// something that says it will, and so does this one now.
+function enterMode(m) {
+  frame(m.frame);
+  if (m.view) { sph.theta = m.view.theta; sph.phi = m.view.phi; }
+  applyCamera();
 }
 
 /* ---------------------------------------------------------------- camera */
@@ -343,7 +352,6 @@ let sph = { r: 160, theta: -0.62, phi: 1.06 };
 function frame(box) {
   target.set(box.cx, box.cy, box.cz);
   sph.r = box.r;
-  applyCamera();
 }
 function applyCamera() {
   camera.position.set(
@@ -407,8 +415,8 @@ for (const [k, m] of Object.entries(MODES)) {
     for (const other of modesEl.children) other.setAttribute('aria-pressed', 'false');
     b.setAttribute('aria-pressed', 'true');
     document.getElementById('explode-wrap').style.display = m.explodes ? '' : 'none';
-    if (m.view) { sph.theta = m.view.theta; sph.phi = m.view.phi; }
     layout();
+    enterMode(m);
   });
   modesEl.appendChild(b);
 }
@@ -499,6 +507,7 @@ function resize() {
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize);
+new ResizeObserver(resize).observe(stage);
 
 function paint() {
   const p = palette();
@@ -512,6 +521,6 @@ function paint() {
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint);
 
 document.getElementById('explode-wrap').style.display = MODES[mode].explodes ? '' : 'none';
-resize(); paint(); layout(); applyCut();
+resize(); paint(); layout(); applyCut(); enterMode(MODES[mode]);
 renderer.setAnimationLoop(() => renderer.render(scene, camera));
 </script>

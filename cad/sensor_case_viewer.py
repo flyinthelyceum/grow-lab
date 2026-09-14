@@ -165,18 +165,20 @@ def _payload(tolerance_mm: float, angular: float) -> dict:
             # Two frames, and the page reads between them as the slider moves:
             # a stack that grows to four times the height of the case cannot be
             # watched through a camera framed on the case.
-            "frame": {**assembled_frame, "r": mm(P.SC_LEN) * 2.4},
+            # Framed for the stack at full explode, because the camera does not
+            # follow the slider — it moves only when a mode or a view button is
+            # pressed, so that a zoom you chose survives a part toggle.
+            "frame": {
+                "cx": 0, "cy": 0,
+                "cz": (mm(P.SC_HGT) + 1.35 * EXPLODE_SPAN) / 2,
+                "r": mm(P.SC_LEN) * 3.1,
+            },
             # Low, almost level with the seam. An exploded stack separated only
             # in Z is invisible from above: the body's own footprint hides
             # everything under it, and at 29 degrees of elevation a 12 mm gap
             # is covered for 22 mm in every direction. From 13 degrees you see
             # between the layers, which is the whole point of the mode.
             "view": {"theta": -0.62, "phi": 1.36},
-            "frameFull": {
-                "cx": 0, "cy": 0,
-                "cz": (mm(P.SC_HGT) + 1.35 * EXPLODE_SPAN) / 2,
-                "r": mm(P.SC_LEN) * 3.3,
-            },
         },
         "print": {
             "label": "On the bed",
