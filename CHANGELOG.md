@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-14 (the loom page catches up)
+
+### Changed
+- **The Station Loom page is Rev B.** Rev A proposed three collars on the mast — sensors, fan, camera — and every one of them was superseded within the day: the sensors went into the printed case on the block, the camera and the fans into the lightbox, and the fixture's leads up the bore and out through the rear slot. The page still showed the collars, listed the camera as unreachable and the mast entry as undersized, and routed a moisture lead down the block face that now travels four inches into the case's end wall. Redrawn from the current parameters: the case on the block, the slot on the mast, the obround entry, and the block's one cable.
+
+### Found
+- **The block's cable has no documented route into the cabinet.** The docs settle the cable — stranded Cat5e, paired grounds, 100 kHz, pull-ups pruned — and both its ends, and said nothing about the 30 in between. Proposed now, in the mounting brief and on the loom page: down the block's rear face, along the tray's rear edge, and down beside the mast through the notch the mast already makes in the tray, so the tray gains no second hole. Marked proposed until the notch's collar is confirmed to pass a cable beside the tube.
+- **Nothing said the Cat5e must be stranded.** Solid-core riser cable work-hardens at a solder joint and snaps the first time the case is lifted; the boards are soldered direct because there is no room in the case for a connector. Patch cable, and the BOM line now says so.
+- **The build doc still called the mast entry 0.50 × 1.00.** The model has had it at 0.50 × 0.85 since the CI catch that put the taller obround below the pan rim. Corrected.
+- **The fixture height is still recorded nowhere.** The one Rev A blocker that survives: the collar is set by hand, the AS7341 reads output and distance as one number, and `pi/config` has no field for it.
+
 ## 2026-09-14 (the sensor case viewer was unusable on a retina screen)
 
 ### Found
