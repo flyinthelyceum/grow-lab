@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-14 (the sensor case viewer was unusable on a retina screen)
+
+### Found
+- **The canvas had no CSS size.** `setSize(w, h, false)` sets only the drawing buffer, which at a device pixel ratio of 2 is twice the CSS size, and a canvas with no CSS size displays at its buffer size. On a retina display the scene was twice its container: a quarter of the case visible in the bottom-right corner, the rail pushed off-screen, the controls unreachable. The station viewer has always had `#stage canvas { width: 100%; height: 100% }`; this page did not, and every screenshot taken of it in this repo was at pixel ratio 1, which is why it looked fine to the person who wrote it and unusable to the person who opened it.
+- **Every part toggle and slider tick reset the camera.** `layout()` re-framed the view on each run, so zooming in on a boss and then hiding a board snapped the view back to the default. The station viewer moves the camera only when something that says it will is pressed.
+
+### Changed
+- The canvas is sized by CSS, the stage cannot be pushed larger than its grid cell, and a `ResizeObserver` on the stage catches resizes an artifact iframe makes without a window event. The camera is set on a mode switch and by the view buttons, and by nothing else; the exploded mode is framed for the fully exploded stack from the start, since nothing re-frames as the slider moves.
+- Tested at pixel ratio 2, in the plain file and in a simulated artifact host, driving the wheel, a part toggle, the slider and an orbit drag: the zoom survives all of them.
+
 ## 2026-09-14 (the lip comes off)
 
 ### Found
