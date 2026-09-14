@@ -33,10 +33,10 @@ Two parts
 **Body**, printed *top face down*. The face you see is then the bed face, which
 on a textured sheet is a uniform matte no other method matches — and matte white
 is the whole point of the object. Everything inside it hangs from the top wall:
-the baffle, the AS7341's boss, the BME280's two bosses, and the four corner
-bosses, which run the full height from the ceiling to the plate and are fused
-into their corners by a web. In the print every one of them is a column growing
-from the bed, and the part has no internal bridge longer than a vent slot.
+the baffle, the AS7341's four bosses, and the four corner bosses, which run the
+full height from the ceiling to the plate and are fused into their corners by a
+web. In the print every one of them is a column growing from the bed, and the
+part has no internal bridge longer than a vent slot.
 
 **Base plate**, printed top face down as well, so its countersinks and foot
 recesses open upward and nothing on it bridges. The walls stand on it and it is
@@ -44,42 +44,48 @@ the full footprint, chamfered to match — a plain butt joint with no fit to get
 wrong, and no slot at the back for the block's own damp air. The seam is a
 hairline 2.5 mm above the block. With the lip gone the plate is a flat
 rectangle with four holes and three recesses in it, which is the whole of what
-it ever needed to be.
+it ever needed to be. The ADS1115 and the BME280 are taped to its inner face.
 
 The AS7341 that is actually in hand
 -----------------------------------
-The first cut was drawn to a vendor datasheet for a 40 × 20 T-shaped board with
-its sensor on a tongue at one end. The board in hand (photographed 2026-09-13)
-is the small square generic: about 21 × 16, sensor near mid-height 3 mm from
-one edge, and — usefully — a Ø3 mounting hole on the sensor's own row 6.7 mm
-inboard of it. So the one board whose position matters is **screwed**, up
-through its own hole into a boss that hangs from the top wall, with the baffle
-as the second contact. Two points fix position and rotation; a ring of contact
-stops rocking.
+Rev G. The first cut was drawn to a vendor datasheet for a 40 × 20 T-shaped
+board; Rev E to a photo of what was thought to be a 21 × 16 generic. The board
+in hand, photographed properly on 2026-09-14, is the **Adafruit STEMMA QT**
+breakout: 1.0 × 0.7 in, four Ø2.5 holes on a 0.8 × 0.5 in grid, the header along
+a long edge, the sensor dead centre, and — the part that changes the case — two
+JST SH sockets standing 2.9 mm tall *on the sensor face*, one at each end.
 
-That hole lies under the diffuser recess in plan, and the recess floor is only
-0.95 mm above the ceiling. The pilot therefore stops 0.3 mm into the wall and
-no deeper; Rev D ran it to exactly the recess floor.
+So it hangs on its own four holes, from four Ø5.5 bosses under the ceiling,
+with M2.5 × 4 thread-forming screws up through the board. Four points fix
+position, rotation and rock, and the collar has no mechanical job any more.
+The bosses set the drop at 3.2, which is the sockets plus 0.3; nothing else on
+that face comes within a millimetre of the ceiling. The header edge faces the
+rear wall, so the four wires go straight to the cable notch.
+
+At 25.4 mm the board takes the whole middle of the upper level, and the corner
+bosses take both ends of it, so the BME280 can no longer hang beside it. It is
+taped to the plate at the −X end instead, sensor up, with the ADS1115 shifted
+6.5 mm toward +X to make the room. Its lid faces the open cavity and the −X
+inlet slot is beside it. Two more millimetres of length put the ADS1115's
+corner a clear half millimetre off the +X corner bosses.
 
 The baffle
 ----------
-The breakout carries an illumination LED a few millimetres from the sensor,
-pointing the same way. A short collar round the sensor is its shield, the field
-stop, and the standoff that fixes sensor-to-diffuser distance — so the optical
-fix and the mechanical one are the same feature. The board hangs sensor-side
-up, so the collar's height is also the clearance for every part on that face.
+The breakout carries an illumination LED 7 mm from the sensor, pointing the
+same way. A short collar round the sensor is its shield and the field stop. It
+hangs from the ceiling and stops 1.5 mm above the board, over the two SOT-23s
+that sit inside its radius; it no longer touches the board, and it does not
+need to — the case is dark inside, and the bore is what defines the field.
 
 The bore runs straight through the top wall at the collar's own diameter. Rev D
 opened the wall to Ø10.5 — wider than the collar — which took the ceiling out
-from under it: the collar hung from a 0.55 mm overlap with the screw boss and
-would have printed in mid-air. Now the collar sits on a full ring of wall, and
-the disc's ledge is 3 mm wide instead of 0.9, which is bond area.
+from under it: the collar would have printed in mid-air. Now the collar sits
+on a full ring of wall, and the disc's ledge is 3 mm wide, which is bond area.
 
-The collar and the screw boss merge into one lozenge; the bore is cut after
-both are added so the union cannot close it. White PETG at 1 mm is a diffuser
-rather than a shield, so the collar attenuates the LED rather than killing it:
-**keep the LED off in firmware regardless**, and paint the interior matte black
-before assembly if the dark-period reading has to be zero.
+White PETG at 1 mm is a diffuser rather than a shield, so the collar attenuates
+the LED rather than killing it: **keep the LED off in firmware regardless**, and
+paint the interior matte black before assembly if the dark-period reading has
+to be zero.
 
 Sealing, deliberately not
 -------------------------
@@ -129,8 +135,13 @@ def ceiling() -> float:
 
 
 def board_top() -> float:
-    """Top surface of the hanging boards, set by the baffle's length."""
+    """Top surface of the hanging AS7341, set by its four bosses."""
     return ceiling() - P.SC_BAFFLE_DROP
+
+
+def collar_bottom() -> float:
+    """Where the baffle stops: clear of the parts round the sensor."""
+    return board_top() + P.SC_BAFFLE_CLEAR
 
 
 def recess_floor() -> float:
@@ -146,6 +157,11 @@ def pilot_top() -> float:
 def ads1115_stack_top() -> float:
     """Highest point of the taped board: tape, board, tallest part, no header."""
     return plate_top() + P.SC_TAPE_T + P.SC_BOARD_T + P.SC_ADS1115_PART_H
+
+
+def bme280_stack_top() -> float:
+    """The other taped board: tape, board, the lid."""
+    return plate_top() + P.SC_TAPE_T + P.SC_BOARD_T + P.SC_BME280_PART_H
 
 
 # --------------------------------------------------------------------------
@@ -166,29 +182,47 @@ def port_centre() -> tuple[float, float]:
 def as7341_span() -> tuple[float, float]:
     """X extent of the AS7341, placed so its sensor lands under the port.
 
-    The header edge points to -X, so the board runs from 18 mm before the
-    port to 3 mm past it.
+    The sensor is at the board's centre, so this is symmetric about the port;
+    it is written from SENSOR_X so a calipered offset moves the board, not the
+    port.
     """
     x0 = P.SC_X - P.SC_AS7341_SENSOR_X
     return x0, x0 + P.SC_AS7341_L
 
 
 def as7341_y_span() -> tuple[float, float]:
-    """Y extent. The regulator edge (the photo's top) is +Y."""
-    y1 = P.SC_Y + P.SC_AS7341_SENSOR_Y
-    return y1 - P.SC_AS7341_W, y1
+    """Y extent. The LED edge is -Y; the header edge is +Y, toward the rear
+    wall and the cable notch."""
+    y0 = P.SC_Y - P.SC_AS7341_SENSOR_Y
+    return y0, y0 + P.SC_AS7341_W
 
 
-def as7341_hole() -> tuple[float, float]:
-    """Where the board's own Ø3 mounting hole lands, in world XY."""
-    x0, _ = as7341_span()
-    _, y1 = as7341_y_span()
-    return x0 + P.SC_AS7341_HOLE_X, y1 - P.SC_AS7341_HOLE_Y
+def as7341_centre() -> tuple[float, float]:
+    x0, x1 = as7341_span()
+    y0, y1 = as7341_y_span()
+    return (x0 + x1) / 2, (y0 + y1) / 2
+
+
+def as7341_hole_points() -> list[tuple[float, float]]:
+    """The board's four mounting holes, in world XY: a grid about its centre."""
+    cx, cy = as7341_centre()
+    return [(cx + sx * P.SC_AS7341_HOLE_PITCH_X / 2, cy + sy * P.SC_AS7341_HOLE_PITCH_Y / 2)
+            for sx in (-1, 1) for sy in (-1, 1)]
 
 
 def as7341_led() -> tuple[float, float]:
     """Where the illumination LED lands. Advisory: the baffle test uses it."""
-    return P.SC_X + P.SC_AS7341_LED_DX, P.SC_Y + P.SC_AS7341_LED_DY
+    y0, _ = as7341_y_span()
+    return P.SC_X, y0 + P.SC_AS7341_LED_Y
+
+
+def as7341_qt_boxes() -> list[tuple[float, float, float, float]]:
+    """The two STEMMA QT sockets on the sensor face, (cx, cy, lx, ly). One at
+    each end, reaching QT_L inboard, on the board's mid-line."""
+    x0, x1 = as7341_span()
+    _, cy = as7341_centre()
+    return [(x0 + P.SC_AS7341_QT_L / 2, cy, P.SC_AS7341_QT_L, P.SC_AS7341_QT_W),
+            (x1 - P.SC_AS7341_QT_L / 2, cy, P.SC_AS7341_QT_L, P.SC_AS7341_QT_W)]
 
 
 def boss_points() -> list[tuple[float, float]]:
@@ -213,19 +247,31 @@ def web_boxes() -> list[tuple[float, float, float, float]]:
     return out
 
 
-def bme280_centre() -> tuple[float, float]:
-    """Upper level, beside the AS7341, hung **sensor-side down**, long side
-    along Y.
+def ads1115_centre() -> tuple[float, float]:
+    """On the plate, taped, shifted toward +X to leave the -X end to the
+    BME280. Advisory: the tests prove a board of this size lands clear of the
+    screws, and the build sheet says where to stick it."""
+    return P.SC_X + P.SC_ADS1115_DX, P.SC_Y
 
-    The BME280's element is a metal lid with a pinhole on its top face. Hung
-    the usual way up it would sit in a 2 mm gap under the ceiling reading dead
-    air; inverted, it faces the open cavity and the convection path. Through-
-    hole pads take wire from either side, so nothing is lost. It lies with its
-    long side across the case because that is the way its two bosses clear the
-    corner bosses.
+
+def ads1115_span() -> tuple[float, float, float, float]:
+    """(x0, x1, y0, y1) of the board."""
+    cx, cy = ads1115_centre()
+    return (cx - P.SC_ADS1115_L / 2, cx + P.SC_ADS1115_L / 2,
+            cy - P.SC_ADS1115_W / 2, cy + P.SC_ADS1115_W / 2)
+
+
+def bme280_centre() -> tuple[float, float]:
+    """On the plate at the -X end, taped, sensor up, long side along Y, a gap
+    from the ADS1115.
+
+    Rev E hung it inverted beside the AS7341 so its lid faced the open cavity
+    rather than a 2 mm slot under the ceiling. On the plate it faces the open
+    cavity the right way up, with the -X inlet slot beside it; and there is no
+    upper-level spot for it any more — see the module docstring.
     """
-    _, x1 = as7341_span()
-    return x1 + 2.0 * _MM + P.SC_BME280_W / 2, P.SC_Y
+    ax0, _, _, _ = ads1115_span()
+    return ax0 - P.SC_BME280_GAP - P.SC_BME280_W / 2, P.SC_Y
 
 
 def bme280_span() -> tuple[float, float, float, float]:
@@ -233,21 +279,6 @@ def bme280_span() -> tuple[float, float, float, float]:
     cx, cy = bme280_centre()
     return (cx - P.SC_BME280_W / 2, cx + P.SC_BME280_W / 2,
             cy - P.SC_BME280_L / 2, cy + P.SC_BME280_L / 2)
-
-
-def bme280_hole_points() -> list[tuple[float, float]]:
-    """Its two mounting holes, on the long edge away from the AS7341."""
-    _, x1, _, _ = bme280_span()
-    cy = P.SC_Y
-    hx = x1 - P.SC_BME280_HOLE_INSET
-    return [(hx, cy - P.SC_BME280_HOLE_PITCH / 2), (hx, cy + P.SC_BME280_HOLE_PITCH / 2)]
-
-
-def ads1115_centre() -> tuple[float, float]:
-    """On the plate, centred, taped. Advisory: the tests prove a board of this
-    size lands clear of the screws, and the build sheet says where to stick
-    it."""
-    return P.SC_X, P.SC_Y
 
 
 def inlet_xs() -> list[float]:
@@ -336,23 +367,17 @@ def build_body() -> "Part":
     # not wider than the collar.
     body -= cyl_z(P.SC_PORT_DIA, P.SC_PORT_DEPTH + over, at=(px, py, recess_floor()))
 
-    # The baffle: field stop, LED shield and the standoff that sets sensor
-    # height, in one feature. Then the AS7341's boss over its own hole, merging
-    # into the collar; then the pilot, stopping short of the recess floor; then
-    # the bore, last, straight through collar and wall so no union can close it.
-    body += cyl_z(P.SC_BAFFLE_OD, P.SC_BAFFLE_DROP, at=(px, py, board_top()))
-    hx, hy = as7341_hole()
-    body += cyl_z(P.SC_AS7341_BOSS_DIA, P.SC_BAFFLE_DROP, at=(hx, hy, board_top()))
-    body -= cyl_z(P.SC_AS7341_PILOT, P.SC_AS7341_PILOT_DEPTH + over,
-                  at=(hx, hy, board_top() - over))
-    body -= cyl_z(P.SC_BAFFLE_ID, P.SC_BAFFLE_DROP + P.SC_WALL + 2 * over,
-                  at=(px, py, board_top() - over))
-
-    # The BME280's two bosses, on its own holes, same fixing as the AS7341.
-    for mx, my in bme280_hole_points():
-        body += cyl_z(P.SC_BME280_BOSS_DIA, P.SC_BAFFLE_DROP, at=(mx, my, board_top()))
+    # The baffle: field stop and LED shield, hanging from the ceiling and
+    # stopping clear of the board. Then the AS7341's four bosses over its own
+    # holes, ceiling to board; their pilots, 0.3 into the top wall; then the
+    # bore, last, straight through collar and wall so no union can close it.
+    body += cyl_z(P.SC_BAFFLE_OD, ceiling() - collar_bottom(), at=(px, py, collar_bottom()))
+    for hx, hy in as7341_hole_points():
+        body += cyl_z(P.SC_AS7341_BOSS_DIA, P.SC_BAFFLE_DROP, at=(hx, hy, board_top()))
         body -= cyl_z(P.SC_AS7341_PILOT, P.SC_AS7341_PILOT_DEPTH + over,
-                      at=(mx, my, board_top() - over))
+                      at=(hx, hy, board_top() - over))
+    body -= cyl_z(P.SC_BAFFLE_ID, ceiling() - collar_bottom() + P.SC_WALL + 2 * over,
+                  at=(px, py, collar_bottom() - over))
 
     # Cable entry: a notch in the rear wall's bottom edge, closed by the plate
     # the wall stands on. A shade under the cable for a friction fit, and the
@@ -412,8 +437,8 @@ def boards() -> dict[str, "Part"]:
     """The three boards and the disc, as blocks, where the layout puts them.
 
     Mock-ups, not models: an outline, a thickness, and for the AS7341 the
-    sensor package, because that is the one part whose height decides the
-    collar's drop. They exist for two reasons. The viewer is the obvious one —
+    sensor package and the two sockets, because those are the parts whose
+    heights decide the drop. They exist for two reasons. The viewer is the obvious one —
     an empty box tells you nothing about a case whose whole job is what is
     inside it. The other is that a kernel intersection against these is a
     stronger statement than the plan arithmetic that proves the same thing in
@@ -431,13 +456,18 @@ def boards() -> dict[str, "Part"]:
                  at=((x0 + x1) / 2, (y0 + y1) / 2, bt - P.SC_BOARD_T))
     px, py = port_centre()
     as7341 += box(3.1 * _MM, 2.0 * _MM, P.SC_AS7341_PKG_H, at=(px, py, bt))
+    # The two sockets: the tallest thing on the face, and the reason for the
+    # drop. If they are in the plastic, the kernel test says so.
+    for cx, cy, lx, ly in as7341_qt_boxes():
+        as7341 += box(lx, ly, P.SC_AS7341_QT_H, at=(cx, cy, bt))
     out["as7341"] = labelled(as7341, "as7341")
 
     bx0, bx1, by0, by1 = bme280_span()
-    out["bme280"] = labelled(
-        box(bx1 - bx0, by1 - by0, P.SC_BOARD_T,
-            at=((bx0 + bx1) / 2, (by0 + by1) / 2, bt - P.SC_BOARD_T)),
-        "bme280")
+    bme = box(bx1 - bx0, by1 - by0, P.SC_BOARD_T,
+              at=((bx0 + bx1) / 2, (by0 + by1) / 2, plate_top() + P.SC_TAPE_T))
+    bme += box(2.5 * _MM, 2.5 * _MM, P.SC_BME280_PART_H,
+               at=((bx0 + bx1) / 2, (by0 + by1) / 2, plate_top() + P.SC_TAPE_T + P.SC_BOARD_T))
+    out["bme280"] = labelled(bme, "bme280")
 
     ax, ay = ads1115_centre()
     out["ads1115"] = labelled(

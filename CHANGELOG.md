@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-14 (the AS7341 is an Adafruit board, and the case is Rev G)
+
+### Found
+- **The AS7341 in hand is the Adafruit STEMMA QT breakout, not the generic the case was drawn to.** A proper photo, taken for the caliper sheet, shows a 1.0 × 0.7 in board with four Ø2.5 holes on a 0.8 × 0.5 in grid, six header pads along a *long* edge, the sensor dead centre, an LED 0.07 in from the far edge — and two JST SH sockets standing about 2.9 mm tall **on the sensor face**, one at each end. Rev E hung that face 2.0 mm under the ceiling. The sockets would have hit the lid before the screw was in.
+- **The board's outline was wrong in both dimensions and its one mounting hole did not exist.** 21 × 16 with a Ø3 hole 6.7 mm from the sensor was scaled off a worse photo of what was assumed to be a different board. The four real holes are the fixing this board was always going to want.
+- **The pull-ups are a 10 kΩ array,** marked 103 beside the sensor, which is the value the bus note assumed.
+
+### Changed
+- **Rev G hangs the AS7341 on its own four holes,** from four Ø5.5 bosses under the ceiling with M2.5 × 4 thread-forming screws into Ø2.3 pilots 3.5 deep. Four points fix position, rotation and rock; the collar has no mechanical job left and stops 1.5 mm clear of the board, over the SOT-23s beside the sensor. The drop is 3.2 mm: the sockets plus 0.3. None of the four pilots is anywhere near the diffuser recess, so Rev E's cap on pilot depth is gone. The header edge faces the rear wall and the cable notch.
+- **The BME280 moves to the plate.** At 25.4 mm the AS7341 takes the whole middle of the upper level and the full-height corner bosses take both ends of it; there is no upper-level spot left for a second board. It is taped to the plate at the −X end, sensor up, with the −X inlet slot beside it, and the ADS1115 shifts 6.5 mm toward +X to make the room. Its holes go unused; nothing about it needs locating.
+- **The case is 60 long,** two more than Rev E, which is what puts the ADS1115's corner half a millimetre clear of the +X corner bosses rather than a tenth.
+- The field half-angle is now measured from the top of the sensor package to the bore's far rim, which is where the detector actually is; the collar not touching the board made the old measurement meaningless.
+- Tests: the single-boss and hanging-BME tests are replaced by four-hole, socket-clearance, near-part-clearance, plate-board and inlet-adjacency rules; a kernel test proves wall over every pilot. 64 pass, kernel included.
+- The caliper sheet's AS7341 section is redrawn from the photo and its BME280 section loses the hole rows, which no longer decide anything.
+
 ## 2026-09-14 (the loom page catches up)
 
 ### Changed

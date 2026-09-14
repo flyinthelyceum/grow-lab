@@ -586,71 +586,82 @@ DEPTH = DepthBudget()
 
 MM = 1.0 / IN  # inches per millimetre
 
-# --- The boards, as bought. Generic modules, not Adafruit. -----------------
-# AS7341: the small square generic, photographed 2026-09-13 — NOT the T-shaped
-# Ewellite board the first cut was drawn to. Scaled off the photo by its own
-# 0.1 in header-pad pitch, so figures are good to about half a millimetre.
-# CALIPER THE FOUR MARKED ONES BEFORE PRINTING. The header edge is -X, and the
-# edge with the regulator (the photo's top) is +Y.
-SC_AS7341_L = 21.0 * MM  # CALIPER — along X
-SC_AS7341_W = 16.0 * MM  # CALIPER — along Y
-SC_AS7341_SENSOR_X = 18.0 * MM  # CALIPER — the sensor ring, from the header edge
-SC_AS7341_SENSOR_Y = 7.9 * MM  # CALIPER — from the +Y edge. Mid-height, near +X
-# The board's own Ø3 mounting hole sits on the sensor's row, 6.7 mm inboard of
-# it. That is the fixing: one M2.5 up through the hole into a boss hanging from
-# the top wall, with the baffle as the second contact. The one board whose
-# position matters gets a screw, not tape.
-SC_AS7341_HOLE_X = 11.3 * MM
-SC_AS7341_HOLE_Y = 7.9 * MM
-SC_AS7341_HOLE_DIA = 3.0 * MM
-SC_AS7341_BOSS_DIA = 6.0 * MM
+# --- The boards, as bought --------------------------------------------------
+# AS7341: the **Adafruit STEMMA QT** breakout, photographed 2026-09-14 — NOT
+# the small generic the Rev E/F sheet was drawn to, which was itself drawn from
+# a worse photo. Scaled off this one by its own 0.1 in header-pad pitch and
+# checked against Adafruit's published 1.0 x 0.7 in outline; the two agree.
+# CALIPER before printing: the caliper sheet has a row for each of these.
+#   Header pads along one LONG edge (six, 0.1 in pitch). That edge faces +Y in
+#   the case, toward the rear wall and the cable notch, so the wires go straight
+#   to it.
+#   Four Ø2.5 holes on a 0.8 x 0.5 in grid, 0.1 in from every edge. The board
+#   hangs on all four. A symmetric board with four holes wants four screws, not
+#   one screw and a collar pressed on its face.
+#   Sensor window dead centre. LED 0.07 in from the opposite (-Y) edge, on the
+#   centre line: 7.1 from the sensor and well outside the collar.
+#   Two STEMMA QT (JST SH) sockets ON THE SENSOR FACE, one at each end, 2.9
+#   tall. They are the tallest thing on that face by a wide margin and they are
+#   why the baffle drop is 3.2, not 2.0. They stay fitted: desoldering them buys
+#   a shallower gap and nothing else.
+SC_AS7341_L = 25.4 * MM  # CALIPER — along X, the long way
+SC_AS7341_W = 17.78 * MM  # CALIPER — along Y
+SC_AS7341_SENSOR_X = 12.7 * MM  # CALIPER — window centre from the -X edge
+SC_AS7341_SENSOR_Y = 8.89 * MM  # CALIPER — window centre from the LED (-Y) edge
+SC_AS7341_HOLE_PITCH_X = 20.32 * MM  # CALIPER — the hole grid, 0.8 in along X
+SC_AS7341_HOLE_PITCH_Y = 12.7 * MM  # CALIPER — 0.5 in along Y
+SC_AS7341_HOLE_DIA = 2.5 * MM  # CALIPER — Adafruit's stated size
+SC_AS7341_BOSS_DIA = 5.5 * MM  # four, hanging from the ceiling to the board.
+                               # 1.6 of wall round a Ø2.3 pilot; reaches 0.2
+                               # past the board's edge, which is nothing
 SC_AS7341_PILOT = 2.3 * MM  # M2.5 thread-forming in PETG. A Ø2.3 vertical hole
                             # prints about 2.1; M2.5 minor is 1.95
-SC_AS7341_PILOT_DEPTH = 2.3 * MM  # 2.0 of boss + 0.3 into the top wall. It CANNOT
-                                  # go deeper: the hole lies under the diffuser
-                                  # recess in plan, and the recess floor is only
-                                  # 0.95 above the ceiling. Rev D ran the pilot to
-                                  # exactly that floor — zero skin under the disc.
-SC_AS7341_SCREW_LEN = 3.0 * MM  # M2.5 x 3 pan, NOT the x 4 the earlier sheet said:
-                                # 1.6 of board leaves 1.4 in the pilot, and a x 4
-                                # bottoms out 0.1 before the board is clamped. 1.4
-                                # of M2.5 thread in PETG shears at about 190 N and
-                                # the board weighs three grams; the diffuser skin
-                                # above is the binding constraint, not the thread
-# What is almost certainly a white LED, 5.2 mm below the sensor — the light
-# square at bottom right of the photo. Advisory: the baffle test uses it.
-SC_AS7341_LED_DX = -0.7 * MM
-SC_AS7341_LED_DY = -5.2 * MM
-# Tallest part on the sensor face (the big capacitor, top centre). Sets the
-# minimum baffle drop, because the board hangs component-side up. CHECK IT.
-SC_AS7341_PART_H = 1.6 * MM
+SC_AS7341_PILOT_DEPTH = 3.5 * MM  # 3.2 of boss + 0.3 into the top wall. None of
+                                  # the four lies anywhere near the diffuser
+                                  # recess (they are 12 mm from the port), so
+                                  # Rev E's cap on the depth no longer applies;
+                                  # 0.3 is simply what a blind end needs
+SC_AS7341_SCREW_LEN = 4.0 * MM  # M2.5 x 4 pan: 1.6 of board leaves 2.4 in a 3.5
+                                # pilot, clamped 1.1 before it could bottom out
+SC_AS7341_LED_Y = 1.8 * MM  # CALIPER — LED centre from the LED edge. Advisory:
+                            # the baffle test uses it
+SC_AS7341_QT_H = 2.9 * MM  # CALIPER — a JST SH socket, board top to its top.
+                           # THIS sets the baffle drop
+SC_AS7341_QT_L = 4.3 * MM  # how far a socket reaches inboard from the board edge
+SC_AS7341_QT_W = 6.0 * MM  # its width, centred on the board's mid-line
+SC_AS7341_NEAR_PART_H = 1.3 * MM  # tallest part within the collar's radius: the
+                                  # SOT-23s either side of the sensor. The collar
+                                  # stops above them instead of landing on them
 SC_AS7341_PKG_H = 1.0 * MM  # the sensor package itself, above the board
 
 SC_ADS1115_L = 28.0 * MM  # 28 x 18 published for the GY-ADS1115
 SC_ADS1115_W = 18.0 * MM
 SC_ADS1115_PART_H = 2.5 * MM  # tallest part on its top face with NO header fitted
-SC_TAPE_T = 1.0 * MM  # the foam tape under it
+SC_ADS1115_DX = 6.5 * MM  # it sits this far +X of centre on the plate, which is
+                          # what makes room for the BME280 at the other end
+SC_TAPE_T = 1.0 * MM  # the foam tape under the two plate boards
 
-# BME280: GY-BME280-3.3, 15.4 x 11.6 published. Two mounting holes, about 10 mm
-# apart, on the edge opposite the pads — CALIPER the pitch and the inset before
-# printing; listings agree on "two holes" and disagree on where. It hangs from
-# two bosses by its own holes, sensor-side down. Rev D sat it on four bare posts
-# with nothing holding it there.
+# BME280: GY-BME280-3.3, 15.4 x 11.6 published. It sits ON THE PLATE, taped,
+# sensor up, at the -X end. Rev E hung it beside the AS7341; a 25.4 mm AS7341
+# takes the whole middle of the upper level and the corner bosses take its
+# ends, so there is no upper-level spot left for it. On the plate its lid faces
+# the open cavity with the -X inlet slot beside it — the same convection
+# argument Rev E made for hanging it inverted, reached from the other side.
+# Its position does not matter, so tape is the right fixing and its holes go
+# unused. CALIPER nothing on it but its outline and the lid's height.
 SC_BME280_L = 15.4 * MM  # the long side. It lies along Y in the case
 SC_BME280_W = 11.6 * MM
-SC_BME280_HOLE_PITCH = 10.0 * MM  # CALIPER — along the board's long side
-SC_BME280_HOLE_INSET = 1.5 * MM  # CALIPER — hole centre from the short edge it is on
-SC_BME280_HOLE_DIA = 3.0 * MM
-SC_BME280_BOSS_DIA = 6.0 * MM
-SC_BME280_PART_H = 1.2 * MM  # tallest part on the pad-side face (it hangs pads-up)
+SC_BME280_PART_H = 1.2 * MM  # the lid, the tallest thing on its sensor face
+SC_BME280_GAP = 1.5 * MM  # to the ADS1115 beside it
 
 SC_BOARD_T = 1.6 * MM
 
 # --- Envelope -------------------------------------------------------------
-# 58 long. The first cut was 78, forced by a 40 mm T-shaped AS7341; the second
-# was 56. The two extra millimetres are what the BME280's bosses need to clear
-# the corner bosses now that those hang full height from the ceiling.
-SC_LEN = 58.0 * MM
+# 60 long. The first cut was 78, forced by a 40 mm T-shaped AS7341; the second
+# 56; Rev E 58. Rev G adds two: the AS7341 is 25.4 long and centred, the two
+# plate boards fill the ends, and 2 mm is what puts the ADS1115's corner a
+# clear half millimetre off the +X corner bosses instead of a tenth.
+SC_LEN = 60.0 * MM
 SC_WID = 27.0 * MM  # inside the CMU's 31.75 face shell with 4.75 to spare
 SC_HGT = 18.0 * MM  # body 15.5 + base plate 2.5
 SC_WALL = 2.0 * MM  # CHOICE: 4 perimeters at 0.50 extrusion width, exactly
@@ -669,11 +680,15 @@ SC_APERTURE_DIA = 6.5 * MM  # == SC_BAFFLE_ID. The bore simply continues through
                             # the whole wall out from under the Ø8.5 collar
 SC_BAFFLE_ID = 6.5 * MM  # the sensor's field stop; narrower than the LED's offset
 SC_BAFFLE_OD = 8.5 * MM
-SC_BAFFLE_DROP = 2.0 * MM  # top wall inner face to the board. Doubles as the standoff
-                           # that sets sensor-to-diffuser distance — the one height
-                           # in this part that has to be right. It is also the
-                           # component clearance: the board hangs sensor-side up, so
-                           # every part on that face lives in this gap.
+SC_BAFFLE_DROP = 3.2 * MM  # ceiling to the board's top face. The STEMMA QT
+                           # sockets stand 2.9 on that face; 0.3 over them.
+                           # Set by the four bosses, which is what hangs the
+                           # board. Rev E made the collar the standoff; it no
+                           # longer touches the board at all
+SC_BAFFLE_CLEAR = 1.5 * MM  # the collar stops this far above the board, over
+                            # the 1.3 mm SOT-23s that sit inside its radius. It
+                            # is a stray-light stop in a box that is dark
+                            # anyway; it never needed to seal on the board
 
 # --- Closure --------------------------------------------------------------
 # Four bosses hang the full height from the ceiling and are fused into the

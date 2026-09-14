@@ -55,18 +55,18 @@ PARTS = {
                              opacity=1.0, explode=(0, 0, 0.0)),
     "diffuser": dict(label="PTFE diffuser, Ø12 × 1", colour="#CBD9E2",
                      opacity=0.75, explode=(0, 0, 1.35), roughness=0.55),
-    # The two hanging boards travel with the body, because that is what holds
-    # them, and a little less far, so they come out from under it rather than
-    # with it. The ADS1115 barely moves: it is taped to the plate, and the only
-    # thing worth showing is that there is tape under it.
-    # 0.35 is not a look: the boards hang 11.5 mm above the body's bottom edge,
-    # so they only clear it once the body has risen that much further than they
-    # have — d(1 - f) > 11.5. At 0.35 they are out in the open by the time the
-    # slider is a third across; at 0.55 they stay hidden until the very end.
-    "as7341": dict(label="AS7341 (screwed)", colour="#2E5C7A",
+    # The hanging board travels with the body, because that is what holds it,
+    # and a little less far, so it comes out from under it rather than with
+    # it. The two taped boards barely move: the only thing worth showing is
+    # that there is tape under them.
+    # 0.35 is not a look: the AS7341 hangs 10.3 mm above the body's bottom
+    # edge, so it only clears it once the body has risen that much further
+    # than it has — d(1 - f) > 10.3. At 0.35 it is out in the open by the time
+    # the slider is a third across; at 0.55 it stays hidden until the very end.
+    "as7341": dict(label="AS7341 (four screws)", colour="#2E5C7A",
                    opacity=1.0, explode=(0, 0, 0.35), roughness=0.6),
-    "bme280": dict(label="BME280 (two bosses)", colour="#3D6B4A",
-                   opacity=1.0, explode=(0, 0, 0.35), roughness=0.6),
+    "bme280": dict(label="BME280 (taped to the plate)", colour="#3D6B4A",
+                   opacity=1.0, explode=(0, 0, 0.12), roughness=0.6),
     "ads1115": dict(label="ADS1115 (taped to the plate)", colour="#A3402B",
                     opacity=1.0, explode=(0, 0, 0.12), roughness=0.6),
 }
@@ -200,7 +200,7 @@ def _payload(tolerance_mm: float, angular: float) -> dict:
         "z": [0.0, mm(P.SC_HGT)],
     }
 
-    tube = mm(SC.recess_floor() - SC.board_top())
+    tube = mm(SC.recess_floor() - (SC.board_top() + P.SC_AS7341_PKG_H))
     import math
 
     half_angle = math.degrees(math.atan((mm(P.SC_BAFFLE_ID) / 2) / tube))
@@ -210,8 +210,10 @@ def _payload(tolerance_mm: float, angular: float) -> dict:
         ("Bore, and its field", f"Ø{mm(P.SC_BAFFLE_ID):.1f} · {half_angle:.0f}°", False),
         ("Wall under the collar",
          f"{mm((P.SC_BAFFLE_OD - P.SC_APERTURE_DIA) / 2):.1f}", False),
-        ("Skin under the disc",
-         f"{mm(SC.recess_floor() - SC.pilot_top()):.2f}", True),
+        ("Drop, over the sockets",
+         f"{mm(P.SC_BAFFLE_DROP):.1f} · {mm(P.SC_BAFFLE_DROP - P.SC_AS7341_QT_H):.1f} clear", True),
+        ("Wall over a pilot",
+         f"{mm(SC.top_face() - SC.pilot_top()):.1f}", False),
         ("Plate under a screw head",
          f"{mm(P.SC_BASE_T - P.SC_SCREW_CSK_DEPTH):.1f}", False),
         ("Headroom over the ADS1115",
@@ -232,8 +234,8 @@ def _payload(tolerance_mm: float, angular: float) -> dict:
             "x": mm(P.CMU_X - P.SC_X), "y": mm(P.CMU_Y - P.SC_Y),
         },
         "meta": (f"{mm(P.SC_LEN):.0f} × {mm(P.SC_WID):.0f} × {mm(P.SC_HGT):.0f} mm, matte white "
-                 "PETG, on the block's centre-rear. Rev E — what five adversarial reviews left "
-                 "standing."),
+                 "PETG, on the block's centre-rear. Rev G — the Adafruit AS7341, on its own "
+                 "four holes, sockets and all."),
         "readout": [{"label": a, "value": b, "tight": t} for a, b, t in readout],
         "foot": ("Built from <code>cad/growlab_cad/sensor_case.py</code> at "
                  f"<code>{_git_sha()}</code>, so the render cannot drift from the part. "

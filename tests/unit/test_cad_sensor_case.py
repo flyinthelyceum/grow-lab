@@ -111,7 +111,7 @@ class TestTheOpticalStack:
         x0, x1 = SC.as7341_span()
         y0, y1 = SC.as7341_y_span()
         assert x0 + P.SC_AS7341_SENSOR_X == pytest.approx(P.SC_X)
-        assert y1 - P.SC_AS7341_SENSOR_Y == pytest.approx(P.SC_Y)
+        assert y0 + P.SC_AS7341_SENSOR_Y == pytest.approx(P.SC_Y)
         assert mm(x1 - x0) == pytest.approx(mm(P.SC_AS7341_L))
         assert mm(y1 - y0) == pytest.approx(mm(P.SC_AS7341_W))
 
@@ -139,39 +139,56 @@ class TestTheOpticalStack:
         the arithmetic below means what it says."""
         assert P.SC_APERTURE_DIA == pytest.approx(P.SC_BAFFLE_ID)
 
-    def test_the_hole_boss_lands_on_the_board(self):
-        """The one board whose position matters is screwed, not taped. The
-        boss has to sit over the board's own hole, on the board."""
-        hx, hy = SC.as7341_hole()
+    def test_the_board_hangs_on_all_four_of_its_holes(self):
+        """The Adafruit board has four holes on a 0.8 x 0.5 in grid; it hangs
+        on all of them. Each pilot sits on the board with room round it, and
+        each boss may reach a hair past the edge but no more."""
         x0, x1 = SC.as7341_span()
         y0, y1 = SC.as7341_y_span()
-        r = P.SC_AS7341_BOSS_DIA / 2
-        assert x0 + r < hx < x1 - r, "boss overhangs the board in X"
-        assert y0 + r < hy < y1 - r, "boss overhangs the board in Y"
+        holes = SC.as7341_hole_points()
+        assert len(holes) == 4
+        r = P.SC_AS7341_PILOT / 2
+        for hx, hy in holes:
+            assert x0 + r + 0.5 * P.MM < hx < x1 - r - 0.5 * P.MM, "a pilot is off the board"
+            assert y0 + r + 0.5 * P.MM < hy < y1 - r - 0.5 * P.MM, "a pilot is off the board"
+            over = P.SC_AS7341_BOSS_DIA / 2 - min(hx - x0, x1 - hx, hy - y0, y1 - hy)
+            assert mm(over) < 0.5, f"a boss overhangs the board by {mm(over):.2f} mm"
+        xs = sorted({h[0] for h in holes})
+        ys = sorted({h[1] for h in holes})
+        assert len(xs) == 2 and len(ys) == 2, "not a grid"
+        assert xs[1] - xs[0] == pytest.approx(P.SC_AS7341_HOLE_PITCH_X)
+        assert ys[1] - ys[0] == pytest.approx(P.SC_AS7341_HOLE_PITCH_Y)
 
-    def test_the_bore_keeps_its_own_wall(self):
-        """The boss and the collar deliberately merge into one lozenge — the
-        board puts its hole 6.7 mm from the sensor and two rings of the sizes
-        needed cannot both fit in that. What must survive is the bore, and what
-        would break into it is the drilled pilot, not the boss's outside."""
-        hx, hy = SC.as7341_hole()
+    def test_the_bosses_clear_the_collar_and_the_sockets(self):
+        """Four bosses, a collar and two sockets share one face. None of the
+        plastic may land on a socket, and the bosses stay their own columns."""
         px, py = SC.port_centre()
-        d = math.hypot(hx - px, hy - py)
-        wall = d - P.SC_AS7341_PILOT / 2 - P.SC_BAFFLE_ID / 2
-        assert mm(wall) >= 1.0, f"only {mm(wall):.2f} mm between the pilot and the bore"
+        rb = P.SC_AS7341_BOSS_DIA / 2
+        for hx, hy in SC.as7341_hole_points():
+            assert not discs_clash(hx, hy, rb, px, py, P.SC_BAFFLE_OD / 2, 1.0 * P.MM), \
+                "a boss runs into the collar"
+            for cx, cy, lx, ly in SC.as7341_qt_boxes():
+                assert not (overlaps(hx - rb, hx + rb, cx - lx / 2, cx + lx / 2)
+                            and overlaps(hy - rb, hy + rb, cy - ly / 2, cy + ly / 2)), \
+                    "a boss lands on a socket"
+        for cx, cy, lx, ly in SC.as7341_qt_boxes():
+            nearest = min(abs(cx - lx / 2 - px), abs(cx + lx / 2 - px))
+            assert nearest > P.SC_BAFFLE_OD / 2 + 1.0 * P.MM, "the collar lands on a socket"
 
-    def test_the_pilot_stops_short_of_the_diffuser(self):
-        """The pilot's blind end is under the diffuser recess in plan, and the
-        recess floor is the thinnest skin in the part. Rev D ran the pilot to
-        exactly that floor: threads into the disc's bond face."""
-        skin = SC.recess_floor() - SC.pilot_top()
-        assert skin > 0, "the pilot breaks into the diffuser recess"
-        assert mm(skin) >= 0.5, f"only {mm(skin):.2f} mm under the disc"
+    def test_no_pilot_goes_near_the_diffuser(self):
+        """Rev E's one pilot lay under the recess and had to stop 0.3 into the
+        wall. These four are far from it, and still leave a whole millimetre
+        of top wall over their blind ends."""
+        px, py = SC.port_centre()
+        for hx, hy in SC.as7341_hole_points():
+            d = math.hypot(hx - px, hy - py)
+            assert d > P.SC_PORT_DIA / 2 + P.SC_AS7341_PILOT / 2 + 2.0 * P.MM, "under the recess"
+        left = SC.top_face() - SC.pilot_top()
+        assert mm(left) >= 1.0, f"only {mm(left):.2f} mm of wall over a pilot"
+        assert SC.pilot_top() > SC.ceiling(), "the pilot stops in the boss, not the wall"
 
     def test_the_screw_clamps_the_board_before_it_bottoms_out(self):
-        """The skin under the diffuser caps the pilot at 2.3, so the screw is
-        chosen to suit the pilot rather than the other way round. A screw that
-        reaches the blind end first holds nothing at all."""
+        """A screw that reaches the blind end first holds nothing at all."""
         into_pilot = P.SC_AS7341_SCREW_LEN - P.SC_BOARD_T
         assert into_pilot < P.SC_AS7341_PILOT_DEPTH, \
             "the screw bottoms out before the board is clamped"
@@ -205,28 +222,34 @@ class TestTheOpticalStack:
         assert P.SC_APERTURE_DIA / 2 < offset, \
             "the LED points straight up through the wall at the diffuser"
 
-    def test_the_baffle_clears_every_part_on_the_sensor_face(self):
-        """The board hangs sensor-side up, so the collar's height is the
-        headroom for everything on that face, the sensor package included."""
-        assert P.SC_BAFFLE_DROP > P.SC_AS7341_PART_H + 0.2 * P.MM
+    def test_the_drop_clears_every_part_on_the_sensor_face(self):
+        """The board hangs sensor-side up, so the drop is the headroom for
+        everything on that face — and the STEMMA QT sockets are on that face.
+        The collar, which no longer touches the board, has to clear the parts
+        that sit inside its own radius."""
+        assert P.SC_BAFFLE_DROP >= P.SC_AS7341_QT_H + 0.3 * P.MM, "a socket hits the ceiling"
         assert P.SC_BAFFLE_DROP > P.SC_AS7341_PKG_H + 0.2 * P.MM
+        assert P.SC_BAFFLE_CLEAR > P.SC_AS7341_NEAR_PART_H + 0.1 * P.MM, \
+            "the collar lands on a part beside the sensor"
+        assert SC.collar_bottom() < SC.ceiling(), "no collar left at all"
 
-    def test_the_collar_mostly_lands_on_the_board(self):
-        """The sensor is near an edge, so part of the ring overhangs. It has to
-        be a minority: the ring is what stops the board rocking on its one
-        screw."""
-        _, x1 = SC.as7341_span()
-        reach = x1 - P.SC_X  # board edge beyond the sensor, toward +X
-        assert reach > P.SC_BAFFLE_ID / 2 * 0.9, "the bore itself is off the board"
-        frac_off = math.acos(min(1.0, reach / (P.SC_BAFFLE_OD / 2))) / math.pi
-        assert frac_off < 0.35, f"{frac_off:.0%} of the collar overhangs"
+    def test_the_collar_is_wholly_over_the_board(self):
+        """The sensor is at the board's centre, so the ring is over the board
+        in every direction with the sockets and the LED outside it."""
+        x0, x1 = SC.as7341_span()
+        y0, y1 = SC.as7341_y_span()
+        px, py = SC.port_centre()
+        reach = min(px - x0, x1 - px, py - y0, y1 - py)
+        assert reach > P.SC_BAFFLE_OD / 2 + 1.0 * P.MM, "the collar overhangs the board"
 
     def test_the_sensor_sees_the_whole_diffuser(self):
         """The bore is a tube of one diameter from the board to the disc, so
         the field stop is honest arithmetic: the half-angle is the tube's.
         Wide enough and the detector sees the entire disc, which is what makes
         a diffuser a diffuser rather than a window at the end of a telescope."""
-        tube = SC.recess_floor() - SC.board_top()
+        # Measured from the top of the sensor package, which is where the
+        # detector is, to the bore's far rim at the recess floor.
+        tube = SC.recess_floor() - (SC.board_top() + P.SC_AS7341_PKG_H)
         half_angle = math.degrees(math.atan((P.SC_BAFFLE_ID / 2) / tube))
         assert half_angle > 45.0, f"field half-angle only {half_angle:.0f} deg"
         # And the package cannot crowd the bore, at the half millimetre the
@@ -265,24 +288,30 @@ class TestNothingCollides:
         to go but up, onto the face the plate lands on."""
         assert P.SC_INSERT_HOLE >= P.SC_INSERT_OD - 0.3 * P.MM
 
-    def test_no_hanging_board_lies_over_a_corner_boss(self):
-        """The bosses are full height now, so a board over one does not clear
-        it — this is the test that replaces the Z gap Rev D relied on."""
+    def test_the_hanging_board_lies_clear_of_the_corner_bosses(self):
+        """The corner bosses are full height, so a board over one does not
+        clear it — this is the test that replaces the Z gap Rev D relied on."""
         x0, x1 = SC.as7341_span()
         y0, y1 = SC.as7341_y_span()
-        bx0, bx1, by0, by1 = SC.bme280_span()
         r = P.SC_BOSS_DIA / 2
         for cx, cy in SC.boss_points():
-            for name, (px0, px1, py0, py1) in (("AS7341", (x0, x1, y0, y1)),
-                                               ("BME280", (bx0, bx1, by0, by1))):
-                assert not (overlaps(px0, px1, cx - r, cx + r)
-                            and overlaps(py0, py1, cy - r, cy + r)), \
-                    f"{name} lies over a corner boss"
+            assert not (overlaps(x0, x1, cx - r, cx + r) and overlaps(y0, y1, cy - r, cy + r)), \
+                "the AS7341 lies over a corner boss"
 
-    def test_the_bme_hangs_clear_of_the_as7341(self):
-        _, x1 = SC.as7341_span()
-        bx0, _, _, _ = SC.bme280_span()
-        assert mm(bx0 - x1) >= 1.5, f"only {mm(bx0 - x1):.1f} mm between them"
+    def test_the_plate_boards_land_clear_of_the_corner_bosses(self):
+        """Both taped boards sit between the corner bosses, with room."""
+        r = P.SC_BOSS_DIA / 2
+        for name, (bx0, bx1, by0, by1) in (("ADS1115", SC.ads1115_span()),
+                                           ("BME280", SC.bme280_span())):
+            for cx, cy in SC.boss_points():
+                assert not (overlaps(bx0, bx1, cx - r - 0.5 * P.MM, cx + r + 0.5 * P.MM)
+                            and overlaps(by0, by1, cy - r, cy + r)), \
+                    f"{name} runs into a corner boss"
+
+    def test_the_bme_sits_clear_of_the_ads(self):
+        ax0, _, _, _ = SC.ads1115_span()
+        _, bx1, _, _ = SC.bme280_span()
+        assert mm(ax0 - bx1) >= 1.5, f"only {mm(ax0 - bx1):.1f} mm between them"
 
     def test_the_bme_fits_the_cavity(self):
         ix, iy = SC.inner_half()
@@ -290,45 +319,27 @@ class TestNothingCollides:
         assert bx1 < P.SC_X + ix and bx0 > P.SC_X - ix
         assert by1 < P.SC_Y + iy and by0 > P.SC_Y - iy
 
-    def test_the_bme_hangs_on_its_own_holes(self):
-        """Rev D sat it on four bare posts with nothing retaining it, inverted.
-        It hangs on two bosses by its own mounting holes, like the AS7341."""
-        holes = SC.bme280_hole_points()
-        assert len(holes) == 2
-        bx0, bx1, by0, by1 = SC.bme280_span()
-        for hx, hy in holes:
-            assert bx0 < hx < bx1 and by0 < hy < by1, "a hole is off the board"
-        pitch = math.hypot(holes[0][0] - holes[1][0], holes[0][1] - holes[1][1])
-        assert pitch == pytest.approx(P.SC_BME280_HOLE_PITCH)
-        assert P.SC_AS7341_PILOT < P.SC_BME280_HOLE_DIA, "no clearance through the board"
+    def test_the_bme_faces_the_open_cavity_beside_an_inlet(self):
+        """Rev E hung it inverted so its lid faced the open cavity. On the
+        plate it faces up into the same cavity, with a whole board's worth of
+        air over it, and the -X inlet slot brings the outside air in beside
+        it rather than at the far end of the box."""
+        gap = (SC.board_top() - P.SC_BOARD_T) - SC.bme280_stack_top()
+        assert mm(gap) >= 3.0, f"only {mm(gap):.1f} mm over the lid"
+        cx, _ = SC.bme280_centre()
+        assert any(abs(vx - cx) < P.SC_BME280_W / 2 + 2.0 * P.MM for vx in SC.inlet_xs()), \
+            "no inlet slot beside the BME280"
 
-    def test_the_bme_bosses_clear_the_corner_bosses(self):
-        for hx, hy in SC.bme280_hole_points():
-            for cx, cy in SC.boss_points():
-                assert not discs_clash(hx, hy, P.SC_BME280_BOSS_DIA / 2,
-                                       cx, cy, P.SC_BOSS_DIA / 2, 1.0 * P.MM), \
-                    "a BME boss runs into a corner boss"
-
-    def test_the_lozenge_and_the_bme_bosses_do_not_touch(self):
-        px, py = SC.port_centre()
-        hx, hy = SC.as7341_hole()
-        for mx, my in SC.bme280_hole_points():
-            assert not discs_clash(mx, my, P.SC_BME280_BOSS_DIA / 2,
-                                   px, py, P.SC_BAFFLE_OD / 2)
-            assert not discs_clash(mx, my, P.SC_BME280_BOSS_DIA / 2,
-                                   hx, hy, P.SC_AS7341_BOSS_DIA / 2)
-
-    def test_the_taped_ads_fits_under_the_hanging_boards(self):
-        """It is the only board with anything above it. Its stack — tape,
-        board, tallest part — has to pass under both, with no header fitted."""
-        assert SC.ads1115_stack_top() < SC.board_top() - P.SC_BOARD_T, \
-            (mm(SC.ads1115_stack_top()), mm(SC.board_top() - P.SC_BOARD_T))
+    def test_the_taped_boards_fit_under_the_hanging_board(self):
+        """Their stacks — tape, board, tallest part, no header — pass under
+        the AS7341 and its bosses with room."""
+        under = SC.board_top() - P.SC_BOARD_T
+        for name, top in (("ADS1115", SC.ads1115_stack_top()), ("BME280", SC.bme280_stack_top())):
+            assert mm(under - top) >= 2.0, f"{name} stack is {mm(under - top):.1f} mm under the board"
 
     def test_the_taped_ads_lands_clear_of_everything_on_the_plate(self):
         """Nothing is fenced, but it still has to miss the screws."""
-        cx, cy = SC.ads1115_centre()
-        bx0, bx1 = cx - P.SC_ADS1115_L / 2, cx + P.SC_ADS1115_L / 2
-        by0, by1 = cy - P.SC_ADS1115_W / 2, cy + P.SC_ADS1115_W / 2
+        bx0, bx1, by0, by1 = SC.ads1115_span()
 
         ix, iy = SC.inner_half()
         assert bx0 > P.SC_X - ix and bx1 < P.SC_X + ix, "off the plate in X"
@@ -427,8 +438,8 @@ class TestItPrintsWithoutTricks:
         assert P.SC_SCREW_CSK > P.SC_SCREW_DIA
 
     def test_the_as7341_screw_clears_the_boards_hole(self):
-        """M2.5 through the board's Ø3 — clearance, so the board can be nudged
-        onto the baffle before the screw bites."""
+        """The pilot is smaller than the board's Ø2.5, so the screw forms its
+        thread in the boss and passes the board — not the other way round."""
         assert P.SC_AS7341_PILOT < P.SC_AS7341_HOLE_DIA
 
     def test_the_pilot_suits_a_thread_forming_screw_in_petg(self):
@@ -438,10 +449,8 @@ class TestItPrintsWithoutTricks:
         assert 1.95 * P.MM < printed < 2.3 * P.MM, f"{mm(printed):.2f} mm as printed"
 
     def test_the_boss_has_meat_around_its_pilot(self):
-        for name, dia in (("AS7341", P.SC_AS7341_BOSS_DIA),
-                          ("BME280", P.SC_BME280_BOSS_DIA)):
-            wall = (dia - P.SC_AS7341_PILOT) / 2
-            assert mm(wall) >= 1.5, f"{name}: only {mm(wall):.2f} mm round the pilot"
+        wall = (P.SC_AS7341_BOSS_DIA - P.SC_AS7341_PILOT) / 2
+        assert mm(wall) >= 1.5, f"only {mm(wall):.2f} mm round the pilot"
 
     def test_nothing_opens_in_the_face_that_meets_the_block(self):
         """The plate's underside is a seating face and a splash shield. Every
@@ -518,8 +527,8 @@ class TestTheGeometryBuilds:
             bbox_in(parts["base"])["z1"])
 
     def test_the_baffle_bore_is_clear_through(self, parts):
-        """From the board right out through the diffuser recess. The boss
-        merges into the collar on purpose; the bore is cut after both."""
+        """From the board right out through the diffuser recess. The bore is
+        cut after the collar is added, so no union can close it."""
         from cad.growlab_cad._shapes import cyl_z
 
         px, py = SC.port_centre()
@@ -528,15 +537,15 @@ class TestTheGeometryBuilds:
                       at=(px, py, SC.board_top()))
         assert (probe & parts["body"]).volume < 1e-6, "something is in the bore"
 
-    def test_the_pilot_does_not_reach_the_diffuser(self, parts):
-        """A cut through the recess floor over the pilot would show as a hole
-        in the disc's bond face."""
+    def test_every_pilot_has_wall_over_it(self, parts):
+        """A blind end that broke through would show as a hole in the top
+        face — the one face on show."""
         from cad.growlab_cad._shapes import cyl_z
 
-        hx, hy = SC.as7341_hole()
-        skin = cyl_z(P.SC_AS7341_PILOT, SC.recess_floor() - SC.pilot_top(),
-                     at=(hx, hy, SC.pilot_top()))
-        assert (skin & parts["body"]).volume > 1e-7, "no material over the pilot"
+        for hx, hy in SC.as7341_hole_points():
+            skin = cyl_z(P.SC_AS7341_PILOT, SC.top_face() - SC.pilot_top(),
+                         at=(hx, hy, SC.pilot_top()))
+            assert (skin & parts["body"]).volume > 0.95 * skin.volume, "no material over a pilot"
 
     def test_it_does_not_interfere_with_the_block(self):
         """It rests on the top face; the lip lies against the rear face. Resting

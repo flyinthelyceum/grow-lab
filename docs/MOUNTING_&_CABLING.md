@@ -363,7 +363,16 @@ restated because it is the one that gets skipped when you are tired.
 ## The canopy sensor case
 
 Modelled in `cad/growlab_cad/sensor_case.py`; CI writes STLs to `cad/out/print/`.
-**58 × 27 × 18 mm**, matte white, on the CMU's centre-rear. Two printed parts.
+**60 × 27 × 18 mm**, matte white, on the CMU's centre-rear. Two printed parts.
+
+Rev G is Rev E redrawn round the AS7341 actually in hand: the **Adafruit STEMMA
+QT** breakout, 1.0 × 0.7 in with four corner holes, the header along a long
+edge, the sensor dead centre, and two JST SH sockets standing 2.9 mm tall on the
+sensor face. It hangs on all four holes; the drop under the ceiling is 3.2 mm
+for the sockets; the collar is a light stop and stops 1.5 mm clear of the board.
+At 25.4 mm long it fills the upper level, so the BME280 now sits taped on the
+plate at the −X end, sensor up beside an inlet slot, with the ADS1115 shifted
+6.5 mm the other way; the case gained 2 mm of length for the clearances.
 
 Rev E is what five adversarial reviews left standing, and the short version is
 that Rev D would not have printed. Four of its features were not attached to the
@@ -384,7 +393,7 @@ is that each half is **one solid**.
 | Supports | **None**, and the tests say so from the solid rather than from the parameters: the only downward faces in either part are the disc's 3 mm ledge and seven vent roofs of 5.5 mm |
 | Elephant's foot | Set the slicer's first-layer compensation. The bed face is the one on show |
 | Inserts | 4 × M2 heat-set (Ø3.2 body) into **Ø3.0** holes, 5.0 deep. Not Ø2.6 — that is 0.6 mm of interference and 14 mm³ of displaced plastic, and it comes up onto the face the plate lands on |
-| Screws | 4 × M2 countersunk up through the plate into a true 90° cone 1.1 deep, leaving 1.4 of plate under each head; **1 × M2.5 × 3** up through the AS7341's own hole, and 1 × M2.5 × 3 into each of the BME280's two |
+| Screws | 4 × M2 countersunk up through the plate into a true 90° cone 1.1 deep, leaving 1.4 of plate under each head; **4 × M2.5 × 4 pan** up through the AS7341's own four holes into Ø2.3 pilots 3.5 deep. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
 | Diffuser | Ø12 × 1 mm **etched** PTFE disc, etched face down, bonded with **neutral-cure (alkoxy/oxime)** silicone. See below — this is the one place the old sheet was quietly wrong |
 | Feet | 3 × neutral-cure silicone, **cast in place** in the plate's recesses. Three points never rock |
 | Interior | Paint matte black before assembly if the dark-period reading has to be zero. White PETG at 1 mm is a diffuser, not a shield |
@@ -471,16 +480,15 @@ is a substitute for the commissioning fit, which is made against a PAR meter
 before there is a canopy. If fixture output is what you want to track, that
 sensor has to see the fixture, and no position on the block does.
 
-**Before printing, caliper these.** On the AS7341: its length and width, and the
-sensor ring's distance from the header edge and from the regulator edge —
-`SC_AS7341_L`, `SC_AS7341_W`, `SC_AS7341_SENSOR_X`, `SC_AS7341_SENSOR_Y`. They
-are scaled off a photo by the header-pad pitch and are good to about half a
-millimetre. Confirm the mounting hole is Ø3 on the sensor's row 6.7 mm inboard,
-and that nothing on the sensor face stands taller than 1.6 mm. On the BME280:
-`SC_BME280_HOLE_PITCH` and `SC_BME280_HOLE_INSET` — it now hangs on its own two
-holes, and vendor listings agree it has two and disagree on where. Fit no headers
-to any of the three boards: a 10-pin header on the ADS1115 stands 13.6 mm tall
-and the boards above it hang at 12.4.
+**Before printing, caliper these.** The caliper sheet (an artifact, in inches,
+saved as you type) has a row for each. On the AS7341: outline, hole grid and
+hole size, the sensor window from the −X and LED edges, the LED from its edge,
+and above all the **STEMMA QT socket height** — `SC_AS7341_QT_H`, which sets the
+drop. They are scaled off a photo by the header-pad pitch and checked against
+Adafruit's published outline; they agree to half a millimetre, which is not the
+same as measured. On the BME280 and ADS1115: outline and tallest part only —
+neither is located by anything now. Fit no headers to any of the three boards:
+a 10-pin header on the ADS1115 stands 13.6 mm tall and the AS7341 hangs at 11.2.
 
 
 ## Colour code and labelling
