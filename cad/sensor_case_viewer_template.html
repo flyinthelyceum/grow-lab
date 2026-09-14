@@ -14,12 +14,14 @@
     --ink-3: #7C837A; --rule: #303631; --rule-2: #252A26; --blue: #7FB0CE;
     --accent: #E08A70; --green: #7FB48E; --bed: #2A2E29; --sky: #101311;
   }
+  :root:not([data-theme="light"]) #stage { background: #15181A; }
 }
 :root[data-theme="dark"] {
   --ground: #141715; --panel: #1B1F1C; --ink: #E7EAE4; --ink-2: #A9B0A7;
   --ink-3: #7C837A; --rule: #303631; --rule-2: #252A26; --blue: #7FB0CE;
   --accent: #E08A70; --green: #7FB48E; --bed: #2A2E29; --sky: #101311;
 }
+:root[data-theme="dark"] #stage { background: #15181A; }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
@@ -27,12 +29,16 @@ body {
   font-family: Archivo, "Helvetica Neue", Arial, sans-serif;
   display: grid; grid-template-columns: 1fr 20rem; overflow: hidden;
 }
-#stage { position: relative; min-width: 0; }
+#stage { position: relative; min-width: 0; background: #B9BEBA; }
 #stage canvas { display: block; }
+/* The bed is nearly black and the ground is mid grey, so the hint cannot take
+   its colour from either. It gets its own chip instead. */
 #hint {
-  position: absolute; left: 0; right: 0; bottom: 0.7rem; text-align: center;
-  font-size: 0.7rem; color: var(--ink-3); pointer-events: none;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  position: absolute; left: 50%; transform: translateX(-50%); bottom: 0.7rem;
+  font-size: 0.68rem; color: #F2F4F1; pointer-events: none;
+  background: rgba(20, 24, 22, 0.5); padding: 0.22rem 0.6rem; border-radius: 99px;
+  font-family: "JetBrains Mono", ui-monospace, monospace; white-space: nowrap;
+  max-width: calc(100% - 2rem); overflow: hidden; text-overflow: ellipsis;
 }
 #rail {
   background: var(--panel); border-left: 1px solid var(--rule);
@@ -62,6 +68,12 @@ section { display: block; }
   background: var(--blue); border-color: var(--blue); color: var(--panel); font-weight: 600;
 }
 .seg button .sub { display: block; font-size: 0.68rem; opacity: 0.78; font-weight: 400; }
+.views { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.views button {
+  font: inherit; font-size: 0.72rem; padding: 0.3rem 0.55rem; background: none;
+  color: var(--ink-2); border: 1px solid var(--rule); border-radius: 3px; cursor: pointer;
+}
+.views button:hover { border-color: var(--ink-3); color: var(--ink); }
 .check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem;
          color: var(--ink-2); padding: 0.24rem 0; cursor: pointer; }
 .check input { accent-color: var(--blue); }
@@ -91,7 +103,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 </style>
 
-<div id="stage"><div id="hint">drag to orbit · wheel to zoom · shift-drag to pan</div></div>
+<div id="stage"><div id="hint">drag to orbit · wheel to zoom · shift-drag or right-drag to pan</div></div>
 
 <aside id="rail">
   <div>
@@ -110,6 +122,17 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     <div class="row">
       <input type="range" id="explode" min="0" max="100" value="0" aria-label="Explode">
       <span class="mono" id="explode-val">0&nbsp;mm</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Look from</h2>
+    <div class="views">
+      <button type="button" data-view="iso">Iso</button>
+      <button type="button" data-view="front">Front</button>
+      <button type="button" data-view="side">Side</button>
+      <button type="button" data-view="plan">Plan</button>
+      <button type="button" data-view="rear">Rear</button>
     </div>
   </section>
 
@@ -141,11 +164,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
   <footer id="foot"></footer>
 </aside>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const DATA = /*__CASE_DATA__*/null;
-const MM = 25.4;   // the model is in inches; this page thinks in millimetres
 
 function b64ToBuffer(s) {
   const bin = atob(s);
@@ -153,14 +174,26 @@ function b64ToBuffer(s) {
   for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
   return u8.buffer;
 }
-function cssColour(name) {
-  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return new THREE.Color(v || '#888888');
-}
-const isDark = () =>
+
+const dark = () =>
   document.documentElement.dataset.theme === 'dark' ||
   (matchMedia('(prefers-color-scheme: dark)').matches &&
    document.documentElement.dataset.theme !== 'light');
+
+// Canvas colours, kept here rather than read back out of the CSS, because they
+// are not the page's colours. A matte white object photographs against
+// something darker than itself or it has no silhouette at all: the first cut of
+// this page put a #F2F4F1 part on a #E6E8E2 ground, which is 1.12:1, and the
+// case dissolved into the background. The bed is darker still because a
+// textured PEI sheet is nearly black, which is both true and exactly what a
+// white part wants behind it.
+function palette() {
+  return dark()
+    ? { bg: 0x15181A, floor: 0x22262A, grid: 0x343A3E, block: 0x4A4A46, bed: 0x26292B,
+        edge: 0x0A0C0D }
+    : { bg: 0xB9BEBA, floor: 0xA9AEAA, grid: 0x999E9A, block: 0x9A9590, bed: 0x3A3D3E,
+        edge: 0x1A1F22 };
+}
 
 const stage = document.getElementById('stage');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -171,28 +204,34 @@ stage.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 4000);
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x8a857c, 0.9));
-const sun = new THREE.DirectionalLight(0xffffff, 0.72);
-sun.position.set(90, -140, 180);
-scene.add(sun);
-const fill = new THREE.DirectionalLight(0xffffff, 0.26);
-fill.position.set(-120, 90, 60);
+// Z is up, on the camera — not by turning the model. Rotating the scene root
+// instead leaves every light in a frame the model no longer shares: the first
+// cut of this page did that, and its key light came out at model Z -140, under
+// the floor, so the top face — the one face this object is ever looked at
+// from — was lit by nothing but the fill.
+camera.up.set(0, 0, 1);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a857c, 0.62));
+const key = new THREE.DirectionalLight(0xffffff, 0.78);
+key.position.set(-70, -120, 150);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0xffffff, 0.28);
 scene.add(fill);
+fill.position.set(95, 70, 45);
+const rim = new THREE.DirectionalLight(0xffffff, 0.22);
+rim.position.set(40, 130, -60);
+scene.add(rim);
 
-const root = new THREE.Group();
-scene.add(root);
-
-// Z is up in the model, as it is in every drawing of this station.
-root.rotation.x = -Math.PI / 2;
-
-const clipPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+const clipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+let clipping = false;
 const meshes = {};
+const edges = {};
 const visible = {};
 
 function makeMaterial(spec) {
   return new THREE.MeshStandardMaterial({
     color: new THREE.Color(spec.colour),
-    roughness: spec.roughness ?? 0.85,
+    roughness: spec.roughness ?? 0.8,
     metalness: 0.02,
     transparent: spec.opacity < 1,
     opacity: spec.opacity,
@@ -200,6 +239,15 @@ function makeMaterial(spec) {
     clippingPlanes: [],
   });
 }
+
+// A white part on a white part is separated by shading alone, and shading on a
+// 2 mm wall is a few percent of value. The edges are what make a chamfer, a
+// boss and a vent slot read — and they cost nothing on 7,700 triangles. The
+// threshold is above the 11.5 deg of the tessellation, so a cylinder stays
+// smooth and only real edges are drawn.
+const edgeMaterial = new THREE.LineBasicMaterial({
+  color: palette().edge, transparent: true, opacity: 0.55, clippingPlanes: [],
+});
 
 for (const [name, md] of Object.entries(DATA.meshes)) {
   const spec = DATA.parts[name];
@@ -210,34 +258,46 @@ for (const [name, md] of Object.entries(DATA.meshes)) {
   geo.computeVertexNormals();
   const mesh = new THREE.Mesh(geo, makeMaterial(spec));
   mesh.name = name;
+  const line = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 26), edgeMaterial);
+  mesh.add(line);          // a child, so it follows the part when it explodes
+  edges[name] = line;
   meshes[name] = mesh;
   visible[name] = spec.on !== false;
-  root.add(mesh);
+  scene.add(mesh);
 }
 
-// The bed: a plane the parts sit on in print mode, so "flat on the bed" is a
-// thing you can see rather than a thing the tests assert.
-const bed = new THREE.Mesh(
-  new THREE.PlaneGeometry(220, 220),
-  new THREE.MeshStandardMaterial({ color: cssColour('--bed'), roughness: 1, side: THREE.DoubleSide }));
-bed.position.z = -0.06;
-bed.visible = false;
-root.add(bed);
-const bedGrid = new THREE.GridHelper(220, 22, cssColour('--ink-3'), cssColour('--ink-3'));
-bedGrid.material.opacity = 0.22;
-bedGrid.material.transparent = true;
-bedGrid.rotation.x = Math.PI / 2;
-bedGrid.position.z = -0.05;
-bedGrid.visible = false;
-root.add(bedGrid);
+/* ---------------------------------------------------------------- ground */
+const p0 = palette();
 
-// The block, as a slab under the case, so the lip has something to bear on.
-const blockH = 40;
+// The block, as a slab: the case's ground in every mode but the print one.
+const BLOCK_H = 60;
 const block = new THREE.Mesh(
-  new THREE.BoxGeometry(DATA.block.len, DATA.block.wid, blockH),
-  new THREE.MeshStandardMaterial({ color: cssColour('--bed'), roughness: 1 }));
-block.position.set(DATA.block.x, DATA.block.y, -blockH / 2);
-root.add(block);
+  new THREE.BoxGeometry(DATA.block.len, DATA.block.wid, BLOCK_H),
+  new THREE.MeshStandardMaterial({ color: p0.block, roughness: 1 }));
+block.position.set(DATA.block.x, DATA.block.y, -BLOCK_H / 2);
+scene.add(block);
+
+// The bed, for print orientation. A grid at 10 mm, which is the scale a person
+// checking a 58 mm part actually thinks in.
+const bed = new THREE.Mesh(
+  new THREE.PlaneGeometry(260, 260),
+  new THREE.MeshStandardMaterial({ color: p0.bed, roughness: 0.9 }));
+bed.position.z = -0.08;
+scene.add(bed);
+const bedGrid = new THREE.GridHelper(260, 26, p0.grid, p0.grid);
+bedGrid.rotation.x = Math.PI / 2;
+bedGrid.position.z = -0.04;
+bedGrid.material.opacity = 0.3;
+bedGrid.material.transparent = true;
+scene.add(bedGrid);
+
+// A floor well below everything, so the frame has a horizon rather than
+// ending in flat background wherever the block stops.
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(2400, 2400),
+  new THREE.MeshStandardMaterial({ color: p0.floor, roughness: 1 }));
+floor.position.z = -BLOCK_H;
+scene.add(floor);
 
 /* ---------------------------------------------------------------- modes */
 const MODES = DATA.modes;
@@ -252,16 +312,16 @@ function layout() {
     if (!place) { mesh.visible = false; continue; }
     mesh.visible = visible[name] && (m.shows ? m.shows.includes(name) : true);
     mesh.rotation.set(place.flip ? Math.PI : 0, 0, 0);
-    // A part's explode vector is a direction and a share, in millimetres of
-    // the slider's full span — not a position, so it is scaled by both.
+    // A part's explode vector is a direction and a share of the slider's span
+    // in millimetres, not a position, so it is scaled by both.
     const e = m.explodes ? (spec.explode || [0, 0, 0]) : [0, 0, 0];
     const d = explode * DATA.explodeSpan;
-    mesh.position.set(
-      place.at[0] + e[0] * d,
-      place.at[1] + e[1] * d,
-      place.at[2] + e[2] * d);
+    mesh.position.set(place.at[0] + e[0] * d,
+                      place.at[1] + e[1] * d,
+                      place.at[2] + e[2] * d);
   }
   block.visible = m.block && visible.block;
+  floor.visible = !!m.block;
   bed.visible = bedGrid.visible = !!m.bed;
   frame(m.frameFull ? lerpFrame(m.frame, m.frameFull, explode) : m.frame);
 }
@@ -273,29 +333,43 @@ function lerpFrame(a, b, t) {
 }
 
 /* ---------------------------------------------------------------- camera */
-let target = new THREE.Vector3();
-// Front three-quarter, slightly above. The rear wall is where the vents, the
-// notch and the tie holes are, so it is the interesting face to an engineer and
-// the wrong one to open on: the question this object has to answer is how it
-// reads from in front of the piece.
-let radius = 200, theta = 2.3, phi = 1.06;
+// Spherical about the target, in the model's own frame: theta about Z measured
+// from -Y, phi from +Z. The same convention as the station viewer, which is
+// worth matching exactly — it is the one place a person switching between the
+// two pages would otherwise have to relearn the mouse.
+const target = new THREE.Vector3();
+let sph = { r: 160, theta: -0.62, phi: 1.06 };
 
 function frame(box) {
   target.set(box.cx, box.cy, box.cz);
-  radius = box.r;
+  sph.r = box.r;
+  applyCamera();
 }
-function updateCamera() {
-  const t = new THREE.Vector3(target.x, target.z, -target.y);  // model → view space
+function applyCamera() {
   camera.position.set(
-    t.x + radius * Math.sin(phi) * Math.cos(theta),
-    t.y + radius * Math.cos(phi),
-    t.z + radius * Math.sin(phi) * Math.sin(theta));
-  camera.lookAt(t);
+    target.x + sph.r * Math.sin(sph.phi) * Math.sin(sph.theta),
+    target.y - sph.r * Math.sin(sph.phi) * Math.cos(sph.theta),
+    target.z + sph.r * Math.cos(sph.phi));
+  camera.lookAt(target);
 }
+
+const VIEWS = {
+  iso: { theta: -0.62, phi: 1.06 },
+  front: { theta: 0, phi: Math.PI / 2 },
+  side: { theta: Math.PI / 2, phi: Math.PI / 2 },
+  plan: { theta: 0, phi: 0.0001 },
+  rear: { theta: Math.PI, phi: 1.25 },
+};
+document.querySelectorAll('[data-view]').forEach(b =>
+  b.addEventListener('click', () => {
+    const v = VIEWS[b.dataset.view];
+    sph.theta = v.theta; sph.phi = v.phi;
+    applyCamera();
+  }));
 
 let drag = null;
 renderer.domElement.addEventListener('pointerdown', (e) => {
-  drag = { x: e.clientX, y: e.clientY, pan: e.shiftKey };
+  drag = { x: e.clientX, y: e.clientY, pan: e.shiftKey || e.button === 1 || e.button === 2 };
   renderer.domElement.setPointerCapture(e.pointerId);
 });
 renderer.domElement.addEventListener('pointermove', (e) => {
@@ -303,99 +377,106 @@ renderer.domElement.addEventListener('pointermove', (e) => {
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   drag.x = e.clientX; drag.y = e.clientY;
   if (drag.pan) {
-    target.x -= dx * radius * 0.0016 * Math.sin(theta + Math.PI / 2);
-    target.y += dx * radius * 0.0016 * Math.cos(theta + Math.PI / 2);
-    target.z += dy * radius * 0.0016;
+    const scale = sph.r / stage.clientHeight * 1.4;
+    const right = new THREE.Vector3(), up = new THREE.Vector3();
+    camera.matrix.extractBasis(right, up, new THREE.Vector3());
+    target.addScaledVector(right, -dx * scale).addScaledVector(up, dy * scale);
   } else {
-    theta -= dx * 0.008;
-    phi = Math.min(Math.PI - 0.05, Math.max(0.05, phi - dy * 0.008));
+    sph.theta -= dx * 0.007;
+    sph.phi = Math.min(Math.PI - 0.02, Math.max(0.02, sph.phi - dy * 0.007));
   }
-  updateCamera();
+  applyCamera();
 });
 addEventListener('pointerup', () => { drag = null; });
+renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 renderer.domElement.addEventListener('wheel', (e) => {
   e.preventDefault();
-  radius = Math.min(900, Math.max(18, radius * (1 + Math.sign(e.deltaY) * 0.11)));
-  updateCamera();
+  sph.r = Math.min(900, Math.max(14, sph.r * (1 + Math.sign(e.deltaY) * 0.11)));
+  applyCamera();
 }, { passive: false });
 
 /* ---------------------------------------------------------------- rail */
 const modesEl = document.getElementById('modes');
-for (const [key, m] of Object.entries(MODES)) {
+for (const [k, m] of Object.entries(MODES)) {
   const b = document.createElement('button');
   b.type = 'button';
   b.innerHTML = `${m.label}<span class="sub">${m.note}</span>`;
-  b.setAttribute('aria-pressed', String(key === mode));
+  b.setAttribute('aria-pressed', String(k === mode));
   b.addEventListener('click', () => {
-    mode = key;
+    mode = k;
     for (const other of modesEl.children) other.setAttribute('aria-pressed', 'false');
     b.setAttribute('aria-pressed', 'true');
     document.getElementById('explode-wrap').style.display = m.explodes ? '' : 'none';
-    layout(); updateCamera();
+    if (m.view) { sph.theta = m.view.theta; sph.phi = m.view.phi; }
+    layout();
   });
   modesEl.appendChild(b);
 }
 
 const partsEl = document.getElementById('parts');
+function addCheck(id, label, colour, onChange) {
+  const l = document.createElement('label');
+  l.className = 'check';
+  const i = document.createElement('input');
+  i.type = 'checkbox'; i.checked = true; i.id = 'p-' + id;
+  i.addEventListener('change', () => onChange(i.checked));
+  const sw = document.createElement('span');
+  sw.className = 'swatch'; sw.style.background = colour;
+  const t = document.createElement('span');
+  t.textContent = label;
+  l.append(i, sw, t);
+  partsEl.appendChild(l);
+}
 for (const [name, spec] of Object.entries(DATA.parts)) {
-  const l = document.createElement('label');
-  l.className = 'check';
-  const i = document.createElement('input');
-  i.type = 'checkbox'; i.checked = spec.on !== false; i.id = 'p-' + name;
-  i.addEventListener('change', () => { visible[name] = i.checked; layout(); });
-  const sw = document.createElement('span');
-  sw.className = 'swatch'; sw.style.background = spec.colour;
-  const t = document.createElement('span');
-  t.textContent = spec.label;
-  l.append(i, sw, t);
-  partsEl.appendChild(l);
+  addCheck(name, spec.label, spec.colour, (on) => { visible[name] = on; layout(); });
 }
-{
-  const l = document.createElement('label');
-  l.className = 'check';
-  const i = document.createElement('input');
-  i.type = 'checkbox'; i.checked = true; i.id = 'p-block';
-  visible.block = true;
-  i.addEventListener('change', () => { visible.block = i.checked; layout(); });
-  const sw = document.createElement('span');
-  sw.className = 'swatch';
-  sw.style.background = getComputedStyle(document.documentElement).getPropertyValue('--bed');
-  const t = document.createElement('span');
-  t.textContent = 'The block (reference)';
-  l.append(i, sw, t);
-  partsEl.appendChild(l);
-}
+visible.block = true;
+addCheck('block', 'The block (reference)', '#9A9590', (on) => { visible.block = on; layout(); });
+
+let showEdges = true;
+addCheck('edges', 'Edges', 'transparent', (on) => {
+  showEdges = on;
+  for (const l of Object.values(edges)) l.visible = on;
+});
 
 const explodeEl = document.getElementById('explode');
 const explodeVal = document.getElementById('explode-val');
 explodeEl.addEventListener('input', () => {
   explode = explodeEl.value / 100;
-  explodeVal.textContent = `${(explode * DATA.explodeSpan).toFixed(0)} mm`;
+  explodeVal.textContent = `${(explode * DATA.explodeSpan).toFixed(0)} mm`;
   layout();
 });
 
 const cutAxis = document.getElementById('cut-axis');
 const cutEl = document.getElementById('cut');
 const cutVal = document.getElementById('cut-val');
-const AXES = { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] };
+// A section is only a section if it takes away what stands between you and the
+// inside. X and Y keep the far half, so the cut face opens toward the default
+// view; Z keeps the lower half, because a horizontal cut is looked down into.
+// three.js keeps the half where normal.p + constant >= 0.
+const CUTS = {
+  x: (at) => [new THREE.Vector3(1, 0, 0), -at],
+  y: (at) => [new THREE.Vector3(0, 1, 0), -at],
+  z: (at) => [new THREE.Vector3(0, 0, -1), at],
+};
 
 function applyCut() {
   const axis = cutAxis.value;
-  const on = axis !== 'none';
-  cutEl.disabled = !on;
-  for (const mesh of Object.values(meshes)) {
-    mesh.material.clippingPlanes = on ? [clipPlane] : [];
-    mesh.material.needsUpdate = true;
+  clipping = axis !== 'none';
+  cutEl.disabled = !clipping;
+  const planes = clipping ? [clipPlane] : [];
+  for (const m of Object.values(meshes)) {
+    m.material.clippingPlanes = planes;
+    m.material.needsUpdate = true;
   }
-  if (!on) { cutVal.textContent = '—'; return; }
-  const [ax, ay, az] = AXES[axis];
-  // Model space is Z-up; the scene is rotated, so the plane is too.
-  const n = new THREE.Vector3(ax, az, -ay).normalize();
-  const span = DATA.cut[axis];
-  const at = span[0] + (cutEl.value / 1000) * (span[1] - span[0]);
-  const p = new THREE.Vector3(ax * at, az * at, -ay * at);
-  clipPlane.setFromNormalAndCoplanarPoint(n.clone().negate(), p);
-  cutVal.textContent = `${at.toFixed(1)} mm`;
+  edgeMaterial.clippingPlanes = planes;
+  edgeMaterial.needsUpdate = true;
+  if (!clipping) { cutVal.textContent = '—'; return; }
+  const [lo, hi] = DATA.cut[axis];
+  const at = lo + (cutEl.value / 1000) * (hi - lo);
+  // The model is not rotated, so the section axis is the model's own.
+  clipPlane.set(...CUTS[axis](at));
+  cutVal.textContent = `${at.toFixed(1)} mm`;
 }
 cutAxis.addEventListener('change', applyCut);
 cutEl.addEventListener('input', applyCut);
@@ -418,14 +499,19 @@ function resize() {
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize);
+
 function paint() {
-  scene.background = cssColour('--sky');
-  bed.material.color = cssColour('--bed');
-  block.material.color = cssColour('--bed');
+  const p = palette();
+  renderer.setClearColor(p.bg);
+  block.material.color.setHex(p.block);
+  bed.material.color.setHex(p.bed);
+  floor.material.color.setHex(p.floor);
+  bedGrid.material.color.setHex(p.grid);
+  edgeMaterial.color.setHex(p.edge);
 }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paint);
 
 document.getElementById('explode-wrap').style.display = MODES[mode].explodes ? '' : 'none';
-resize(); paint(); layout(); applyCut(); updateCamera();
+resize(); paint(); layout(); applyCut();
 renderer.setAnimationLoop(() => renderer.render(scene, camera));
 </script>
