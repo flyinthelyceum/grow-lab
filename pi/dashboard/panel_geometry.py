@@ -27,13 +27,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from components import weston_301
+
 # Face stock, from the panel schedule.
 FACE_WIDTH = 9.50
 FACE_HEIGHT = 12.00
 
 # Weston 301, 3-1/2 in: nominal bezel outside diameter.
 DIAL_BEZEL_OD = 3.50
-DIAL_CUT_DIAMETER: float | None = 2.75  # calipered 2026-09-09
+DIAL_CUT_DIAMETER: float | None = weston_301.BEZEL_OD  # LIB, measured 2026-09-09
 
 # Inky Impression 7.3 in: stated active area 160 x 96 mm, and its pixel grid.
 WINDOW_WIDTH = 6.30

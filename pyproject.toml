@@ -16,6 +16,9 @@ dependencies = [
     "uvicorn[standard]>=0.27",
     "slowapi>=0.1.9",
     "itsdangerous>=2.1",
+    # Measured component dimensions; params.py and panel_geometry.py import them
+    # and never restate them. Pure Python, no dependencies of its own.
+    "components @ git+https://github.com/flyinthelyceum/components.git@components-v1",
 ]
 
 [project.optional-dependencies]

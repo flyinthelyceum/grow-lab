@@ -55,6 +55,8 @@ import math
 import os
 from dataclasses import dataclass
 
+from components import lm301h_heatsink_module, weston_301
+
 from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH
 
 IN = 25.4  # millimetres per inch — the only unit conversion in the package
@@ -328,10 +330,10 @@ CASE_FLANGE = 0.5  # CHOICE: return flanges folded inward from the LEFT and RIGH
                    # 0.25 of it. Side flanges clear every layout (tightest: WIDE, 0.06).
 CASE_TAP_DIA = 2.5 / 25.4  # M3 tap drill in the flanges
 
-# Weston 301 bezel OD, calipered 2026-09-09 — both meters identical.
-DIAL_CUT_DIAMETER: float | None = 2.75
-DIAL_BODY_DEPTH = 0.975   # bezel rear face to body rear face, calipered 2026-09-09
-DIAL_TERMINAL_DEPTH = 1.735  # bezel rear face to terminal bolt rear, calipered 2026-09-09
+# Weston 301 bezel OD — both meters identical. Measured value lives in the lib.
+DIAL_CUT_DIAMETER: float | None = weston_301.BEZEL_OD
+DIAL_BODY_DEPTH = weston_301.BODY_DEPTH   # bezel rear face to body rear face
+DIAL_TERMINAL_DEPTH = weston_301.TERMINAL_DEPTH  # bezel rear face to terminal bolt rear
 WITNESS_DEPTH = 0.02  # CHOICE: engraving depth for reference marks
 
 
@@ -386,11 +388,11 @@ LIGHTBOX_VENT_W = 0.375  # CHOICE
 LIGHTBOX_VENT_L = 3.5  # CHOICE: along the depth, inside the cross bar's landing
 LIGHTBOX_END_INSET = 0.75  # CHOICE: the end slots' inset from each end
 
-# Two LM301H + heatsink modules side by side, calipered 2026-09-10.
+# Two LM301H + heatsink modules side by side; one module's dimensions from the lib.
 # Each module: 15.5 x 1.575 x 0.525; combined envelope below.
-HEATSINK_W = 15.5        # along the fixture width (one module's length)
-HEATSINK_D = 2 * 1.575   # two modules side by side, front to back
-HEATSINK_H = 0.525       # height/thickness of one module
+HEATSINK_W = lm301h_heatsink_module.LENGTH       # along the fixture width (one module's length)
+HEATSINK_D = 2 * lm301h_heatsink_module.WIDTH    # two modules side by side, front to back
+HEATSINK_H = lm301h_heatsink_module.HEIGHT       # height/thickness of one module
 FIXTURE_ARM_W = 1.5  # CHOICE: the arm forward from the mast
 FIXTURE_ARM_T = 0.5  # CHOICE
 FIXTURE_BAR_D = 1.0  # CHOICE: the cross bar along the fixture's back edge
@@ -591,7 +593,9 @@ MM = 1.0 / IN  # inches per millimetre
 # the small generic the Rev E/F sheet was drawn to, which was itself drawn from
 # a worse photo. Scaled off this one by its own 0.1 in header-pad pitch and
 # checked against Adafruit's published 1.0 x 0.7 in outline; the two agree.
-# CALIPER before printing: the caliper sheet has a row for each of these.
+# Caliper before printing: components.as7341_breakout has a row for each of
+# these (`python -m components measure as7341_breakout PCB_L <mm> --by XX`);
+# import them here once measured. Until then they are ESTIMATES.
 #   Header pads along one LONG edge (six, 0.1 in pitch). That edge faces +Y in
 #   the case, toward the rear wall and the cable notch, so the wires go straight
 #   to it.
@@ -604,13 +608,13 @@ MM = 1.0 / IN  # inches per millimetre
 #   tall. They are the tallest thing on that face by a wide margin and they are
 #   why the baffle drop is 3.2, not 2.0. They stay fitted: desoldering them buys
 #   a shallower gap and nothing else.
-SC_AS7341_L = 25.4 * MM  # CALIPER — along X, the long way
-SC_AS7341_W = 17.78 * MM  # CALIPER — along Y
-SC_AS7341_SENSOR_X = 12.7 * MM  # CALIPER — window centre from the -X edge
-SC_AS7341_SENSOR_Y = 8.89 * MM  # CALIPER — window centre from the LED (-Y) edge
-SC_AS7341_HOLE_PITCH_X = 20.32 * MM  # CALIPER — the hole grid, 0.8 in along X
-SC_AS7341_HOLE_PITCH_Y = 12.7 * MM  # CALIPER — 0.5 in along Y
-SC_AS7341_HOLE_DIA = 2.5 * MM  # CALIPER — Adafruit's stated size
+SC_AS7341_L = 25.4 * MM  # ESTIMATE — along X, the long way; lib: as7341_breakout.PCB_L
+SC_AS7341_W = 17.78 * MM  # ESTIMATE — along Y; lib: PCB_W
+SC_AS7341_SENSOR_X = 12.7 * MM  # ESTIMATE — window centre from the -X edge (dead centre)
+SC_AS7341_SENSOR_Y = 8.89 * MM  # ESTIMATE — window centre from the LED (-Y) edge (dead centre)
+SC_AS7341_HOLE_PITCH_X = 20.32 * MM  # ESTIMATE — the hole grid, 0.8 in along X; lib: HOLE_PITCH_X
+SC_AS7341_HOLE_PITCH_Y = 12.7 * MM  # ESTIMATE — 0.5 in along Y; lib: HOLE_PITCH_Y
+SC_AS7341_HOLE_DIA = 2.5 * MM  # ESTIMATE — Adafruit's stated size; lib: HOLE_DIA
 SC_AS7341_BOSS_DIA = 5.5 * MM  # four, hanging from the ceiling to the board.
                                # 1.6 of wall round a Ø2.3 pilot; reaches 0.2
                                # past the board's edge, which is nothing
@@ -623,9 +627,9 @@ SC_AS7341_PILOT_DEPTH = 3.5 * MM  # 3.2 of boss + 0.3 into the top wall. None of
                                   # 0.3 is simply what a blind end needs
 SC_AS7341_SCREW_LEN = 4.0 * MM  # M2.5 x 4 pan: 1.6 of board leaves 2.4 in a 3.5
                                 # pilot, clamped 1.1 before it could bottom out
-SC_AS7341_LED_Y = 1.8 * MM  # CALIPER — LED centre from the LED edge. Advisory:
+SC_AS7341_LED_Y = 1.8 * MM  # ESTIMATE — LED centre from the LED edge; lib: LED_Y_FROM_LED_EDGE. Advisory:
                             # the baffle test uses it
-SC_AS7341_QT_H = 2.9 * MM  # CALIPER — a JST SH socket, board top to its top.
+SC_AS7341_QT_H = 2.9 * MM  # ESTIMATE — a JST SH socket, board top to its top; lib: QT_SOCKET_H.
                            # THIS sets the baffle drop
 SC_AS7341_QT_L = 4.3 * MM  # how far a socket reaches inboard from the board edge
 SC_AS7341_QT_W = 6.0 * MM  # its width, centred on the board's mid-line
