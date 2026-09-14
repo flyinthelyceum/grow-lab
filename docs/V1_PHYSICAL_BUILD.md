@@ -197,8 +197,9 @@ The instrument head is gone from the top of the mast; the panel is in the cabine
   the carcass floor in the dry bay, held to the **full-height rear panel** by 3 x 1/4-20
   U-bolts beside the divider, passes up through a notch in the rail and the tray, and ends
   at a welded disc at 81.4 in. **The bore carries the loom:** drip line, the LED pair, the
-  camera's HDMI and the fixture fans' lead, entering through a grommeted **0.50 × 1.00
-  obround** in the side facing the divider, over the pan's rim. The three fixture leads
+  camera's HDMI and the fixture fans' lead, entering through a grommeted **0.50 × 0.85
+  obround** in the side facing the divider, over the pan's rim (0.85, not 1.00: the
+  obround grows upward only, so its lower edge stays 0.15 in clear of the rim). The three fixture leads
   leave through the **rear cable slot** (below); the drip line exits lower, at the emitters.
   **The sensor loom never leaves the cabinet** — probes in the tray and the pan, canopy
   sensors on the block, Pi in the console bay.

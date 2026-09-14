@@ -316,6 +316,22 @@ Then the mitigations, in the order to try them:
 Do not diagnose this in software. If `as7341` drops out intermittently, suspect the
 cable before the driver.
 
+**What is on each end, and what is in between.** At the case: bare wire, soldered. A
+JST-XH housing is 7.0 mm tall mated and the headroom over the ADS1115 is 5.8, so the
+Cat5e's conductors solder straight to the pads — four of eight, SDA and SCL each paired
+with a ground — and the boards daisy-chain on wire. Use **stranded** Cat5e (patch, not
+riser): solid core work-hardens at a solder joint and snaps the first time the case is
+lifted. At the cabinet: one **JST-XH 4-pin** crimped on where the cable reaches the
+four-rail bus, which is the only connector on this leg and the only place it unplugs.
+
+The route between them is **proposed, not yet built**: out of the notch in the case's
+rear wall, down the block's rear face — held by the zip tie at the top and a dab of the
+same neutral-cure silicone at the foot — along the tray's rear edge, then **down beside
+the mast through the notch the mast already makes in the tray**, so the tray gains no
+second penetration, and across the dry bay to the bus. Two things to confirm before it is
+written as fact: that the notch's gasketed collar passes a 5.5 mm cable beside a Ø 1.5
+tube, and that the cable clears the pan's rim on the way past the line pass.
+
 ### Sleeving and lacing — the visible runs
 
 Where a run crosses the open field of the console bay, it is finish work.
@@ -562,7 +578,7 @@ Nothing here blocks a phase; all of it is Phase F (the enclosure). Rough figures
 | Cable glands, assorted | $20 | Already on the Phase F list. **Size after the loom exists** |
 | P-clips / adhesive cable bases | $10 | Strain relief, second point |
 | Printed heat-shrink labels or a label printer | $0–40 | A Dymo already in the house will do |
-| Cat5e offcut for the canopy I²C leg | — | Probably on hand |
+| Cat5e offcut for the canopy I²C leg, **stranded** (patch, not riser) | — | Probably on hand. Solid core snaps at a solder joint |
 
 Roughly **$200–250**, and the ferrule kit and the lacing twine are most of the visible
 improvement.
