@@ -57,12 +57,16 @@ class TestItSitsOnTheBlock:
         shell_inner = P.CMU_Y + P.CMU_W / 2 - P.CMU_FACE_SHELL
         assert front_edge > shell_inner, "the front wall would overhang the core"
 
-    def test_the_lip_hangs_on_the_block_not_in_it(self):
-        """The lip bears on the block's rear face from outside. Its inner face
-        is where that face is; flush-and-outboard, not flush-and-through."""
-        lip_inner = P.SC_Y1 - P.SC_WALL
-        assert lip_inner == pytest.approx(P.CMU_Y + P.CMU_W / 2)
-        assert P.SC_Y1 > P.CMU_Y + P.CMU_W / 2, "the lip would be inside the block"
+    def test_nothing_hangs_off_the_back_of_the_block(self):
+        """The whole footprint lands on the block and nothing overhangs the rear
+        arris. There used to be a lip down the rear face; it was the fixing
+        before the cast feet were, and afterwards it was a vestige setting the
+        datum — it pushed the case 2 mm proud of the block so it had room to
+        hang. What it is really in the way of is the mortise: the case's outline
+        in plan should be the outline of the pocket, with nothing to cut down
+        the outside of the face shell."""
+        assert P.SC_Y1 == pytest.approx(P.CMU_Y + P.CMU_W / 2), "proud of the block"
+        assert not hasattr(P, "SC_LIP_DROP"), "the lip is back"
 
     def test_it_is_centred_on_the_block(self):
         assert P.SC_X == pytest.approx(P.CMU_X)
@@ -352,12 +356,14 @@ class TestNothingCollides:
             assert abs(vx - P.SC_X) - P.SC_VENT_L / 2 > P.SC_CABLE_W / 2, \
                 "an inlet runs into the cable notch"
 
-    def test_the_tie_holes_flank_the_notch_without_breaking_into_it(self):
-        """The zip tie through the lip is the strain relief; two holes, one
-        each side of the channel, neither of them opening into it."""
-        clear = P.SC_TIE_HOLE_DX - P.SC_TIE_HOLE_DIA / 2 - P.SC_CABLE_W / 2
-        assert mm(clear) >= 1.0, f"only {mm(clear):.2f} mm of lip between them"
-        assert P.SC_TIE_HOLE_DX + P.SC_TIE_HOLE_DIA / 2 < P.SC_LEN / 2
+    def test_the_notch_is_a_stop_for_the_strain_relief(self):
+        """With no lip to tie through, the strain relief is a zip tie on the
+        jacket outside the wall, and what makes it work is that the notch is
+        narrower than the cable plus the tie's head. A notch cut generously
+        would let the tie pull straight back through."""
+        tie_head = 4.0 * P.MM
+        assert P.SC_CABLE_W < 5.5 * P.MM + tie_head, "the tie would pull through"
+        assert P.SC_CABLE_W < 5.5 * P.MM, "no friction on the jacket either"
 
     def test_the_probe_comes_in_over_its_own_core(self):
         """It goes to the media in one of the cores, so it leaves through an
@@ -479,13 +485,26 @@ class TestTheGeometryBuilds:
         assert bb["z1"] == pytest.approx(SC.top_face())
         assert bb["z0"] == pytest.approx(SC.plate_top())
 
-    def test_the_plate_carries_the_lip(self, parts):
+    def test_the_case_is_the_footprint_a_mortise_would_take(self, parts):
+        """One pocket, straight-sided, in the top face. Every printed thing is
+        inside the plan outline and above the block's top."""
+        from cad.growlab_cad._shapes import bbox_in
+
+        for name, part in parts.items():
+            bb = bbox_in(part)
+            assert bb["z0"] >= P.SC_Z0 - 1e-9, f"{name} reaches below the block top"
+            assert mm(bb["x1"] - bb["x0"]) <= mm(P.SC_LEN) + 0.01, f"{name} past the ends"
+            assert bb["y1"] <= P.SC_Y1 + 1e-9 and bb["y0"] >= P.SC_Y - P.SC_WID / 2 - 1e-9
+
+    def test_the_plate_is_a_flat_rectangle_on_the_block(self, parts):
+        """No lip, nothing below the block's top face, nothing past its rear."""
         from cad.growlab_cad._shapes import bbox_in
 
         bb = bbox_in(parts["base"])
-        assert bb["z0"] == pytest.approx(P.SC_Z0 - P.SC_LIP_DROP)
+        assert bb["z0"] == pytest.approx(P.SC_Z0), "something hangs below the block"
         assert bb["z1"] == pytest.approx(SC.plate_top())
-        assert bb["y1"] > P.CMU_Y + P.CMU_W / 2, "the lip is not outside the block"
+        assert bb["y1"] <= P.CMU_Y + P.CMU_W / 2 + 1e-9, "past the rear arris"
+        assert mm(bb["y1"] - bb["y0"]) == pytest.approx(mm(P.SC_WID), abs=0.01)
 
     def test_the_two_halves_meet_without_interfering(self, parts):
         shared = (parts["body"] & parts["base"]).volume / P.IN**3

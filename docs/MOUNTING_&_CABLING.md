@@ -150,8 +150,8 @@ to the carcass and reaches in.
 **The block is the exception, and it is deliberate.** The canopy sensor case
 sits on the CMU's centre-rear, because that is the only place on the piece that
 is both unshaded and invisible — see *The canopy sensor case* below. It is held
-by its own weight and a lip over the rear face, drills nothing, and adds about
-40 g to a 50 lb block. The rule that stands is the one underneath it: nothing
+by three dabs of silicone, drills nothing, and adds about 40 g to a 50 lb
+block. The rule that stands is the one underneath it: nothing
 structural, nothing wet, nothing that cannot be lifted straight off.
 
 ---
@@ -413,13 +413,38 @@ blocks.
 
 **Fixing:** three dabs of neutral-cure silicone in the plate's foot recesses,
 pressed onto the brushed dry block and cured under the case's own weight. It
-bonds to concrete and to PETG, fills the block's texture, holds far more than
-adhesive bumpers on a dusty alkaline surface, and cuts free with a blade. The
-lip — the plate's rear edge carried down past the block's top — bears on the
-block's rear face and stops the case walking backwards. **The strain relief is
-the zip tie through the lip**, not the notch: a stiff Cat5e pushes about 0.24 N
-at the case's rear edge and the case weighs 0.25 N, so without the tie the cable
-positions the case rather than the other way round.
+bonds to concrete and to PETG, fills the block's texture, holds over a newton
+per foot against a case that weighs a quarter of one, and cuts free with a
+blade. That is the whole fixing.
+
+**There is no lip any more, and there should not have been one for two
+revisions.** It started as the entire fixing — a fin off the plate's rear edge,
+down the block's rear face, holding the case by weight and friction. The
+silicone feet replaced that, and from then on the fin held nothing; what it
+still did was set the datum, pushing the case 2 mm proud of the block's rear
+face so a 2 mm fin had room to hang. A feature with no job was deciding where
+the whole part went.
+
+It was also in the way of where this is going. Mortised into the block, a
+straight-sided pocket in the top face is one cut; a pocket plus a slot down the
+outside of the rear face shell is two, the second of them a visible scar on the
+face you see from behind, and it gets worse the deeper the case sinks. **The
+case's outline in plan is now the outline of the pocket** — 58 × 27, flush at
+the back, nothing overhanging and nothing below the block's top face.
+
+**The strain relief is a zip tie cinched on the jacket just outside the rear
+wall.** Its head stands about 4 mm proud of a 5.5 mm cable and the notch is
+5.3 wide, so it cannot be drawn back through: a pull stops at the wall instead
+of reaching the solder joints. A stiff Cat5e pushes about 0.24 N at that corner
+and the case weighs 0.25 N, so the tie matters — it is just that it does not
+need a lip to pass through.
+
+**When the mortise happens, it will be an open-backed pocket.** The rear face
+shell is 31.75 and the case is 27 wide, which leaves 4.75 mm of concrete to
+split between the two sides of the pocket. Two walls of 2.4 mm are crumbs, not
+walls, so the pocket breaks out at the rear face and the case's own rear face
+finishes flush with the block's. Nothing of that is visible from the front, and
+it is the easier cut of the two.
 
 **What the AS7341 actually measures.** The block's centre is the open spot
 between the two cores, which is why the case is there — but ranunculus clumps

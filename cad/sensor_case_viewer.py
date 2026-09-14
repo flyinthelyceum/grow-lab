@@ -51,7 +51,7 @@ PARTS = {
                              opacity=1.0, explode=(0, 0, 1.0)),
     # The plate does not move. Everything is assembled onto it, and exploding it
     # downward only buries it in the block it is standing on.
-    "sensor_case_base": dict(label="Base plate + lip", colour="#E2E5DE",
+    "sensor_case_base": dict(label="Base plate", colour="#E2E5DE",
                              opacity=1.0, explode=(0, 0, 0.0)),
     "diffuser": dict(label="PTFE diffuser, Ø12 × 1", colour="#CBD9E2",
                      opacity=0.75, explode=(0, 0, 1.35), roughness=0.55),
@@ -174,7 +174,7 @@ def _payload(tolerance_mm: float, angular: float) -> dict:
             "view": {"theta": -0.62, "phi": 1.36},
             "frameFull": {
                 "cx": 0, "cy": 0,
-                "cz": (mm(P.SC_HGT) + 1.35 * EXPLODE_SPAN - mm(P.SC_LIP_DROP)) / 2,
+                "cz": (mm(P.SC_HGT) + 1.35 * EXPLODE_SPAN) / 2,
                 "r": mm(P.SC_LEN) * 3.3,
             },
         },
@@ -195,7 +195,7 @@ def _payload(tolerance_mm: float, angular: float) -> dict:
     cut = {
         "x": [-mm(P.SC_LEN) / 2, mm(P.SC_LEN) / 2],
         "y": [-mm(P.SC_WID) / 2, mm(P.SC_Y1 - P.SC_Y)],
-        "z": [-mm(P.SC_LIP_DROP), mm(P.SC_HGT)],
+        "z": [0.0, mm(P.SC_HGT)],
     }
 
     tube = mm(SC.recess_floor() - SC.board_top())

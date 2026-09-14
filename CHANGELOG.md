@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-14 (the lip comes off)
+
+### Found
+- **The lip had been a vestige for two revisions.** It began as the entire fixing — a 58 × 2 × 12 fin off the plate's rear edge, bearing on the block's rear face, holding the case by weight and friction with nothing drilled. The red team replaced that with three cast silicone feet, which bond to concrete and hold over a newton each against a case weighing a quarter of one. From that moment the fin held nothing.
+- **What it still did was set the datum.** To give a 2 mm fin room to hang, the case sat 2 mm proud of the block's rear face and the plate overhung the rear arris by 2 mm. A feature with no job was deciding where the whole part went.
+- **And it was in the way of the mortise.** A straight-sided pocket in the block's top face is one cut. A pocket plus a slot down the outside of the rear face shell is two, the second a visible scar on the face you see from behind, and it gets worse the deeper the case sinks.
+
+### Changed
+- **No lip.** The case is flush at the back with its whole footprint on the block: a plain 58 × 27 × 18 prism, nothing overhanging the rear arris and nothing below the block's top face. Its outline in plan is the outline of the pocket it will be mortised into. The plate is now a flat rectangle with four countersinks and three foot recesses, which is all it ever needed to be, and it prints without the 12 mm fin.
+- **The strain relief is a zip tie cinched on the jacket outside the rear wall**, not a tie through holes in the lip. The tie's head stands about 4 mm proud of a 5.5 mm cable and the notch is 5.3 wide, so it cannot be drawn back through — a pull stops at the wall rather than at the solder joints. `SC_TIE_HOLE_DIA` and `SC_TIE_HOLE_DX` are gone with it.
+- Tests: the lip's two assertions are replaced by one that nothing hangs off the back of the block and one that every printed feature stays inside the plan outline and above the block's top face — which is the property the mortise actually needs, stated as a test rather than as an intention.
+
+### Noted
+- **The mortise will be an open-backed pocket.** The rear face shell is 31.75 and the case is 27 wide, leaving 4.75 mm of concrete to split between the two sides. Two walls of 2.4 mm are crumbs, so the pocket breaks out at the rear face and the case's rear face finishes flush with the block's. Nothing of that is visible from the front, and it is the easier cut.
+
 ## 2026-09-14 (the sensor case viewer was unreadable)
 
 ### Found
