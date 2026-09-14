@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-14 (the sensor case viewer was unreadable)
+
+### Found
+- **The key light was under the part.** The viewer turned the scene root 90 degrees to get Z up and then placed its lights in world space, which is a frame the model no longer shared: the key came out at model Z -140, below the floor. The top face — the one face this object is ever looked at from — was lit by nothing but a 0.28 fill. `cad/viewer.py` does not have this problem because it turns the *camera* (`camera.up.set(0, 0, 1)`) and leaves the model alone, which is now what this page does too. Orbit, pan and the section planes all work in the model's own frame as a result, and each of them was carrying a coordinate swap before.
+- **The palette had no range.** Body #F2F4F1 against a #E6E8E2 ground is a contrast ratio of **1.12:1**; the station viewer puts its block at 2.53:1 against its own background. A matte white object photographs against something darker than itself or it has no silhouette. The ground is a mid grey now, the block is the same #9A9590 the station viewer gives the CMU, and the print bed is nearly black, which is both what a textured PEI sheet looks like and exactly what a white part wants behind it.
+- **Every part in this case is white**, which the station's palette never has to deal with — it has warm ply against white metal against grey concrete. Shading alone separates two white surfaces by a few percent of value, so the page draws **edges** at a 26 degree threshold: above the 11.5 degrees of the tessellation, so cylinders stay smooth and only real edges are drawn. That is what makes a chamfer, a boss and a vent slot read.
+- **The section kept the half nearest the viewer**, so cutting from the front showed the outside of a shorter box. It cuts away what stands between you and the inside now, which is the only thing a section is for.
+- **An exploded stack separated only in Z is invisible from above.** At 29 degrees of elevation the body's own footprint hides a 12 mm gap for 22 mm in every direction, so the two hanging boards never appeared. Each mode sets its own view angle now, and the exploded one is nearly level with the seam.
+
+### Changed
+- Five view presets (iso, front, side, plan, rear), as the station viewer has; an edges toggle; a floor under the block so the frame has a horizon; and a hint chip that is legible over both the mid-grey ground and the near-black bed.
+
 ## 2026-09-13 (a viewer for the one printed part)
 
 ### Added
