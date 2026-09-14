@@ -9,16 +9,24 @@ quantity — see the changelog — but it is not the fixture's output, and the
 docs say so rather than claiming a property the geometry does not have.
 
 It is held by three dabs of neutral-cure silicone cast in place in the plate's
-recesses, and by a lip: the plate's rear edge carries on down past the block's
-top and bears on its rear face from **outside** it. Inside, not outside, is
-where the case would be — 0.08 in3 of printed plastic sharing space with the
-concrete — which is what the interference check against the CMU is there to
-say. Nothing is drilled, and the silicone cuts free with a blade, so the
-position can be lived with for a season before anyone commits a masonry bit.
+recesses, which bond to concrete and to PETG and hold over a newton each
+against a case that weighs a quarter of one. Nothing is drilled and the
+silicone cuts free with a blade, so the position stays a decision rather than a
+commitment — until someone mortises it in, which is where this is going.
 
-What the lip cannot do is hold the case against a tug on its cable, so it does
-not have to: the zip tie through the lip clamps the jacket to the lip itself,
-and a pull reaches the block's rear face rather than the solder joints.
+**There is no lip**, and the earlier revisions' insistence on one is worth
+recording because it was a vestige for two revisions before anyone said so. It
+began as the whole fixing: a fin off the plate's rear edge, down the block's
+rear face, holding the case by weight and friction. The silicone feet replaced
+that, and from then on the fin held nothing — but it still set the datum,
+pushing the case 2 mm proud of the block's rear face so it had room to hang. A
+feature with no job was deciding where the whole part went, and it was in the
+way of the mortise: a pocket in the top face is one cut, a pocket plus a slot
+down the outside of the rear face shell is two.
+
+The strain relief that used to run through it is now a zip tie cinched on the
+jacket **outside** the wall. Its head stands about 4 mm proud of a 5.5 mm
+cable; the notch is 5.3 wide. A pull stops at the wall.
 
 Two parts
 ---------
@@ -31,12 +39,12 @@ into their corners by a web. In the print every one of them is a column growing
 from the bed, and the part has no internal bridge longer than a vent slot.
 
 **Base plate**, printed top face down as well, so its countersinks and foot
-recesses open upward and nothing on it bridges. The walls stand on it: it is the
-full footprint, chamfered to match, and it carries the lip. Putting the lip here
-rather than on the body is what makes the plate a plain butt joint with no fit to
-get wrong — and leaves no slot at the back for the block's own damp air. The seam
-is a hairline 2.5 mm above the block, and the rear wall continues the lip's outer
-face above it, so the back reads as one surface.
+recesses open upward and nothing on it bridges. The walls stand on it and it is
+the full footprint, chamfered to match — a plain butt joint with no fit to get
+wrong, and no slot at the back for the block's own damp air. The seam is a
+hairline 2.5 mm above the block. With the lip gone the plate is a flat
+rectangle with four holes and three recesses in it, which is the whole of what
+it ever needed to be.
 
 The AS7341 that is actually in hand
 -----------------------------------
@@ -261,7 +269,7 @@ def outlet_z() -> float:
 
 
 def rear_wall_y() -> float:
-    """Mid-plane of the rear wall, which is also the lip."""
+    """Mid-plane of the rear wall. Its outer face is the block's rear face."""
     return P.SC_Y1 - P.SC_WALL / 2
 
 
@@ -297,7 +305,7 @@ def _chamfer_verticals(part: "Part", z0: float, z1: float) -> "Part":
 
 
 def build_body() -> "Part":
-    """The upper half: top face, four walls, the optics, the bosses, the lip."""
+    """The upper half: top face, four walls, the optics, the bosses."""
     from ._shapes import CENTRE, box, cyl_z, labelled
 
     z0, z1 = plate_top(), top_face()
@@ -347,10 +355,10 @@ def build_body() -> "Part":
                       at=(mx, my, board_top() - over))
 
     # Cable entry: a notch in the rear wall's bottom edge, closed by the plate
-    # the wall stands on. It lines up with the channel in the plate's lip, so
-    # the loom drops behind the block rather than bending over an edge. A shade
-    # under the cable for a friction fit; the zip tie through the lip is the
-    # strain relief.
+    # the wall stands on. A shade under the cable for a friction fit, and the
+    # strain relief is a zip tie cinched on the jacket just outside it — the
+    # tie's head cannot be drawn back through a 5.3 mm notch, so a pull stops
+    # at the wall instead of reaching the solder joints.
     body -= box(P.SC_CABLE_W, P.SC_WALL * 3, P.SC_CABLE_H + over,
                 at=(P.SC_X, rear_wall_y(), z0 - over))
 
@@ -372,20 +380,13 @@ def build_body() -> "Part":
 
 def build_base() -> "Part":
     """The lower half: the plate the walls stand on, the ADS1115, the feet."""
-    from ._shapes import box, cone_z, cyl_y, cyl_z, labelled
+    from ._shapes import box, cone_z, cyl_z, labelled
 
     z0 = P.SC_Z0
     over = 0.5 * _MM
-    lip_bottom = z0 - P.SC_LIP_DROP
 
     plate = box(P.SC_LEN, P.SC_WID, P.SC_BASE_T, at=(P.SC_X, P.SC_Y, z0))
-
-    # The lip: the plate's rear edge carries on down past the block's top face
-    # and bears on its rear face from outside it. Its outer face continues as
-    # the body's rear wall above the seam.
-    plate += box(P.SC_LEN, P.SC_WALL, z0 - lip_bottom,
-                 at=(P.SC_X, rear_wall_y(), lip_bottom))
-    plate = _chamfer_verticals(plate, lip_bottom, z0 + P.SC_BASE_T)
+    plate = _chamfer_verticals(plate, z0, z0 + P.SC_BASE_T)
 
     # No printed fence round the ADS1115, deliberately. A fence has to be sized
     # to an outline, and this one comes off a vendor listing rather than a
@@ -403,17 +404,6 @@ def build_base() -> "Part":
     # Recesses for the three cast feet.
     for fx, fy in foot_points():
         plate -= cyl_z(P.SC_FOOT_DIA, P.SC_FOOT_DEPTH + over, at=(fx, fy, z0 - over))
-
-    # The cable channel through the lip, in line with the notch in the wall
-    # above it, and two holes flanking it for the zip tie that clamps the jacket
-    # to the lip. That tie is the strain relief: a pull on the cable reaches the
-    # block's rear face, not the solder joints.
-    plate -= box(P.SC_CABLE_W, P.SC_WALL * 3, P.SC_LIP_DROP + over,
-                 at=(P.SC_X, rear_wall_y(), lip_bottom - over))
-    for sx in (-1, 1):
-        plate -= cyl_y(P.SC_TIE_HOLE_DIA, P.SC_WALL * 3,
-                       at=(P.SC_X + sx * P.SC_TIE_HOLE_DX, rear_wall_y(),
-                           lip_bottom + P.SC_LIP_DROP / 2))
 
     return labelled(plate, "sensor_case_base")
 

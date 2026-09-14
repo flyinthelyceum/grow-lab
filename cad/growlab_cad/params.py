@@ -696,8 +696,10 @@ SC_SCREW_CSK_DEPTH = (SC_SCREW_CSK - SC_SCREW_DIA) / 2  # 1.1 — a cone, not a 
 # bridge; a notch needs neither, and the cable drops in instead of threading.
 SC_CABLE_W = 5.3 * MM  # Cat5e (~5.5 OD), a shade under for a friction fit
 SC_CABLE_H = 6.0 * MM  # above the plate
-SC_TIE_HOLE_DIA = 3.0 * MM  # two through the lip, flanking the notch: a zip tie
-SC_TIE_HOLE_DX = 6.0 * MM  # clamps the cable to the lip. That is the strain relief
+# No tie holes, and no lip for them to go through. The strain relief is a zip
+# tie cinched on the jacket OUTSIDE the wall: its head stands about 4 mm proud
+# of a 5.5 mm cable and the notch is 5.3 wide, so the tie cannot be pulled back
+# through. A pull stops at the wall. Push does not reach the solder joints.
 SC_PROBE_W = 4.6 * MM  # SEN0308 lead, into the +X end wall, over that core
 SC_PROBE_H = 5.0 * MM
 # Ventilation. Inlets low in the END walls (behind the plants), outlets high
@@ -713,19 +715,25 @@ SC_OUTLET_DROP = 4.0 * MM  # slot centre below the ceiling
 # Three, because three points never rock.
 SC_FOOT_DIA = 7.0 * MM
 SC_FOOT_DEPTH = 1.0 * MM
-SC_LIP_DROP = 12.0 * MM  # the plate's rear edge carries on down past the block's
-                         # top and bears on its rear face from outside it. It is
-                         # part of the PLATE, not the body: a full-footprint plate
-                         # that the walls stand on has no fit to get wrong, and no
-                         # slot at the back for the block's damp air to come
-                         # through. Above the seam the rear wall continues the
-                         # lip's outer face, so it reads as one surface.
+# There is no lip. There was: a 58 x 2 x 12 fin hanging off the plate's rear
+# edge, down the block's rear face. It began as the whole fixing — weight and
+# friction, nothing drilled — and the red team replaced that with three cast
+# silicone feet, which bond to concrete and hold over a newton each against a
+# case that weighs a quarter of one. After that the fin held nothing.
+#
+# What it still did was set the datum. To give a 2 mm fin room to hang, the
+# case sat 2 mm proud of the block's rear face and the plate overhung the rear
+# arris by 2 mm — so a vestige was deciding where the whole case went. And it
+# is in the way of what this part is meant to become: mortised into the block.
+# A pocket in the top face is one cut; a pocket plus a slot down the outside of
+# the rear face shell is two, one of them a visible scar on the face you would
+# see from behind, and it only gets worse as the case sinks into the concrete.
 
 # --- Where it sits --------------------------------------------------------
 SC_X = CMU_X  # centred on the block's length
-# The rear wall's INNER face is flush with the block's rear face: the wall is
-# the lip, and the lip is outside the block. Rev D put the outer face flush and
-# then hung a separate strip outboard; the strip touched the body along a line.
-SC_Y1 = CMU_Y + CMU_W / 2 + SC_WALL  # outer rear face
+# Flush at the back, and the whole footprint on the block. Nothing overhangs
+# the rear arris and nothing hangs down the rear face, so the case's outline in
+# plan is the outline of the pocket it will one day be mortised into.
+SC_Y1 = CMU_Y + CMU_W / 2  # rear face flush with the block's, nothing proud
 SC_Y = SC_Y1 - SC_WID / 2
 SC_Z0 = CMU_TOP_Z  # the base plate's underside, on the block
