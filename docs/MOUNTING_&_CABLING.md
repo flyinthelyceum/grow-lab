@@ -166,12 +166,12 @@ anything that gets closed up.
 
 | Class | Connector | Why |
 |---|---|---|
-| I²C at each sensor | **JST-XH 4-pin pigtail** | The boards here are generic 0.1 in-header parts, not Adafruit — they have no Qwiic socket, so the connector gets added rather than assumed. Keyed, latching, ~$20 for the crimp tool |
+| I²C at each sensor | **Nothing — the branch lands in the bus block** | Struck 2026-09-15. The three canopy boards are soldered to one Cat5e, the probes are BNC and the camera is HDMI, so a pigtail connector had two places left to go, and both of those land in the four-rail push-in block with a ferrule, which releases tool-free. A crimp tool for two connectors was a tool in search of a job |
 | I²C distribution | **A four-rail bus: SDA / SCL / 3V3 / GND** | No usable off-the-shelf hub exists for 0.1 in boards; every Qwiic hub assumes JST-SH. Four multi-way push-in blocks on the case back panel, one feed in from the Pi, every branch landing with ferrules. ~$12, and adding a sensor later is four push-ins |
 | Atlas pH / EC probes | **Nothing — the i3 already has BNCs** | Three BNCs are soldered to the i3's own board edge, one per EZO slot. The probe mates directly. It is the cleanest termination in the build |
 | Pi GPIO to discrete loads | **Screw terminal breakout + bootlace ferrules** | The RSP-GPIO-8 is already in the build. Ferrules are what make it look made |
 | Case ↔ station umbilical | **One multipin, side wall, right-angle hood** — see below | Makes "unplugged at one terminal block" literally true |
-| pH and EC probes | **Isolated bulkhead BNC** — see below | Standard BNC here silently destroys the i3's isolation |
+| pH and EC probes | **A gland, not a bulkhead** — see *Open items* | Settled 2026-09-12: the i3 has its own BNCs on its board edge. Bulkheading both through one steel panel would bond the two isolated domains; the probe cables gland through and plug straight in |
 | DC power distribution | **WAGO 221 lever splices**, or DIN terminals | Already in the BOM. Reusable, no crimp tool, visibly deliberate |
 | Camera | CSI ribbon, its own slot and clamp | Cannot pass through any connector above |
 | Mains | Factory cordsets only in V1 — see *Power* | Do not hand-terminate mains in this build |
@@ -201,10 +201,7 @@ compromise: a metal-hooded D-sub or a screw-collar circular connector both look
 correct on the flank of a white instrument case. That visibility is not a problem to
 hide; it is the piece saying it is serviceable.
 
-**Size it at DB-37, not DB-25.** The conductor count below comes to about 22 before
-spares, and doubling the 5 V and ground pins is good practice. DB-25 fits with zero
-growth left; DB-37 leaves room for the moisture sensor moving, a second fan, or the
-deferred red/blue lighting channels.
+**Size it at DB-25.** The schedule below comes to 19 conductors, not the "about 22" an earlier draft counted, with the 5 V and ground pins already doubled. DB-25 leaves six spare, which covers a second fan or a moved sensor; the moisture probe already rides the block's I²C and adds nothing. A DB-37 was headroom for a count that had been added up wrong.
 
 ### The probe BNCs must be **isolated** bulkheads
 
@@ -258,8 +255,8 @@ status by being cut from calipered parts, and this has not been yet.
 | 8 | EC probe | coax | Zone 5 | Same. Bulkheading both would bond the two isolated domains |
 | 9 | Camera | HDMI | Zone 6 | Arducam CSI-over-HDMI pair. **Own path** — no connector above carries this |
 
-≈ 22 conductors plus two coax plus one ribbon. Hence DB-37 plus two BNCs plus a
-ribbon slot on the case's side wall — a legible, buildable back-of-instrument face.
+19 conductors plus two coax plus one HDMI. Hence a DB-25 on the side wall, two glands
+for the probe coax, and the HDMI's own path — a legible, buildable back-of-instrument face.
 
 **The pump relay moves to GPIO23 when the Inky is installed.** The Inky hard-wires
 BCM17 as BUSY and `config.example.toml` still has `relay_gpio = 17`. This is already
@@ -392,8 +389,8 @@ is that each half is **one solid**.
 | Layer height | 0.15 mm. The side walls are visible; that is what layer lines show on |
 | Supports | **None**, and the tests say so from the solid rather than from the parameters: the only downward faces in either part are the disc's 3 mm ledge and seven vent roofs of 5.5 mm |
 | Elephant's foot | Set the slicer's first-layer compensation. The bed face is the one on show |
-| Inserts | 4 × M2 heat-set (Ø3.2 body) into **Ø3.0** holes, 5.0 deep. Not Ø2.6 — that is 0.6 mm of interference and 14 mm³ of displaced plastic, and it comes up onto the face the plate lands on |
-| Screws | 4 × M2 countersunk up through the plate into a true 90° cone 1.1 deep, leaving 1.4 of plate under each head; **4 × M2.5 × 4 pan** up through the AS7341's own four holes into Ø2.3 pilots 3.5 deep. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
+| Inserts | **None.** Rev E used four M2 heat-set inserts; they were a soldering-iron step with an alignment risk on the one face that has to seat flat, for a box that opens a few times a year. The plate screws form their own thread in the corner bosses instead |
+| Screws | **One size, M2.5, thread-forming into Ø2.3 pilots.** 4 × M2.5 × 6 countersunk up through the plate into a true 90° cone 1.1 deep (1.4 of plate left under each head) and 4.0 into the corner bosses; 4 × M2.5 × 4 pan up through the AS7341's own four holes, 3.5 into its bosses. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
 | Diffuser | Ø12 × 1 mm **etched** PTFE disc, etched face down, bonded with **neutral-cure (alkoxy/oxime)** silicone. See below — this is the one place the old sheet was quietly wrong |
 | Feet | 3 × neutral-cure silicone, **cast in place** in the plate's recesses. Three points never rock |
 | Interior | Paint matte black before assembly if the dark-period reading has to be zero. White PETG at 1 mm is a diffuser, not a shield |
@@ -568,30 +565,34 @@ unattended for months with a plant depending on it.
 
 ## What to buy
 
-Nothing here blocks a phase; all of it is Phase F (the enclosure). Rough figures.
+Red-teamed 2026-09-15 against the decisions in this document; the first draft was
+both redundant and over-specced. Nothing here blocks a phase; all of it is Phase F
+(the enclosure) except the first two lines, which the sensor case needs before it
+is printed. Rough figures.
 
 | Item | Approx. | Note |
 |---|---|---|
+| White acrylic sheet, 1 mm | $8 | The diffuser disc. Etched PTFE does not exist at 1 mm from any stock supplier; acrylic is the alternative any silicone holds |
+| Neutral-cure silicone, 20 g tube | $10 | Bonds the disc and casts the three feet. Not acetoxy — it off-gasses acetic acid into a closed box |
+| M2.5 × 6 countersunk, M2.5 × 4 pan | $10 | The whole case, one thread size. Skip the pans if the ×3 from the earlier sheet are in the drawer: 1.4 of thread passes |
+| Acrylic conformal coat, aerosol | $25 | Three boards in a vented box under a warm fixture. Mask the BME280 lid and the AS7341 window with any tape |
 | Bootlace ferrule kit + crimper | $25 | Non-negotiable. Buy first |
-| JST-XH crimp tool + connector kit | $25 | One pigtail per generic sensor board |
-| Push-in terminal blocks for the four-rail I²C bus | $12 | SDA / SCL / 3V3 / GND |
-| Arducam CSI-to-HDMI extender pair (B0091) | $28 | **Camera Module 3 is supported** — verified. Ships as a pack of two, which is one set |
-| DB-37 panel connector pair + right-angle hoods | $25 | Solder-cup is fine at this count |
-| **Isolated** bulkhead BNC ×2 | $20 | Isolated, not standard — see above |
-| M3 self-clinching nuts + M2.5 / M2 standoff kit | $20 | Clinch nuts for the case flanges |
-| 35 mm DIN rail, 300 mm + end stops | $15 | Zone 4 |
-| DIN terminal blocks, fuse holders, fuses | $30 | 5 V / 12 V / 24 V rails |
-| White or light grey expandable sleeving | $15 | Visible runs only |
+| 35 mm DIN rail, 12 in, + push-in terminal block kit with end stops and jumpers | $35 | Zone 4 and the four-rail I²C bus, on one rail. Jumper bars make the rails |
+| DB-25 solder-cup pair, right-angle hood on the cable end | $12 | One pair. 19 conductors, six spare |
+| Arducam CSI-to-HDMI extender pair | $28 | Ships as a set of two, which is one link |
 | Waxed lacing twine, 1 spool | $10 | Replaces zip ties behind glass |
-| Cable glands, assorted | $20 | Already on the Phase F list. **Size after the loom exists** |
-| P-clips / adhesive cable bases | $10 | Strain relief, second point |
-| Printed heat-shrink labels or a label printer | $0–40 | A Dymo already in the house will do |
-| Cat5e offcut for the canopy I²C leg, **stranded** (patch, not riser) | — | Probably on hand. Solid core snaps at a solder joint |
+| P-clips, nylon, white | $10 | Strain relief, second point, inside the cabinet |
+| M2.5 / M2 standoff kit | $12 | The Pi, the DAC, the ESP32 on the back panel |
+| Cable glands, assorted | $20 | **Size after the loom exists** |
 
-Roughly **$200–250**, and the ferrule kit and the lacing twine are most of the visible
-improvement.
-
----
+Roughly **$200**. Struck from the first draft, with the reason: JST-XH kit and crimp tool
+(two connectors, both replaced by the bus block); isolated bulkhead BNCs (the i3's own
+BNCs, settled 2026-09-12); WAGO 221s (already in the BOM; the DIN blocks are the bus);
+sleeving (the only exposed run is white Cat5e already); Kapton (any tape masks a spray);
+M3 clinch nuts (they need an arbor press — decide by tool, and rivnuts if there is none);
+DIN fuse holders (every rail comes off a supply with its own current limit; revisit when
+the rail is built and the draws are measured); M2 heat-set inserts and M2 screws (the
+closure is thread-forming M2.5 now). Cat5e, foam tape and PETG are "if not on the shelf".
 
 ## Getting out of the mess without a big bang
 
@@ -601,13 +602,11 @@ each step, so there is never a day where nothing works.
 
 1. **Label what exists, before touching it.** Every conductor, both ends, today. The
    current wiring is only fully understood while it is in front of you.
-2. **Build the four-rail I²C bus and crimp a JST-XH pigtail onto every sensor
-   that has room for one.** The three boards in the canopy sensor case do not:
-   an XH housing is 12.4 × 5.75 × 7.0 mated and the free height over the
-   ADS1115 is 5.8 mm. They daisy-chain on soldered wire inside the case, and the
-   one JST-XH on that leg is at the far end of the Cat5e, at the bus.
-   Biggest visual win, lowest risk, entirely reversible. `i2cdetect` proves it before
-   and after.
+2. **Build the four-rail I²C bus** on the DIN rail — push-in blocks, jumper bars for
+   SDA / SCL / 3V3 / GND — and land every branch in it with a ferrule. The three boards
+   in the canopy sensor case daisy-chain on soldered wire inside the case and arrive as
+   one Cat5e. Biggest visual win, lowest risk, entirely reversible. `i2cdetect` proves
+   it before and after.
 3. **Ferrule every screw terminal** on the GPIO breakout. An hour's work.
 4. **Build the Zone 4 rail** on the bench as a standalone assembly and swap the power
    over to it in one session. It is the only step with a real down-window.

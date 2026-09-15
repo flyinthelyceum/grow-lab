@@ -263,9 +263,9 @@ class TestNothingCollides:
     def test_the_corner_bosses_reach_the_ceiling(self):
         """Rev D's second blocker. A boss that stops short of the ceiling is,
         in the print, a disc starting in mid-air over the cavity."""
-        assert P.SC_BOSS_DIA > P.SC_INSERT_OD
-        assert SC.ceiling() - SC.plate_top() > P.SC_INSERT_DEPTH, \
-            "the insert would come out the top of the boss"
+        assert P.SC_BOSS_DIA > P.SC_CLOSURE_PILOT
+        assert SC.ceiling() - SC.plate_top() > P.SC_CLOSURE_PILOT_DEPTH + 1.0 * P.MM, \
+            "the pilot would come out the top of the boss"
 
     def test_each_boss_is_fused_into_its_corner(self):
         """Tangent to a wall is a line of contact, which is no contact at all.
@@ -276,17 +276,19 @@ class TestNothingCollides:
             assert abs(wx - bx) <= wl / 2 + 1e-9, "web misses its boss in X"
             assert abs(wy - by) <= ww / 2 + 1e-9, "web misses its boss in Y"
 
-    def test_the_insert_has_meat_around_it(self):
-        """A heat-set insert splits a thin boss as it goes in. The rule is wall
-        >= the insert's own radius — and the insert's, not the pilot hole's,
-        which is what Rev D measured."""
-        wall = (P.SC_BOSS_DIA - P.SC_INSERT_OD) / 2
-        assert wall >= P.SC_INSERT_OD / 2, f"only {mm(wall):.2f} mm round the insert"
+    def test_the_closure_pilot_has_meat_around_it(self):
+        """A thread-forming screw splits a thin boss. The corner boss keeps
+        more than the pilot's own diameter of wall round it."""
+        wall = (P.SC_BOSS_DIA - P.SC_CLOSURE_PILOT) / 2
+        assert wall >= P.SC_CLOSURE_PILOT, f"only {mm(wall):.2f} mm round the pilot"
 
-    def test_the_insert_hole_is_the_size_its_maker_asks_for(self):
-        """0.6 mm of interference is 14 mm3 of displaced plastic with nowhere
-        to go but up, onto the face the plate lands on."""
-        assert P.SC_INSERT_HOLE >= P.SC_INSERT_OD - 0.3 * P.MM
+    def test_the_closure_screw_clamps_the_plate_before_it_bottoms_out(self):
+        """One screw size for the whole case: the same thread-forming M2.5 the
+        board hangs on, up through the plate into the corner boss."""
+        assert P.SC_CLOSURE_PILOT == P.SC_AS7341_PILOT, "two pilot sizes for one screw"
+        into_pilot = P.SC_CLOSURE_SCREW_LEN - P.SC_BASE_T
+        assert into_pilot < P.SC_CLOSURE_PILOT_DEPTH, "bottoms out before the plate is clamped"
+        assert mm(into_pilot) >= 2.0, f"only {mm(into_pilot):.2f} mm of thread in the boss"
 
     def test_the_hanging_board_lies_clear_of_the_corner_bosses(self):
         """The corner bosses are full height, so a board over one does not
@@ -434,7 +436,7 @@ class TestItPrintsWithoutTricks:
         assert mm(left) >= 1.0, f"only {mm(left):.2f} mm of plate under the head"
 
     def test_the_screw_clears_its_hole(self):
-        assert P.SC_SCREW_DIA > 2.0 * P.MM, "M2 needs clearance, not a thread"
+        assert P.SC_SCREW_DIA > 2.5 * P.MM, "M2.5 needs clearance through the plate, not a thread"
         assert P.SC_SCREW_CSK > P.SC_SCREW_DIA
 
     def test_the_as7341_screw_clears_the_boards_hole(self):
