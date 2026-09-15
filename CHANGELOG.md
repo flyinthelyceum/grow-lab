@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-15 (the order list, red-teamed)
+
+### Found
+- **The umbilical was sized to a miscount.** The conductor schedule in the mounting doc adds to 19, not the "about 22" its own sizing paragraph claimed, so "DB-25 fits with zero growth" was wrong by six pins. DB-25 it is.
+- **The shopping list contradicted the document it sat in.** It still listed two isolated bulkhead BNCs three days after the open-items section settled that the probes gland through and plug into the i3's own BNCs, and a JST-XH crimp kit justified by "one pigtail per generic board" when every board that would have taken one is soldered, coaxial or HDMI. The connector table carried both stale rows.
+- **Etched PTFE does not exist at 1 mm** from any stock supplier: film to 10 mil, then 1/16 in. The 1 mm white acrylic the doc already named as the fallback is the diffuser.
+
+### Changed
+- **The case closes on thread-forming M2.5, not heat-set inserts.** Four M2.5 × 6 countersunk up through the plate into Ø2.3 pilots 4.0 deep in the corner bosses, the same thread and pilot the AS7341 hangs on. One screw size for the whole case, no soldering-iron step on the one face that has to seat flat, and the countersink and the plate under the head are unchanged at 1.1 and 1.4. PETG gives a formed thread about ten cycles; the box opens a few times a year.
+- The "What to buy" table is rewritten to the red-teamed list (about $200, from $250) with each struck item and its reason kept in the text, and the stale XH and BNC rows in the connector table are struck with the date.
+
 ## 2026-09-14 (the AS7341 is an Adafruit board, and the case is Rev G)
 
 ### Found

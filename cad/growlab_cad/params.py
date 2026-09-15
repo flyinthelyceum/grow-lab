@@ -701,12 +701,19 @@ SC_BOSS_DIA = 7.0 * MM
 SC_BOSS_INSET_X = 4.5 * MM  # boss centre from the outer face. Ø7 reaches 1.0
 SC_BOSS_INSET_Y = 5.5 * MM  # into the end walls; 1.5 short of the long walls,
                             # which the web bridges
-SC_INSERT_OD = 3.2 * MM  # M2 heat-set insert body
-SC_INSERT_HOLE = 3.0 * MM  # what its makers ask for. Rev D said 2.6: 0.6 of
-                           # interference and 14 mm3 of spew onto the seating face
-SC_INSERT_DEPTH = 5.0 * MM
-SC_SCREW_DIA = 2.2 * MM  # M2 clearance through the base plate
-SC_SCREW_CSK = 4.4 * MM  # 90 deg countersink mouth. DIN 963 M2 head is Ø3.8
+# No inserts. Rev E closed the plate with four M2 heat-set inserts and four M2
+# countersunk screws — a soldering-iron step with an alignment risk, and the
+# one place Rev D's spew ended up was this seating face. The plate now takes
+# the same thread-forming M2.5 the AS7341 hangs on, straight into the corner
+# bosses: one screw size for the whole case and nothing to melt in. PETG gives
+# a formed thread about ten open-close cycles; the box opens for service a few
+# times a year.
+SC_CLOSURE_PILOT = SC_AS7341_PILOT  # Ø2.3 in a Ø7 boss: 2.35 of wall round it
+SC_CLOSURE_PILOT_DEPTH = 4.0 * MM  # from the boss's bottom face, up the column
+SC_CLOSURE_SCREW_LEN = 6.0 * MM  # M2.5 x 6 countersunk: 2.5 of plate leaves 3.5
+                                 # in a 4.0 pilot, clamped 0.5 before bottoming
+SC_SCREW_DIA = 2.7 * MM  # M2.5 clearance through the base plate
+SC_SCREW_CSK = 4.9 * MM  # 90 deg countersink mouth. DIN 963 M2.5 head is Ø4.7
 SC_SCREW_CSK_DEPTH = (SC_SCREW_CSK - SC_SCREW_DIA) / 2  # 1.1 — a cone, not a bore
 
 # --- Entries, vents, seating ----------------------------------------------

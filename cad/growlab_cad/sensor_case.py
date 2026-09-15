@@ -358,9 +358,10 @@ def build_body() -> "Part":
     # Chamfer the four vertical corners, webs included.
     body = _chamfer_verticals(body, z0, z1)
 
-    # Insert holes, from the boss's bottom face.
+    # Closure pilots, from the boss's bottom face: the plate screws form their
+    # own thread up the column, as the board screws do in theirs.
     for bx, by in boss_points():
-        body -= cyl_z(P.SC_INSERT_HOLE, P.SC_INSERT_DEPTH + over, at=(bx, by, z0 - over))
+        body -= cyl_z(P.SC_CLOSURE_PILOT, P.SC_CLOSURE_PILOT_DEPTH + over, at=(bx, by, z0 - over))
 
     # Diffuser recess from the top face. The aperture through the rest of the
     # wall is the bore's own diameter — see the module docstring for why it is
