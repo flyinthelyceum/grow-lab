@@ -55,7 +55,7 @@ import math
 import os
 from dataclasses import dataclass
 
-from components import lm301h_heatsink_module, weston_301
+from components import bme280_breakout, lm301h_heatsink_module, weston_301
 
 from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH
 
@@ -645,7 +645,8 @@ SC_ADS1115_DX = 6.5 * MM  # it sits this far +X of centre on the plate, which is
                           # what makes room for the BME280 at the other end
 SC_TAPE_T = 1.0 * MM  # the foam tape under the two plate boards
 
-# BME280: GY-BME280-3.3, 15.4 x 11.6 published. It sits ON THE PLATE, taped,
+# BME280: the board in the components library (calipered 2026-09-14: 13.18 x 10.64,
+# smaller than the 15.4 x 11.6 its listing claimed). It sits ON THE PLATE, taped,
 # sensor up, at the -X end. Rev E hung it beside the AS7341; a 25.4 mm AS7341
 # takes the whole middle of the upper level and the corner bosses take its
 # ends, so there is no upper-level spot left for it. On the plate its lid faces
@@ -653,8 +654,8 @@ SC_TAPE_T = 1.0 * MM  # the foam tape under the two plate boards
 # argument Rev E made for hanging it inverted, reached from the other side.
 # Its position does not matter, so tape is the right fixing and its holes go
 # unused. CALIPER nothing on it but its outline and the lid's height.
-SC_BME280_L = 15.4 * MM  # the long side. It lies along Y in the case
-SC_BME280_W = 11.6 * MM
+SC_BME280_L = bme280_breakout.PCB_L * MM  # LIB — the long side. It lies along Y in the case
+SC_BME280_W = bme280_breakout.PCB_W * MM  # LIB
 SC_BME280_PART_H = 1.2 * MM  # the lid, the tallest thing on its sensor face
 SC_BME280_GAP = 1.5 * MM  # to the ADS1115 beside it
 
