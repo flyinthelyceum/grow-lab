@@ -165,7 +165,9 @@ pegging. The needle then breathes visibly with the watering rhythm.
 4. **Draw the new face** in that geometry — scale, numerals, legend (`pH` / `MOISTURE %`),
    band markings.
 5. **Print on matte stock and match the cream.** A bright white face behind an aged Bakelite
-   ring looks wrong; sample the colour off the scan. Mount to the original backing plate if it
+   ring looks wrong; sample the colour off the scan — `COLOR_MEASUREMENT.md` is the workflow
+   that turns that scan into a CIELAB number a print shop can hold, and says plainly what it
+   cannot settle (a match under the scanner's lamp is not a match under the gallery's). Mount to the original backing plate if it
    survives stripping, otherwise to new **aluminium** of the same thickness. This is the
    one place aluminium is still specified, and for a reason: it sits inside a moving-coil
    movement, where a ferrous backing plate would be in the field of the magnet. Non-magnetic

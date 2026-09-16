@@ -2,6 +2,37 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-16 (the scanner becomes an instrument)
+
+### Changed
+- **The colour workflow is in the repo and runs.** `docs/COLOR_MEASUREMENT.md` plus four modules
+  under `tools/color/`: sample a chart off a scan, fit a gamma and a 3x3 to it, apply that to
+  named spots on a subject scanned in the same pass, and score any two patch sets against each
+  other in CIEDE2000. Standard library and Pillow, which the project already carries — no
+  colour-management stack to install. `INSTRUMENT_HEAD_PLANS.md` said "sample the colour off the
+  scan" for the dial face and nothing in the repo could; now something can.
+- **The fitter reports two numbers and says which one to quote.** The fit error is the chart
+  marking its own work — a 3x3 fitted to four patches scores zero and knows nothing. The
+  cross-validated error holds each patch out and scores it against a model that never saw it,
+  which is what happens to every colour the chart does not contain. That is the one that goes in
+  a sentence to anybody else.
+
+### Found
+- **dE76 would have flattered exactly the colour this project cares about.** On (50, 2.5, 0)
+  against (50, 0, -2.5) it reports 3.54 where CIEDE2000 reports 4.31: near the neutral axis, which
+  is where the dial-face cream lives, the plain Euclidean distance understates what the eye does.
+  CIEDE2000 throughout, asserted against all thirty-four Sharma, Wu and Dalal pairs — the table
+  exists to catch hue-angle wraparound and the neutral degenerate cases, which is where every
+  wrong implementation of that formula is wrong.
+- **Rounded matrix constants were inventing error.** The published inverses of the sRGB and
+  Bradford matrices are given to seven places, and a round trip through a rounded pair left a few
+  parts per million that this repo had no business adding. Both inverses are now computed from
+  their forward matrices, so the two directions cannot disagree by more than a float.
+- **A scanner cannot settle the cream match on its own.** Three channels cannot carry a spectrum,
+  so metamerism survives profiling and the optical brighteners in paper and white paint respond to
+  a UV content the gallery does not have. The number narrows the search; a proof print under the
+  real light still ends it. Stated once in the doc rather than discovered later against a print run.
+
 ## 2026-09-15 (the order list, red-teamed)
 
 ### Found
