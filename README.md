@@ -95,6 +95,7 @@ Still Pi-dependent:
 - [Lighting System](docs/LIGHTING_SYSTEM.md)
 - [UI/UX Design Reference](docs/UI_UX_DESIGN_REFERENCE.md)
 - [BOM](docs/BOM.md)
+- [Colour Measurement](docs/COLOR_MEASUREMENT.md)
 - [V0 Bench Prototype](docs/V0_BENCH_PROTOTYPE.md)
 - [Changelog](CHANGELOG.md)
 
