@@ -55,7 +55,13 @@ import math
 import os
 from dataclasses import dataclass
 
-from components import bme280_breakout, lm301h_heatsink_module, weston_301
+from components import (
+    ads1115_breakout,
+    as7341_breakout,
+    bme280_breakout,
+    lm301h_heatsink_module,
+    weston_301,
+)
 
 from pi.dashboard.panel_geometry import FACE_HEIGHT, FACE_WIDTH
 
@@ -589,58 +595,79 @@ DEPTH = DepthBudget()
 MM = 1.0 / IN  # inches per millimetre
 
 # --- The boards, as bought --------------------------------------------------
-# AS7341: the **Adafruit STEMMA QT** breakout, photographed 2026-09-14 — NOT
-# the small generic the Rev E/F sheet was drawn to, which was itself drawn from
-# a worse photo. Scaled off this one by its own 0.1 in header-pad pitch and
-# checked against Adafruit's published 1.0 x 0.7 in outline; the two agree.
-# Caliper before printing: components.as7341_breakout has a row for each of
-# these (`python -m components measure as7341_breakout PCB_L <mm> --by XX`);
-# import them here once measured. Until then they are ESTIMATES.
+# AS7341: the **Adafruit STEMMA QT** breakout. Rev G drew it from a bench photo
+# scaled by its own 0.1 in header-pad pitch and checked against Adafruit's
+# published 1.0 x 0.7 in outline. Rev H replaces every one of those estimates
+# with the calipered value out of the components library, and two of them moved
+# far enough to change the case:
+#   The QT sockets are 4.7 tall, not the 2.9 the photo suggested. Rev G set the
+#   baffle drop to 3.2 — "the sockets plus 0.3" — which put the ceiling 1.5 mm
+#   INSIDE them. Same class of error as Rev E's, one revision later, and the
+#   drop is now 5.0.
+#   The board's holes are Ø2.29, not the Ø2.5 Adafruit publishes. An M2.5 does
+#   not pass through its own mounting hole, so the board hangs on M2.
+# The one row still un-calipered is PCB_W, and it is the row the photo and the
+# other measurements disagree about: PCB_L came in 0.28 OVER the published
+# 25.4, which argues the board is a shade large, while the sensor sitting 8.76
+# from the LED edge argues for 17.52 if the window is truly centred. Those
+# point opposite ways, so nothing is inferred here — the published 17.78 stands
+# as the estimate until a caliper settles it.
 #   Header pads along one LONG edge (six, 0.1 in pitch). That edge faces +Y in
 #   the case, toward the rear wall and the cable notch, so the wires go straight
 #   to it.
-#   Four Ø2.5 holes on a 0.8 x 0.5 in grid, 0.1 in from every edge. The board
-#   hangs on all four. A symmetric board with four holes wants four screws, not
-#   one screw and a collar pressed on its face.
-#   Sensor window dead centre. LED 0.07 in from the opposite (-Y) edge, on the
-#   centre line: 7.1 from the sensor and well outside the collar.
-#   Two STEMMA QT (JST SH) sockets ON THE SENSOR FACE, one at each end, 2.9
-#   tall. They are the tallest thing on that face by a wide margin and they are
-#   why the baffle drop is 3.2, not 2.0. They stay fitted: desoldering them buys
-#   a shallower gap and nothing else.
-SC_AS7341_L = 25.4 * MM  # ESTIMATE — along X, the long way; lib: as7341_breakout.PCB_L
-SC_AS7341_W = 17.78 * MM  # ESTIMATE — along Y; lib: PCB_W
-SC_AS7341_SENSOR_X = 12.7 * MM  # ESTIMATE — window centre from the -X edge (dead centre)
-SC_AS7341_SENSOR_Y = 8.89 * MM  # ESTIMATE — window centre from the LED (-Y) edge (dead centre)
-SC_AS7341_HOLE_PITCH_X = 20.32 * MM  # ESTIMATE — the hole grid, 0.8 in along X; lib: HOLE_PITCH_X
-SC_AS7341_HOLE_PITCH_Y = 12.7 * MM  # ESTIMATE — 0.5 in along Y; lib: HOLE_PITCH_Y
-SC_AS7341_HOLE_DIA = 2.5 * MM  # ESTIMATE — Adafruit's stated size; lib: HOLE_DIA
+#   Four holes on a 20.17 x 12.62 grid. The board hangs on all four. A symmetric
+#   board with four holes wants four screws, not one screw and a collar pressed
+#   on its face.
+#   Sensor window all but centred. LED 2.24 from the opposite (-Y) edge, on the
+#   centre line: 6.5 from the sensor and well outside the collar.
+#   Two STEMMA QT (JST SH) sockets ON THE SENSOR FACE, one at each end. They are
+#   the tallest thing on that face by a wide margin and they are what sets the
+#   baffle drop. They stay fitted: desoldering them buys a shallower gap and
+#   nothing else.
+SC_AS7341_L = as7341_breakout.PCB_L * MM  # LIB — along X, the long way
+SC_AS7341_W = 17.78 * MM  # ESTIMATE — along Y; Adafruit's published 0.7 in.
+                          # lib: as7341_breakout.PCB_W, still None. See above:
+                          # do not infer it from the sensor position
+SC_AS7341_SENSOR_X = as7341_breakout.SENSOR_X_FROM_EDGE * MM  # LIB — window
+                          # centre from the -X edge. 0.09 off centre, not 0
+SC_AS7341_SENSOR_Y = as7341_breakout.SENSOR_Y_FROM_LED_EDGE * MM  # LIB — window
+                          # centre from the LED (-Y) edge
+SC_AS7341_HOLE_PITCH_X = as7341_breakout.HOLE_PITCH_X * MM  # LIB
+SC_AS7341_HOLE_PITCH_Y = as7341_breakout.HOLE_PITCH_Y * MM  # LIB
+SC_AS7341_HOLE_DIA = as7341_breakout.HOLE_DIA * MM  # LIB — Ø2.29. Adafruit say
+                          # 2.5; the board says otherwise, and the board wins
 SC_AS7341_BOSS_DIA = 5.5 * MM  # four, hanging from the ceiling to the board.
-                               # 1.6 of wall round a Ø2.3 pilot; reaches 0.2
+                               # 1.8 of wall round a Ø1.9 pilot; reaches 0.2
                                # past the board's edge, which is nothing
-SC_AS7341_PILOT = 2.3 * MM  # M2.5 thread-forming in PETG. A Ø2.3 vertical hole
-                            # prints about 2.1; M2.5 minor is 1.95
-SC_AS7341_PILOT_DEPTH = 3.5 * MM  # 3.2 of boss + 0.3 into the top wall. None of
-                                  # the four lies anywhere near the diffuser
-                                  # recess (they are 12 mm from the port), so
-                                  # Rev E's cap on the depth no longer applies;
-                                  # 0.3 is simply what a blind end needs
-SC_AS7341_SCREW_LEN = 4.0 * MM  # M2.5 x 4 pan: 1.6 of board leaves 2.4 in a 3.5
+SC_AS7341_PILOT = 1.9 * MM  # CHOICE: M2 thread-forming in PETG. A Ø1.9 vertical
+                            # hole prints about 1.7; M2 minor is 1.57, so the
+                            # screw forms the flanks and never has to cut the
+                            # root. Rev G's Ø2.3 was for an M2.5 that cannot
+                            # pass the board's Ø2.29 hole
+SC_AS7341_PILOT_DEPTH = 3.5 * MM  # wholly inside the 5.0 boss now, with 1.5 of
+                                  # boss above the blind end before the top wall
+                                  # even starts. Rev G had to run 0.3 into that
+                                  # wall to get the depth; the taller drop pays
+                                  # for it
+SC_AS7341_SCREW_LEN = 4.0 * MM  # M2 x 4 pan: 1.6 of board leaves 2.4 in a 3.5
                                 # pilot, clamped 1.1 before it could bottom out
-SC_AS7341_LED_Y = 1.8 * MM  # ESTIMATE — LED centre from the LED edge; lib: LED_Y_FROM_LED_EDGE. Advisory:
-                            # the baffle test uses it
-SC_AS7341_QT_H = 2.9 * MM  # ESTIMATE — a JST SH socket, board top to its top; lib: QT_SOCKET_H.
-                           # THIS sets the baffle drop
+SC_AS7341_LED_Y = as7341_breakout.LED_Y_FROM_LED_EDGE * MM  # LIB — LED centre
+                          # from the LED edge. Advisory: the baffle test uses it
+SC_AS7341_QT_H = as7341_breakout.QT_SOCKET_H * MM  # LIB — a JST SH socket, board
+                          # top to its top. THIS sets the baffle drop, and at
+                          # 4.7 it is 1.8 more than Rev G believed
 SC_AS7341_QT_L = 4.3 * MM  # how far a socket reaches inboard from the board edge
 SC_AS7341_QT_W = 6.0 * MM  # its width, centred on the board's mid-line
 SC_AS7341_NEAR_PART_H = 1.3 * MM  # tallest part within the collar's radius: the
                                   # SOT-23s either side of the sensor. The collar
                                   # stops above them instead of landing on them
-SC_AS7341_PKG_H = 1.0 * MM  # the sensor package itself, above the board
+SC_AS7341_PKG_H = as7341_breakout.PKG_H * MM  # LIB — the sensor package itself,
+                          # above the board
 
-SC_ADS1115_L = 28.0 * MM  # 28 x 18 published for the GY-ADS1115
-SC_ADS1115_W = 18.0 * MM
-SC_ADS1115_PART_H = 2.5 * MM  # tallest part on its top face with NO header fitted
+SC_ADS1115_L = ads1115_breakout.PCB_L * MM  # LIB. The 28 x 18 the listing
+SC_ADS1115_W = ads1115_breakout.PCB_W * MM  # publishes is 0.2 short and 0.7 wide
+SC_ADS1115_PART_H = ads1115_breakout.PART_H * MM  # LIB — tallest part on its top
+                          # face with NO header fitted
 SC_ADS1115_DX = 6.5 * MM  # it sits this far +X of centre on the plate, which is
                           # what makes room for the BME280 at the other end
 SC_TAPE_T = 1.0 * MM  # the foam tape under the two plate boards
@@ -668,7 +695,10 @@ SC_BOARD_T = 1.6 * MM
 # clear half millimetre off the +X corner bosses instead of a tenth.
 SC_LEN = 60.0 * MM
 SC_WID = 27.0 * MM  # inside the CMU's 31.75 face shell with 4.75 to spare
-SC_HGT = 18.0 * MM  # body 15.5 + base plate 2.5
+SC_HGT = 18.5 * MM  # body 16.0 + base plate 2.5. Rev G was 18.0; the extra
+                    # 0.5 is what keeps 2.0 mm between the plate boards' tallest
+                    # part and the underside of the hanging AS7341 once the
+                    # measured sockets pushed that board 1.8 lower
 SC_WALL = 2.0 * MM  # CHOICE: 4 perimeters at 0.50 extrusion width, exactly
 SC_BASE_T = 2.5 * MM  # 5 lines. Under a 1.1 mm countersink that leaves 1.4
 SC_CHAMFER = 1.5 * MM  # the four vertical corners, 45 deg, cut like the plinth's
@@ -680,16 +710,38 @@ SC_PORT_DIA = 12.5 * MM  # recess for it. 0.25 a side: the mouth is on the bed,
                          # where elephant's foot and hole shrink both take
 SC_PORT_DEPTH = 1.05 * MM  # 7 layers of 0.15. The disc sits 0.05 low, which is
                            # nothing; 1.0 is not a whole number of layers
-SC_APERTURE_DIA = 6.5 * MM  # == SC_BAFFLE_ID. The bore simply continues through
-                            # the top wall. Rev D opened it to 10.5, which took
-                            # the whole wall out from under the Ø8.5 collar
-SC_BAFFLE_ID = 6.5 * MM  # the sensor's field stop; narrower than the LED's offset
-SC_BAFFLE_OD = 8.5 * MM
-SC_BAFFLE_DROP = 3.2 * MM  # ceiling to the board's top face. The STEMMA QT
-                           # sockets stand 2.9 on that face; 0.3 over them.
+SC_BAFFLE_ID = 9.2 * MM  # the sensor's field stop, and the one lever that buys
+                         # back the field angle the taller drop costs. The tube
+                         # from the package top to the recess floor is WALL +
+                         # DROP - PORT_DEPTH - PKG_H = 4.53, and that is
+                         # independent of the case height, so nothing but the
+                         # bore can widen the cone. Ø9.2 puts the half-angle at
+                         # 45.4 deg; Rev G's Ø6.5 would give 36 and the detector
+                         # would see a spot on the disc instead of the disc.
+                         # Still narrower than the LED's 6.5 mm offset, which is
+                         # the constraint that set it in the first place
+SC_BAFFLE_OD = 11.4 * MM  # 1.1 of wall carried under the collar's rim, which is
+                          # what stops it printing in mid-air — Rev D's blocker.
+                          # Under a Ø12.5 recess the Ø12 disc keeps 1.4 mm of
+                          # ledge all round, and the LED at 6.5 mm off the
+                          # sensor still clears the rim by 0.8
+SC_APERTURE_DIA = SC_BAFFLE_ID  # the bore simply continues through the top wall.
+                            # Rev D opened it to 10.5 independently of the
+                            # collar, which took the whole wall out from under
+                            # it; tied together they cannot disagree again
+SC_QT_CLEAR = 0.3 * MM  # CHOICE: air over the tallest thing on the sensor face
+SC_BAFFLE_DROP = SC_AS7341_QT_H + SC_QT_CLEAR  # DERIVED, and derived on purpose:
+                           # ceiling to the board's top face. The
+                           # sockets stand 4.7 on that face (LIB). Rev G read
+                           # 2.9 off a photo and typed 3.2, which buried the
+                           # ceiling 1.5 mm inside them — a typed number that
+                           # was supposed to track a measured one and did not.
+                           # It is an expression now.
                            # Set by the four bosses, which is what hangs the
                            # board. Rev E made the collar the standoff; it no
-                           # longer touches the board at all
+                           # longer touches the board at all. The extra 1.8
+                           # costs headroom under the board and field angle
+                           # above it; SC_HGT and SC_BAFFLE_ID pay for both
 SC_BAFFLE_CLEAR = 1.5 * MM  # the collar stops this far above the board, over
                             # the 1.3 mm SOT-23s that sit inside its radius. It
                             # is a stray-light stop in a box that is dark
@@ -709,7 +761,16 @@ SC_BOSS_INSET_Y = 5.5 * MM  # into the end walls; 1.5 short of the long walls,
 # bosses: one screw size for the whole case and nothing to melt in. PETG gives
 # a formed thread about ten open-close cycles; the box opens for service a few
 # times a year.
-SC_CLOSURE_PILOT = SC_AS7341_PILOT  # Ø2.3 in a Ø7 boss: 2.35 of wall round it
+SC_CLOSURE_PILOT = 2.3 * MM  # CHOICE: M2.5, in a Ø7 boss — 2.35 of wall round it.
+                             # Rev G aliased this to the AS7341's pilot because
+                             # one screw size was worth having. The board's
+                             # holes measured Ø2.29 and took that choice away
+                             # from the board, not from the plate: these screws
+                             # pass through printed material at both ends and
+                             # meet nothing that caps them at M2, so they keep
+                             # the bigger thread. No longer an alias, so the
+                             # board dropping a size cannot drag the plate down
+                             # with it
 SC_CLOSURE_PILOT_DEPTH = 4.0 * MM  # from the boss's bottom face, up the column
 SC_CLOSURE_SCREW_LEN = 6.0 * MM  # M2.5 x 6 countersunk: 2.5 of plate leaves 3.5
                                  # in a 4.0 pilot, clamped 0.5 before bottoming

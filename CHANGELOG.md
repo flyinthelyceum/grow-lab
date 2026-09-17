@@ -2,6 +2,57 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-17 (Rev H: the measurements land, and two of them redraw the case)
+
+### Found
+- **The case was drawn to a socket height read off a photo, and the photo was 1.8 mm wrong.**
+  The STEMMA QT sockets measure **4.7**, not 2.9. Rev G set the baffle drop to 3.2 —
+  literally "the sockets plus 0.3" — which put the ceiling 1.5 mm *inside* them. This is the
+  same failure as Rev E's, one revision later and in the parameter that was written to fix it:
+  Rev E hung the sensor face 2.0 under the ceiling and the sockets would have hit the lid.
+  A number that is supposed to track a measured value must be an expression, not a typed
+  constant. `SC_BAFFLE_DROP` is now `SC_AS7341_QT_H + SC_QT_CLEAR` and cannot drift again.
+- **The board's mounting holes are Ø2.29, not the Ø2.5 Adafruit publishes.** An M2.5's major
+  diameter does not pass through its own board. Rev G's best feature — one screw size for the
+  whole case — was resting on a published figure the board disagrees with.
+- **The stale-library trap.** The venv here was pinned to the moving `components-v1` tag but
+  installed at **v1.16** while the library was at v1.32. Every AS7341 constant read `None`,
+  `params.py` kept its ESTIMATEs, and the full suite passed. A pin that moves is only as good
+  as the last install; the freshness check belongs in the session-start hook.
+- **Dropping the board 1.8 mm costs field angle, and the case height cannot buy it back.**
+  The tube from the sensor package to the diffuser is `SC_WALL + SC_BAFFLE_DROP −
+  SC_PORT_DEPTH − SC_AS7341_PKG_H`, which has no `SC_HGT` in it. Growing the case does
+  nothing. At Ø6.5 the half-angle fell from 46° to **36°**, where the detector sees a spot on
+  the disc instead of the disc — a diffuser reduced to a window at the end of a telescope.
+
+### Changed
+- **Rev H imports what Rev G estimated.** `PCB_L`, both hole pitches, `HOLE_DIA`, both sensor
+  offsets, `LED_Y`, `QT_SOCKET_H` and `PKG_H` now come from `components.as7341_breakout`, and
+  the ADS1115's outline from `ads1115_breakout` (its published 28 × 18 is 0.2 short and 0.7
+  wide). `params.py` states measured values in exactly one place: the import.
+- **The board hangs on M2 × 4 into Ø1.9 pilots; the plate keeps M2.5.** The closure screws pass
+  through printed material at both ends and meet nothing that caps them at M2, so they keep the
+  bigger thread. `SC_CLOSURE_PILOT` was an alias of the AS7341's pilot and is now its own
+  value, with a test asserting the two differ on purpose — otherwise the board dropping a size
+  silently drags the plate down with it.
+- **The bore opens to Ø9.2 and the collar to Ø11.4**, restoring the half-angle to 45.4°. Still
+  inside the LED's 6.5 mm offset, which is the constraint that set the bore originally, and
+  still leaving 1.1 mm of wall carried under the collar's rim — Rev D's blocker, and the reason
+  `SC_APERTURE_DIA` is now literally `SC_BAFFLE_ID` rather than a second number that agreed
+  with it by hand.
+- **The case is 18.5 tall, from 18.0.** The board dropping 1.8 left only 1.76 mm over the
+  plate boards against a 2.0 rule.
+- Tests: the socket clearance is asserted as a margin rather than an equality a derived value
+  can only meet to the last bit; the pilot's blind end now stops inside a 5.0 boss instead of
+  running into the top wall; the thread-forming window is M2's, not M2.5's. 65 pass, kernel
+  included, 1027 across the suite.
+
+### Still open
+- **`PCB_W` is the one row without a caliper on it**, and its two estimates point opposite
+  ways: the measured length ran 0.28 *over* the published 25.4, while a centred sensor window
+  at 8.76 from the LED edge implies 17.52. Nothing is inferred from that. It decides the board
+  left under the collar on the header side — measure before printing.
+
 ## 2026-09-16 (the scanner becomes an instrument)
 
 ### Changed
