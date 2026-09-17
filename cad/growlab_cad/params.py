@@ -606,12 +606,13 @@ MM = 1.0 / IN  # inches per millimetre
 #   drop is now 5.0.
 #   The board's holes are Ø2.29, not the Ø2.5 Adafruit publishes. An M2.5 does
 #   not pass through its own mounting hole, so the board hangs on M2.
-# The one row still un-calipered is PCB_W, and it is the row the photo and the
-# other measurements disagree about: PCB_L came in 0.28 OVER the published
-# 25.4, which argues the board is a shade large, while the sensor sitting 8.76
-# from the LED edge argues for 17.52 if the window is truly centred. Those
-# point opposite ways, so nothing is inferred here — the published 17.78 stands
-# as the estimate until a caliper settles it.
+# PCB_W was the last estimate, and the two inferences available pointed opposite
+# ways: PCB_L came in 0.28 OVER the published 25.4, arguing the board runs
+# large, while a centred sensor window at 8.76 from the LED edge argued for
+# 17.52. Calipered 2026-09-17 at 17.78 — 0.700 in exactly — so neither was
+# right. The board runs long but not wide, and the window sits 0.13 off centre
+# in Y: 8.76 to the LED edge against 9.02 to the header edge. Every dimension on
+# this board is measured now; nothing here is inferred from anything else.
 #   Header pads along one LONG edge (six, 0.1 in pitch). That edge faces +Y in
 #   the case, toward the rear wall and the cable notch, so the wires go straight
 #   to it.
@@ -625,9 +626,9 @@ MM = 1.0 / IN  # inches per millimetre
 #   baffle drop. They stay fitted: desoldering them buys a shallower gap and
 #   nothing else.
 SC_AS7341_L = as7341_breakout.PCB_L * MM  # LIB — along X, the long way
-SC_AS7341_W = 17.78 * MM  # ESTIMATE — along Y; Adafruit's published 0.7 in.
-                          # lib: as7341_breakout.PCB_W, still None. See above:
-                          # do not infer it from the sensor position
+SC_AS7341_W = as7341_breakout.PCB_W * MM  # LIB — along Y. 0.700 in on the nose,
+                          # so the published width was right where the published
+                          # length was not, and the window is NOT centred in Y
 SC_AS7341_SENSOR_X = as7341_breakout.SENSOR_X_FROM_EDGE * MM  # LIB — window
                           # centre from the -X edge. 0.09 off centre, not 0
 SC_AS7341_SENSOR_Y = as7341_breakout.SENSOR_Y_FROM_LED_EDGE * MM  # LIB — window
