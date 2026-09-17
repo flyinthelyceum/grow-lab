@@ -428,6 +428,55 @@ is that each half is **one solid**.
 | Feet | 3 × neutral-cure silicone, **cast in place** in the plate's recesses. Three points never rock |
 | Interior | Paint matte black before assembly if the dark-period reading has to be zero. White PETG at 1 mm is a diffuser, not a shield |
 
+### Print the thread coupon first
+
+`cad/out/print/thread_coupon.stl`, about 96 × 28 × 10 mm. **Slice it with the
+same profile as the case** — 0.15 layers, 0.50 extrusion width, same filament,
+same flow. A coupon sliced differently from the part answers a different question.
+
+It exists because the pilots rest on a number nobody here has measured: *a
+vertical hole prints about 0.2 mm small*. That is printer, filament and flow
+specific, and everything follows from it. M2's minor diameter is **1.567**; at
+Ø1.9 nominal with 0.2 of shrink the hole lands at 1.7 and the screw forms the
+flanks. At 0.3 of shrink it lands at 1.6 and the screw has to **cut the root**,
+which is how a boss splits — and a split corner boss means reprinting the body,
+the long print with the show face on it.
+
+Two rows of five, each stepping 0.1 mm, with pips beside each boss counting the
+column. The nominal is the middle one in both rows.
+
+| Row | Boss | Pilot sweep | Nominal | What it is |
+|---|---|---|---|---|
+| Front (fewer pips toward −Y) | Ø5.5 | 1.7 → 2.1 | **1.9** | AS7341, M2 × 4 |
+| Rear | Ø7.0 | 2.1 → 2.5 | **2.3** | Plate closure, M2.5 × 6 |
+
+At the +X end, two countersunk clearance holes in a pad of the plate's real
+2.5 mm — the other half of the same joint.
+
+**What to do with it.**
+
+1. **Measure before driving anything.** Pin gauges or drill shanks in each hole,
+   and write down what a nominal Ø1.9 actually printed at. That single number is
+   the real deliverable; the screws only confirm it.
+2. **Drive the real screws** — M2 × 4 pan in the front row, M2.5 × 6 countersunk
+   in the rear — by hand, with a driver that fits. Note which columns go in
+   cleanly, which need force, and which split. A boss that splits is data, not a
+   failure.
+3. **Check the countersinks.** The head should finish flush or a hair below with
+   no dimple raised around it. 2.5 mm of PETG under a 90° cone 1.1 deep leaves
+   1.4 mm, which is thin enough to be worth looking at rather than assuming.
+4. **Cycle the winner ten times**, in and out, and see whether the thread is
+   still tight on the tenth. The case is documented at "about ten cycles" and
+   nobody has counted. If it gives three, the plate wants machine screws into
+   brass inserts after all and it is much better to learn that now.
+5. **Record the printed diameters here**, and if the best column is not the
+   nominal, change `SC_AS7341_PILOT` / `SC_CLOSURE_PILOT` in `params.py` before
+   printing the case.
+
+**Do not skip this because the geometry is settled.** The geometry being settled
+is exactly what makes the print worth protecting: a coupon is twenty minutes and
+the body is hours.
+
 **Silicone does not bond to PTFE.** Untreated PTFE is the reference non-stick
 surface — about 18 mN/m of surface energy — and nothing in a workshop wets it.
 The old sheet called the diffuser joint "the only one that has to keep water

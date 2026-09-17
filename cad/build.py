@@ -30,7 +30,7 @@ sys.path.insert(0, str(REPO))
 
 from build123d import export_step, export_stl  # noqa: E402
 
-from cad.growlab_cad import assembly, params, plinth, sensor_case  # noqa: E402
+from cad.growlab_cad import assembly, params, plinth, sensor_case, thread_coupon  # noqa: E402
 from cad.growlab_cad._shapes import bbox_in  # noqa: E402
 
 OUT = REPO / "cad" / "out"
@@ -122,7 +122,11 @@ def main(argv: list[str] | None = None) -> int:
     # bed. STEP is for Fusion; a slicer wants a mesh and wants it flat.
     printed = OUT / "print"
     printed.mkdir(exist_ok=True)
-    for n, p in sensor_case.for_print().items():
+    # The coupon is a jig, not part of the station: it never appears in the
+    # assembly and has no bounding box worth reporting. It is here because the
+    # thing it tests is here, and it has to be sliced with the same profile as
+    # the parts it is testing for the answer to mean anything.
+    for n, p in {**sensor_case.for_print(), **thread_coupon.for_print()}.items():
         sp = printed / f"{n}.stl"
         export_stl(p, str(sp))
         st = printed / f"{n}.step"

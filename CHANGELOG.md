@@ -2,6 +2,39 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-17 (a coupon for the threads, and the docstring catches up)
+
+### Found
+- **Rev H updated the parameters and left the prose behind.** `sensor_case.py`'s module
+  docstring still said Rev G, "four Ø2.5 holes", "sockets standing 2.9 mm tall" and "M2.5 × 4
+  up through the board" — every one of them superseded by the measurements, in the file whose
+  numbers had already changed. The geometry was right and the paragraph above it was not, which
+  is the version of stale that is hardest to notice.
+- **Both pilots rest on a figure nobody here has measured.** "A vertical hole prints about
+  0.2 mm small" is printer, filament and flow specific, and the M2 pilot has no margin for it
+  to be wrong: M2's minor diameter is 1.567, and Ø1.9 at 0.3 of shrink prints 1.6, where the
+  screw cuts the thread root instead of forming the flanks. That splits the boss, and the boss
+  is a structural column — a split one means reprinting the body.
+
+### Changed
+- **`cad/growlab_cad/thread_coupon.py`.** Two rows of five bosses stepping 0.1 mm either side
+  of each nominal, at the real boss diameters, real pilot depths, and in the real print
+  orientation — the slab is the top wall, the bosses stand on it as they do on the bed, and
+  each pilot is blind and opens upward. Pips beside each boss count the column. A pad at one
+  end carries two countersinks in the plate's real 2.5 mm, which is the other half of the same
+  joint. Closure bosses are shortened from 14 mm to 8: the thread forms in the top 4 and the
+  wall is at steady state long before that, so the print halves and nothing tested changes.
+  96 × 28 × 10 mm, about twenty minutes against hours for the body.
+- Build writes it to `cad/out/print/` beside the case, because it has to be sliced with the
+  same profile as the parts it is testing for the answer to mean anything.
+- A bench procedure in the mounting brief: measure the holes *before* driving anything (the
+  printed diameter is the real deliverable; the screws only confirm it), then drive, then check
+  the countersinks seat flush in 1.4 mm of plate, then cycle the winner ten times — the case is
+  documented at "about ten cycles" and nobody counted.
+- 21 tests hold the coupon against `params.py` rather than against its own constants, because a
+  coupon that quietly differs from the part it tests is worse than no coupon: it returns a
+  number, and the number is wrong.
+
 ## 2026-09-17 (the reservoir gets one writer, and the fixture gets a field)
 
 ### Found
