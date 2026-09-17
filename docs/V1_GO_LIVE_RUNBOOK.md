@@ -106,14 +106,56 @@ With LED on: expect elevated values across visible channels, particularly 445nm 
 
 Goal: reservoir mixed to target range, stable before plant uptake begins.
 
+**Targets are not written here.** They live in `[reservoir]` in `config.toml`,
+which is also where the alert bands and both dial centres come from. This phase
+describes what the config says; if the two ever disagree, the config is right
+and this page is stale.
+
+### D.0 Recalibrate the EC probe in the range you actually control — do this first
+
+Phase 3 calibrated the EZO-EC at **12,880 and 80,000 µS/cm** and then recorded a
+plain-water baseline of **1,529 µS/cm**. Those calibration points are 8× and 52×
+above the 800–1,200 band this station controls in. A conductivity cell is not
+characterised outside its calibration points, so **that 1,529 figure cannot carry
+the weight the build has been putting on it** — it has been read as "the tap water
+is too hard for the target", which may or may not be true, and cannot be settled
+by that number.
+
+Before any conclusion about the water, or any dial face:
+
+1. **Dry-calibrate the zero.** Probe clean and completely dry, in air:
+   `Cal,dry`. Skipping this is the single most common cause of a large offset at
+   the low end.
+2. **Single-point at 1,413 µS/cm**, the standard that sits in this station's
+   working range: `Cal,low,1413` — or `Cal,1413` on a single-point setup. Rinse
+   in distilled between solutions and let the reading settle.
+3. **Confirm the probe's K value** matches the circuit's setting (`K,?`). A K=1.0
+   cell reporting through a K=10 setting reads 10× high, which would put genuinely
+   soft water at exactly the sort of number that got recorded.
+4. **Re-measure the plain makeup water**, three times, rinsing between.
+
+Then set `source_water_ec_us` in `[reservoir]` to what you measured. The loader
+refuses a target at or below the source water, because adding nutrient can only
+raise conductivity — so if the real figure comes back near 1,500, the station will
+not start until either the target moves up or the makeup water becomes RO. That
+refusal is the decision being forced, and it is the right place for it.
+
+**If the water really is that hard:** RO or distilled makeup water is the answer,
+not a raised target. Ranunculus are not the problem — the problem is that hard
+tap water arrives with its conductivity already spent on calcium and magnesium
+carbonates, so an EC that *looks* on target carries very little of the nutrient
+you actually dosed. EC cannot tell you which salts it is measuring.
+
 ### D.1 Mix Nutrient Solution
 
 Follow General Hydroponics Flora Series directions for seedling/early growth strength:
 
 - Start at 1/4 to 1/2 recommended concentration.
 - Add FloraMicro first, stir. Then FloraGrow, stir. Then FloraBloom, stir.
-- Target EC: 800-1,200 µS/cm (mild for establishing corms).
-- Target pH: 5.8-6.2.
+- Target EC and pH: whatever `[reservoir]` says — `ec_target_us` and `ph_target`,
+  with the warning bands either side. Shipped as EC 800–1,200 µS/cm (mild for
+  establishing corms) and pH 5.8–6.2. Read them rather than trusting this line:
+  `growlab config show` prints what the station is actually holding to.
 
 ### D.2 Adjust pH
 
@@ -203,7 +245,9 @@ Verify image shows the planted container under grow light.
 ### Phase 4 Exit Criteria
 
 - [ ] All 6 sensors reporting on dashboard.
-- [ ] Nutrient reservoir stable in target pH (5.8-6.2) and EC (800-1,200 µS/cm) range.
+- [ ] EZO-EC recalibrated in range per D.0, and `reservoir.source_water_ec_us` set
+      from a post-recalibration measurement.
+- [ ] Nutrient reservoir stable inside the `[reservoir]` warning bands for pH and EC.
 - [ ] Irrigation delivering water to planted media on schedule.
 - [ ] LED strip running on photoperiod with AS7341 confirming output.
 - [ ] Plant shows no stress in first 48 hours.

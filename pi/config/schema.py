@@ -88,6 +88,23 @@ class LightingConfig:
     off_hour: int = 22
     intensity: int = 200
     ramp_minutes: int = 15
+    # Where the fixture is on the mast, in inches above the media surface.
+    #
+    # The collar is set by hand and nothing else in the system knows where it
+    # ended up. That matters more than it sounds: the AS7341 reads output and
+    # distance as ONE number, so a spectral reading without this figure cannot
+    # be compared with last month's, and a dimming that is really the fixture
+    # having been raised looks identical to a failing board.
+    #
+    # None means "nobody has written it down", which is the honest default and
+    # is what every reading before today is worth. The bounds are the CAD's
+    # FIXTURE_ABOVE_MEDIA_MIN and _MAX: closest useful working distance, and
+    # 15 in of clearance over an 18 in plant.
+    fixture_above_media_in: float | None = None
+
+
+FIXTURE_ABOVE_MEDIA_MIN_IN = 12.0  # CHOICE, mirrors cad/growlab_cad/params.py
+FIXTURE_ABOVE_MEDIA_MAX_IN = 33.0  # CHOICE, mirrors cad/growlab_cad/params.py
 
 
 @dataclass(frozen=True)
@@ -120,11 +137,52 @@ class FanConfig:
 
 
 @dataclass(frozen=True)
+class ReservoirConfig:
+    """Target water chemistry: the ONE place pH and EC bands are stated.
+
+    They used to be stated in three places, and all three disagreed. The
+    runbook and the build procedure said EC 800-1,200 uS/cm; `alerts.py`
+    hardcoded a warning band of 800-1,600 and a critical band of 400-2,000;
+    `[meters.ec]` centred a dial at 1.0 mS/cm. Nothing derived from anything,
+    so the dial, the alert and the procedure could drift apart silently, and
+    had. The alert rules and both meter centres are computed from these fields
+    now — see `alerts.rules_from_config` and `loader._build_meters`.
+
+    `source_water_ec_us` is the measured conductivity of the water that goes
+    IN, before any nutrient: tap, or near zero for RO. It is not decoration.
+    Salts only ever add conductivity, so a target at or below the source is
+    unreachable by construction, and `_validate_config` refuses it rather than
+    letting the station chase a number it cannot hit. Leave it None until it
+    has actually been measured.
+
+    On measuring it: see V1_GO_LIVE_RUNBOOK.md. The 1,529 uS/cm plain-water
+    figure this project recorded in March is NOT usable as that measurement --
+    the probe behind it was calibrated at 12,880 and 80,000 uS/cm, points 8x
+    and 52x above the range being controlled here.
+    """
+
+    ph_target: float = 6.0  # dial centre
+    ph_warning_low: float = 5.8
+    ph_warning_high: float = 6.2
+    ph_critical_low: float = 5.0
+    ph_critical_high: float = 7.5
+
+    ec_target_us: float = 1000.0  # dial centre; midpoint of the runbook's band
+    ec_warning_low_us: float = 800.0
+    ec_warning_high_us: float = 1200.0
+    ec_critical_low_us: float = 400.0
+    ec_critical_high_us: float = 1600.0
+
+    source_water_ec_us: float | None = None
+
+
+@dataclass(frozen=True)
 class MeterChannelConfig:
     """One centre-zero movement on a differential DAC pair."""
 
     sensor_id: str = "ezo_ph"
-    centre: float = 6.0  # sensor value at mechanical centre
+    centre: float = 6.0  # sensor value at mechanical centre. Defaulted from
+                         # [reservoir] unless the file sets it explicitly.
     span: float = 1.0  # half-range: deflection reaching a full endpoint
     scale: float = 1.0  # applied to the raw reading (e.g. uS/cm -> mS/cm)
     dac_positive: str = "A"
@@ -253,6 +311,7 @@ class AppConfig:
     sensors: SensorsConfig = field(default_factory=SensorsConfig)
     camera: CameraConfig = field(default_factory=CameraConfig)
     lighting: LightingConfig = field(default_factory=LightingConfig)
+    reservoir: ReservoirConfig = field(default_factory=ReservoirConfig)
     irrigation: IrrigationConfig = field(default_factory=IrrigationConfig)
     fan: FanConfig = field(default_factory=FanConfig)
     meters: MetersConfig = field(default_factory=MetersConfig)

@@ -9,9 +9,12 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from dataclasses import replace
 from typing import Any
 
 from pi.config.schema import (
+    FIXTURE_ABOVE_MEDIA_MAX_IN,
+    FIXTURE_ABOVE_MEDIA_MIN_IN,
     MeterChannelConfig,
     MetersConfig,
     AppConfig,
@@ -24,6 +27,7 @@ from pi.config.schema import (
     IrrigationScheduleEntry,
     LightingConfig,
     NotificationConfig,
+    ReservoirConfig,
     SensorEntry,
     SensorsConfig,
     SerialConfig,
@@ -128,9 +132,35 @@ def _build_meter_channel(data: dict[str, Any], default: MeterChannelConfig) -> M
     )
 
 
-def _build_meters(raw: dict[str, Any]) -> MetersConfig:
+def _build_reservoir(raw: dict[str, Any]) -> ReservoirConfig:
+    data = raw.get("reservoir", {})
+    d = ReservoirConfig()
+    src = data.get("source_water_ec_us", d.source_water_ec_us)
+    return ReservoirConfig(
+        ph_target=data.get("ph_target", d.ph_target),
+        ph_warning_low=data.get("ph_warning_low", d.ph_warning_low),
+        ph_warning_high=data.get("ph_warning_high", d.ph_warning_high),
+        ph_critical_low=data.get("ph_critical_low", d.ph_critical_low),
+        ph_critical_high=data.get("ph_critical_high", d.ph_critical_high),
+        ec_target_us=data.get("ec_target_us", d.ec_target_us),
+        ec_warning_low_us=data.get("ec_warning_low_us", d.ec_warning_low_us),
+        ec_warning_high_us=data.get("ec_warning_high_us", d.ec_warning_high_us),
+        ec_critical_low_us=data.get("ec_critical_low_us", d.ec_critical_low_us),
+        ec_critical_high_us=data.get("ec_critical_high_us", d.ec_critical_high_us),
+        source_water_ec_us=None if src is None else float(src),
+    )
+
+
+def _build_meters(raw: dict[str, Any], reservoir: ReservoirConfig) -> MetersConfig:
     data = raw.get("meters", {})
     defaults = MetersConfig()
+    # Centre is the target, so it is derived rather than restated. A file that
+    # sets `centre` explicitly still wins -- the dial can be deliberately
+    # off-target -- but nothing has to remember to keep two numbers in step.
+    ph_default = replace(defaults.ph, centre=reservoir.ph_target)
+    ec_default = replace(
+        defaults.ec, centre=reservoir.ec_target_us * defaults.ec.scale
+    )
     return MetersConfig(
         enabled=data.get("enabled", defaults.enabled),
         i2c_address=data.get("i2c_address", defaults.i2c_address),
@@ -144,8 +174,8 @@ def _build_meters(raw: dict[str, Any]) -> MetersConfig:
         fault_timeout_seconds=data.get(
             "fault_timeout_seconds", defaults.fault_timeout_seconds
         ),
-        ph=_build_meter_channel(data.get("ph", {}), defaults.ph),
-        ec=_build_meter_channel(data.get("ec", {}), defaults.ec),
+        ph=_build_meter_channel(data.get("ph", {}), ph_default),
+        ec=_build_meter_channel(data.get("ec", {}), ec_default),
     )
 
 
@@ -238,6 +268,61 @@ def _validate_config(config: AppConfig) -> None:
         raise ValueError(f"lighting.intensity must be 0-255, got {lc.intensity}")
     if lc.ramp_minutes < 0:
         raise ValueError(f"lighting.ramp_minutes must be >= 0, got {lc.ramp_minutes}")
+    if lc.fixture_above_media_in is not None:
+        if not (
+            FIXTURE_ABOVE_MEDIA_MIN_IN
+            <= lc.fixture_above_media_in
+            <= FIXTURE_ABOVE_MEDIA_MAX_IN
+        ):
+            raise ValueError(
+                "lighting.fixture_above_media_in must be between "
+                f"{FIXTURE_ABOVE_MEDIA_MIN_IN} and {FIXTURE_ABOVE_MEDIA_MAX_IN} in, "
+                f"got {lc.fixture_above_media_in}"
+            )
+
+    rc = config.reservoir
+    for name, low, high in (
+        ("ph warning", rc.ph_warning_low, rc.ph_warning_high),
+        ("ph critical", rc.ph_critical_low, rc.ph_critical_high),
+        ("ec warning", rc.ec_warning_low_us, rc.ec_warning_high_us),
+        ("ec critical", rc.ec_critical_low_us, rc.ec_critical_high_us),
+    ):
+        if low >= high:
+            raise ValueError(f"reservoir.{name} band is inverted: {low} >= {high}")
+    if not (rc.ph_critical_low <= rc.ph_warning_low
+            <= rc.ph_target <= rc.ph_warning_high <= rc.ph_critical_high):
+        raise ValueError(
+            "reservoir pH bands must nest around the target: "
+            f"{rc.ph_critical_low} <= {rc.ph_warning_low} <= {rc.ph_target} "
+            f"<= {rc.ph_warning_high} <= {rc.ph_critical_high}"
+        )
+    if not (rc.ec_critical_low_us <= rc.ec_warning_low_us <= rc.ec_target_us
+            <= rc.ec_warning_high_us <= rc.ec_critical_high_us):
+        raise ValueError(
+            "reservoir EC bands must nest around the target: "
+            f"{rc.ec_critical_low_us} <= {rc.ec_warning_low_us} <= {rc.ec_target_us} "
+            f"<= {rc.ec_warning_high_us} <= {rc.ec_critical_high_us}"
+        )
+    # Nutrient salts only ever ADD conductivity. A target at or below the water
+    # going in is unreachable however much you dose, and this is the check the
+    # project spent months not making: it recorded a 1,529 uS/cm plain-water
+    # baseline against an 800-1,200 target in prose, in a different document,
+    # and carried on.
+    if rc.source_water_ec_us is not None:
+        if rc.source_water_ec_us >= rc.ec_target_us:
+            raise ValueError(
+                f"reservoir.source_water_ec_us ({rc.source_water_ec_us} uS/cm) is at or "
+                f"above reservoir.ec_target_us ({rc.ec_target_us} uS/cm). Adding "
+                "nutrient can only raise EC, so this target cannot be reached from "
+                "this water. Use RO/distilled makeup water, or raise the target."
+            )
+        if rc.source_water_ec_us >= rc.ec_warning_low_us:
+            raise ValueError(
+                f"reservoir.source_water_ec_us ({rc.source_water_ec_us} uS/cm) is at or "
+                f"above reservoir.ec_warning_low_us ({rc.ec_warning_low_us} uS/cm), so a "
+                "freshly filled reservoir starts inside the warning band before any "
+                "nutrient is added."
+            )
 
     ic = config.irrigation
     if ic.max_runtime_seconds < 1:
@@ -293,6 +378,8 @@ def load_config(path: Path | None = None) -> AppConfig:
     fan_data = raw.get("fan", {})
     display_data = raw.get("display", {})
 
+    reservoir = _build_reservoir(raw)
+
     config = AppConfig(
         system=_build_system(raw),
         i2c=I2CConfig(bus=i2c_data.get("bus", 1)),
@@ -308,7 +395,9 @@ def load_config(path: Path | None = None) -> AppConfig:
             off_hour=lighting_data.get("off_hour", 22),
             intensity=lighting_data.get("intensity", 200),
             ramp_minutes=lighting_data.get("ramp_minutes", 15),
+            fixture_above_media_in=lighting_data.get("fixture_above_media_in"),
         ),
+        reservoir=reservoir,
         irrigation=_build_irrigation(raw),
         fan=FanConfig(
             enabled=fan_data.get("enabled", False),
@@ -322,7 +411,7 @@ def load_config(path: Path | None = None) -> AppConfig:
             calm_threshold=fan_data.get("calm_threshold", 0.40),
             poll_interval_seconds=fan_data.get("poll_interval_seconds", 5),
         ),
-        meters=_build_meters(raw),
+        meters=_build_meters(raw, reservoir),
         control=_build_control(raw),
         display=DisplayConfig(
             enabled=display_data.get("enabled", False),

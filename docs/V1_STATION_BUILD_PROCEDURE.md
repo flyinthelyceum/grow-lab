@@ -372,7 +372,10 @@ Watch it for 72 hours before calling V1 built.
 
 - [ ] Both cores wetting evenly; soil moisture recovering after each event and drying between.
 - [ ] Runoff fraction roughly 10–20 % of dose. Much more is waste; much less risks salt build-up.
-- [ ] Reservoir pH holding 5.8–6.2, EC 800–1,200 µS/cm.
+- [ ] EC probe recalibrated in range (`V1_GO_LIVE_RUNBOOK.md` D.0) and
+      `reservoir.source_water_ec_us` set from that measurement.
+- [ ] Reservoir pH and EC holding inside the `[reservoir]` warning bands —
+      `growlab config show` prints them.
 - [ ] Fan ramping with canopy temperature, not pinned or stalled.
 - [ ] LED heatsink stable at photoperiod temperature.
 - [ ] Tray emptied and reservoir topped on the cadence from 0.2 — measure the real rate.
