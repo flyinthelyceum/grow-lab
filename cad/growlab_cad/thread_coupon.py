@@ -42,8 +42,11 @@ column was right.
 from __future__ import annotations
 
 from . import params as P
-from ._shapes import box, cone_z, cyl_z, labelled
 
+# The kernel import is deferred into build(), the way sensor_case.py does it.
+# Everything above that -- the sweep, the layout, the clearances -- is
+# arithmetic over the parameters, and it has to import and run in an
+# environment with no build123d, because that is what `tests.yml` is.
 _MM = P.MM
 
 # CHOICE: the sweep. Five steps of 0.1 either side of nominal is wider than the
@@ -123,6 +126,8 @@ def csk_positions() -> list[tuple[float, float]]:
 
 def build() -> "Part":
     """The coupon, sitting on Z=0 the way it prints."""
+    from ._shapes import box, cone_z, cyl_z, labelled
+
     lx, ly = slab_size()
     part = box(lx, ly, SLAB_T, at=(0.0, 0.0, 0.0))
 
