@@ -184,8 +184,14 @@ class TestTheOpticalStack:
             d = math.hypot(hx - px, hy - py)
             assert d > P.SC_PORT_DIA / 2 + P.SC_AS7341_PILOT / 2 + 2.0 * P.MM, "under the recess"
         left = SC.top_face() - SC.pilot_top()
-        assert mm(left) >= 1.0, f"only {mm(left):.2f} mm of wall over a pilot"
-        assert SC.pilot_top() > SC.ceiling(), "the pilot stops in the boss, not the wall"
+        assert mm(left) >= 1.0, f"only {mm(left):.2f} mm of material over a pilot"
+        # Rev G's boss was 3.2 long and a 3.5 pilot had to run 0.3 into the top
+        # wall to fit. The measured sockets make the boss 5.0, so the blind end
+        # now stops inside it with boss above it — the top wall is no longer
+        # part of the screw's problem.
+        assert SC.pilot_top() < SC.ceiling(), "the pilot runs up into the top wall"
+        assert mm(SC.ceiling() - SC.pilot_top()) >= 1.0, \
+            f"only {mm(SC.ceiling() - SC.pilot_top()):.2f} mm of boss over the blind end"
 
     def test_the_screw_clamps_the_board_before_it_bottoms_out(self):
         """A screw that reaches the blind end first holds nothing at all."""
@@ -227,7 +233,8 @@ class TestTheOpticalStack:
         everything on that face — and the STEMMA QT sockets are on that face.
         The collar, which no longer touches the board, has to clear the parts
         that sit inside its own radius."""
-        assert P.SC_BAFFLE_DROP >= P.SC_AS7341_QT_H + 0.3 * P.MM, "a socket hits the ceiling"
+        assert mm(P.SC_BAFFLE_DROP - P.SC_AS7341_QT_H) >= 0.25, \
+            f"only {mm(P.SC_BAFFLE_DROP - P.SC_AS7341_QT_H):.2f} mm over a socket"
         assert P.SC_BAFFLE_DROP > P.SC_AS7341_PKG_H + 0.2 * P.MM
         assert P.SC_BAFFLE_CLEAR > P.SC_AS7341_NEAR_PART_H + 0.1 * P.MM, \
             "the collar lands on a part beside the sensor"
@@ -282,10 +289,19 @@ class TestNothingCollides:
         wall = (P.SC_BOSS_DIA - P.SC_CLOSURE_PILOT) / 2
         assert wall >= P.SC_CLOSURE_PILOT, f"only {mm(wall):.2f} mm round the pilot"
 
+    def test_the_case_runs_two_screw_sizes_on_purpose(self):
+        """Rev G ran one size throughout, which was worth having. The board's
+        own holes measured Ø2.29, so an M2.5 cannot pass them and the board
+        dropped to M2. The closure screws pass through the plate into printed
+        bosses and meet no such limit, so they stay M2.5 where the bigger
+        thread is worth more. Two sizes, each for a stated reason."""
+        assert P.SC_CLOSURE_PILOT > P.SC_AS7341_PILOT, \
+            "the closure has quietly followed the board down to M2"
+        assert P.SC_AS7341_PILOT < P.SC_AS7341_HOLE_DIA, "M2 cannot pass the board"
+        assert P.SC_CLOSURE_PILOT == 2.3 * P.MM, "the closure is no longer M2.5"
+
     def test_the_closure_screw_clamps_the_plate_before_it_bottoms_out(self):
-        """One screw size for the whole case: the same thread-forming M2.5 the
-        board hangs on, up through the plate into the corner boss."""
-        assert P.SC_CLOSURE_PILOT == P.SC_AS7341_PILOT, "two pilot sizes for one screw"
+        """Thread-forming M2.5 up through the plate into the corner boss."""
         into_pilot = P.SC_CLOSURE_SCREW_LEN - P.SC_BASE_T
         assert into_pilot < P.SC_CLOSURE_PILOT_DEPTH, "bottoms out before the plate is clamped"
         assert mm(into_pilot) >= 2.0, f"only {mm(into_pilot):.2f} mm of thread in the boss"
@@ -440,15 +456,22 @@ class TestItPrintsWithoutTricks:
         assert P.SC_SCREW_CSK > P.SC_SCREW_DIA
 
     def test_the_as7341_screw_clears_the_boards_hole(self):
-        """The pilot is smaller than the board's Ø2.5, so the screw forms its
-        thread in the boss and passes the board — not the other way round."""
+        """The pilot is smaller than the board's hole, so the screw forms its
+        thread in the boss and passes the board — not the other way round.
+        This is the test Rev G would have failed on the measured Ø2.29: an
+        M2.5's Ø2.5 major does not go through it at all."""
         assert P.SC_AS7341_PILOT < P.SC_AS7341_HOLE_DIA
+        assert mm(P.SC_AS7341_HOLE_DIA) > 2.0, "an M2 shank does not pass the board"
 
     def test_the_pilot_suits_a_thread_forming_screw_in_petg(self):
         """Too tight and the boss splits; too loose and there is no thread. An
-        M2.5's minor diameter is 1.95, and a vertical hole prints ~0.2 small."""
+        M2's minor diameter is 1.567 and its major is 2.0; a vertical hole
+        prints ~0.2 small. Printing above the minor means the screw forms the
+        flanks and never has to cut the root, which is what a boss splits on."""
         printed = P.SC_AS7341_PILOT - 0.2 * P.MM
-        assert 1.95 * P.MM < printed < 2.3 * P.MM, f"{mm(printed):.2f} mm as printed"
+        assert 1.567 * P.MM < printed < 2.0 * P.MM, f"{mm(printed):.2f} mm as printed"
+        engaged = (2.0 * P.MM - printed) / 2
+        assert mm(engaged) >= 0.12, f"only {mm(engaged):.2f} mm of flank engaged"
 
     def test_the_boss_has_meat_around_its_pilot(self):
         wall = (P.SC_AS7341_BOSS_DIA - P.SC_AS7341_PILOT) / 2

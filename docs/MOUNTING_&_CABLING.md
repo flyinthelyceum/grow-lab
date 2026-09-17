@@ -360,16 +360,47 @@ restated because it is the one that gets skipped when you are tired.
 ## The canopy sensor case
 
 Modelled in `cad/growlab_cad/sensor_case.py`; CI writes STLs to `cad/out/print/`.
-**60 × 27 × 18 mm**, matte white, on the CMU's centre-rear. Two printed parts.
+**60 × 27 × 18.5 mm**, matte white, on the CMU's centre-rear. Two printed parts.
 
-Rev G is Rev E redrawn round the AS7341 actually in hand: the **Adafruit STEMMA
-QT** breakout, 1.0 × 0.7 in with four corner holes, the header along a long
-edge, the sensor dead centre, and two JST SH sockets standing 2.9 mm tall on the
-sensor face. It hangs on all four holes; the drop under the ceiling is 3.2 mm
-for the sockets; the collar is a light stop and stops 1.5 mm clear of the board.
-At 25.4 mm long it fills the upper level, so the BME280 now sits taped on the
-plate at the −X end, sensor up beside an inlet slot, with the ADS1115 shifted
-6.5 mm the other way; the case gained 2 mm of length for the clearances.
+Rev H is Rev G with every estimate replaced by the calipered value out of the
+components library, and two of them moved far enough to redraw the case.
+
+**The STEMMA QT sockets are 4.7 mm tall, not 2.9.** Rev G read that height off a
+photo and typed a 3.2 mm drop under the ceiling — "the sockets plus 0.3" — which
+put the ceiling 1.5 mm *inside* them. That is the same failure as Rev E's, one
+revision later: Rev E hung the sensor face 2.0 under the ceiling and the sockets
+would have hit the lid. The drop is 5.0 now and it is an expression,
+`SC_AS7341_QT_H + SC_QT_CLEAR`, not a number anyone types.
+
+**The board's mounting holes are Ø2.29, not the Ø2.5 Adafruit publishes.** An
+M2.5 does not pass through them, so the board hangs on M2 × 4 into Ø1.9 pilots.
+The plate keeps M2.5: those screws pass through printed material at both ends
+and nothing caps them at M2. Rev G's one-size-for-the-whole-case is gone, and a
+test now asserts the two sizes are different on purpose so the plate cannot
+quietly follow the board down.
+
+The 1.8 mm the board dropped had to be paid for twice. **Downward**, it left only
+1.76 mm between the plate boards and the underside of the hanging AS7341, so the
+case is 0.5 mm taller. **Upward**, it lengthened the tube from the sensor to the
+diffuser and took the field half-angle from 46° to 36° — at which point the
+detector sees a spot on the disc rather than the disc. That tube is
+`SC_WALL + SC_BAFFLE_DROP − SC_PORT_DEPTH − SC_AS7341_PKG_H` and is independent
+of the case height, so the only lever is the bore: **Ø9.2 now, not Ø6.5**, with
+the collar at Ø11.4. That restores 45.4° and still sits inside the LED's 6.5 mm
+offset, which is the constraint that set the bore in the first place.
+
+Everything else of Rev G stands. The board hangs on all four holes; the collar
+is a light stop and stops 1.5 mm clear of the board. At 25.68 mm long it fills
+the upper level, so the BME280 sits taped on the plate at the −X end, sensor up
+beside an inlet slot, with the ADS1115 shifted 6.5 mm the other way.
+
+**One row is still un-calipered: the board's width.** Its two independent
+estimates disagree — the measured length came in 0.28 mm *over* Adafruit's
+published 25.4, arguing the board runs large, while the sensor sitting 8.76 mm
+from the LED edge argues for 17.52 if the window is truly centred. Nothing is
+inferred from that; the published 17.78 stands as the estimate until a caliper
+settles it. It decides how much board is left under the collar on the header
+side, so measure it before printing.
 
 Rev E is what five adversarial reviews left standing, and the short version is
 that Rev D would not have printed. Four of its features were not attached to the
@@ -390,7 +421,7 @@ is that each half is **one solid**.
 | Supports | **None**, and the tests say so from the solid rather than from the parameters: the only downward faces in either part are the disc's 3 mm ledge and seven vent roofs of 5.5 mm |
 | Elephant's foot | Set the slicer's first-layer compensation. The bed face is the one on show |
 | Inserts | **None.** Rev E used four M2 heat-set inserts; they were a soldering-iron step with an alignment risk on the one face that has to seat flat, for a box that opens a few times a year. The plate screws form their own thread in the corner bosses instead |
-| Screws | **One size, M2.5, thread-forming into Ø2.3 pilots.** 4 × M2.5 × 6 countersunk up through the plate into a true 90° cone 1.1 deep (1.4 of plate left under each head) and 4.0 into the corner bosses; 4 × M2.5 × 4 pan up through the AS7341's own four holes, 3.5 into its bosses. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
+| Screws | **Two sizes, both thread-forming, each for a stated reason.** Plate: 4 × M2.5 × 6 countersunk into Ø2.3 pilots, up through a true 90° cone 1.1 deep (1.4 of plate left under each head) and 4.0 into the corner bosses. Board: 4 × **M2 × 4** pan into Ø1.9 pilots, up through the AS7341's own Ø2.29 holes, 3.5 into its bosses — an M2.5 will not pass that hole. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
 | Diffuser | Ø12 × 1 mm **etched** PTFE disc, etched face down, bonded with **neutral-cure (alkoxy/oxime)** silicone. See below — this is the one place the old sheet was quietly wrong |
 | Feet | 3 × neutral-cure silicone, **cast in place** in the plate's recesses. Three points never rock |
 | Interior | Paint matte black before assembly if the dark-period reading has to be zero. White PETG at 1 mm is a diffuser, not a shield |
@@ -574,7 +605,7 @@ is printed. Rough figures.
 |---|---|---|
 | White acrylic sheet, 1 mm | $8 | The diffuser disc. Etched PTFE does not exist at 1 mm from any stock supplier; acrylic is the alternative any silicone holds |
 | Neutral-cure silicone, 20 g tube | $10 | Bonds the disc and casts the three feet. Not acetoxy — it off-gasses acetic acid into a closed box |
-| M2.5 × 6 countersunk, M2.5 × 4 pan | $10 | The whole case, one thread size. Skip the pans if the ×3 from the earlier sheet are in the drawer: 1.4 of thread passes |
+| M2.5 × 6 countersunk, M2 × 4 pan | $10 | Two sizes: the plate takes M2.5, the board takes M2 because its own holes are Ø2.29. M2.5 pans from the earlier sheet do **not** substitute — they do not pass the board |
 | Acrylic conformal coat, aerosol | $25 | Three boards in a vented box under a warm fixture. Mask the BME280 lid and the AS7341 window with any tape |
 | Bootlace ferrule kit + crimper | $25 | Non-negotiable. Buy first |
 | 35 mm DIN rail, 12 in, + push-in terminal block kit with end stops and jumpers | $35 | Zone 4 and the four-rail I²C bus, on one rail. Jumper bars make the rails |
