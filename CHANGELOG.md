@@ -2,6 +2,52 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-17 (the reservoir gets one writer, and the fixture gets a field)
+
+### Found
+- **The EC contradiction was three-way, not two.** The runbook and the build procedure said
+  800–1,200 µS/cm; `alerts.py` hardcoded a warning band of **800–1,600** and a critical band of
+  400–2,000; `[meters.ec]` centred a dial at 1.0 mS/cm. Nothing derived from anything, so a
+  reading of 1,300 µS/cm was out of range according to the documents and perfectly normal
+  according to the service that actually raises alarms. The documented contradiction was the
+  visible part of a wider drift.
+- **The number the whole thing was blocked on is not trustworthy.** The 1,529 µS/cm plain-water
+  baseline came from a probe calibrated at **12,880 and 80,000 µS/cm** — points 8× and 52× above
+  the band this station controls in. A conductivity cell is not characterised outside its
+  calibration points. Six months of "either the target is wrong or we need RO" rested on a
+  measurement taken with an instrument that had never been calibrated anywhere near the range.
+  The blocker is a recalibration, not a decision.
+
+### Changed
+- **`[reservoir]` is the one writer for water chemistry.** pH and EC targets with their warning
+  and critical bands. Both meter centres are computed from the targets, and the pH and EC alert
+  rules are built from the bands by `alerts.rules_from_config`. A file that sets `centre`
+  explicitly still wins — a dial can be deliberately off-target — but nothing has to remember to
+  keep two numbers in step. The alert bands move to match the runbook: pH warning high 6.5 → 6.2,
+  EC warning high 1,600 → 1,200, EC critical high 2,000 → 1,600.
+- **An unreachable target fails to load.** `source_water_ec_us` records the conductivity of the
+  water going in. Salts only ever add conductivity, so `_validate_config` refuses a target at or
+  below the source, and refuses a source already inside the warning band. The exact numbers this
+  project carried in prose for months — 800–1,200 against 1,529 — do not load. That refusal is
+  where the decision gets forced, instead of a paragraph in a document nobody reads at mix time.
+- **`lighting.fixture_above_media_in`.** The collar is set by hand and nothing knew where it
+  ended up, which matters because the AS7341 reads output and distance as one number: a spectral
+  reading without it cannot be compared with last month's, and a raised fixture is
+  indistinguishable from a dimming board. Bounds are the CAD's own `FIXTURE_ABOVE_MEDIA_MIN/MAX`
+  (12.0–33.0 in), with a test that fails if the two ever diverge. Default `None`, because nobody
+  has written it down and that is what every reading before today is worth.
+- **`growlab config show`.** "Read the config, not the doc" only works if the config can be read.
+  It prints the targets, the derived centres, and says **NOT MEASURED** / **NOT RECORDED** in
+  plain words for the two values that are still missing.
+- **The mast-bore slack mock-up is a procedure, not a warning.** Five steps, a go/no-go, and the
+  four figures it turns on pulled from the CAD: 1.37 in bore, 21 in of slack at the bottom of
+  travel, 0.50 × 0.85 entry, 0.25 slot. The failure mode is named because it is the one that
+  fools people — the slack does not coil, it helixes and then binds, and it feels fine for the
+  first few cycles. Ten cycles minimum. Until it has been run, the slot is not cut.
+- Runbook gains **D.0**, which recalibrates the EC probe in range before anything else in Phase D
+  and sets `source_water_ec_us` from that measurement. The BOM's blocking note is reframed: not a
+  choice between two readings, but one reading that needs retaking.
+
 ## 2026-09-17 (the width lands, and the pin stops lying)
 
 ### Changed

@@ -112,9 +112,10 @@
             </div>
             <p class="rationale">
                 Centre is mechanical zero, so where you put it decides where the
-                needle rests in normal operation. This is the control for the
-                open question: an 800–1,200&nbsp;µS/cm target against a
-                1,529&nbsp;µS/cm plain-water baseline.
+                needle rests in normal operation. It defaults to
+                <code>[reservoir].ec_target_us</code>, the same figure the alert
+                band is built from, so the needle and the alarm cannot disagree.
+                Override it here only to sit the needle deliberately off-target.
             </p>
         </div>
 

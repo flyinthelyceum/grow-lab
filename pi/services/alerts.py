@@ -74,7 +74,7 @@ DEFAULT_RULES: tuple[ThresholdRule, ...] = (
     ThresholdRule(
         sensor_id="ezo_ph",
         warning_low=5.8,
-        warning_high=6.5,
+        warning_high=6.2,
         critical_low=5.0,
         critical_high=7.5,
         label="pH",
@@ -83,13 +83,57 @@ DEFAULT_RULES: tuple[ThresholdRule, ...] = (
     ThresholdRule(
         sensor_id="ezo_ec",
         warning_low=800.0,
-        warning_high=1600.0,
+        warning_high=1200.0,
         critical_low=400.0,
-        critical_high=2000.0,
+        critical_high=1600.0,
         label="EC",
         unit="µS/cm",
     ),
 )
+
+# The pH and EC entries above are the same numbers ReservoirConfig defaults to,
+# and they are here only so AlertService still has something sane when it is
+# constructed without a config. Anything that HAS a config should call
+# rules_from_config, which is the one path that cannot drift from the dials.
+_RESERVOIR_SENSORS = ("ezo_ph", "ezo_ec")
+
+
+def rules_from_config(config) -> tuple[ThresholdRule, ...]:
+    """DEFAULT_RULES with the reservoir bands taken from `[reservoir]`.
+
+    Before this existed the EC band lived in three places -- the runbook's
+    prose, this module's constants, and the dial's centre -- and the three had
+    already drifted apart: the docs said a reading of 1,300 uS/cm was out of
+    range and this file said it was fine. Now the docs describe what the config
+    says, and the alert and the needle are computed from the same two numbers.
+    """
+    r = config.reservoir
+    overrides = {
+        "ezo_ph": ThresholdRule(
+            sensor_id="ezo_ph",
+            warning_low=r.ph_warning_low,
+            warning_high=r.ph_warning_high,
+            critical_low=r.ph_critical_low,
+            critical_high=r.ph_critical_high,
+            label="pH",
+            unit="",
+        ),
+        "ezo_ec": ThresholdRule(
+            sensor_id="ezo_ec",
+            warning_low=r.ec_warning_low_us,
+            warning_high=r.ec_warning_high_us,
+            critical_low=r.ec_critical_low_us,
+            critical_high=r.ec_critical_high_us,
+            label="EC",
+            unit="µS/cm",
+        ),
+    }
+    return tuple(
+        overrides.get(rule.sensor_id, rule)
+        if rule.sensor_id in _RESERVOIR_SENSORS
+        else rule
+        for rule in DEFAULT_RULES
+    )
 
 
 class AlertService:

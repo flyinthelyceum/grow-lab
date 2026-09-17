@@ -679,10 +679,51 @@ Things this document raises that it cannot settle.
   `V1_PHYSICAL_BUILD.md` currently specifies. Resolve before the flanges are made.
 - **Conductor count is a draft.** Verify against the boards in hand before buying a
   connector.
-- **Slack inside the mast bore is not proven.** At the bottom of travel there is ~21 in
-  of spare cable inside a 1.37 in bore. This project already has history with something
-  jamming in that bore — the counterweight. **Mock it up with the real cables before the
-  slot is cut**, and use thin, flexible stock: ultra-slim HDMI, silicone-jacket 18 AWG.
+- **Slack inside the mast bore is not proven.** The procedure below settles it. Until
+  it has been run, the slot is not cut.
+
+### Mast-bore slack mock-up — before the slot is cut
+
+The fixture collar travels **21 in** (12.0 to 33.0 above the media). All 21 in of that
+becomes slack cable inside a **1.37 in** bore when the fixture is at the bottom. This
+project already has history with something jamming in that bore — the counterweight —
+and a jam here is discovered by a fixture that will not lower, with the cabinet built.
+
+The mock-up costs an afternoon and needs no cut metal: a length of the real tube, the
+real cables, and gravity.
+
+| Figure | Value | Where from |
+|---|---|---|
+| Bore ID | 1.37 in | `MAST_OD` 1.5 − 2 × `MAST_WALL` 0.065 |
+| Collar travel, = slack at the bottom | 21.0 in | `FIXTURE_ABOVE_MEDIA` 12.0 → 33.0 |
+| Entry obround | 0.50 × 0.85 in | `MAST_LINE_PASS_DIA` × `_H` |
+| Exit slot width | 0.25 in | `MAST_SLOT_W` — passes cable, not connectors |
+| Keyhole at the slot's top | Ø0.625 in | `MAST_SLOT_KEYHOLE_DIA`, passes an HDMI end |
+
+**Run it like this.**
+
+1. **Stand a full-length offcut of the real 1.5 × 0.065 tube** vertically. It must be the
+   real tube: bore ID is the whole question and nominal 1.5 in stock varies.
+2. **Bundle the actual cables** — ultra-slim HDMI, the fixture's silicone-jacket 18 AWG
+   pair, the Cat5e — as they will be loomed, and measure the bundle's OD where it is
+   fattest, which is at a connector, not along the run.
+3. **Feed from the top with 21 in of deliberate slack** below the collar's entry point,
+   then work the bundle down and up through its whole travel ten times.
+4. **Watch for the failure that matters**: the slack does not coil, it *helixes* and then
+   binds against the bore wall. It will feel fine for the first few cycles and then not.
+   Ten cycles is the minimum that finds it.
+5. **Go/no-go:** the bundle moves through the full 21 in under its own weight plus a hand,
+   with no point where it needs a tug. A tug in a mock-up is a jam in the built piece.
+
+**If it binds** — the options, cheapest first: thinner stock (ultra-slim HDMI is already
+specified for exactly this reason); a single loose spiral wrap so the bundle helixes
+predictably rather than randomly; taking the slack *outside* the tube in a service loop
+behind the cabinet and letting the bore carry only a taut run; or a larger tube, which
+changes the frame and is the expensive answer.
+
+**Record the result here** — the bundle OD, the cycles run, and whether it passed —
+because a negative result is what justifies the redesign, and a positive one is what
+lets the slot be cut.
 - **Keep drip-line joints out of 34–45 in.** Below the slot the bore is shared between the
   drip line and three electrical runs. A joint that weeps inside a tube full of cable is
   the one failure this arrangement invites.

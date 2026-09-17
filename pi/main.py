@@ -18,7 +18,7 @@ from pi.data.models import SystemEvent
 from pi.data.repository import SensorRepository
 from pi.discovery.registry import build_registry
 from pi.discovery.scanner import scan_all
-from pi.services.alerts import AlertService
+from pi.services.alerts import AlertService, rules_from_config
 from pi.services.irrigation import IrrigationService
 from pi.services.polling import PollingService
 
@@ -177,7 +177,9 @@ async def run(config: AppConfig) -> None:
         """Deliver alert events to the notification channels."""
         await notification_svc.dispatch(event)
 
-    alert_svc = AlertService(repo, on_alert=_on_alert)
+    alert_svc = AlertService(
+        repo, rules=list(rules_from_config(config)), on_alert=_on_alert
+    )
     await alert_svc.start()
 
     # Start fan service (temperature-triggered PWM)

@@ -476,12 +476,22 @@ moisture does: both are reservoir chemistry, both come from EZO circuits in the 
 both benefit from the same isolation story, and the two needles then read the same body of
 liquid. Moisture is a media value on a different rhythm.
 
-**Blocking: this project's own EC numbers disagree, and they set the dial's centre.**
-`V1_GO_LIVE_RUNBOOK.md` targets **800–1,200 µS/cm**, but the same doc records the plain-water
-baseline at **1,529 µS/cm** — already above target before any nutrient is added. You cannot
-reach 0.8–1.2 mS/cm by adding salts to 1.53 mS/cm water. Either the target is wrong for this
-tap water or the build needs RO/distilled makeup water. **Resolve before printing an EC face**,
-because the resolved target *is* mechanical centre.
+~~**Blocking: this project's own EC numbers disagree, and they set the dial's centre.**~~
+**Reframed 2026-09-17.** The numbers no longer disagree — targets, alert bands and both dial
+centres are computed from `[reservoir]` in `config.toml`, and the loader refuses a target that
+is at or below the source water, since adding nutrient can only raise conductivity.
+
+What is still open is not a choice between two readings; it is that **one of the readings is
+not trustworthy**. The 1,529 µS/cm plain-water baseline came from a probe calibrated at 12,880
+and 80,000 µS/cm — 8× and 52× above the band this station controls in. A conductivity cell is
+not characterised outside its calibration points. Recalibrate at 1,413 µS/cm and re-measure
+(`V1_GO_LIVE_RUNBOOK.md` D.0) before concluding anything about the tap water.
+
+**Still resolve before printing an EC face**, because the target is mechanical centre — but
+the thing to resolve is a calibration, not an argument. If the water really does come back
+near 1,500 µS/cm, the answer is RO/distilled makeup water rather than a raised target: hard
+water spends its conductivity on calcium and magnesium carbonates, so an EC that looks on
+target carries very little of the nutrient actually dosed.
 
 Once resolved, centre on the target and span so the working band sits at roughly ±20% of
 half-scale, matching pH. Do **not** centre at 2.0 mS/cm on an 0–4 face: with a ~1.0 target the

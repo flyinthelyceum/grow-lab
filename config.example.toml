@@ -58,6 +58,12 @@ on_hour = 6
 off_hour = 22
 intensity = 200        # PWM 0-255
 ramp_minutes = 15
+# Inches above the media surface, 12.0 to 33.0. The collar is set by hand and
+# nothing else knows where it ended up -- and the AS7341 reads output and
+# distance as ONE number, so without this a spectral reading cannot be compared
+# with last month's, and a raised fixture looks exactly like a dimming board.
+# Unset means nobody has written it down, which is what it is worth.
+# fixture_above_media_in = 12.0
 
 [[irrigation.schedules]]
 hour = 8
@@ -116,6 +122,38 @@ poll_interval_seconds = 2.0
 # web stays there through a hot afternoon.
 override_ttl_seconds = 3600.0
 
+[reservoir]
+# Target water chemistry. THE one place these numbers are stated.
+#
+# They used to live in three: the runbook's prose (EC 800-1,200 uS/cm),
+# alerts.py's constants (warn 800-1,600, critical 400-2,000) and this file's
+# dial centre. Nothing derived from anything, so they drifted -- the docs
+# called 1,300 uS/cm out of range while the alert service called it fine.
+# The alert bands and both meter centres are computed from these fields now.
+ph_target = 6.0            # dial centre
+ph_warning_low = 5.8
+ph_warning_high = 6.2
+ph_critical_low = 5.0
+ph_critical_high = 7.5
+
+ec_target_us = 1000.0      # dial centre; midpoint of the runbook's 800-1,200
+ec_warning_low_us = 800.0
+ec_warning_high_us = 1200.0
+ec_critical_low_us = 400.0
+ec_critical_high_us = 1600.0
+
+# Conductivity of the water going IN, before any nutrient. Tap, or near zero
+# for RO. Salts only ever ADD conductivity, so a target at or below this is
+# unreachable however much you dose -- the loader refuses that config rather
+# than letting the station chase a number it cannot hit.
+#
+# Left unset because it has not been measured on an instrument that can be
+# trusted in this range. The 1,529 uS/cm this project recorded in March does
+# NOT count: that probe was calibrated at 12,880 and 80,000 uS/cm, points 8x
+# and 52x above the band being controlled here. Recalibrate at 1,413 uS/cm
+# first -- V1_GO_LIVE_RUNBOOK.md D.0 -- then measure, then set this.
+# source_water_ec_us = 0.0
+
 [meters]
 # Front-panel Weston 301 centre-zero movements on an MCP4728 quad DAC.
 # Each meter sits between two DAC channels with a fixed resistor per leg;
@@ -130,8 +168,8 @@ fault_timeout_seconds = 900.0   # stale this long -> ease to centre, flag fault
 
 [meters.ph]
 # 30-0-30 uA movement. Centre is the target; span is the half-range.
+# `centre` defaults to [reservoir].ph_target -- see [meters.ec] below.
 sensor_id = "ezo_ph"
-centre = 6.0
 span = 1.0                      # so 5.0 = full left, 7.0 = full right
 dac_positive = "A"
 dac_negative = "B"
@@ -143,11 +181,12 @@ invert = false
 
 [meters.ec]
 # 100-0-100 uA movement. EZO-EC reports uS/cm; scale converts to mS/cm.
-# WARNING: `centre` is unresolved. The runbook targets 800-1,200 uS/cm but
-# records plain water at 1,529 uS/cm — already above target. Settle that
-# before printing a dial face; the resolved target IS mechanical centre.
+# `centre` defaults to [reservoir].ec_target_us * scale and is left unset here
+# so the dial cannot disagree with the alert band. Set it only to put the
+# needle deliberately off-target.
+# Span stays 1.0 mS/cm on purpose: it puts the 800-1,200 working band at about
+# +/-20% of half-scale, which is the rule the dial-face note states.
 sensor_id = "ezo_ec"
-centre = 1.0
 span = 1.0
 scale = 0.001
 dac_positive = "C"

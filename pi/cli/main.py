@@ -8,6 +8,7 @@ from __future__ import annotations
 import click
 
 from pi.cli.camera_control import camera_group
+from pi.cli.config_cmd import config_group
 from pi.cli.dashboard_cmd import dashboard_cmd
 from pi.cli.db_tools import db_group
 from pi.cli.display_cmd import display_group
@@ -50,6 +51,7 @@ def start(ctx: click.Context) -> None:
 
 cli.add_command(camera_group, name="camera")
 cli.add_command(dashboard_cmd, name="dashboard")
+cli.add_command(config_group, name="config")
 cli.add_command(db_group, name="db")
 cli.add_command(display_group, name="display")
 cli.add_command(fan_group, name="fan")
