@@ -394,13 +394,15 @@ is a light stop and stops 1.5 mm clear of the board. At 25.68 mm long it fills
 the upper level, so the BME280 sits taped on the plate at the −X end, sensor up
 beside an inlet slot, with the ADS1115 shifted 6.5 mm the other way.
 
-**One row is still un-calipered: the board's width.** Its two independent
-estimates disagree — the measured length came in 0.28 mm *over* Adafruit's
-published 25.4, arguing the board runs large, while the sensor sitting 8.76 mm
-from the LED edge argues for 17.52 if the window is truly centred. Nothing is
-inferred from that; the published 17.78 stands as the estimate until a caliper
-settles it. It decides how much board is left under the collar on the header
-side, so measure it before printing.
+**Every dimension on this board is now measured.** The width was the last
+estimate, and the two inferences available pointed opposite ways: the measured
+length came in 0.28 mm *over* Adafruit's published 25.4, arguing the board runs
+large, while the sensor sitting 8.76 mm from the LED edge argued for 17.52 if
+the window were centred. It calipers at **17.78 — 0.700 in exactly**, so
+neither was right. The board runs long but not wide, and the window sits 0.13 mm
+off centre in Y: 8.76 to the LED edge against 9.02 to the header edge. The
+collar has 8.76 mm of board to its LED side and 9.02 mm to its header side,
+against the 6.7 mm it needs. Nothing in the case is drawn to an estimate.
 
 Rev E is what five adversarial reviews left standing, and the short version is
 that Rev D would not have printed. Four of its features were not attached to the

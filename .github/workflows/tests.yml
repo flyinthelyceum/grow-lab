@@ -1,0 +1,64 @@
+name: Tests
+
+# The suite, on every pull request.
+#
+# Until now nothing ran it there. `deploy.yml` gates the Pi deploy on green
+# tests, but only on push to main — by which point the change is already in.
+# `cad.yml` runs on pull requests but is path-filtered to the CAD, so a pull
+# request touching `pi/`, `tools/` or the docs got no checks at all and merged
+# on the author's word that it passed locally.
+#
+# Scoped to pull requests on purpose: pushes to main are already covered by
+# deploy.yml's test job, and running both would double every main build for
+# nothing.
+#
+# The CAD tests skip here without build123d, and that is deliberate — the OCP
+# kernel is ~150 MB and cad.yml already runs them on the paths that can break
+# them. This job is the fast one; if it stops being fast, nobody will wait for it.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A second push to a pull request makes the first run irrelevant.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        # Not the `pi` extra: RPi.GPIO and picamera2 do not build off-Pi, and
+        # every driver that needs them imports lazily for exactly this reason.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Which components
+        # The library is pinned to a MOVING tag, so the version under test is
+        # worth printing: a run that goes green against a stale copy looks
+        # identical to one that went green against the current one.
+        run: python -c "import components; print(components.version())"
+
+      - name: One writer for measurements
+        # CLAUDE.md's rule is enforced by a pre-commit hook, and a hook is
+        # advisory — .git/hooks is not versioned and --no-verify is one flag.
+        # This is where it actually holds.
+        run: python -m components lint .
+
+      - name: Test
+        run: pytest -q

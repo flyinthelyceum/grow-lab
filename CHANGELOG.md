@@ -2,6 +2,35 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-17 (the width lands, and the pin stops lying)
+
+### Changed
+- **`SC_AS7341_W` is an import.** The board calipers at **17.78 — 0.700 in exactly**. Both
+  available inferences were wrong: the length ran 0.28 over Adafruit's published 25.4, which
+  argued the board runs large, and a centred sensor window at 8.76 from the LED edge argued for
+  17.52. It runs long but not wide, and the window sits 0.13 off centre in Y. Nothing in the
+  sensor case is drawn to an estimate any more.
+- **The SessionStart hook keeps the library current, not merely present.** It only ever
+  installed `components` when the import *failed*, so a stale copy was invisible by
+  construction. It now compares the installed commit — pip records it in `direct_url.json` —
+  against wherever `components-v1` points, and reinstalls when they differ. Offline, it says
+  nothing and does nothing: a freshness check must never be why a session cannot start.
+- **`tests.yml` runs the suite on every pull request.** `deploy.yml` gated the Pi deploy on
+  green tests but only on push to main, by which point the change is already in, and `cad.yml`
+  is path-filtered to the CAD. A pull request touching `pi/`, `tools/` or the docs got no checks
+  at all. It also runs `python -m components lint`, which until now was enforced only by a
+  pre-commit hook — and `.git/hooks` is unversioned and `--no-verify` is one flag.
+
+### Found
+- **An editable install is not automatically a current one.** The first run of the new check
+  passed straight over this machine's install, correctly by its own rule — editable installs
+  track their clone. The clone was 41 commits behind, at v1.9, quietly shadowing a newer copy.
+  "It tracks the clone" is only reassuring if the clone is current. A clean clone is
+  fast-forwarded now; a dirty one is left alone and said out loud, because someone is
+  mid-measurement in it and their work outranks the check.
+- **The moving tag drifted twice in one session** — v1.16 to v1.32 to v1.50 — which is the
+  argument for the check rather than a one-off to fix by hand.
+
 ## 2026-09-17 (Rev H: the measurements land, and two of them redraw the case)
 
 ### Found
