@@ -42,22 +42,33 @@ part has no internal bridge longer than a vent slot.
 recesses open upward and nothing on it bridges. The walls stand on it and it is
 the full footprint, chamfered to match — a plain butt joint with no fit to get
 wrong, and no slot at the back for the block's own damp air. The seam is a
-hairline 2.5 mm above the block. With the lip gone the plate is a flat
+hairline 2.5 mm above the block, and the case stands 18.5 overall. With the lip gone the plate is a flat
 rectangle with four holes and three recesses in it, which is the whole of what
 it ever needed to be. The ADS1115 and the BME280 are taped to its inner face.
 
 The AS7341 that is actually in hand
 -----------------------------------
-Rev G. The first cut was drawn to a vendor datasheet for a 40 × 20 T-shaped
-board; Rev E to a photo of what was thought to be a 21 × 16 generic. The board
-in hand, photographed properly on 2026-09-14, is the **Adafruit STEMMA QT**
-breakout: 1.0 × 0.7 in, four Ø2.5 holes on a 0.8 × 0.5 in grid, the header along
-a long edge, the sensor dead centre, and — the part that changes the case — two
-JST SH sockets standing 2.9 mm tall *on the sensor face*, one at each end.
+Rev H. The first cut was drawn to a vendor datasheet for a 40 × 20 T-shaped
+board; Rev E to a photo of what was thought to be a 21 × 16 generic; Rev G to a
+proper photo of the right board, scaled off its own header pitch. Rev H is the
+first one drawn to calipers: every dimension comes from
+``components.as7341_breakout``.
+
+It is the **Adafruit STEMMA QT** breakout, 25.68 × 17.78, four Ø2.29 holes on a
+20.17 × 12.62 grid, the header along a long edge, the sensor all but centred,
+and — the part that sets the case's height — two JST SH sockets standing
+**4.7 mm** on the sensor face, one at each end.
+
+Two of those measurements moved the part. Rev G read the sockets as 2.9 off a
+photo and set a 3.2 drop, "the sockets plus 0.3", which put the ceiling 1.5 mm
+*inside* them — the same failure as Rev E's, in the parameter written to fix it.
+The drop is 5.0 and derived now. And the holes are Ø2.29, not the Ø2.5 Adafruit
+publishes, so an M2.5 does not pass the board at all.
 
 So it hangs on its own four holes, from four Ø5.5 bosses under the ceiling,
-with M2.5 × 4 thread-forming screws up through the board. Four points fix
-position, rotation and rock, and the collar has no mechanical job any more.
+with **M2 × 4** thread-forming screws up through the board into Ø1.9 pilots.
+Four points fix position, rotation and rock, and the collar has no mechanical
+job any more.
 The bosses set the drop at 3.2, which is the sockets plus 0.3; nothing else on
 that face comes within a millimetre of the ceiling. The header edge faces the
 rear wall, so the four wires go straight to the cable notch.
