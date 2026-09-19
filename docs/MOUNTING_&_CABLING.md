@@ -427,7 +427,8 @@ is that each half is **one solid**.
 | Screws | **Two sizes, both thread-forming, each for a stated reason.** Plate: 4 × M2.5 × 6 countersunk into Ø2.3 pilots, up through a true 90° cone 1.1 deep (1.4 of plate left under each head) and 4.0 into the corner bosses. Board: 4 × **M2 × 4** pan into Ø1.9 pilots, up through the AS7341's own Ø2.29 holes, 3.5 into its bosses — an M2.5 will not pass that hole. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
 | Diffuser | Ø12 × 1 mm **etched** PTFE disc, etched face down, bonded with **neutral-cure (alkoxy/oxime)** silicone. See below — this is the one place the old sheet was quietly wrong |
 | Feet | 3 × neutral-cure silicone, **cast in place** in the plate's recesses. Three points never rock |
-| Interior | Paint matte black before assembly if the dark-period reading has to be zero. White PETG at 1 mm is a diffuser, not a shield |
+| Interior | **Unpainted in V1, deliberately.** White PETG at 1 mm is a diffuser rather than a shield, so blackening the inside is a real improvement in principle — but nothing has yet measured whether the walls leak enough to matter, and the firmware already puts the onboard LED out on every read. Runbook C.3 now takes the reading that would decide it. Paint is a serviceable retrofit: the box opens, so this costs nothing to defer and is reversible in an afternoon |
+| If it does need painting | Water-based ultra-matte acrylic, airbrushed thin — Black 3.0 or similar. **Mask every surface that touches another:** boss end faces, the plate's mating rim, the four AS7341 boss tops, the tape footprints, every bore. What makes an optical black that black is a chalky low-binder surface, and in a cavity pointed at a sensor, shed particles on the window are a worse failure than the leak being fixed. **Never clearcoat it** — a smooth topcoat reflects about 4% at its own surface and throws away most of what the paint bought |
 
 ### Print the thread coupon first
 

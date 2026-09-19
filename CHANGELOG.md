@@ -2,6 +2,33 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-19 (the interior stays white, and the reading that would change that)
+
+### Found
+- **The paint instruction had no measurement behind it.** The mounting brief said to paint the
+  interior matte black "if the dark-period reading has to be zero", and nothing anywhere ever
+  took a dark-period reading. The condition could never be evaluated, so the instruction was
+  either going to be followed on principle or skipped on vibes.
+
+### Changed
+- **V1 ships with the case unpainted, on purpose.** White PETG at 1 mm is a diffuser rather than
+  a shield, so blackening the inside is a real improvement in principle — but the firmware
+  already puts the breakout's LED out on every read, and the box opens, so this is a reversible
+  retrofit rather than a decision that has to be made before assembly. Deferring an unmeasured
+  problem is cheaper than solving it blind, and the paint carries its own risk: an optical black
+  is black because it is chalky and low-binder, and shed particles on the sensor window would be
+  a worse failure than the leak being fixed.
+- **Runbook C.3 takes the dark pair.** Fixture off and room dark with the case as built, then the
+  same again with something opaque draped over the whole case. The second is the sensor's own
+  floor; the difference between them *is* the light coming through the walls. If they agree the
+  case stays white, and if they do not the paint spec is in the mounting brief. Both numbers get
+  recorded either way — an unpainted case with a measured floor is a result, and it is what makes
+  the decision reviewable rather than re-arguable.
+- The mounting brief carries the paint spec as a retrofit rather than a build step, with the
+  masking list (every surface that touches another) and one warning worth keeping: **never
+  clearcoat an optical black.** A smooth topcoat reflects about 4% at its own surface and throws
+  away most of what the paint bought.
+
 ## 2026-09-17 (a coupon for the threads, and the docstring catches up)
 
 ### Found
