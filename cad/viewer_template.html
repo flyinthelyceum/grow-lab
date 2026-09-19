@@ -137,6 +137,11 @@
     #hint { display: none; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  /* Bare: the portfolio's model slot (aaand.space loads this page with ?bare=1).
+     A model on white and nothing else — no chrome, no ground, no text — in
+     either theme. Last in the sheet so it outranks both theme blocks. */
+  :root.bare { --ground: #ffffff; }
+  :root.bare #rail, :root.bare #labels, :root.bare #hint { display: none; }
 </style>
 
 <div id="stage"></div>
@@ -198,6 +203,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const DATA = /*__STATION_DATA__*/null;
+// Bare mode: the portfolio's model slot. On for ?bare=1 in the URL (how
+// aaand.space loads the page) or when viewer.py --bare baked it into the file.
+const BARE = /*__BARE__*/false || new URLSearchParams(location.search).get('bare') === '1';
+if (BARE) document.documentElement.classList.add('bare');
 
 // ---------- data ----------
 function b64ToBuffer(s) {
@@ -216,6 +225,7 @@ function cssColour(name) {
 const dark = () => matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light'
   || document.documentElement.dataset.theme === 'dark';
 function palette() {
+  if (BARE) return { bg: 0xffffff, gridA: 0xffffff, gridB: 0xffffff, floor: 0xffffff };
   return dark()
     ? { bg: 0x1B1D21, gridA: 0x3A3F47, gridB: 0x272A30, floor: 0x202329 }
     : { bg: 0xEFEDE6, gridA: 0xBFB9AA, gridB: 0xDAD5C8, floor: 0xE6E3DA };
@@ -246,6 +256,7 @@ function buildGround() {
   const p = palette();
   if (grid) scene.remove(grid);
   if (floor) scene.remove(floor);
+  if (BARE) { renderer.setClearColor(p.bg); return; }   // no grid, no floor: the piece alone on white
   grid = new THREE.GridHelper(120, 10, p.gridA, p.gridB);   // 12 in squares
   grid.rotation.x = Math.PI / 2;
   grid.position.z = -0.02;
@@ -479,6 +490,38 @@ renderer.domElement.addEventListener('wheel', e => {
   applyCamera();
 }, { passive: false });
 
+// ---------- bare: fit and auto-orbit ----------
+// The bounding SPHERE of the piece sets the distance, not its box: the camera
+// circles the piece, so the frame has to hold every angle of it, not the one
+// it started at. 1.08 is the margin.
+function fitBare() {
+  const box = new THREE.Box3().setFromObject(station);
+  target.copy(box.getCenter(new THREE.Vector3()));
+  const radius = box.getSize(new THREE.Vector3()).length() / 2;
+  const vfov = camera.fov * Math.PI / 180;
+  const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
+  sph.r = radius / Math.sin(Math.min(vfov, hfov) / 2) * 1.08;
+  applyCamera();
+}
+// One turn about Z in ~40 s, while bare, no pointer is down, the tab is
+// visible and the visitor has not asked for reduced motion. A press pauses
+// it; it resumes 4 s after the pointer lifts. Stepped from the frame clock,
+// so a slow frame is a bigger step, not a slower turn.
+const TURN_MS = 40000;
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+let orbitAfter = 0;        // clock time past which the orbit may run; Infinity while held
+let orbitTick = null;      // clock time of the last orbit step; null while it is not running
+function orbiting() {
+  return BARE && !reducedMotion.matches && !document.hidden && performance.now() >= orbitAfter;
+}
+function holdOrbit() { orbitAfter = Infinity; }
+function releaseOrbit() { orbitAfter = performance.now() + 4000; }
+renderer.domElement.addEventListener('pointerdown', holdOrbit);
+renderer.domElement.addEventListener('touchstart', holdOrbit, { passive: true });
+for (const ev of ['pointerup', 'pointercancel', 'touchend', 'touchcancel']) renderer.domElement.addEventListener(ev, releaseOrbit);
+// rAF stops in a hidden tab; forget the last step so the turn resumes from here, not with a jump.
+document.addEventListener('visibilitychange', () => { orbitTick = null; });
+
 // ---------- UI ----------
 const readout = document.getElementById('readout');
 function renderReadout() {
@@ -538,6 +581,7 @@ document.getElementById('meta').textContent = `commit ${DATA.sha} · inches · Z
 let dirty = true;
 function needs() { dirty = true; }
 function railInset() {
+  if (BARE) return { x: 0, y: 0 };
   const rail = document.getElementById('rail').getBoundingClientRect();
   const bottomRail = rail.top > 0;          // narrow screens: rail sits at the bottom
   return bottomRail ? { x: 0, y: rail.height } : { x: rail.width, y: 0 };
@@ -550,6 +594,7 @@ function resize() {
   const r = railInset();
   camera.setViewOffset(w, h, -r.x / 2, r.y / 2, w, h);
   camera.updateProjectionMatrix();
+  if (BARE && current) fitBare();
   needs();
 }
 addEventListener('resize', resize);
@@ -557,7 +602,14 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { bu
 new MutationObserver(() => { buildGround(); buildDatums(); needs(); })
   .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-function frame() {
+function frame(now = performance.now()) {
+  if (orbiting()) {
+    if (orbitTick !== null) sph.theta += (now - orbitTick) / TURN_MS * 2 * Math.PI;
+    orbitTick = now;
+    applyCamera();   // marks dirty
+  } else {
+    orbitTick = null;
+  }
   if (dirty) {
     dirty = false;
     renderer.render(scene, camera);
@@ -567,7 +619,9 @@ function frame() {
 }
 
 resize();
+if (BARE) document.getElementById('datums').checked = false;   // nothing in the frame but the piece
 loadVariant(DATA.variants[0]);
 setView('iso');
+if (BARE) fitBare();
 frame();
 </script>
