@@ -179,7 +179,7 @@ def _three_js() -> str | None:
         return None
 
 
-def render_html(variants: list[dict]) -> str:
+def render_html(variants: list[dict], bare: bool = False) -> str:
     template = (REPO / "cad" / "viewer_template.html").read_text()
     payload = json.dumps({
         "sha": _git_sha(),
@@ -187,6 +187,9 @@ def render_html(variants: list[dict]) -> str:
         "variants": variants,
     })
     html = template.replace("/*__STATION_DATA__*/null", payload)
+    if bare:
+        assert "/*__BARE__*/false" in html, "the bare flag moved; --bare would silently no-op"
+        html = html.replace("/*__BARE__*/false", "true")
     src = _three_js()
     if src is not None:
         assert THREE_TAG in html, "the three.js script tag moved; inlining would silently no-op"
@@ -203,6 +206,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--angular", type=float, default=0.35, help="angular tolerance, radians")
     ap.add_argument("--dump", type=Path, help=argparse.SUPPRESS)
     ap.add_argument("--out", type=Path, default=OUT / "viewer.html")
+    ap.add_argument("--bare", action="store_true",
+                    help="bake bare mode in: the piece alone on white, no chrome, auto-orbit. "
+                         "?bare=1 on the URL does the same to any build")
     args = ap.parse_args(argv)
 
     if args.dump:
@@ -217,7 +223,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         specs = DEFAULT_VARIANTS
     variants = build_variants(specs, args.tolerance, args.angular)
-    html = render_html(variants)
+    html = render_html(variants, bare=args.bare)
     args.out.write_text(html)
     print(f"wrote {args.out.relative_to(REPO) if args.out.is_relative_to(REPO) else args.out}  ({len(html) // 1024} KB)")
     return 0
