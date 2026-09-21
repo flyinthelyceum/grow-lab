@@ -388,8 +388,8 @@ Pimoroni Inky Impression 7.3" (7-colour) — already in the standards; slow unla
 
 | Meter | Movement | Coil (measured) | Reads |
 |---|---|---|---|
-| Weston 301 | **30-0-30 µA** centre-zero | 800 Ω | pH |
-| Weston 301 | **100-0-100 µA** centre-zero | 640 Ω | EC |
+| Weston 301 | **30-0-30 µA** centre-zero | 800 Ω | pH — received 2026-09-21 (eBay, $15.95) |
+| Weston 301 | **100-0-100 µA** centre-zero | 640 Ω | EC — received 2026-09-21 (eBay, $14.99) |
 
 Coil resistance measured 2026-09-09 by voltage method (PSU + series resistor + pot,
 DMM in mV mode across the coil, R = V/I at two needle positions per movement).
