@@ -287,6 +287,7 @@ just change the finish, it discards what the material was doing.
 
 - Mounted above the water line and to the side — never over the reservoir
 - Cable glands on every penetration; drip loops on all external cables
+- DB37 panel-mount pass-through — Connectors Pro 1015-H37F-4S, female solder connectors + plastic hoods, sensor/control harness breakout at the enclosure wall — received 2026-09-21 (4-set, recount flagged: bag shows more loose shells than 4). **MEASURE: panel cutout not yet taken — `components measure` before cutting the front panel.**
 - Mains and DC/signal wiring separated inside
 - Ventilation for PSU + LED-driver heat, drawn away from the wet zone
 - Houses: Raspberry Pi, ESP32, relay board, PSU (5V), PWM-120-24 driver, meter driver
