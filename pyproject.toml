@@ -33,6 +33,12 @@ dev = [
     "pytest-asyncio>=0.23",
     "pytest-cov>=4.1",
 ]
+# The scanner colour workflow (docs/COLOR_MEASUREMENT.md). The maths lives in
+# spectra since its stage 0 and is imported, never copied; the Pi runtime has no
+# business carrying it, so it is an extra.
+color = [
+    "spectra @ git+https://github.com/flyinthelyceum/spectra.git@main",
+]
 # The station CAD (cad/). build123d pulls the OCP kernel, ~150 MB, so it is
 # its own extra rather than part of dev; the CAD tests skip without it.
 cad = [
