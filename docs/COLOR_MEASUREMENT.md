@@ -77,8 +77,9 @@ scanners.
 
 ## The workflow
 
-Three commands. They live in `tools/color/` and depend on nothing outside the
-standard library and Pillow, which the project already carries.
+Three commands. They live in the `spectra` package (`pip install -e .[color]`
+here, or a clone of `flyinthelyceum/spectra`) and depend on nothing outside the
+standard library and Pillow, which this project already carries.
 
 ### 1. Sample the chart
 
@@ -87,7 +88,7 @@ four corner patches — top-left, top-right, bottom-right, bottom-left, in the
 image's own orientation — and hand them over. Everything between is interpolated.
 
 ```sh
-python tools/color/sample_chart.py grid scan.tif \
+python -m spectra.sample_chart grid scan.tif \
     --corners 412,388 1596,392 1600,1180 408,1176 \
     --rows 4 --cols 6 \
     --ids-from ColorChecker.cie \
@@ -103,7 +104,7 @@ quantisation a plain median would bring.
 ### 2. Fit the model
 
 ```sh
-python tools/color/fit_profile.py measured.csv ColorChecker.cie -o v600-2026-09-16.json
+python -m spectra.fit_profile measured.csv ColorChecker.cie -o v600-2026-09-16.json
 ```
 
 ```
@@ -138,7 +139,7 @@ of ΔE00 values and is not smooth.
 ### 3. Read the subject
 
 ```sh
-python tools/color/sample_chart.py points scan.tif \
+python -m spectra.sample_chart points scan.tif \
     --point cream:2040,910 \
     --point cream-edge:2180,1015 \
     --point ring:2105,880 \
@@ -166,7 +167,7 @@ verification chart against its reference values, this month's scan against last
 month's, a proof print against the target.
 
 ```sh
-python tools/color/check_profile.py verify.csv ColorChecker.cie
+python -m spectra.check_profile verify.csv ColorChecker.cie
 ```
 
 It reports the mean, median, 95th percentile and worst ΔE00, lists the worst
@@ -221,15 +222,15 @@ rather than trusting a command line copied from anywhere, this page included.
 
 ## Files
 
-| Path | What it is |
+| Path (in [`flyinthelyceum/spectra`](https://github.com/flyinthelyceum/spectra), since its stage 0) | What it is |
 |---|---|
-| `tools/color/colorimetry.py` | XYZ/Lab, sRGB, Bradford adaptation, ΔE00 and ΔE76. Standard library only. |
-| `tools/color/cgats.py` | Reads CGATS (`.ti3`, `.cie`) and plain CSV patch lists. |
-| `tools/color/sample_chart.py` | `grid` samples a chart, `points` samples named spots. Pillow. |
-| `tools/color/fit_profile.py` | Fits gamma + 3×3, reports fit and cross-validated error, writes the model. |
-| `tools/color/check_profile.py` | Scores measured against reference in ΔE00. |
-| `tests/unit/test_color.py` | The whole Sharma/Wu/Dalal CIEDE2000 table, plus the conversions. |
-| `tests/unit/test_color_fit.py` | Synthetic scans whose transform is known, fitted back. |
+| `spectra/colorimetry.py` | XYZ/Lab, sRGB, Bradford adaptation, ΔE00 and ΔE76. Standard library only. |
+| `spectra/cgats.py` | Reads CGATS (`.ti3`, `.cie`) and plain CSV patch lists. |
+| `spectra/sample_chart.py` | `grid` samples a chart, `points` samples named spots. Pillow. |
+| `spectra/fit_profile.py` | Fits gamma + 3×3, reports fit and cross-validated error, writes the model. |
+| `spectra/check_profile.py` | Scores measured against reference in ΔE00. |
+| `spectra: tests/test_colorimetry.py` | The whole Sharma/Wu/Dalal CIEDE2000 table, plus the conversions. |
+| `spectra: tests/test_fit_profile.py` | Synthetic scans whose transform is known, fitted back. |
 
 The ΔE00 implementation is asserted against all thirty-four of the Sharma, Wu and
 Dalal test pairs — the ones written to catch hue-angle wraparound and the neutral
