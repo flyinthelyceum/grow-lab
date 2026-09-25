@@ -165,6 +165,27 @@ def pilot_top() -> float:
     return board_top() + P.SC_AS7341_PILOT_DEPTH
 
 
+def insert_top() -> float:
+    """Top of a seated closure insert, measured up from the plate face.
+
+    It is SINK above that face, not level with it: an insert installed flush is
+    one that can just as easily come out proud, and proud lands on the surface
+    the plate seats against.
+    """
+    return plate_top() + P.SC_CLOSURE_SINK
+
+
+def insert_bottom() -> float:
+    """Where a seated insert ends, deepest point of the brass."""
+    return insert_top() + P.SC_CLOSURE_INSERT_LEN
+
+
+def closure_bore_top() -> float:
+    """Blind end of the bore. Past the insert, so melt and a long screw both
+    have somewhere to go that is not the thread."""
+    return plate_top() + P.SC_CLOSURE_BORE_DEPTH
+
+
 def ads1115_stack_top() -> float:
     """Highest point of the taped board: tape, board, tallest part, no header."""
     return plate_top() + P.SC_TAPE_T + P.SC_BOARD_T + P.SC_ADS1115_PART_H
@@ -369,10 +390,16 @@ def build_body() -> "Part":
     # Chamfer the four vertical corners, webs included.
     body = _chamfer_verticals(body, z0, z1)
 
-    # Closure pilots, from the boss's bottom face: the plate screws form their
-    # own thread up the column, as the board screws do in theirs.
+    # Closure insert bores, from the boss's bottom face. Two diameters, and the
+    # wider one is the whole answer to why Rev G took the inserts out: a shallow
+    # relief at the mouth so melt displaced by the knurl rises into an annulus
+    # instead of onto the seating plane. The insert lands SINK below the face,
+    # inside that relief.
     for bx, by in boss_points():
-        body -= cyl_z(P.SC_CLOSURE_PILOT, P.SC_CLOSURE_PILOT_DEPTH + over, at=(bx, by, z0 - over))
+        body -= cyl_z(P.SC_CLOSURE_BORE, P.SC_CLOSURE_BORE_DEPTH + over,
+                      at=(bx, by, z0 - over))
+        body -= cyl_z(P.SC_CLOSURE_RELIEF_DIA, P.SC_CLOSURE_RELIEF_DEPTH + over,
+                      at=(bx, by, z0 - over))
 
     # Diffuser recess from the top face. The aperture through the rest of the
     # wall is the bore's own diameter — see the module docstring for why it is

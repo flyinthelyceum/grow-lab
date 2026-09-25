@@ -57,6 +57,7 @@ from dataclasses import dataclass
 
 from components import (
     ads1115_breakout,
+    heatset_insert_m2x4,
     as7341_breakout,
     bme280_breakout,
     lm301h_heatsink_module,
@@ -755,28 +756,62 @@ SC_BOSS_DIA = 7.0 * MM
 SC_BOSS_INSET_X = 4.5 * MM  # boss centre from the outer face. Ø7 reaches 1.0
 SC_BOSS_INSET_Y = 5.5 * MM  # into the end walls; 1.5 short of the long walls,
                             # which the web bridges
-# No inserts. Rev E closed the plate with four M2 heat-set inserts and four M2
-# countersunk screws — a soldering-iron step with an alignment risk, and the
-# one place Rev D's spew ended up was this seating face. The plate now takes
-# the same thread-forming M2.5 the AS7341 hangs on, straight into the corner
-# bosses: one screw size for the whole case and nothing to melt in. PETG gives
-# a formed thread about ten open-close cycles; the box opens for service a few
-# times a year.
-SC_CLOSURE_PILOT = 2.3 * MM  # CHOICE: M2.5, in a Ø7 boss — 2.35 of wall round it.
-                             # Rev G aliased this to the AS7341's pilot because
-                             # one screw size was worth having. The board's
-                             # holes measured Ø2.29 and took that choice away
-                             # from the board, not from the plate: these screws
-                             # pass through printed material at both ends and
-                             # meet nothing that caps them at M2, so they keep
-                             # the bigger thread. No longer an alias, so the
-                             # board dropping a size cannot drag the plate down
-                             # with it
-SC_CLOSURE_PILOT_DEPTH = 4.0 * MM  # from the boss's bottom face, up the column
-SC_CLOSURE_SCREW_LEN = 6.0 * MM  # M2.5 x 6 countersunk: 2.5 of plate leaves 3.5
-                                 # in a 4.0 pilot, clamped 0.5 before bottoming
-SC_SCREW_DIA = 2.7 * MM  # M2.5 clearance through the base plate
-SC_SCREW_CSK = 4.9 * MM  # 90 deg countersink mouth. DIN 963 M2.5 head is Ø4.7
+# Rev I puts the inserts back, and the history is worth keeping because the
+# objection that removed them was real and is answered by geometry rather than
+# by disagreeing with it.
+#
+# Rev E closed the plate with four M2 heat-set inserts. Rev G pulled them: a
+# soldering-iron step with an alignment risk, on the one face in the whole part
+# that has to seat flat, and the one place a previous revision's spew had ended
+# up. It went to thread-forming M2.5 straight into the printed bosses.
+#
+# What that bought was simplicity and what it cost was cycles. A formed thread
+# in PETG gives something like ten open-close cycles, on the ONE joint in this
+# case that exists to be opened. Brass is effectively unlimited. The seating
+# face objection is answered by SC_CLOSURE_RELIEF below: the insert sits under
+# the face with an annular relief above it, so displaced material has somewhere
+# to go that is not the seating plane.
+#
+# M2, not M3, and the arithmetic is not close. The M3 on the shelf measures
+# 5.461 over the knurl; in a Ø7 boss that leaves 0.77 of wall, a boss-to-insert
+# ratio of 1.28 against a usual bar of 2.0 and a floor of 1.5. It would force
+# the bosses to Ø8.2 and spend 0.6 mm of the ADS1115 clearance Rev G bought
+# with two extra millimetres of case length. The M2 at 3.531 lands at 1.98 in
+# the bosses that are already there.
+SC_CLOSURE_INSERT_OD = heatset_insert_m2x4.OD * MM  # LIB
+SC_CLOSURE_INSERT_LEN = heatset_insert_m2x4.LENGTH * MM  # LIB — the x4 of the
+                            # four lengths on the shelf. 3.937 gives 3.5 of
+                            # engagement under a 6 mm screw through a 2.5 plate,
+                            # which is 1.75 x the screw diameter in brass; the
+                            # x6 would bring more heat and more displaced
+                            # material for engagement this joint does not need
+SC_HOLE_SHRINK = 0.2 * MM   # ESTIMATE — how much under nominal a vertical hole
+                            # prints here. THE thread coupon measures this, and
+                            # until it does, every bore below is provisional.
+                            # It is an estimate in exactly one place so that one
+                            # number updates the whole closure
+SC_CLOSURE_INTERFERENCE = 0.40 * MM  # CHOICE: diametral, mid of the 0.30-0.50
+                            # the library's own insert note specifies — and that
+                            # note is explicit that the interference is against
+                            # the hole AS IT COMES OFF THE MACHINE, not as
+                            # modelled. Hence the shrink term below. The same
+                            # note records a ladder that asked 1.3-1.9 mm of an
+                            # insert and bowed its posts outward
+SC_CLOSURE_BORE = SC_CLOSURE_INSERT_OD - SC_CLOSURE_INTERFERENCE + SC_HOLE_SHRINK
+SC_CLOSURE_SINK = 0.3 * MM  # how far under the seating face the insert's top
+                            # sits. Not zero: flush is a target you miss in both
+                            # directions, and missing it proud is the failure
+SC_CLOSURE_RELIEF_DIA = SC_CLOSURE_INSERT_OD + 0.8 * MM  # the spew trap
+SC_CLOSURE_RELIEF_DEPTH = 0.6 * MM  # deeper than SINK, so the annulus over the
+                            # insert is open and melt rises into it
+SC_CLOSURE_BORE_CLEAR = 0.8 * MM  # blind depth past the insert, so displaced
+                            # material and a long screw both have somewhere to go
+SC_CLOSURE_BORE_DEPTH = (SC_CLOSURE_SINK + SC_CLOSURE_INSERT_LEN
+                         + SC_CLOSURE_BORE_CLEAR)
+SC_CLOSURE_SCREW_LEN = 6.0 * MM  # M2 x 6 countersunk: 2.5 of plate leaves 3.5
+                                 # into a 3.937 insert
+SC_SCREW_DIA = 2.2 * MM  # M2 clearance through the base plate
+SC_SCREW_CSK = 4.0 * MM  # 90 deg countersink mouth. DIN 963 M2 head is Ø3.8
 SC_SCREW_CSK_DEPTH = (SC_SCREW_CSK - SC_SCREW_DIA) / 2  # 1.1 — a cone, not a bore
 
 # --- Entries, vents, seating ----------------------------------------------

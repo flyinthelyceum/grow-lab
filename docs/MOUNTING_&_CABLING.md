@@ -423,8 +423,10 @@ is that each half is **one solid**.
 | Layer height | 0.15 mm. The side walls are visible; that is what layer lines show on |
 | Supports | **None**, and the tests say so from the solid rather than from the parameters: the only downward faces in either part are the disc's 3 mm ledge and seven vent roofs of 5.5 mm |
 | Elephant's foot | Set the slicer's first-layer compensation. The bed face is the one on show |
-| Inserts | **Under review — see below.** Rev G removed Rev E's four M2 heat-set inserts because they put a soldering-iron step and possible spew on the one face that has to seat flat. That objection is answerable with a counterbore, and a formed thread in PETG gives about ten open/close cycles on the one joint designed to open. M2 inserts fit the existing Ø7 corner bosses at a boss-to-insert ratio of about 1.94; M3 at 5.461 would leave 0.77 mm of wall and force the bosses to Ø8.2. Blocked on calipering the M2 insert's OD and length |
-| Screws | **Two sizes, both thread-forming, each for a stated reason.** Plate: 4 × M2.5 × 6 countersunk into Ø2.3 pilots, up through a true 90° cone 1.1 deep (1.4 of plate left under each head) and 4.0 into the corner bosses. Board: 4 × **M2 × 4** pan into Ø1.9 pilots, up through the AS7341's own Ø2.29 holes, 3.5 into its bosses — an M2.5 will not pass that hole. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
+| Inserts | **Four M2 × 4 brass heat-set, in the corner bosses (Rev I).** Measured OD 3.531 in a Ø7 boss is a ratio of **1.98** — the usual bar is 2.0 — with 1.73 mm of wall and no change to the case envelope. M3 was checked and rejected: at 5.461 it leaves 0.77 mm, a ratio of 1.28, and would force the bosses to Ø8.2 and spend 0.6 mm of the ADS1115 clearance. **Nothing changes for the board**, which stays thread-forming M2: its Ø5.5 bosses would give a ratio of 1.56, and a full-depth insert there would end 3.5 mm under the show face |
+| Insert bore | Ø3.33 modelled, **which is provisional until the coupon runs**. The library's insert note specifies 0.30–0.50 mm of *diametral* interference measured on the hole **as it comes off the machine, not as modelled** — so the bore is `OD − interference + SC_HOLE_SHRINK`, and that shrink is an estimate of 0.2 mm that nobody has measured here. Get it wrong high and the insert is loose; wrong low and you get the failure the library already records: a ladder that asked 1.3–1.9 mm of an insert and bowed its posts outward with melt up through the thread |
+| Seating face | **A Ø4.33 × 0.6 relief at each bore mouth, and the insert seats 0.3 under the face.** This is the whole answer to why Rev G pulled the inserts out. Melt displaced by the knurl rises into an open annulus instead of onto the plane the plate seats against, and an insert deliberately set below flush cannot end up proud — which is the failure mode, since flush is a target you miss in both directions |
+| Screws | **One size for the whole case again — M2 — with two retention methods.** Plate: 4 × M2 × 6 countersunk through a true 90° cone 0.9 deep (1.6 of plate under each head) into the brass, 3.5 mm of engagement in a 3.937 insert. Board: 4 × M2 × 4 pan into Ø1.9 thread-forming pilots, up through the AS7341's own Ø2.29 holes. Rev G had one size, Rev H lost it when the board's measured holes forced M2 while the plate stayed M2.5, and Rev I gets it back because the M2 insert fits the bosses that already exist. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
 | Diffuser | Ø12 × 1 mm **etched** PTFE disc, etched face down, bonded with **neutral-cure (alkoxy/oxime)** silicone. See below — this is the one place the old sheet was quietly wrong |
 | Feet | 3 × neutral-cure silicone, **cast in place** in the plate's recesses. Three points never rock |
 | Interior | **Unpainted in V1, deliberately.** White PETG at 1 mm is a diffuser rather than a shield, so blackening the inside is a real improvement in principle — but nothing has yet measured whether the walls leak enough to matter, and the firmware already puts the onboard LED out on every read. Runbook C.3 now takes the reading that would decide it. Paint is a serviceable retrofit: the box opens, so this costs nothing to defer and is reversible in an afternoon |
@@ -454,10 +456,18 @@ the long print with the show face on it.
 Two rows of five, each stepping 0.1 mm, with pips beside each boss counting the
 column. The nominal is the middle one in both rows.
 
-| Row | Boss | Pilot sweep | Nominal | What it is |
+| Row | Boss | Sweep | Nominal | What it is |
 |---|---|---|---|---|
-| Front (fewer pips toward −Y) | Ø5.5 | 1.7 → 2.1 | **1.9** | AS7341, M2 × 4 |
-| Rear | Ø7.0 | 2.1 → 2.5 | **2.3** | Plate closure, M2.5 × 6 |
+| Front (fewer pips toward −Y) | Ø5.5 | 1.7 → 2.1 | **1.9** | AS7341 thread-forming pilot, M2 × 4 |
+| Rear | Ø7.0 | 3.131 → 3.531 | **3.331** | Plate closure **insert bore**, M2 × 4 heat-set |
+
+The rear row changed in Rev I and is now the more valuable of the two. **Press a
+real insert into each column.** The one that takes it cleanly, with no bulge in
+the boss and melt going into the relief rather than over the face, *is* the
+measurement — it gives the interference and the print shrink together, on the
+geometry that will actually be printed. The sweep is derived from the insert's
+measured OD and spans `[OD − 0.40, OD]`, which is every bore that could be right
+given 0.30–0.50 of interference and 0.1–0.3 of shrink.
 
 At the +X end, two countersunk clearance holes in a pad of the plate's real
 2.5 mm — the other half of the same joint.
@@ -669,7 +679,7 @@ is printed. Rough figures.
 | Acrylic conformal coat, aerosol | $25 | Three boards in a vented box under a warm fixture. Mask the BME280 lid and the AS7341 window with any tape |
 | Bootlace ferrule kit + crimper | $25 | Non-negotiable. Buy first |
 | 35 mm DIN rail, 12 in, + push-in terminal block kit with end stops and jumpers | $35 | Zone 4 and the four-rail I²C bus, on one rail. Jumper bars make the rails |
-| DB-25 solder-cup pair, right-angle hood on the cable end | $12 | One pair. 19 conductors, six spare |
+| DB-25 solder-cup pair, right-angle hood on the cable end | $12 | One pair. 19 conductors, six spare. **Both DB-25 and DB-37 are on the shelf as of 2026-09-21** — the umbilical stays DB-25 on the sizing above, and the DB-37s are stock for something else rather than a change of mind |
 | Arducam CSI-to-HDMI extender pair | $28 | Ships as a set of two, which is one link |
 | Waxed lacing twine, 1 spool | $10 | Replaces zip ties behind glass |
 | P-clips, nylon, white | $10 | Strain relief, second point, inside the cabinet |
