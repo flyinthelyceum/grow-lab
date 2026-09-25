@@ -100,6 +100,25 @@ growlab sensor read as7341
 
 With LED on: expect elevated values across visible channels, particularly 445nm (blue) and 630nm (red) for a full-spectrum grow light. Lux estimate should be meaningfully above ambient.
 
+**Then take the dark pair, which nothing did before and which decides a build
+question.** The case is white PETG 1 mm thick around an optical sensor — a
+diffuser, not a shield — so the interior may want painting matte black. That
+has been deferred in V1 rather than done on principle, because nobody had
+measured whether the walls actually leak. Two readings settle it:
+
+1. **Fixture off, room dark, case in place as built.**
+2. **The same, with something opaque draped over the whole case** — a box, a
+   dark cloth. This is the sensor's own floor.
+
+Same integration time for both; the driver already puts the breakout's LED out
+on every read, so neither number is contaminated by it.
+
+If the two agree, the walls are tight enough and the case stays unpainted. If
+the first is meaningfully above the second, that difference **is** the light
+coming through the walls, and `MOUNTING_&_CABLING.md` carries the paint spec.
+Record both numbers either way — an unpainted case with a measured floor is a
+result, and it is what makes the decision reviewable later.
+
 ---
 
 ## Phase D: Nutrient Introduction (~30 minutes)

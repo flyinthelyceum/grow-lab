@@ -416,23 +416,32 @@ is that each half is **one solid**.
 
 | | |
 |---|---|
-| Material | Matte white PETG. Not PLA — it creeps under a warm fixture. ASA if it will ever see sun |
+| Material | Matte white PETG, and the heat-set insert question does not change it. Service air is 18–29 °C by the station's own alert bands against PETG's ~80 °C glass transition, and brass keys into PETG cleanly. Not PLA — it creeps under a warm fixture, and its Tg sits close enough to an insert iron to distort a boss. ASA if it will ever see sun |
+| Filament state | **Dry it before printing, and print the coupon and the case from the same spool.** Wet PETG strings and prints holes rough and undersized by a variable amount — and the coupon exists to measure exactly that. A damp spool does not just print badly; it returns a hole diameter that is real for that print and wrong for the next one, and the case then gets built to it |
 | Orientation | **Both parts top-face-down.** The body's show face is then the bed face, and a textured sheet gives a matte nothing else matches. The plate that way up has no overhang at all |
 | Extrusion width | **0.50 mm**, so the 2.0 walls and 2.5 plate land on whole lines |
 | Layer height | 0.15 mm. The side walls are visible; that is what layer lines show on |
 | Supports | **None**, and the tests say so from the solid rather than from the parameters: the only downward faces in either part are the disc's 3 mm ledge and seven vent roofs of 5.5 mm |
 | Elephant's foot | Set the slicer's first-layer compensation. The bed face is the one on show |
-| Inserts | **None.** Rev E used four M2 heat-set inserts; they were a soldering-iron step with an alignment risk on the one face that has to seat flat, for a box that opens a few times a year. The plate screws form their own thread in the corner bosses instead |
+| Inserts | **Under review — see below.** Rev G removed Rev E's four M2 heat-set inserts because they put a soldering-iron step and possible spew on the one face that has to seat flat. That objection is answerable with a counterbore, and a formed thread in PETG gives about ten open/close cycles on the one joint designed to open. M2 inserts fit the existing Ø7 corner bosses at a boss-to-insert ratio of about 1.94; M3 at 5.461 would leave 0.77 mm of wall and force the bosses to Ø8.2. Blocked on calipering the M2 insert's OD and length |
 | Screws | **Two sizes, both thread-forming, each for a stated reason.** Plate: 4 × M2.5 × 6 countersunk into Ø2.3 pilots, up through a true 90° cone 1.1 deep (1.4 of plate left under each head) and 4.0 into the corner bosses. Board: 4 × **M2 × 4** pan into Ø1.9 pilots, up through the AS7341's own Ø2.29 holes, 3.5 into its bosses — an M2.5 will not pass that hole. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
 | Diffuser | Ø12 × 1 mm **etched** PTFE disc, etched face down, bonded with **neutral-cure (alkoxy/oxime)** silicone. See below — this is the one place the old sheet was quietly wrong |
 | Feet | 3 × neutral-cure silicone, **cast in place** in the plate's recesses. Three points never rock |
-| Interior | Paint matte black before assembly if the dark-period reading has to be zero. White PETG at 1 mm is a diffuser, not a shield |
+| Interior | **Unpainted in V1, deliberately.** White PETG at 1 mm is a diffuser rather than a shield, so blackening the inside is a real improvement in principle — but nothing has yet measured whether the walls leak enough to matter, and the firmware already puts the onboard LED out on every read. Runbook C.3 now takes the reading that would decide it. Paint is a serviceable retrofit: the box opens, so this costs nothing to defer and is reversible in an afternoon |
+| If it does need painting | Water-based ultra-matte acrylic, airbrushed thin — Black 3.0 or similar. **Mask every surface that touches another:** boss end faces, the plate's mating rim, the four AS7341 boss tops, the tape footprints, every bore. What makes an optical black that black is a chalky low-binder surface, and in a cavity pointed at a sensor, shed particles on the window are a worse failure than the leak being fixed. **Never clearcoat it** — a smooth topcoat reflects about 4% at its own surface and throws away most of what the paint bought |
 
 ### Print the thread coupon first
 
 `cad/out/print/thread_coupon.stl`, about 96 × 28 × 10 mm. **Slice it with the
 same profile as the case** — 0.15 layers, 0.50 extrusion width, same filament,
 same flow. A coupon sliced differently from the part answers a different question.
+
+**And from the same dried spool.** Wet PETG prints holes rough and undersized by
+a variable amount, which is the one quantity this coupon exists to measure. A
+damp spool does not simply print badly — it returns a number that is true for
+that print and false for the next, and the case then gets built to it. Dry the
+filament, print the coupon, print the case, in that order and without changing
+spools in between.
 
 It exists because the pilots rest on a number nobody here has measured: *a
 vertical hole prints about 0.2 mm small*. That is printer, filament and flow
