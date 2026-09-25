@@ -32,10 +32,10 @@ class TestItMirrorsTheRealGeometry:
 
     def test_closure_bosses_are_the_cases_closure_bosses(self):
         closure = [b for b in T.boss_positions() if b[2] == P.SC_BOSS_DIA]
-        assert len(closure) == len(T.M25_PILOTS)
+        assert len(closure) == len(T.INSERT_BORES)
         for _, _, boss_dia, _, depth, _ in closure:
             assert boss_dia == P.SC_BOSS_DIA
-            assert depth == P.SC_CLOSURE_PILOT_DEPTH
+            assert depth == P.SC_CLOSURE_BORE_DEPTH
 
     def test_the_slab_is_the_top_wall(self):
         """The bosses have to grow from the same thickness they grow from in
@@ -45,10 +45,10 @@ class TestItMirrorsTheRealGeometry:
     def test_the_board_boss_keeps_its_real_length(self):
         assert T.BOARD_BOSS_H == P.SC_BAFFLE_DROP
 
-    def test_the_closure_boss_is_shortened_but_keeps_the_whole_thread(self):
-        """Cut down to halve the print. Everything the screw touches stays."""
+    def test_the_closure_boss_is_shortened_but_keeps_the_whole_bore(self):
+        """Cut down to halve the print. Everything the insert touches stays."""
         assert T.CLOSURE_BOSS_H < mm(14.0) * P.MM
-        assert T.CLOSURE_BOSS_H >= P.SC_CLOSURE_PILOT_DEPTH + 2.0 * P.MM
+        assert T.CLOSURE_BOSS_H >= P.SC_CLOSURE_BORE_DEPTH + 2.0 * P.MM
 
     def test_the_countersink_pad_is_the_plates_thickness(self):
         assert T.CSK_PAD_T == P.SC_BASE_T
@@ -57,16 +57,31 @@ class TestItMirrorsTheRealGeometry:
 class TestTheSweepIsUseful:
     def test_each_row_brackets_its_nominal(self):
         assert min(T.M2_PILOTS) < P.SC_AS7341_PILOT < max(T.M2_PILOTS)
-        assert min(T.M25_PILOTS) < P.SC_CLOSURE_PILOT < max(T.M25_PILOTS)
+        assert min(T.INSERT_BORES) < P.SC_CLOSURE_BORE < max(T.INSERT_BORES)
+
+    def test_the_bore_row_spans_every_plausible_answer(self):
+        """Interference 0.30-0.50 against the insert OD, with shrink anywhere
+        from 0.1 to 0.3, puts the right bore between 3.13 and 3.53. If the
+        sweep did not cover all of it the answer could fall off an end and the
+        print would have to be repeated."""
+        from components import heatset_insert_m2x4 as ins
+
+        lo = ins.OD - 0.50 + 0.1
+        hi = ins.OD - 0.30 + 0.3
+        assert mm(min(T.INSERT_BORES)) <= lo + 1e-9
+        assert mm(max(T.INSERT_BORES)) >= hi - 1e-9
 
     def test_the_nominal_is_actually_on_the_coupon(self):
         """A sweep that skips the value you are shipping is a wasted print."""
         assert any(d == pytest.approx(P.SC_AS7341_PILOT) for d in T.M2_PILOTS)
-        assert any(d == pytest.approx(P.SC_CLOSURE_PILOT) for d in T.M25_PILOTS)
+        assert any(
+            mm(d) == pytest.approx(mm(P.SC_CLOSURE_BORE), abs=0.051)
+            for d in T.INSERT_BORES
+        ), "no column within half a step of the modelled bore"
 
     def test_the_steps_are_finer_than_the_uncertainty(self):
         """The unknown is hole shrink, believed 0.2. Steps have to resolve it."""
-        for row in (T.M2_PILOTS, T.M25_PILOTS):
+        for row in (T.M2_PILOTS, T.INSERT_BORES):
             steps = [mm(b - a) for a, b in zip(row, row[1:])]
             assert all(s == pytest.approx(0.1, abs=1e-9) for s in steps)
 
@@ -76,10 +91,14 @@ class TestTheSweepIsUseful:
         0.2 of shrink the smallest column prints at 1.5, which is past it."""
         assert mm(min(T.M2_PILOTS)) - 0.2 < 1.567
 
-    def test_every_pilot_leaves_wall_around_it(self):
-        for _, _, boss_dia, pilot_dia, _, _ in T.boss_positions():
-            wall = (boss_dia - pilot_dia) / 2
+    def test_every_hole_leaves_wall_around_it(self):
+        for _, _, boss_dia, hole_dia, _, _ in T.boss_positions():
+            wall = (boss_dia - hole_dia) / 2
             assert mm(wall) >= 1.5, f"only {mm(wall):.2f} mm of wall"
+        # The widest bore on the coupon still has to leave the boss a wall, or
+        # a column fails for a reason that is not the one being tested.
+        widest = (P.SC_BOSS_DIA - max(T.INSERT_BORES)) / 2
+        assert mm(widest) >= 1.5
 
 
 class TestTheLayoutWorksOnABench:
@@ -87,7 +106,7 @@ class TestTheLayoutWorksOnABench:
         # Filter by boss diameter, not pilot: Ø2.1 appears in both rows.
         for boss_dia, row in (
             (P.SC_AS7341_BOSS_DIA, T.M2_PILOTS),
-            (P.SC_BOSS_DIA, T.M25_PILOTS),
+            (P.SC_BOSS_DIA, T.INSERT_BORES),
         ):
             indices = [b[5] for b in T.boss_positions() if b[2] == boss_dia]
             assert indices == list(range(1, len(row) + 1))

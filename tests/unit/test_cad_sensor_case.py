@@ -270,9 +270,9 @@ class TestNothingCollides:
     def test_the_corner_bosses_reach_the_ceiling(self):
         """Rev D's second blocker. A boss that stops short of the ceiling is,
         in the print, a disc starting in mid-air over the cavity."""
-        assert P.SC_BOSS_DIA > P.SC_CLOSURE_PILOT
-        assert SC.ceiling() - SC.plate_top() > P.SC_CLOSURE_PILOT_DEPTH + 1.0 * P.MM, \
-            "the pilot would come out the top of the boss"
+        assert P.SC_BOSS_DIA > P.SC_CLOSURE_RELIEF_DIA
+        assert SC.ceiling() - SC.closure_bore_top() >= 1.0 * P.MM, \
+            "the insert bore would come out the top of the boss"
 
     def test_each_boss_is_fused_into_its_corner(self):
         """Tangent to a wall is a line of contact, which is no contact at all.
@@ -283,28 +283,76 @@ class TestNothingCollides:
             assert abs(wx - bx) <= wl / 2 + 1e-9, "web misses its boss in X"
             assert abs(wy - by) <= ww / 2 + 1e-9, "web misses its boss in Y"
 
-    def test_the_closure_pilot_has_meat_around_it(self):
-        """A thread-forming screw splits a thin boss. The corner boss keeps
-        more than the pilot's own diameter of wall round it."""
-        wall = (P.SC_BOSS_DIA - P.SC_CLOSURE_PILOT) / 2
-        assert wall >= P.SC_CLOSURE_PILOT, f"only {mm(wall):.2f} mm round the pilot"
+    def test_the_boss_can_take_the_insert_without_bulging(self):
+        """A heat-set insert displaces material outward as the knurl melts in,
+        so the wall round it is the number that decides whether the boss bulges
+        or splits. The usual bar is a boss twice the insert's OD; 1.5x is the
+        floor. The M3 on the shelf would be 1.28 here, which is why this case
+        takes the M2."""
+        ratio = P.SC_BOSS_DIA / P.SC_CLOSURE_INSERT_OD
+        assert ratio >= 1.9, f"boss is only {ratio:.2f}x the insert OD"
+        wall = (P.SC_BOSS_DIA - P.SC_CLOSURE_INSERT_OD) / 2
+        assert mm(wall) >= 1.5, f"only {mm(wall):.2f} mm round the insert"
+        # And the relief cannot eat the wall it is cut into.
+        relief_wall = (P.SC_BOSS_DIA - P.SC_CLOSURE_RELIEF_DIA) / 2
+        assert mm(relief_wall) >= 1.0, f"only {mm(relief_wall):.2f} mm round the relief"
 
-    def test_the_case_runs_two_screw_sizes_on_purpose(self):
-        """Rev G ran one size throughout, which was worth having. The board's
-        own holes measured Ø2.29, so an M2.5 cannot pass them and the board
-        dropped to M2. The closure screws pass through the plate into printed
-        bosses and meet no such limit, so they stay M2.5 where the bigger
-        thread is worth more. Two sizes, each for a stated reason."""
-        assert P.SC_CLOSURE_PILOT > P.SC_AS7341_PILOT, \
-            "the closure has quietly followed the board down to M2"
-        assert P.SC_AS7341_PILOT < P.SC_AS7341_HOLE_DIA, "M2 cannot pass the board"
-        assert P.SC_CLOSURE_PILOT == 2.3 * P.MM, "the closure is no longer M2.5"
+    def test_the_bore_is_sized_against_the_printed_hole_not_the_modelled_one(self):
+        """The library's insert note is explicit: interference is measured on
+        the hole as it comes off the machine. A printed hole runs under nominal,
+        so a bore modelled straight at OD-minus-interference hands the insert
+        that much more than intended, which is how a boss bows."""
+        printed = P.SC_CLOSURE_BORE - P.SC_HOLE_SHRINK
+        interference = P.SC_CLOSURE_INSERT_OD - printed
+        assert mm(interference) == pytest.approx(mm(P.SC_CLOSURE_INTERFERENCE))
+        assert 0.30 <= mm(interference) <= 0.50, \
+            f"{mm(interference):.2f} mm is outside the 0.30-0.50 the library specifies"
+        assert P.SC_CLOSURE_BORE < P.SC_CLOSURE_INSERT_OD, "no interference at all"
 
-    def test_the_closure_screw_clamps_the_plate_before_it_bottoms_out(self):
-        """Thread-forming M2.5 up through the plate into the corner boss."""
-        into_pilot = P.SC_CLOSURE_SCREW_LEN - P.SC_BASE_T
-        assert into_pilot < P.SC_CLOSURE_PILOT_DEPTH, "bottoms out before the plate is clamped"
-        assert mm(into_pilot) >= 2.0, f"only {mm(into_pilot):.2f} mm of thread in the boss"
+    def test_the_insert_sits_under_the_seating_face(self):
+        """The objection that removed the inserts in Rev G. An insert level
+        with the face can come out proud, and proud lands on the one plane in
+        the part that has to seat flat. It goes in under the face, with the
+        relief open above it so melt rises into an annulus instead."""
+        assert SC.insert_top() > SC.plate_top(), "the insert is proud of the seat"
+        assert mm(SC.insert_top() - SC.plate_top()) >= 0.2
+        relief_top = SC.plate_top() + P.SC_CLOSURE_RELIEF_DEPTH
+        assert relief_top > SC.insert_top(), "no open annulus over the insert"
+        assert P.SC_CLOSURE_RELIEF_DIA > P.SC_CLOSURE_INSERT_OD, "the relief traps nothing"
+
+    def test_the_bore_is_deeper_than_the_insert(self):
+        """Blind, and past the brass: displaced material needs room, and so
+        does a screw that runs long."""
+        assert SC.closure_bore_top() > SC.insert_bottom(), "the insert bottoms out"
+        assert mm(SC.closure_bore_top() - SC.insert_bottom()) >= 0.5
+
+    def test_one_screw_size_for_the_whole_case(self):
+        """Rev G had this, Rev H lost it, Rev I gets it back. The board's holes
+        measured Ø2.29, which caps its screws at M2 whatever else happens; Rev H
+        left the plate on M2.5 and the case ran two sizes. The M2 insert fits
+        the existing bosses, so both joints are M2 again -- one size, two
+        retention methods, each for its own reason."""
+        assert P.SC_SCREW_DIA > 2.0 * P.MM, "M2 needs clearance, not a thread"
+        assert P.SC_SCREW_DIA < 2.5 * P.MM, "the plate has drifted back up to M2.5"
+        assert mm(P.SC_AS7341_HOLE_DIA) > 2.0, "an M2 shank does not pass the board"
+        assert P.SC_AS7341_PILOT < P.SC_AS7341_HOLE_DIA
+
+    def test_the_closure_screw_reaches_the_brass_without_bottoming_out(self):
+        """M2 x 6 countersunk: through 2.5 of plate, into a 3.937 insert.
+
+        The bar is 1.5x the screw diameter, not the 2x you would want going
+        into plastic or aluminium. The mating thread here is brass, which is
+        stronger than the steel screw's own tensile limit long before it
+        strips, and 2x is unreachable in an insert 3.937 long anyway -- an
+        engagement rule that no available insert can satisfy is a rule about
+        the wrong material.
+        """
+        into_insert = P.SC_CLOSURE_SCREW_LEN - P.SC_BASE_T
+        assert into_insert < P.SC_CLOSURE_INSERT_LEN, "bottoms out in the insert"
+        assert mm(into_insert) >= 1.5 * 2.0, \
+            f"only {mm(into_insert):.2f} mm of engagement, under 1.5x the screw diameter"
+        # A screw that runs past the brass must not run into solid plastic.
+        assert SC.closure_bore_top() > SC.plate_top() + P.SC_CLOSURE_SCREW_LEN - P.SC_BASE_T
 
     def test_the_hanging_board_lies_clear_of_the_corner_bosses(self):
         """The corner bosses are full height, so a board over one does not
@@ -452,8 +500,12 @@ class TestItPrintsWithoutTricks:
         assert mm(left) >= 1.0, f"only {mm(left):.2f} mm of plate under the head"
 
     def test_the_screw_clears_its_hole(self):
-        assert P.SC_SCREW_DIA > 2.5 * P.MM, "M2.5 needs clearance through the plate, not a thread"
+        assert P.SC_SCREW_DIA > 2.0 * P.MM, "M2 needs clearance through the plate, not a thread"
         assert P.SC_SCREW_CSK > P.SC_SCREW_DIA
+        # DIN 963 M2 head is Ø3.8; the cone has to swallow it and still leave
+        # plate under it.
+        assert mm(P.SC_SCREW_CSK) >= 3.8
+        assert mm(P.SC_BASE_T - P.SC_SCREW_CSK_DEPTH) >= 1.4, "too little plate under the head"
 
     def test_the_as7341_screw_clears_the_boards_hole(self):
         """The pilot is smaller than the board's hole, so the screw forms its

@@ -1,24 +1,30 @@
-"""A test coupon for the two thread-forming pilots, before the case is printed.
+"""A test coupon for the two holes the case screws into, before it is printed.
 
 Why this exists
 ---------------
-Both pilot diameters in the case are CHOICE values, and the reasoning behind
-them contains one number nobody here has measured: **a vertical hole prints
-about 0.2 mm small**. That figure is printer, filament, nozzle and flow
-specific. Everything downstream rests on it.
+Both hole diameters in the case rest on one number nobody here has measured:
+**how much under nominal a vertical hole prints on this machine**, in
+`SC_HOLE_SHRINK`, currently an ESTIMATE of 0.2 mm. It is printer, filament,
+nozzle and flow specific, and after Rev I both of the case's screw joints
+depend on it — for different reasons, which is why the coupon has two rows.
 
-    M2   pilot Ø1.9  ->  prints ~1.7  ->  0.13 of flank engaged per side
-    M2.5 pilot Ø2.3  ->  prints ~2.1  ->  0.20 of flank engaged per side
+**Row A, the board's thread-forming pilot.** M2's minor diameter is 1.567 and
+the pilot is Ø1.9. At 0.2 of shrink it prints 1.7 and the screw forms the
+flanks; at 0.3 it prints 1.6 and the screw has to cut the thread root instead.
+That is how a boss splits, and the AS7341's bosses are structural columns.
 
-M2's minor diameter is 1.567. If this printer's shrink is 0.3 rather than 0.2,
-the M2 pilot comes out at 1.6 and the screw has to cut the thread root instead
-of forming the flanks. That is how a boss splits, and the boss is a structural
-column: a split corner boss is a reprinted body, which is the long print with
-the show face on it. The coupon is minutes.
+**Row B, the closure's insert bore.** Rev I put heat-set inserts back in the
+plate closure, and the components library's own insert note is explicit that
+the 0.30-0.50 mm of diametral interference is measured against the hole **as
+it comes off the machine, not as modelled**. So a bore modelled straight at
+OD-minus-interference hands the insert the shrink on top, and that note also
+records what that does: a ladder that asked 1.3-1.9 mm of an insert and bowed
+its posts outward with melt coming up through the thread.
 
-There is a second unknown the coupon settles cheaply: **how many open/close
-cycles a formed thread in PETG really gives.** The case is documented at about
-ten. Nobody counted.
+Row B sweeps the bore and you press a real M2 insert into each. The column
+that takes one cleanly, without the boss bulging, IS the measurement -- it
+gives the interference and the shrink together, on the geometry that will be
+printed.
 
 What it reproduces, and what it does not
 ----------------------------------------
@@ -49,11 +55,24 @@ from . import params as P
 # environment with no build123d, because that is what `tests.yml` is.
 _MM = P.MM
 
-# CHOICE: the sweep. Five steps of 0.1 either side of nominal is wider than the
-# answer can plausibly be, which is the point -- a coupon that only brackets
-# the expected answer cannot tell you the expected answer was wrong.
+# CHOICE: the sweeps. Five steps of 0.1 either side of nominal is wider than
+# the answer can plausibly be, which is the point -- a coupon that only
+# brackets the expected answer cannot tell you the expected answer was wrong.
 M2_PILOTS = (1.7 * _MM, 1.8 * _MM, 1.9 * _MM, 2.0 * _MM, 2.1 * _MM)
-M25_PILOTS = (2.1 * _MM, 2.2 * _MM, 2.3 * _MM, 2.4 * _MM, 2.5 * _MM)
+# The insert bores span the whole plausible space rather than the nominal's
+# neighbourhood, and they are DERIVED from the insert rather than typed: the
+# library specifies 0.30-0.50 of interference and shrink could be 0.1 to 0.3,
+# which puts the right modelled bore anywhere in [OD - 0.40, OD]. Five steps of
+# 0.1 across exactly that, so the answer cannot fall off an end -- and the
+# middle column lands on the modelled nominal by construction.
+#
+# Typed round numbers missed the top of that span by a thousandth, because the
+# OD is 3.531 and not 3.53. The same class of mistake as a baffle drop typed to
+# follow a socket height: a number meant to track a measurement has to be an
+# expression.
+INSERT_BORES = tuple(
+    (P.SC_CLOSURE_INSERT_OD / _MM - 0.40 + 0.10 * i) * _MM for i in range(5)
+)
 
 # CHOICE: room for fingers and a driver between bosses, and for the boss that
 # splits to fail without taking its neighbour with it.
@@ -65,14 +84,17 @@ SLAB_T = P.SC_WALL  # the top wall the bosses grow from, at its real thickness
 
 # The board bosses keep their real length; the closure bosses are cut down.
 BOARD_BOSS_H = P.SC_BAFFLE_DROP  # 5.0: ceiling to board, the real column
-CLOSURE_BOSS_H = 8.0 * _MM  # CHOICE: 4.0 of pilot over 4.0 of solid
+CLOSURE_BOSS_H = 8.0 * _MM  # CHOICE: the 5.04 bore over ~3 of solid. The case's
+                            # own boss is 14 long and printing five of those
+                            # tests nothing -- the insert seats in the top 5 and
+                            # the wall round it is at steady state well before
 
 # Index pips, so a boss on the bench says which column it is without a card.
 PIP_DIA = 1.2 * _MM
 PIP_DEPTH = 0.6 * _MM
 PIP_PITCH = 2.0 * _MM
 
-# The plate half of the same joint: does an M2.5 countersunk head sit flush in
+# The plate half of the same joint: does an M2 countersunk head sit flush in
 # 2.5 mm of PETG, or dimple it? Two holes at the real thickness answer it.
 CSK_PAD_T = P.SC_BASE_T
 CSK_COUNT = 2
@@ -87,14 +109,14 @@ def slab_size() -> tuple[float, float]:
     countersink pad, which needs to stand clear: a boss sitting on the pad
     would grow from 2.5 mm of material instead of the top wall's 2.0.
     """
-    n = max(len(M2_PILOTS), len(M25_PILOTS))
+    n = max(len(M2_PILOTS), len(INSERT_BORES))
     lx = (n - 1) * PITCH + 2 * MARGIN + 2 * PITCH
     ly = ROW_GAP + 2 * MARGIN
     return lx, ly
 
 
 def _row_y() -> tuple[float, float]:
-    """Y centres of the M2 row and the M2.5 row."""
+    """Y centres of the thread-forming row and the insert-bore row."""
     return -ROW_GAP / 2, ROW_GAP / 2
 
 
@@ -111,9 +133,9 @@ def boss_positions() -> list[tuple[float, float, float, float, float, int]]:
     for i, d in enumerate(M2_PILOTS):
         out.append((x0 + i * PITCH, y_m2, P.SC_AS7341_BOSS_DIA, d,
                     P.SC_AS7341_PILOT_DEPTH, i + 1))
-    for i, d in enumerate(M25_PILOTS):
+    for i, d in enumerate(INSERT_BORES):
         out.append((x0 + i * PITCH, y_m25, P.SC_BOSS_DIA, d,
-                    P.SC_CLOSURE_PILOT_DEPTH, i + 1))
+                    P.SC_CLOSURE_BORE_DEPTH, i + 1))
     return out
 
 
@@ -145,6 +167,12 @@ def build() -> "Part":
         # the same thermal history.
         part -= cyl_z(pilot_dia, pilot_depth + _OVER,
                       at=(x, y, SLAB_T + height - pilot_depth))
+        if boss_dia == P.SC_BOSS_DIA:
+            # The spew relief at the mouth, as the case has it. Without it the
+            # coupon measures a hole the part does not contain.
+            part -= cyl_z(P.SC_CLOSURE_RELIEF_DIA,
+                          P.SC_CLOSURE_RELIEF_DEPTH + _OVER,
+                          at=(x, y, SLAB_T + height - P.SC_CLOSURE_RELIEF_DEPTH))
         # Pips, counting the column, recessed into the slab beside the boss.
         span = (index - 1) * PIP_PITCH
         for k in range(index):

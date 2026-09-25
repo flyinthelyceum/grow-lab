@@ -2,6 +2,57 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-25 (Rev I: the inserts come back, and one screw size with them)
+
+### Changed
+- **The plate closes on four M2 × 4 brass heat-set inserts.** Rev E had inserts, Rev G pulled
+  them — a soldering-iron step with an alignment risk on the one face in the part that has to
+  seat flat — and went to thread-forming M2.5 in the printed bosses. That bought simplicity and
+  cost cycles: a formed thread in PETG gives about ten open-close cycles, on the one joint in
+  this case that exists to be opened. Brass is effectively unlimited.
+- **Rev G's objection is answered by geometry rather than argued with.** A Ø4.33 × 0.6 relief at
+  each bore mouth, and the insert seats 0.3 mm *under* the face. Melt displaced by the knurl
+  rises into an open annulus instead of onto the seating plane, and an insert set deliberately
+  below flush cannot finish proud — which is the actual failure, because flush is a target you
+  miss in both directions.
+- **M2, not M3, and the arithmetic is not close.** The M3 on the shelf measures 5.461 over the
+  knurl: in a Ø7 boss that is 0.77 mm of wall and a boss-to-insert ratio of 1.28, against a usual
+  bar of 2.0 and a floor of 1.5. It would force the bosses to Ø8.2 and spend 0.6 mm of the
+  ADS1115 clearance Rev G bought with two extra millimetres of case length. The measured M2 at
+  3.531 lands at **1.98 in the bosses that already exist** — no envelope change at all.
+- **One screw size for the whole case, again.** Rev G had it; Rev H lost it when the board's
+  measured Ø2.29 holes forced M2 there while the plate stayed M2.5. Both joints are M2 now, with
+  two retention methods: brass in the plate, formed thread in the board. The countersink follows
+  to a DIN 963 M2 head, which leaves 1.6 mm of plate under it rather than 1.4.
+- **The board keeps its thread-forming M2 and that is not a compromise.** Its Ø5.5 bosses would
+  put an insert at a ratio of 1.56, and a full-depth insert would end 3.5 mm under the show face
+  — the matte bed face that cannot be refinished. It is also a build-once joint.
+- **The coupon's second row now sweeps the insert bore**, which makes it the more valuable of the
+  two rows. Press a real insert into each column; the one that takes it cleanly is the
+  measurement, and it gives interference and print shrink together on the geometry that will be
+  printed. The sweep is derived from the insert's measured OD and spans `[OD − 0.40, OD]`, every
+  bore that could be right given 0.30–0.50 of interference and 0.1–0.3 of shrink.
+
+### Found
+- **A typed sweep missed its own span by a thousandth.** The bore columns were written as round
+  numbers — 3.13 to 3.53 — against an insert OD of 3.531, so the top of the plausible range fell
+  off the end of the coupon. Same class of mistake as a baffle drop typed to follow a socket
+  height: a number meant to track a measurement has to be an expression. It is derived now, and
+  the middle column lands on the modelled nominal by construction.
+- **An engagement rule was quoting the wrong material.** The first version of the closure test
+  asked for 2× the screw diameter of thread engagement, which no insert on the shelf can satisfy
+  at M2 × 4 and which is the guidance for threading into plastic or aluminium. The mating thread
+  here is brass. The bar is 1.5×, and an engagement rule no available part can meet is a rule
+  about the wrong material.
+- **`SC_HOLE_SHRINK` is now load-bearing and still an estimate.** Both of the case's screw joints
+  depend on how far under nominal a vertical hole prints here, and nobody has measured it. It is
+  an ESTIMATE of 0.2 mm in exactly one place, so the coupon's answer updates the whole closure
+  by changing one number.
+- Both DB-25 and DB-37 connectors are on the shelf as of 2026-09-21. The BOM recorded the DB-37s
+  while the mounting brief explicitly rejects DB-37 for the umbilical, which read as a
+  contradiction and is not one: the umbilical stays DB-25 on its own 19-conductor sizing, and the
+  DB-37s are stock. Recorded so it does not read as a reversal next time.
+
 ## 2026-09-19 (the interior stays white, and the reading that would change that)
 
 ### Found
