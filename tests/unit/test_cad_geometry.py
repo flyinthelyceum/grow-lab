@@ -304,6 +304,24 @@ class TestTheFaceReadsThePanelGeometry:
             assert (part & probe).volume < 1.0, name
 
 
+class TestTheUBoltsClearTheDivider:
+    """The tube stands 0.125 off the divider, so the U-bolt's near leg ran
+    straight through it. Nothing modelled the U-bolts, so nothing collided."""
+
+    def test_every_leg_clears(self):
+        from cad.growlab_cad._shapes import cyl_y
+
+        divider = plinth.build_divider()
+        for z in mast.strap_heights():
+            for x in mast.strap_bolt_x():
+                leg = cyl_y(P.MAST_STRAP_BOLT_DIA, P.PLINTH_D - P.MAST_Y,
+                            at=(x, (P.MAST_Y + P.PLINTH_D) / 2, z))
+                assert (leg & divider).volume < 1e-6, (x, z)
+        # And the bend, which wraps the tube's front face, is inside the notch.
+        for y0, _, _, _ in plinth.divider_reliefs():
+            assert y0 <= P.MAST_Y - P.MAST_D / 2
+
+
 class TestTheLightbox:
     """The one part of the piece that went months with no material at all.
 

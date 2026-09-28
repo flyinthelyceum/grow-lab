@@ -326,6 +326,71 @@ class TestTheBackplate:
         assert len(entities(read(pack, "backplate.dxf"))) == 4
 
 
+class TestThePlyIsTheCarcass:
+    """The router files, one part each, have to close back into the cabinet."""
+
+    def test_every_part_is_written_in_inches(self, pack):
+        for r in F.ply_parts():
+            doc = read(pack, r["file"])
+            assert doc.header["$INSUNITS"] == 1, r["file"]
+            x0, y0, x1, y1 = extents(doc)
+            assert (x1 - x0, y1 - y0) == pytest.approx(F._bbox(r["sketch"]), abs=1e-6), r["file"]
+
+    def test_the_cut_list_is_the_files(self):
+        rows = {r["part"]: r for r in F.cutlist()["ply"]["parts"]}
+        for r in F.ply_parts():
+            assert rows[r["part"]]["file"] == r["file"]
+            assert rows[r["part"]]["qty"] == r["qty"]
+
+    def test_the_box_closes(self):
+        size = {r["part"]: F._bbox(r["sketch"]) for r in F.ply_parts()}
+        inside_w = P.INSIDE_X1 - P.INSIDE_X0
+        carcass_h = P.TRAY_RIM_Z - P.SHADOW_GAP_H
+        assert size["Side, left"] == pytest.approx((P.PLINTH_D, carcass_h))
+        assert size["Rear panel"] == pytest.approx((inside_w, carcass_h))
+        assert size["Floor"][0] == pytest.approx(inside_w)
+        # Floor + front panel + rear panel = the depth of the sides.
+        assert size["Floor"][1] + P.CARCASS_T + P.REAR_PANEL_T == pytest.approx(P.PLINTH_D)
+        # The front is two pieces with the open band between them.
+        band = plinth._fascia_band()
+        assert (size["Front panel, lower"][1] + (band[1] - band[0] - P.FASCIA_TOP_LIP)
+                + size["Front header"][1]) == pytest.approx(P.RAIL_BOTTOM_Z - P.SHADOW_GAP_H)
+
+    def test_the_rails_butt_instead_of_overlapping(self):
+        """The old list had every rail full-length, so the corners collided."""
+        rl = F.rail_lengths()
+        assert rl["front"] == pytest.approx(P.INSIDE_X1 - P.INSIDE_X0)
+        assert rl["between"] + 2 * P.CARCASS_T == pytest.approx(P.REAR_INSIDE_Y - P.CARCASS_T)
+        gap = P.MAST_W + 2 * P.MAST_NOTCH_CLEARANCE
+        assert rl["back_left"] + gap + rl["back_right"] == pytest.approx(rl["front"])
+
+    @pytest.mark.parametrize("name", ["ply_side_left.dxf", "ply_side_right.dxf"])
+    def test_the_band_notch_is_dogboned_for_the_acrylic(self, pack, name):
+        doc = read(pack, name)
+        # They join the outline, so they come back as arcs, not circles.
+        bones = [(a.dxf.center.x, a.dxf.center.y, 2 * a.dxf.radius)
+                 for a in entities(doc, "cut", "ARC")
+                 if 2 * a.dxf.radius == pytest.approx(P.ROUTER_BIT_DIA)]
+        assert len(bones) == 2
+        r = P.ROUTER_BIT_DIA / 2
+        a, b = (z - P.SHADOW_GAP_H for z in plinth._fascia_band())
+        for x, y, _ in bones:
+            # Each passes through its inside corner of the notch.
+            corner = (P.FASCIA_POCKET, a) if y < (a + b) / 2 else (P.FASCIA_POCKET, b)
+            assert ((x - corner[0]) ** 2 + (y - corner[1]) ** 2) ** 0.5 == pytest.approx(r)
+
+    def test_the_u_bolt_holes_are_marked_not_cut(self, pack):
+        """Their spacing is a CHOICE and the U-bolts are not bought."""
+        doc = read(pack, "ply_rear.dxf")
+        assert len(circles(doc, "mark")) == 2 * P.MAST_STRAP_COUNT
+        assert circles(doc, "cut") == []
+
+    def test_the_pads_are_on_the_list(self):
+        rows = {r["part"]: r for r in F.cutlist()["ply"]["parts"]}
+        assert rows["Block pad"]["qty"] == 4
+        assert rows["Block pad"]["t"] == pytest.approx(P.CMU_UNDERSIDE_Z - P.RAIL_TOP_Z)
+
+
 class TestTheCutList:
     def test_every_part_has_a_real_size(self):
         data = F.cutlist()
@@ -396,5 +461,6 @@ def test_the_pack_builds_from_a_clean_shell(tmp_path):
     assert r.returncode == 0, r.stdout + r.stderr
     assert "SCRIBE RINGS" not in r.stdout
     for name in ("plate.dxf", "case_body.dxf", "fascia.dxf", "backplate.dxf",
-                 "lightbox.dxf", "tray.dxf", "cutlist.md", "cutlist.json", "README.md"):
+                 "lightbox.dxf", "tray.dxf", "ply_side_left.dxf", "ply_rear.dxf",
+                 "cutlist.md", "cutlist.json", "README.md"):
         assert (tmp_path / name).exists(), name

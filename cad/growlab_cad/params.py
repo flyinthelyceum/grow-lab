@@ -136,6 +136,9 @@ LEDGE_CHASE = 0.75  # gap behind the ledge, the cable route down
 CARCASS_T = 0.75  # CHOICE: 3/4 in sheet stock for sides, top frame and floor
 REAR_PANEL_T = 0.75  # "full-height rear panel in the carcass" — the mast fixes here
 DOOR_GAP = 0.0625  # CHOICE: clearance around the rear door
+ROUTER_BIT_DIA = 0.25  # CHOICE: the end mill the ply DXFs are dogboned for.
+                       # A smaller bit is fine; a bigger one leaves corners
+                       # the acrylic's square edge will not seat in
 
 # Console bay: the dry slice directly behind the front face, full width.
 # INSTRUMENT_HEAD_PLANS.md § Depth stack: meters, Inky, i3 and Pi "both fit
@@ -240,6 +243,10 @@ MAST_STRAP_COUNT = 3
 MAST_STRAP_PITCH = 9.0  # CHOICE: spread along the fixing length
 MAST_STRAP_BOLT_DIA = 0.28  # 1/4-20 U-bolt legs, clearance
 MAST_STRAP_SPAN = MAST_OD + 0.6  # CHOICE: leg centres, straddling the tube
+# The tube stands 0.125 off the divider, so the U-bolt's divider-side leg runs
+# through the divider's back end. A notch there at each strap, from the rear
+# panel forward past the tube's front face -- the whole U, whatever its shape.
+MAST_STRAP_RELIEF_W = MAST_STRAP_BOLT_DIA + 0.25  # CHOICE
 # --- the head's clamp ----------------------------------------------------
 # No counterweight. A 12 lb head is a two-handed lift, and a split clamp collar
 # holds it and locks the height in one part. The counterweight was what forced a
