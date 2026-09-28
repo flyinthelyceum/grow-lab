@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-28 (the thread coupon, used)
+
+### Changed
+- **Board pilot Ø1.9 → Ø2.0.** From the coupon: Ø2.0 in a Ø5.5 boss printed 1.55 and was the
+  best column over ten open-close cycles. The shipped Ø1.9 printed 1.40 and felt too tight;
+  Ø2.1 printed 1.70 and felt a little loose. No boss cracked at any size.
+- **Closure hole shrink 0.20 → 0.15**, from the Ø7-boss row (0.11–0.20 mm under, mean 0.15). The
+  insert bore goes Ø3.33 → Ø3.28 and prints near 3.13, which is 0.40 of interference on the
+  3.531 insert — the middle of the 0.30–0.50 window. The Ø3.3 size itself was not on the print;
+  the margin covers it.
+
+### Found
+- **Shrink depends on the boss, not just the printer.** The same modelled Ø2.1 printed 1.70 in a
+  Ø5.5 boss and 1.97 in a Ø7 one. Overall 95.7 × 27.99 × 10.06 against 96 × 28 × 10, so scaling
+  is fine.
+- The print was the #77 coupon. Its rear row was the old M2.5 pilot sweep, and for a turn those
+  numbers were compared against the Rev I insert-bore sweep, which made the printer look badly
+  out. It isn't. The coupon's rear row was redefined in place without saying so; worth a
+  revision mark if it is ever printed again.
+
 ## 2026-09-25 (Rev I: the inserts come back, and one screw size with them)
 
 ### Changed

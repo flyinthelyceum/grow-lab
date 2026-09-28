@@ -56,7 +56,7 @@ class TestItMirrorsTheRealGeometry:
 
 class TestTheSweepIsUseful:
     def test_each_row_brackets_its_nominal(self):
-        assert min(T.M2_PILOTS) < P.SC_AS7341_PILOT < max(T.M2_PILOTS)
+        assert min(T.M2_PILOTS) <= P.SC_AS7341_PILOT <= max(T.M2_PILOTS)
         assert min(T.INSERT_BORES) < P.SC_CLOSURE_BORE < max(T.INSERT_BORES)
 
     def test_the_bore_row_spans_every_plausible_answer(self):

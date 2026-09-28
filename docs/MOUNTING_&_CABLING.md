@@ -373,7 +373,7 @@ would have hit the lid. The drop is 5.0 now and it is an expression,
 `SC_AS7341_QT_H + SC_QT_CLEAR`, not a number anyone types.
 
 **The board's mounting holes are Ø2.29, not the Ø2.5 Adafruit publishes.** An
-M2.5 does not pass through them, so the board hangs on M2 × 4 into Ø1.9 pilots.
+M2.5 does not pass through them, so the board hangs on M2 × 4 into Ø2.0 pilots (set by the thread coupon).
 The plate keeps M2.5: those screws pass through printed material at both ends
 and nothing caps them at M2. Rev G's one-size-for-the-whole-case is gone, and a
 test now asserts the two sizes are different on purpose so the plate cannot
@@ -424,15 +424,24 @@ is that each half is **one solid**.
 | Supports | **None**, and the tests say so from the solid rather than from the parameters: the only downward faces in either part are the disc's 3 mm ledge and seven vent roofs of 5.5 mm |
 | Elephant's foot | Set the slicer's first-layer compensation. The bed face is the one on show |
 | Inserts | **Four M2 × 4 brass heat-set, in the corner bosses (Rev I).** Measured OD 3.531 in a Ø7 boss is a ratio of **1.98** — the usual bar is 2.0 — with 1.73 mm of wall and no change to the case envelope. M3 was checked and rejected: at 5.461 it leaves 0.77 mm, a ratio of 1.28, and would force the bosses to Ø8.2 and spend 0.6 mm of the ADS1115 clearance. **Nothing changes for the board**, which stays thread-forming M2: its Ø5.5 bosses would give a ratio of 1.56, and a full-depth insert there would end 3.5 mm under the show face |
-| Insert bore | Ø3.33 modelled, **which is provisional until the coupon runs**. The library's insert note specifies 0.30–0.50 mm of *diametral* interference measured on the hole **as it comes off the machine, not as modelled** — so the bore is `OD − interference + SC_HOLE_SHRINK`, and that shrink is an estimate of 0.2 mm that nobody has measured here. Get it wrong high and the insert is loose; wrong low and you get the failure the library already records: a ladder that asked 1.3–1.9 mm of an insert and bowed its posts outward with melt up through the thread |
+| Insert bore | **Ø3.28 modelled.** The library's insert note wants 0.30–0.50 mm of diametral interference on the hole *as printed*, so the bore is `OD − 0.40 + SC_HOLE_SHRINK`. The coupon measured 0.11–0.20 mm of loss (mean 0.15) on holes in Ø7 bosses, so it prints near 3.13 for 0.40 of interference — the middle of the window. The Ø3.3 size itself was not on the coupon; the margin either side covers that |
 | Seating face | **A Ø4.33 × 0.6 relief at each bore mouth, and the insert seats 0.3 under the face.** This is the whole answer to why Rev G pulled the inserts out. Melt displaced by the knurl rises into an open annulus instead of onto the plane the plate seats against, and an insert deliberately set below flush cannot end up proud — which is the failure mode, since flush is a target you miss in both directions |
-| Screws | **One size for the whole case again — M2 — with two retention methods.** Plate: 4 × M2 × 6 countersunk through a true 90° cone 0.9 deep (1.6 of plate under each head) into the brass, 3.5 mm of engagement in a 3.937 insert. Board: 4 × M2 × 4 pan into Ø1.9 thread-forming pilots, up through the AS7341's own Ø2.29 holes. Rev G had one size, Rev H lost it when the board's measured holes forced M2 while the plate stayed M2.5, and Rev I gets it back because the M2 insert fits the bosses that already exist. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
+| Screws | **One size for the whole case again — M2 — with two retention methods.** Plate: 4 × M2 × 6 countersunk through a true 90° cone 0.9 deep (1.6 of plate under each head) into the brass, 3.5 mm of engagement in a 3.937 insert. Board: 4 × M2 × 4 pan into Ø2.0 thread-forming pilots, up through the AS7341's own Ø2.29 holes. Rev G had one size, Rev H lost it when the board's measured holes forced M2 while the plate stayed M2.5, and Rev I gets it back because the M2 insert fits the bosses that already exist. Nothing screws the BME280 or the ADS1115: both are taped to the plate |
 | Diffuser | Ø12 × 1 mm **etched** PTFE disc, etched face down, bonded with **neutral-cure (alkoxy/oxime)** silicone. See below — this is the one place the old sheet was quietly wrong |
 | Feet | 3 × neutral-cure silicone, **cast in place** in the plate's recesses. Three points never rock |
 | Interior | **Unpainted in V1, deliberately.** White PETG at 1 mm is a diffuser rather than a shield, so blackening the inside is a real improvement in principle — but nothing has yet measured whether the walls leak enough to matter, and the firmware already puts the onboard LED out on every read. Runbook C.3 now takes the reading that would decide it. Paint is a serviceable retrofit: the box opens, so this costs nothing to defer and is reversible in an afternoon |
 | If it does need painting | Water-based ultra-matte acrylic, airbrushed thin — Black 3.0 or similar. **Mask every surface that touches another:** boss end faces, the plate's mating rim, the four AS7341 boss tops, the tape footprints, every bore. What makes an optical black that black is a chalky low-binder surface, and in a cavity pointed at a sensor, shed particles on the window are a worse failure than the leak being fixed. **Never clearcoat it** — a smooth topcoat reflects about 4% at its own surface and throws away most of what the paint bought |
 
 ### Print the thread coupon first
+
+**Result, 2026-09-26 (the #77 print):** holes shrink more in the thin Ø5.5 bosses
+than in the Ø7 ones — the same modelled Ø2.1 printed 1.70 in one and 1.97 in the
+other. Board pilot set to **Ø2.0** (printed 1.55): best of the columns over ten
+open-close cycles, ahead of Ø2.1, which printed 1.70 and felt a little loose.
+Ø1.9 printed 1.40 and felt too tight. No boss cracked. Closure shrink set to
+**0.15** from the Ø7 row, giving a Ø3.28 insert bore. Overall 95.7 × 27.99 × 10.06
+against 96 × 28 × 10, so the printer scales correctly. The procedure below is kept
+for a future printer or filament.
 
 `cad/out/print/thread_coupon.stl`, about 96 × 28 × 10 mm. **Slice it with the
 same profile as the case** — 0.15 layers, 0.50 extrusion width, same filament,

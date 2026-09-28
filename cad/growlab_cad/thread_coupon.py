@@ -4,7 +4,7 @@ Why this exists
 ---------------
 Both hole diameters in the case rest on one number nobody here has measured:
 **how much under nominal a vertical hole prints on this machine**, in
-`SC_HOLE_SHRINK`, currently an ESTIMATE of 0.2 mm. It is printer, filament,
+`SC_HOLE_SHRINK` (0.15 in Ø7 bosses, from the first print). It is printer, filament,
 nozzle and flow specific, and after Rev I both of the case's screw joints
 depend on it — for different reasons, which is why the coupon has two rows.
 

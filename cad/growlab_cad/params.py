@@ -641,11 +641,12 @@ SC_AS7341_HOLE_DIA = as7341_breakout.HOLE_DIA * MM  # LIB — Ø2.29. Adafruit s
 SC_AS7341_BOSS_DIA = 5.5 * MM  # four, hanging from the ceiling to the board.
                                # 1.8 of wall round a Ø1.9 pilot; reaches 0.2
                                # past the board's edge, which is nothing
-SC_AS7341_PILOT = 1.9 * MM  # CHOICE: M2 thread-forming in PETG. A Ø1.9 vertical
-                            # hole prints about 1.7; M2 minor is 1.57, so the
-                            # screw forms the flanks and never has to cut the
-                            # root. Rev G's Ø2.3 was for an M2.5 that cannot
-                            # pass the board's Ø2.29 hole
+SC_AS7341_PILOT = 2.0 * MM  # CHOICE, from the thread coupon (2026-09-26): in a
+                            # Ø5.5 boss a modelled Ø2.0 printed 1.55. That is a
+                            # hair under M2's 1.567 minor, so on paper it cuts the
+                            # root -- but it came through ten open-close cycles
+                            # as the best of the columns, tighter than Ø2.1 and
+                            # with no cracking. Tested beats calculated
 SC_AS7341_PILOT_DEPTH = 3.5 * MM  # wholly inside the 5.0 boss now, with 1.5 of
                                   # boss above the blind end before the top wall
                                   # even starts. Rev G had to run 0.3 into that
@@ -785,11 +786,14 @@ SC_CLOSURE_INSERT_LEN = heatset_insert_m2x4.LENGTH * MM  # LIB — the x4 of the
                             # which is 1.75 x the screw diameter in brass; the
                             # x6 would bring more heat and more displaced
                             # material for engagement this joint does not need
-SC_HOLE_SHRINK = 0.2 * MM   # ESTIMATE — how much under nominal a vertical hole
-                            # prints here. THE thread coupon measures this, and
-                            # until it does, every bore below is provisional.
-                            # It is an estimate in exactly one place so that one
-                            # number updates the whole closure
+SC_HOLE_SHRINK = 0.15 * MM  # CHOICE, from the thread coupon (2026-09-26): holes
+                            # of Ø2.1-2.5 in Ø7 bosses printed 0.11-0.20 under,
+                            # mean 0.15. Ø7 bosses only -- the same Ø2.1 lost 0.40
+                            # in a Ø5.5 boss, so this is not a printer-wide number.
+                            # The insert bore is Ø3.3 and was not on that coupon;
+                            # at this shrink it prints ~3.13 for 0.40 of
+                            # interference, the middle of the 0.30-0.50 window,
+                            # so there is room either side if it is a little off
 SC_CLOSURE_INTERFERENCE = 0.40 * MM  # CHOICE: diametral, mid of the 0.30-0.50
                             # the library's own insert note specifies — and that
                             # note is explicit that the interference is against
