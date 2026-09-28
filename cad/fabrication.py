@@ -51,7 +51,7 @@ from build123d import (  # noqa: E402
 )
 from build123d.exporters import ExportDXF, LineType  # noqa: E402
 
-from cad.growlab_cad import canopy as _canopy, case, fixture, mast, params as P, plinth, tray  # noqa: E402
+from cad.growlab_cad import canopy as _canopy, carcass, case, fixture, params as P, plinth, tray  # noqa: E402
 from cad.growlab_cad.face import corner_screw_points, knob_points  # noqa: E402
 from pi.dashboard.panel_geometry import (  # noqa: E402
     DIAL_BEZEL_OD,
@@ -333,220 +333,141 @@ def backplate_flat() -> Sketch:
 
 
 # ---------------------------------------------------------------------------
-# The carcass — birch ply, every part a 2D profile for the CNC router.
+# The carcass — birch ply, for the CNC router. The panels and their joinery are
+# ``carcass.py``; this draws each one flat as the machine sees it (looking down
+# on the pocketed face) and writes a STEP of it for Fusion.
 #
-# Each file is one part, origin at its bottom-left, drawn as seen from the
-# front (panels facing forward) or from the viewer's left (panels running
-# front to back, x = 0 at the FRONT edge). Everything is a through-cut, so a
-# part flipped on the table is the same part.
-#
-# What a 2D profile cannot carry, and the cut list says instead: the 45°
-# chamfer on the sides' outer vertical edges, and the header's rebate.
+# Layers: ``cut`` the profile and every through hole; ``pocket_<depth>`` each
+# housing or bore, cut down from the up face to that depth; ``mark`` scribe or
+# bench-drill only.
 # ---------------------------------------------------------------------------
 
-_Z0 = plinth.Z0
-_BAND = plinth._fascia_band()
+PRETTY = {
+    "side_left": "Side, left", "side_right": "Side, right", "rear": "Rear panel",
+    "floor": "Floor", "deck": "Deck", "apron": "Apron", "ledge": "Console ledge",
+    "partition": "Console partition", "divider": "Bay divider", "front": "Front panel",
+    "cleat_left": "Front cleat", "shelf": "Reservoir shelf", "door": "Rear door",
+}
 
 
-def _dogbone(corner: tuple[float, float], void: tuple[int, int]) -> Sketch:
-    """A relief at an inside corner, so a square-edged part seats in it.
-
-    ``void`` points from the corner into the cut-away region. The bit is run
-    diagonally into the corner until its edge reaches it: the circle's centre
-    is in the void, r from the corner, and the circle passes through it.
-    """
-    r = P.ROUTER_BIT_DIA / 2
-    d = r / 2 ** 0.5
-    return Pos(corner[0] + void[0] * d, corner[1] + void[1] * d) * Circle(r)
-
-
-def _side(vents: list[tuple[float, float]], vent_dia: float) -> Sketch:
-    """A carcass side, x = model y (0 at the front), y = height above its foot.
-
-    The band notch in the front edge is where the fascia's ends sit: through
-    the full thickness, FASCIA_POCKET deep, dogboned so the acrylic's square
-    corners reach the back of it.
-    """
-    w, h = P.PLINTH_D, plinth.Z1 - _Z0
-    a, b = _BAND[0] - _Z0, _BAND[1] - _Z0
-    sk = rect(w, h, (0, 0)) - rect(P.FASCIA_POCKET, b - a, (0, a))
-    sk -= _dogbone((P.FASCIA_POCKET, a), (-1, 1))
-    sk -= _dogbone((P.FASCIA_POCKET, b), (-1, -1))
-    return holes(sk, [(y, z - _Z0) for y, z in vents], vent_dia)
-
-
-def ply_side_left() -> Sketch:
-    """Wet-bay vents: an open reservoir in a sealed box makes a humid box."""
-    z = plinth.RAIL_BOTTOM - 1.0
-    return _side([(P.RESERVOIR_Y0 + 1.5 + i * 2.5, z) for i in range(4)], 1.0)
-
-
-def ply_side_right() -> Sketch:
-    """Console-bay vents, low and forward, for the PSU and driver."""
-    y = (P.CONSOLE_Y0 + P.CONSOLE_Y1) / 2
-    return _side([(y, plinth.FLOOR_TOP + 2.0 + i * 1.5) for i in range(3)], 0.75)
-
-
-def ply_rear() -> tuple[Sketch, list]:
-    """Between the sides, seen from the front. The door opening is a notch in
-    its left edge, the wet bay's full width and height.
-
-    The U-bolt holes are MARKED, not cut: their spacing is a CHOICE and the
-    U-bolts are not bought. Drill them from the U-bolt in hand.
-    """
-    w, h = P.INSIDE_X1 - P.INSIDE_X0, plinth.Z1 - _Z0
-    sk = rect(w, h, (0, 0)) - rect(plinth.DOOR_X1 - P.INSIDE_X0 + 0.5,
-                                   plinth.DOOR_Z1 - plinth.DOOR_Z0,
-                                   (-0.5, plinth.DOOR_Z0 - _Z0))
+def ply_flat(panel: carcass.Panel) -> dict[str, list]:
+    """One panel's layers: {"cut": [...], "pocket_0.250": [...], "mark": [...]}."""
+    su, sv = panel.size_uv()
+    body = rect(su, sv, (0, 0))
+    for c in panel.cutouts:
+        u0, u1, v0, v1 = panel.rect_uv(c)
+        body -= rect(u1 - u0, v1 - v0, (u0, v0))
+    for h in panel.holes:
+        body -= Pos(*panel.to_uv(h.at)) * Circle(h.d / 2)
+    layers: dict[str, list] = {"cut": [body]}
+    for pk in panel.pockets:
+        u0, u1, v0, v1 = panel.rect_uv(pk.box)
+        # Clipped to what is left of the sheet: a housing across an opening
+        # is only cut where there is wood.
+        shape = rect(u1 - u0, v1 - v0, (u0, v0)) & body
+        layers.setdefault(f"pocket_{panel.depth_of(pk):.3f}", []).append(shape)
+    for bo in panel.bores:
+        layers.setdefault(f"pocket_{bo.depth:.3f}", []).append(
+            Pos(*panel.to_uv(bo.at)) * Circle(bo.d / 2))
     marks = []
-    for z in mast.strap_heights():
-        for x in mast.strap_bolt_x():
-            marks.extend((Pos(x - P.INSIDE_X0, z - _Z0)
-                          * Circle(P.MAST_STRAP_BOLT_DIA / 2)).edges())
-    return sk, marks
+    for m in panel.marks:
+        marks.extend((Pos(*panel.to_uv(m.at)) * Circle(m.d / 2)).edges())
+    if marks:
+        layers["mark"] = marks
+    return layers
 
 
-def ply_floor() -> Sketch:
-    """Between the sides, front panel to rear panel, seen from above. The mast
-    passes through a notch in its back edge to the frame below."""
-    w, d = P.INSIDE_X1 - P.INSIDE_X0, P.REAR_INSIDE_Y - P.CARCASS_T
-    c = P.MAST_NOTCH_CLEARANCE
-    x0 = P.MAST_X - P.MAST_W / 2 - c - P.INSIDE_X0
-    y0 = P.MAST_Y - P.MAST_D / 2 - c - P.CARCASS_T
-    return rect(w, d, (0, 0)) - rect(P.MAST_W + 2 * c, d - y0 + 0.5, (x0, y0))
+def ply_solid(panel: carcass.Panel):
+    """The panel flat, as it lies on the bed: pocketed face up, bottom at z = 0,
+    corner at the origin. Millimetres, for Fusion CAM."""
+    from build123d import Box, Cylinder, Align, extrude, scale
+
+    layers = ply_flat(panel)
+    t = panel.t
+    s = extrude(layers["cut"][0], amount=t)
+    for pk in panel.pockets:
+        u0, u1, v0, v1 = panel.rect_uv(pk.box)
+        d = panel.depth_of(pk)
+        s -= Pos(u0 - 0.01 if u0 <= 1e-9 else u0, v0 - 0.01 if v0 <= 1e-9 else v0, t - d) * Box(
+            (u1 - u0) + 0.02, (v1 - v0) + 0.02, d + 0.01, align=(Align.MIN,) * 3)
+    for bo in panel.bores:
+        u, v = panel.to_uv(bo.at)
+        s -= Pos(u, v, t - bo.depth) * Cylinder(bo.d / 2, bo.depth + 0.01,
+                                                 align=(Align.CENTER, Align.CENTER, Align.MIN))
+    s = scale(s, by=IN_MM)
+    s.label = panel.name
+    return s
 
 
-def ply_front_lower() -> Sketch:
-    """The removable panel below the band: the PSU and driver are behind it."""
-    return rect(P.INSIDE_X1 - P.INSIDE_X0, _BAND[0] - _Z0, (0, 0))
+IN_MM = 25.4
 
 
-def ply_front_header() -> Sketch:
-    """What is left of the front panel above the open band: a strip the
-    fascia's top row screws into. Rebated FASCIA_POCKET from its face, so it
-    finishes CARCASS_T - FASCIA_POCKET thick."""
-    x0, z0 = P.INSIDE_X0, _BAND[1] - P.FASCIA_TOP_LIP
-    sk = rect(P.INSIDE_X1 - P.INSIDE_X0, P.FASCIA_TOP_LIP, (0, 0))
-    return holes(sk, [(x - x0, z - z0) for x, z in plinth.fascia_screw_points()
-                      if z > z0], P.PILOT_DIA)
+def _write_layers(path: Path, layers: dict[str, list]) -> None:
+    ex = ExportDXF(unit=Unit.IN, line_weight=0.35)
+    for name, shapes in layers.items():
+        if name == "mark":
+            ex.add_layer(name, line_type=LineType.ISO_DOT, line_weight=0.18)
+        else:
+            ex.add_layer(name, line_weight=0.5 if name == "cut" else 0.25)
+        for sh in shapes:
+            ex.add_shape(sh, layer=name)
+    ex.write(str(path))
 
 
-def ply_partition() -> Sketch:
-    return rect(plinth.DIVIDER_X - P.DIVIDER_T / 2 - P.INSIDE_X0,
-                plinth.RAIL_BOTTOM - plinth.FLOOR_TOP, (0, 0))
+def ply_files() -> dict[str, carcass.Panel]:
+    """One file per distinct part: the two cleats are one blank."""
+    out: dict[str, carcass.Panel] = {}
+    for p in carcass.panels():
+        out.setdefault(p.file, p)
+    return out
 
 
-def ply_divider() -> Sketch:
-    """Seen from the viewer's left, x = 0 at its front edge (the partition)."""
-    w = P.REAR_INSIDE_Y - P.PARTITION_Y0
-    sk = rect(w, plinth.RAIL_BOTTOM - plinth.FLOOR_TOP, (0, 0))
-    # The U-bolt reliefs, in its back edge.
-    for y0, _, z0, z1 in plinth.divider_reliefs():
-        sk -= rect(w - (y0 - P.PARTITION_Y0) + 0.5, z1 - z0,
-                   (y0 - P.PARTITION_Y0, z0 - plinth.FLOOR_TOP))
-    return holes(sk, [(plinth.LINE_PASS_Y - P.PARTITION_Y0,
-                       plinth.LINE_PASS_Z - plinth.FLOOR_TOP)], P.MAST_LINE_PASS_H)
+def ply_qty() -> dict[str, int]:
+    q: dict[str, int] = {}
+    for p in carcass.panels():
+        q[p.file] = q.get(p.file, 0) + p.qty
+    return q
 
 
-def ply_ledge() -> Sketch:
-    return rect(P.INSIDE_X1 - P.INSIDE_X0,
-                P.CONSOLE_Y1 - P.LEDGE_CHASE - P.FASCIA_POCKET, (0, 0))
+# The fit coupon. Every housing is measured stock plus JOINT_CLEAR, and the
+# stock is an ESTIMATE until it is calipered. Cut this from an offcut first:
+# three dados for the 3/4 and three for the 1/2, the model's width in the middle
+# of each three and one JOINT_CLEAR either side. Push an offcut of each sheet
+# in. The one that takes a mallet fit is the width; if it is not the middle
+# one, the stock figure moves and the model re-runs before anything else is cut.
+COUPON_PITCH = 1.5
+COUPON_W = 3.0
 
 
-def ply_shelf() -> Sketch:
-    return rect(plinth.DIVIDER_X - P.DIVIDER_T / 2 - P.INSIDE_X0,
-                P.REAR_INSIDE_Y - P.PARTITION_Y1, (0, 0))
+def coupon_widths() -> list[tuple[str, float]]:
+    out = []
+    for stock, t in (("3/4", carcass.TA), ("1/2", carcass.HA)):
+        for k in (-1, 0, 1):
+            out.append((stock, t + carcass.CLR + k * carcass.CLR))
+    return out
 
 
-SHELF_CLEAT_H = 1.5  # as plinth.build_shelf
+def coupon_flat() -> dict[str, list]:
+    ws = coupon_widths()
+    length = COUPON_PITCH * (len(ws) + 1)
+    body = rect(length, COUPON_W, (0, 0))
+    pockets, marks = [], []
+    for i, (_, w) in enumerate(ws):
+        cx = COUPON_PITCH * (i + 1)
+        pockets.append(rect(w, COUPON_W, (cx - w / 2, 0)))
+        # Pips count the column within its stock: 1 narrow, 2 model, 3 wide.
+        n = i % 3 + 1
+        for k in range(n):
+            marks.extend((Pos(cx + w / 2 + 0.15, 0.3 + k * 0.2) * Circle(0.05)).edges())
+    return {"cut": [body], f"pocket_{P.DADO_D:.3f}": pockets, "mark": marks}
 
 
-def ply_shelf_cleat() -> Sketch:
-    return rect(P.REAR_INSIDE_Y - P.PARTITION_Y1, SHELF_CLEAT_H, (0, 0))
+def ubolt_plate_flat() -> Sketch:
+    w, h = P.UBOLT_PLATE_W, P.UBOLT_PLATE_H
+    sk = rect(w, h, (0, 0))
+    half = P.MAST_STRAP_SPAN / 2
+    return holes(sk, [(w / 2 - half, h / 2), (w / 2 + half, h / 2)], P.MAST_STRAP_BOLT_DIA)
 
-
-def ply_door() -> Sketch:
-    g = P.DOOR_GAP
-    return rect(plinth.DOOR_X1 - plinth.DOOR_X0 - 2 * g,
-                plinth.DOOR_Z1 - plinth.DOOR_Z0 - 2 * g, (0, 0))
-
-
-def rail_lengths() -> dict[str, float]:
-    """The top rail as sticks that butt, not the model's overlapping union.
-
-    Front and back run the full inside width; sides and cross rails run
-    between them. The back member is two pieces — the mast stands in its line.
-    """
-    t, c = P.CARCASS_T, P.MAST_NOTCH_CLEARANCE
-    w = P.INSIDE_X1 - P.INSIDE_X0
-    notch_x0 = P.MAST_X - P.MAST_W / 2 - c
-    notch_x1 = P.MAST_X + P.MAST_W / 2 + c
-    return {
-        "front": w,
-        "back_left": notch_x0 - P.INSIDE_X0,
-        "back_right": P.INSIDE_X1 - notch_x1,
-        "between": P.REAR_INSIDE_Y - P.CARCASS_T - 2 * t,
-    }
-
-
-def ply_parts() -> list[dict]:
-    """Every ply part: its file, stock, count, and the sketch it is cut from.
-
-    The cut list's ply table is this, so the list and the files cannot drift.
-    """
-    T, H = P.CARCASS_T, P.DIVIDER_T
-    rl = rail_lengths()
-    rear, rear_marks = ply_rear()
-    return [
-        {"part": "Side, left", "file": "ply_side_left.dxf", "t": T, "qty": 1,
-         "sketch": ply_side_left(),
-         "note": f"{P.CHAMFER} × 45° chamfer on the outer face of both vertical edges, "
-                 "after cutting. Wet-bay vents"},
-        {"part": "Side, right", "file": "ply_side_right.dxf", "t": T, "qty": 1,
-         "sketch": ply_side_right(),
-         "note": f"{P.CHAMFER} × 45° chamfer as the left. Console-bay vents"},
-        {"part": "Rear panel", "file": "ply_rear.dxf", "t": P.REAR_PANEL_T, "qty": 1,
-         "sketch": rear, "marks": rear_marks,
-         "note": "door opening notched in; U-bolt holes MARKED — drill from the U-bolt in hand"},
-        {"part": "Rear door", "file": "ply_door.dxf", "t": P.REAR_PANEL_T, "qty": 1,
-         "sketch": ply_door(), "note": "hinge and catch TBD — cut it now, hang it later"},
-        {"part": "Floor", "file": "ply_floor.dxf", "t": T, "qty": 1,
-         "sketch": ply_floor(), "note": "mast notch in the back edge"},
-        {"part": "Front panel, lower", "file": "ply_front_lower.dxf", "t": T, "qty": 1,
-         "sketch": ply_front_lower(), "note": "removable; screws to the sides"},
-        {"part": "Front header", "file": "ply_front_header.dxf", "t": T, "qty": 1,
-         "sketch": ply_front_header(),
-         "note": f"rebate the face {P.FASCIA_POCKET} deep over its full height, leaving "
-                 f"{T - P.FASCIA_POCKET:.2f}; fascia top-row pilots"},
-        {"part": "Console ledge", "file": "ply_ledge.dxf", "t": P.LEDGE_T, "qty": 1,
-         "sketch": ply_ledge(),
-         "note": "fascia bottom-row pilots go in its front edge: drill through the fascia"},
-        {"part": "Reservoir shelf", "file": "ply_shelf.dxf", "t": P.SHELF_T, "qty": 1,
-         "sketch": ply_shelf(), "note": ""},
-        {"part": "Shelf cleat", "file": "ply_shelf_cleat.dxf", "t": T, "qty": 2,
-         "sketch": ply_shelf_cleat(),
-         "note": "one on the left side, one on the divider; slot the fixings on the bench "
-                 "once the flow test sets the lift"},
-        {"part": "Console partition", "file": "ply_partition.dxf", "t": P.CONSOLE_PARTITION_T,
-         "qty": 1, "sketch": ply_partition(), "note": ""},
-        {"part": "Bay divider", "file": "ply_divider.dxf", "t": H, "qty": 1,
-         "sketch": ply_divider(),
-         "note": "grommeted line pass; three notches in the back edge for the U-bolts"},
-        {"part": "Top rail, front", "file": "ply_rail_front.dxf", "t": T, "qty": 1,
-         "sketch": rect(rl["front"], T, (0, 0)), "note": f"{T} × {T} stick"},
-        {"part": "Top rail, back left", "file": "ply_rail_back_left.dxf", "t": T, "qty": 1,
-         "sketch": rect(rl["back_left"], T, (0, 0)), "note": "the mast stands in the gap"},
-        {"part": "Top rail, back right", "file": "ply_rail_back_right.dxf", "t": T, "qty": 1,
-         "sketch": rect(rl["back_right"], T, (0, 0)), "note": ""},
-        {"part": "Top rail, side and cross", "file": "ply_rail_between.dxf", "t": T, "qty": 4,
-         "sketch": rect(rl["between"], T, (0, 0)),
-         "note": "two at the sides, two under the pads; all butt between front and back"},
-    ]
-
-
-# ---------------------------------------------------------------------------
-# The cut list — what to buy and saw, from the same parameters.
-# ---------------------------------------------------------------------------
 
 def _bbox(sk: Sketch) -> tuple[float, float]:
     bb = sk.bounding_box()
@@ -566,15 +487,15 @@ def cutlist() -> dict:
         "ply": {
             "stock": f"{P.CARCASS_T} and {P.DIVIDER_T} in birch ply",
             "parts": [
-                {"part": r["part"], "qty": r["qty"], "t": r["t"],
-                 "w": _bbox(r["sketch"])[0], "h": _bbox(r["sketch"])[1],
-                 "file": r["file"], "note": r["note"]}
-                for r in ply_parts()
+                {"part": PRETTY[p.name], "qty": ply_qty()[f], "t": p.nominal_t,
+                 "w": p.size_uv()[0], "h": p.size_uv()[1], "file": f"{f}.dxf",
+                 "note": p.note}
+                for f, p in ply_files().items()
             ] + [
                 {"part": "Block pad", "qty": 4, "t": P.CMU_UNDERSIDE_Z - P.RAIL_TOP_Z,
                  "w": P.PAD_SIZE, "h": P.PAD_SIZE, "file": "—",
-                 "note": "hardwood, or ply plus a shim to the height in t; glued to the "
-                         "cross rails through the tray's cutouts"},
+                 "note": "hardwood, or ply plus a shim to the height in t; screwed up "
+                         "through the deck"},
             ],
         },
         "steel": {
@@ -583,7 +504,9 @@ def cutlist() -> dict:
             "parts": [
                 {"part": "Frame leg", "qty": 4, "length": frame_leg,
                  "note": "levelling feet in the ends"},
-                {"part": "Frame ring, left/right", "qty": 2, "length": ring_y, "note": ""},
+                {"part": "Frame ring, left/right", "qty": 2, "length": ring_y,
+                 "note": f"two Ø{P.FRAME_BOLT_DIA} holes each, {P.FRAME_BOLT_INSET} from "
+                         "each end: the floor bolts down through them"},
                 {"part": "Frame ring, front/back", "qty": 2, "length": ring_x,
                  "note": "back member notched for the mast"},
                 {"part": "Mast", "qty": 1, "length": P.MAST_TOP,
@@ -626,6 +549,11 @@ def cutlist() -> dict:
              "blank": list(backplate_size()), "file": "backplate.dxf",
              "cut_on": "CNC plasma",
              "note": "plain rectangle — a DXF only because there is no shear"},
+            {"part": "U-bolt backing plate", "material": f"{P.PLATE_T} mild steel, white DTM",
+             "blank": [P.UBOLT_PLATE_W, P.UBOLT_PLATE_H], "file": "ubolt_plate.dxf",
+             "cut_on": "waterjet", "qty": P.MAST_STRAP_COUNT,
+             "note": f"×{P.MAST_STRAP_COUNT}, outside the rear panel; drill the ply through "
+                     "them. Buy the U-bolts for 1.5 OD tube, 1/4-20"},
             {"part": "Fascia", "material": f"{P.FASCIA_T} clear cast acrylic",
              "blank": [fm["w"], fm["h"]], "file": "fascia.dxf",
              "cut_on": "CO2 laser",
@@ -690,7 +618,9 @@ model. If a number here disagrees with the STEP, the STEP is stale — rebuild.
 | `backplate.dxf` | Console backplate, {bpw:.3f} × {bph:.3f}. A plain blank. |
 | `lightbox.dxf` | Lightbox shell flat, 16 ga. Blank {lbw:.3f} × {lbd:.3f}, four bends. |
 | `tray.dxf` | Drip tray flat, 304 stainless 16 ga. Blank {tw:.3f} × {td:.3f}, four bends. |
-| `ply_*.dxf` | Every carcass part for the CNC router, one file each. See the cut list. |
+| `ply_*.dxf`, `ply_*.step` | Every carcass part for the CNC router, one file each, joinery in. |
+| `fit_coupon.dxf` | Six dados to prove the housing widths on the real sheets. Cut first. |
+| `ubolt_plate.dxf` | The mast's U-bolt backing plates, 1/8 steel, ×3. |
 | `cutlist.md` | Ply, steel, sheet and glazing, with quantities. |
 
 **Units: inches, 1:1.** The exporter tags the unit but does not convert, so
@@ -711,12 +641,23 @@ the CNC plasma. Nothing needs the shear the shop does not have.
 **Plasma and small holes.** Anything under about 1/4 in comes off the plasma
 as a pierce, not a hole: use it as a centre mark and drill to size.
 
-**Ply** (CNC router): every file is a through-cut profile, so a part flipped
-on the table is still the same part. The sides' band notch is dogboned for a
-{bit} in bit; a bigger bit leaves corners the acrylic will not seat in. The
-chamfer on the sides and the rebate on the header are not in the files — the
-cut list says where. The rear panel's U-bolt holes are on `mark`: drill them
-from the U-bolts in hand.
+**Ply** (CNC router). The joinery is the house CNC grammar, v1.4: every
+joint a through dado or rabbet, pockets on one face of each panel, widths
+from MEASURED stock plus 0.1 mm. `ply_<part>.dxf` has `cut` (profile and
+through holes), `pocket_<depth>` (each housing and bore, from the up face)
+and `mark`; `ply_<part>.step` is the same part flat, pocketed face up, in mm,
+for Fusion CAM.
+
+**Before any panel is cut:** caliper both sheets at five points, put the
+figures in `params.PLY_T_ACTUAL` and `HALF_T_ACTUAL` (they are estimates
+until then), re-run, and cut `fit_coupon.dxf` from an offcut. Push a scrap
+of each sheet into its three dados: the middle one should take a mallet
+fit. If not, move the figure a step and re-run.
+
+**By hand after cutting:** the {chamfer} × 45° chamfer on the sides' outside
+vertical edges (router table; it is on the down face). The fascia's bottom
+row, the front panel's M5 inserts and the U-bolt holes are drilled on the
+bench through the part they fix, which is then their template.
 
 **Pans** (lightbox, tray): corners are notched square to the bend lines, so
 after folding each corner is an open seam to weld. The last two folds of a
@@ -755,8 +696,18 @@ def main(argv: list[str] | None = None) -> int:
     pan, pan_bends = tray_flat()
     _write(args.out / "tray.dxf", pan, bend=pan_bends)
 
-    for r in ply_parts():
-        _write(args.out / r["file"], r["sketch"], mark=r.get("marks"))
+    _write(args.out / "ubolt_plate.dxf", ubolt_plate_flat())
+
+    from build123d import export_step
+
+    # The ply set changes as the carcass does; a stale file is a part that
+    # does not exist, sitting beside the ones that do.
+    for old in list(args.out.glob("ply_*.dxf")) + list(args.out.glob("ply_*.step")):
+        old.unlink()
+    for f, p in ply_files().items():
+        _write_layers(args.out / f"{f}.dxf", ply_flat(p))
+        export_step(ply_solid(p), str(args.out / f"{f}.step"))
+    _write_layers(args.out / "fit_coupon.dxf", coupon_flat())
 
     data = cutlist()
     (args.out / "cutlist.json").write_text(json.dumps(data, indent=2))
@@ -769,7 +720,7 @@ def main(argv: list[str] | None = None) -> int:
         bpw=backplate_size()[0], bph=backplate_size()[1],
         lbw=lightbox_metrics()["blank_w"], lbd=lightbox_metrics()["blank_d"],
         tw=tray_metrics()["blank_w"], td=tray_metrics()["blank_d"],
-        bit=P.ROUTER_BIT_DIA,
+        chamfer=P.CHAMFER,
     ))
 
     for f in sorted(args.out.iterdir()):
