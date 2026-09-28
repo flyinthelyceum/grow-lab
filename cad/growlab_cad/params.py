@@ -393,7 +393,13 @@ LIGHTBOX_T = 0.0625  # CHOICE: 16 ga, as the instrument case
 LIGHTBOX_VENT_N = 9  # CHOICE: slots along the top, over the heatsink's fins
 LIGHTBOX_VENT_W = 0.375  # CHOICE
 LIGHTBOX_VENT_L = 3.5  # CHOICE: along the depth, inside the cross bar's landing
-LIGHTBOX_END_INSET = 0.75  # CHOICE: the end slots' inset from each end
+LIGHTBOX_VENT_BEND_MARGIN = 0.375  # CHOICE: steel between the outer vents and the
+                                   # end bends -- nearer than ~3t, the brake
+                                   # pulls the slot out of shape
+# The end slots are top vents turned on their side: VENT_L along the depth,
+# VENT_W tall, centred on the end wall's inside height. That leaves ~0.53 of
+# steel between the slot and each of the bend and the free edge -- well clear of
+# a 16 ga fold, which wants roughly 2t plus the radius.
 
 # Two LM301H + heatsink modules side by side; one module's dimensions from the lib.
 # Each module: 15.5 x 1.575 x 0.525; combined envelope below.

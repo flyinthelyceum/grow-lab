@@ -8,6 +8,9 @@ Outputs
 fab/plate.dxf          the instrument plate, 1/8 mild steel, full hole schedule
 fab/case_body.dxf      the case's flat development, 16 ga, with bend lines
 fab/fascia.dxf         the clear acrylic band
+fab/backplate.dxf      the console backplate, a plain blank (no shear in the shop)
+fab/lightbox.dxf       the lightbox shell's flat, 16 ga, vents and bend lines
+fab/tray.dxf           the drip tray's flat, 304 stainless 16 ga, bend lines
 fab/cutlist.md         ply panels, frame members, sheet and bought stock
 fab/cutlist.json       the same, for anything that wants to read it
 fab/README.md          what each file is and how to read it
@@ -47,7 +50,7 @@ from build123d import (  # noqa: E402
 )
 from build123d.exporters import ExportDXF, LineType  # noqa: E402
 
-from cad.growlab_cad import canopy as _canopy, case, params as P, plinth  # noqa: E402
+from cad.growlab_cad import canopy as _canopy, case, fixture, params as P, plinth, tray  # noqa: E402
 from cad.growlab_cad.face import corner_screw_points, knob_points  # noqa: E402
 from pi.dashboard.panel_geometry import (  # noqa: E402
     DIAL_BEZEL_OD,
@@ -207,12 +210,135 @@ def fascia_flat() -> Sketch:
 
 
 # ---------------------------------------------------------------------------
+# Pans — the lightbox and the tray are the same shape: a base with four walls
+# folded off its edges, corners notched square and welded.
+#
+#            +--------------+
+#            |     wall     |
+#   +--------+--------------+--------+
+#   |  wall  |     BASE     |  wall  |      walls fold off the base's edges;
+#   +--------+--------------+--------+      the corner squares are cut away
+#            |     wall     |               and the seams welded after folding
+#            +--------------+
+#
+# As with the case, the base is the modelled outside less a wall thickness each
+# side, and each wall is the modelled height less one thickness, so the blank is
+# the sum of the flat faces and the folded outside is the modelled outside.
+# Four-sided pans want a box-and-pan (finger) brake for the last two folds.
+# ---------------------------------------------------------------------------
+
+def pan_metrics(outer_w: float, outer_d: float, outer_h: float, t: float) -> dict:
+    base_w, base_d, wall = outer_w - 2 * t, outer_d - 2 * t, outer_h - t
+    return {"t": t, "base_w": base_w, "base_d": base_d, "wall": wall,
+            "blank_w": base_w + 2 * wall, "blank_d": base_d + 2 * wall}
+
+
+def pan_flat(m: dict) -> tuple[Sketch, list]:
+    """The cruciform blank and its four bend lines, origin bottom-left."""
+    a, bw, bd = m["wall"], m["base_w"], m["base_d"]
+    sk = (rect(bw, bd, (a, a))
+          + rect(a, bd, (0, a)) + rect(a, bd, (a + bw, a))
+          + rect(bw, a, (a, 0)) + rect(bw, a, (a, a + bd)))
+    bends = [
+        Line((a, a), (a, a + bd)),
+        Line((a + bw, a), (a + bw, a + bd)),
+        Line((a, a), (a + bw, a)),
+        Line((a, a + bd), (a + bw, a + bd)),
+    ]
+    return sk, bends
+
+
+def _to_base(m: dict, centre: tuple[float, float]):
+    """Model plan (x, y) -> flat coordinates on the base."""
+    x0 = centre[0] - m["base_w"] / 2
+    y0 = centre[1] - m["base_d"] / 2
+    return lambda x, y: (m["wall"] + x - x0, m["wall"] + y - y0)
+
+
+def lightbox_metrics() -> dict:
+    return pan_metrics(P.FIXTURE_W, P.FIXTURE_D, P.FIXTURE_H, P.LIGHTBOX_T)
+
+
+def lightbox_flat() -> tuple[Sketch, list]:
+    """Drawn from above: the base is the top, the walls fold down away from you.
+
+    Nine vents in the top over the heatsink, and one slot in each end wall at
+    mid-height — the same slots ``fixture.py`` cuts, from the same functions.
+    """
+    m = lightbox_metrics()
+    sk, bends = pan_flat(m)
+    to = _to_base(m, (P.FIXTURE_X, P.FIXTURE_Y))
+    for x in fixture.vent_xs():
+        fx, fy = to(x, P.FIXTURE_Y)
+        sk -= rect(P.LIGHTBOX_VENT_W, P.LIGHTBOX_VENT_L,
+                   (fx - P.LIGHTBOX_VENT_W / 2, fy - P.LIGHTBOX_VENT_L / 2))
+    # End slots: in the end walls, which are the left and right arms. The arm's
+    # free edge is the wall's bottom, so the slot's height up the wall is its
+    # distance in from the blank's edge.
+    up = fixture.end_slot_zc() - fixture.shell_z0()
+    _, fy = to(P.FIXTURE_X, P.FIXTURE_Y)
+    for fx in (up, m["blank_w"] - up):
+        sk -= rect(P.LIGHTBOX_VENT_W, P.LIGHTBOX_VENT_L,
+                   (fx - P.LIGHTBOX_VENT_W / 2, fy - P.LIGHTBOX_VENT_L / 2))
+    return sk, bends
+
+
+def tray_metrics() -> dict:
+    return pan_metrics(P.TRAY_W, P.TRAY_D, P.TRAY_UPSTAND + P.TRAY_T, P.TRAY_T)
+
+
+def tray_flat() -> tuple[Sketch, list]:
+    """Drawn from above: the floor's inside face, upstands fold UP toward you.
+
+    That matters here, unlike the lightbox: the mast notch is off-centre, and
+    folding the other way makes its mirror image. Four pad cutouts in the
+    floor, and the mast notch through the floor and on out through the back
+    upstand — so the back bend is two lines, either side of it.
+    """
+    m = tray_metrics()
+    sk, bends = pan_flat(m)
+    to = _to_base(m, tray.plan_centre())
+    cut = P.PAD_SIZE + 2 * P.PAD_CUTOUT_CLEARANCE
+    for px, py in tray.pad_centres():
+        fx, fy = to(px, py)
+        sk -= rect(cut, cut, (fx - cut / 2, fy - cut / 2))
+
+    x0, x1, y_front = tray_notch_flat()
+    sk -= rect(x1 - x0, m["blank_d"] - y_front + 0.5, (x0, y_front))
+
+    # The back bend is the last of pan_flat's four; the notch splits it.
+    a, bw, bd = m["wall"], m["base_w"], m["base_d"]
+    bends = bends[:3] + [Line((a, a + bd), (x0, a + bd)),
+                         Line((x1, a + bd), (a + bw, a + bd))]
+    return sk, bends
+
+
+def tray_notch_flat() -> tuple[float, float, float]:
+    """(x0, x1, y_front) of the mast notch, in flat coordinates."""
+    m = tray_metrics()
+    nx, ny, ncx, ncy = tray.mast_notch()
+    fx, fy = _to_base(m, tray.plan_centre())(ncx, ncy - ny / 2)
+    return fx - nx / 2, fx + nx / 2, fy
+
+
+def backplate_size() -> tuple[float, float]:
+    bz0, bz1 = plinth._fascia_band()
+    return P.INSIDE_X1 - P.INSIDE_X0, bz1 - bz0
+
+
+def backplate_flat() -> Sketch:
+    """A plain rectangle — but there is no shear, so it goes on the plasma too."""
+    return rect(*backplate_size(), (0, 0))
+
+
+# ---------------------------------------------------------------------------
 # The cut list — what to buy and saw, from the same parameters.
 # ---------------------------------------------------------------------------
 
 def cutlist() -> dict:
     m = case_metrics()
     fm = fascia_metrics()
+    lm, tm = lightbox_metrics(), tray_metrics()
     bay_h = P.RAIL_BOTTOM_Z - P.FLOOR_TOP_Z
     frame_leg = P.SHADOW_GAP_H - P.FRAME_TUBE
     ring_x = P.PLINTH_W - 2 * P.FRAME_LEG_INSET
@@ -292,28 +418,34 @@ def cutlist() -> dict:
         },
         "sheet": [
             {"part": "Instrument plate", "material": f"{P.PLATE_T} mild steel, white DTM",
-             "blank": [FACE_WIDTH, FACE_HEIGHT], "file": "plate.dxf"},
+             "blank": [FACE_WIDTH, FACE_HEIGHT], "file": "plate.dxf",
+             "cut_on": "waterjet",
+             "note": f"{FACE_HEIGHT:g} long is the waterjet's whole bed; plasma if it "
+                     "will not sit. The one visible cut edge, so the cleanest machine"},
             {"part": "Instrument case body", "material": "16 ga mild steel, white DTM",
              "blank": [m["blank_w"], m["blank_h"]], "file": "case_body.dxf",
+             "cut_on": "CNC plasma",
              "note": "6 bends; see the drawing. 0.0625 is modelled; 16 ga steel is "
-                     "0.0598, inside the bend allowance"},
+                     f"0.0598, inside the bend allowance. The four Ø{P.CASE_TAP_DIA:.3f} "
+                     "taps: pierce only on the plasma, drill to size and tap M3"},
             {"part": "Console backplate", "material": f"{P.BACKPLATE_T} mild steel, white DTM",
-             "blank": [P.INSIDE_X1 - P.INSIDE_X0, plinth._fascia_band()[1] - plinth._fascia_band()[0]],
-             "note": "plain rectangle, no DXF — the blank is the part"},
+             "blank": list(backplate_size()), "file": "backplate.dxf",
+             "cut_on": "CNC plasma",
+             "note": "plain rectangle — a DXF only because there is no shear"},
             {"part": "Fascia", "material": f"{P.FASCIA_T} clear cast acrylic",
              "blank": [fm["w"], fm["h"]], "file": "fascia.dxf",
-             "note": "cast, not extruded"},
+             "cut_on": "CO2 laser",
+             "note": "cast, not extruded — cast laser-cuts to a polished edge"},
             {"part": "Lightbox shell", "material": f"{P.LIGHTBOX_T} mild steel, white DTM",
-             "blank": [P.FIXTURE_W + 2 * P.FIXTURE_H, P.FIXTURE_D + 2 * P.FIXTURE_H],
-             "file": "(from the STEP)",
-             "note": "folded channel, open bottom; blank is a nominal cruciform bounding "
-                     "box, the shop develops it"},
+             "blank": [lm["blank_w"], lm["blank_d"]], "file": "lightbox.dxf",
+             "cut_on": "CNC plasma",
+             "note": "4 bends, walls fold down; weld the four corner seams and dress "
+                     "them. 9 top vents, 1 slot per end"},
             {"part": "Tray", "material": "304 stainless, 16 ga",
-             "blank": [P.TRAY_W - 2 * P.TRAY_T + 2 * P.TRAY_UPSTAND,
-                       P.TRAY_D - 2 * P.TRAY_T + 2 * P.TRAY_UPSTAND],
-             "file": "(from the STEP)",
-             "note": "formed pan; blank is nominal, the shop develops it. Pad cutouts "
-                     "and the mast notch are in the STEP."},
+             "blank": [tm["blank_w"], tm["blank_d"]], "file": "tray.dxf",
+             "cut_on": "CNC plasma",
+             "note": "4 bends (the back one split by the mast notch), upstands fold UP "
+                     "toward you as drawn. TIG the corner seams watertight"},
         ],
         "pending": [
             "Dial mounting studs — Simpson pattern, does not apply.",
@@ -339,10 +471,10 @@ def cutlist_markdown(data: dict) -> str:
         out.append(f"| {r['part']} | {r['qty']} | {r['length']:.3f} | {r['note']} |")
 
     out += ["", "## Sheet and glazing", "",
-            "| Part | Material | Blank | File | Note |", "|---|---|---|---|---|"]
+            "| Part | Material | Blank | File | Cut on | Note |", "|---|---|---|---|---|---|"]
     for r in data["sheet"]:
         out.append(f"| {r['part']} | {r['material']} | {r['blank'][0]:.3f} × {r['blank'][1]:.3f} "
-                   f"| {r.get('file', '—')} | {r.get('note', '')} |")
+                   f"| {r.get('file', '—')} | {r.get('cut_on', '—')} | {r.get('note', '')} |")
 
     out += ["", "## Not on this list — measure first", ""]
     out += [f"- {p}" for p in data["pending"]]
@@ -359,6 +491,9 @@ model. If a number here disagrees with the STEP, the STEP is stale — rebuild.
 | `plate.dxf` | Instrument plate, {plate_t} mild steel. Hole schedule from `panel_geometry.py`. |
 | `case_body.dxf` | Case body flat, 16 ga. Blank {cbw:.3f} × {cbh:.3f}, six bends. |
 | `fascia.dxf` | Clear cast acrylic band, {fascia_t}. Two knob holes, ten fixings. |
+| `backplate.dxf` | Console backplate, {bpw:.3f} × {bph:.3f}. A plain blank. |
+| `lightbox.dxf` | Lightbox shell flat, 16 ga. Blank {lbw:.3f} × {lbd:.3f}, four bends. |
+| `tray.dxf` | Drip tray flat, 304 stainless 16 ga. Blank {tw:.3f} × {td:.3f}, four bends. |
 | `cutlist.md` | Ply, steel, sheet and glazing, with quantities. |
 
 **Units: inches, 1:1.** The exporter tags the unit but does not convert, so
@@ -370,6 +505,20 @@ both the tag and a coordinate.
 
 **Bends** are drawn at the theoretical fold with no bend allowance; the
 K-factor is the shop's. The blank is the sum of the flat faces.
+
+**Which machine.** The cut list's *Cut on* column says. In short: the plate
+on the waterjet (12 × 12 bed — it is the only steel part that fits, and the
+one whose edge is seen), the fascia on the CO2 laser, everything else steel on
+the CNC plasma. Nothing needs the shear the shop does not have.
+
+**Plasma and small holes.** Anything under about 1/4 in comes off the plasma
+as a pierce, not a hole: use it as a centre mark and drill to size.
+
+**Pans** (lightbox, tray): corners are notched square to the bend lines, so
+after folding each corner is an open seam to weld. The last two folds of a
+four-sided pan want a box-and-pan brake. The tray is stainless and carries
+water: TIG its corners, and fold it with the drawing face up — the mast notch
+is off-centre, so folding it the other way makes the mirror image.
 
 **The dials are cut** at Ø 2.75, calipered from the Weston 301 bezels.
 
@@ -394,6 +543,13 @@ def main(argv: list[str] | None = None) -> int:
     _write(args.out / "case_body.dxf", body, bend=bends)
 
     _write(args.out / "fascia.dxf", fascia_flat())
+    _write(args.out / "backplate.dxf", backplate_flat())
+
+    shell, shell_bends = lightbox_flat()
+    _write(args.out / "lightbox.dxf", shell, bend=shell_bends)
+
+    pan, pan_bends = tray_flat()
+    _write(args.out / "tray.dxf", pan, bend=pan_bends)
 
     data = cutlist()
     (args.out / "cutlist.json").write_text(json.dumps(data, indent=2))
@@ -403,6 +559,9 @@ def main(argv: list[str] | None = None) -> int:
     (args.out / "README.md").write_text(PACK_README.format(
         plate_t=P.PLATE_T, fascia_t=P.FASCIA_T,
         cbw=m["blank_w"], cbh=m["blank_h"],
+        bpw=backplate_size()[0], bph=backplate_size()[1],
+        lbw=lightbox_metrics()["blank_w"], lbd=lightbox_metrics()["blank_d"],
+        tw=tray_metrics()["blank_w"], td=tray_metrics()["blank_d"],
     ))
 
     for f in sorted(args.out.iterdir()):

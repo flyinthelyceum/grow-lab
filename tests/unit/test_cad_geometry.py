@@ -331,6 +331,15 @@ class TestTheLightbox:
                         at=(x, P.FIXTURE_Y, top_z - P.LIGHTBOX_T / 2))
             assert (probe & parts["lightbox"]).volume < 1.0, f"slot at x={x:.2f}"
 
+    def test_the_ends_are_slotted(self, parts):
+        """They were once placed 0.75 in from each end -- inside the hollow,
+        where they cut nothing, and the model had closed ends unnoticed."""
+        for sx in (-1, 1):
+            x = P.FIXTURE_X + sx * (P.FIXTURE_W / 2 - P.LIGHTBOX_T / 2)
+            probe = box(P.LIGHTBOX_T / 2, P.LIGHTBOX_VENT_L / 2, P.LIGHTBOX_VENT_W / 2,
+                        at=(x, P.FIXTURE_Y, fixture.end_slot_zc() - P.LIGHTBOX_VENT_W / 4))
+            assert (probe & parts["lightbox"]).volume < 1.0, f"end {sx:+d}"
+
     def test_the_shell_clears_the_heatsink(self, parts, refs):
         """Calipered 2026-09-10: 15.5 x 1.575 x 0.525."""
         assert assembly._shared_in3(parts["lightbox"], refs["led_heatsink"]) < 0.001
