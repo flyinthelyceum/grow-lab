@@ -265,6 +265,22 @@ def build_partition() -> Part:
     )
 
 
+def divider_reliefs() -> list[tuple[float, float, float, float]]:
+    """(y0, y1, z0, z1) of the notches in the divider's back edge.
+
+    The mast stands MAST_NOTCH_CLEARANCE off the divider and the U-bolts
+    straddle it, so the divider-side leg of every U-bolt runs through the
+    divider's end. Found cutting the router files, 2026-09-28: nothing
+    modelled the U-bolts, so nothing collided.
+    """
+    from .mast import strap_heights
+
+    c = P.MAST_NOTCH_CLEARANCE
+    y0 = P.MAST_Y - P.MAST_D / 2 - c
+    w = P.MAST_STRAP_RELIEF_W
+    return [(y0, IY1, z - w / 2, z + w / 2) for z in strap_heights()]
+
+
 def build_divider() -> Part:
     """Wet bay / dry bay, hard-divided, floor to rail, partition to rear panel.
 
@@ -279,6 +295,8 @@ def build_divider() -> Part:
     # with no circumference to wrap, so a plain round hole can pass the camera
     # connector that forced the mast's pass to stretch.
     divider -= cyl_x(P.MAST_LINE_PASS_H, P.DIVIDER_T * 3, at=(DIVIDER_X, LINE_PASS_Y, LINE_PASS_Z))
+    for y0, y1, z0, z1 in divider_reliefs():
+        divider -= _panel(DIVIDER_X - P.DIVIDER_T, DIVIDER_X + P.DIVIDER_T, y0, y1 + 0.5, z0, z1)
     return labelled(divider, "bay_divider")
 
 

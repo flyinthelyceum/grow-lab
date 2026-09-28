@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-28 (the carcass, for the router)
+
+### Added
+- **`ply_*.dxf`: every carcass part, one file each, for the CNC router.** The ply table in the
+  cut list is now generated from the same registry as the files, so they cannot drift. All
+  through-cuts; the sides' band notch is dogboned for a `ROUTER_BIT_DIA` (1/4) bit so the
+  acrylic's square corners seat. The rear panel's U-bolt holes are on `mark`: their spacing is
+  a CHOICE and the U-bolts are not bought.
+- **Block pads** on the cut list (×4, 1.25 square × 0.8125). They were in the model and on no
+  list.
+
+### Fixed
+- **The U-bolts ran through the divider.** The tube stands 0.125 off it, so the near leg of
+  every U-bolt went straight through the divider's back end. Nothing modelled the U-bolts, so
+  nothing collided. The divider now has a notch at each strap; a test puts a leg through it.
+- **The top rails overlapped at every corner.** Front, back, sides and crosses were all listed
+  full length. The sides and crosses now butt between front and back (13.0, not 14.5), and the
+  back rail is two pieces — the mast stands in its line.
+- **The front panel is two pieces, not one.** The open band runs its full width, so what the
+  list called one panel with an opening is a removable lower panel and a separate header strip.
+
 ## 2026-09-28 (every sheet part has a flat, and a machine)
 
 ### Added
