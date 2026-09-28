@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-28 (every sheet part has a flat, and a machine)
+
+### Added
+- **`lightbox.dxf`, `tray.dxf`, `backplate.dxf`** in the fab pack. The lightbox and tray were
+  "(from the STEP) — the shop develops it"; the backplate was "plain rectangle, no DXF". There
+  is no shear in the shop, so a rectangle is a plasma job like anything else. The lightbox and
+  tray are the same cruciform pan: base plus four walls, corners notched square to the bend
+  lines and welded after folding. The tray's back bend is split by the mast notch.
+- **A *Cut on* column in the cut list.** Plate on the waterjet (the only steel part inside its
+  12 × 12 bed, and the one whose edge is seen); fascia on the CO2 laser; the rest on the CNC
+  plasma. Holes under ~1/4 in come off the plasma as pierce marks: drill to size.
+
+### Fixed
+- **The lightbox's end slots cut nothing.** They sat 0.75 in from each end, inside the hollow,
+  so the model had closed ends. They are in the end walls now — a vent slot turned on its side,
+  at mid-height — and the flat puts them in the same place. A test checks the model has them.
+- **The outer top vents were 0.19 in from the end bends**, close enough for the brake to pull
+  them out of shape. They now keep `LIGHTBOX_VENT_BEND_MARGIN` (0.375) clear; still over the
+  heatsink.
+
+### Found
+- **The tray floor has open holes in it**: the four pad cutouts and the mast notch. Anything
+  that reaches the floor drains through them into the carcass. Not solved here.
+
 ## 2026-09-28 (the thread coupon, used)
 
 ### Changed

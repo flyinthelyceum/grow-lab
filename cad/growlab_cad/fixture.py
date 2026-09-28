@@ -18,7 +18,7 @@ Decided 2026-09-05: **a white steel channel over the aluminium bar.**
   conducting; the shell does the looking.
 * **Open at the bottom.** That face is the light aperture, so there is nothing
   to fabricate there and nothing to obstruct.
-* **Slotted along the top, open at the ends.** `LIGHTING_SYSTEM.md` asks for
+* **Slotted along the top and through both ends.** `LIGHTING_SYSTEM.md` asks for
   free airflow round the heatsink. An open-bottomed channel with a row of slots
   above the fins is a chimney: air in at the aperture, out at the top. A closed
   box would be an oven, and LED life is the thing thermal management is for.
@@ -51,10 +51,20 @@ def heatsink_z0() -> float:
 
 
 def vent_xs() -> list[float]:
-    """Slot centres along the top, spread over the heatsink's own width."""
-    span = P.HEATSINK_W - P.LIGHTBOX_VENT_W
+    """Slot centres along the top, over the heatsink, clear of the end bends.
+
+    They used to span the heatsink's full 15.5, which put the outer slots
+    0.19 from the fold -- fine in a solid model, torn on a brake.
+    """
+    inside = P.FIXTURE_W - 2 * P.LIGHTBOX_T - 2 * P.LIGHTBOX_VENT_BEND_MARGIN
+    span = min(P.HEATSINK_W, inside) - P.LIGHTBOX_VENT_W
     step = span / (P.LIGHTBOX_VENT_N - 1)
     return [P.FIXTURE_X - span / 2 + i * step for i in range(P.LIGHTBOX_VENT_N)]
+
+
+def end_slot_zc() -> float:
+    """The end slots' centre height: mid-way up the end wall's inside face."""
+    return shell_z0() + (P.FIXTURE_H - P.LIGHTBOX_T) / 2
 
 
 def build_shell() -> Part:
@@ -74,10 +84,15 @@ def build_shell() -> Part:
 
     # End slots: the chimney's outlets, and what stops the ends reading as a
     # closed box from the side — the view a person gets standing beside it.
+    # Until 2026-09-28 these sat 0.75 in from each end, which is inside the
+    # hollow: they cut nothing, and the model had closed ends for a month
+    # without anything noticing. They are in the end walls now, where the flat
+    # pattern puts them.
+    zc = end_slot_zc()
     for sx in (-1, 1):
-        x = P.FIXTURE_X + sx * (P.FIXTURE_W / 2 - P.LIGHTBOX_END_INSET)
-        outer -= box(t * 3, P.LIGHTBOX_VENT_L, P.FIXTURE_H - 2 * t,
-                     at=(x, P.FIXTURE_Y, shell_z0() + t))
+        x = P.FIXTURE_X + sx * (P.FIXTURE_W / 2 - t / 2)
+        outer -= box(t * 3, P.LIGHTBOX_VENT_L, P.LIGHTBOX_VENT_W,
+                     at=(x, P.FIXTURE_Y, zc - P.LIGHTBOX_VENT_W / 2))
 
     return labelled(outer, "lightbox_shell")
 

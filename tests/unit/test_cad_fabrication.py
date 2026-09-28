@@ -69,7 +69,8 @@ def extents(doc, layer="cut"):
 class TestTheFilesSayInchesAndMeanIt:
     """The exporter tags a unit without converting. Both have to agree."""
 
-    @pytest.mark.parametrize("name", ["plate", "case_body", "fascia"])
+    @pytest.mark.parametrize("name", ["plate", "case_body", "fascia", "backplate",
+                                      "lightbox", "tray"])
     def test_header_says_inches(self, pack, name):
         assert read(pack, f"{name}.dxf").header["$INSUNITS"] == 1  # 1 = inches
 
@@ -200,6 +201,131 @@ class TestTheFascia:
             assert in_header or in_ledge, wz
 
 
+def slots(doc):
+    """Closed rectangles on the cut layer, as (cx, cy, w, h).
+
+    The pans' holes are all rectangles: two vertical cut LINEs over the same
+    span, closed top and bottom by horizontal ones over exactly the gap
+    between them. The outline's own edges never close like that.
+    """
+    vert, horiz = {}, set()
+    for ln in entities(doc, "cut", "LINE"):
+        (xa, ya), (xb, yb) = (ln.dxf.start.x, ln.dxf.start.y), (ln.dxf.end.x, ln.dxf.end.y)
+        if abs(xa - xb) < 1e-9:
+            vert.setdefault((round(min(ya, yb), 5), round(max(ya, yb), 5)), []).append(round(xa, 5))
+        elif abs(ya - yb) < 1e-9:
+            horiz.add((round(min(xa, xb), 5), round(max(xa, xb), 5), round(ya, 5)))
+    out = []
+    for (y0, y1), xs in vert.items():
+        for a in xs:
+            for b in xs:
+                if a < b and (a, b, y0) in horiz and (a, b, y1) in horiz:
+                    out.append(((a + b) / 2, (y0 + y1) / 2, b - a, y1 - y0))
+    return out
+
+
+class TestTheLightboxFlatFoldsBackIntoThePart:
+    def test_the_blank_is_the_sum_of_the_faces(self, pack):
+        m = F.lightbox_metrics()
+        x0, y0, x1, y1 = extents(read(pack, "lightbox.dxf"))
+        assert (x1 - x0) == pytest.approx(m["blank_w"], abs=1e-6)
+        assert (y1 - y0) == pytest.approx(m["blank_d"], abs=1e-6)
+
+    def test_folded_it_is_the_shell_that_is_modelled(self):
+        m = F.lightbox_metrics()
+        assert m["base_w"] + 2 * m["t"] == pytest.approx(P.FIXTURE_W)
+        assert m["base_d"] + 2 * m["t"] == pytest.approx(P.FIXTURE_D)
+        assert m["wall"] + m["t"] == pytest.approx(P.FIXTURE_H)
+
+    def test_four_bends(self, pack):
+        assert len(entities(read(pack, "lightbox.dxf"), "bend")) == 4
+
+    def test_nine_vents_in_the_top_and_one_in_each_end(self, pack):
+        m = F.lightbox_metrics()
+        found = slots(read(pack, "lightbox.dxf"))
+        assert len(found) == P.LIGHTBOX_VENT_N + 2
+        a = m["wall"]
+        top = [s for s in found if a < s[0] < a + m["base_w"]]
+        ends = [s for s in found if not a < s[0] < a + m["base_w"]]
+        assert len(top) == P.LIGHTBOX_VENT_N and len(ends) == 2
+        for cx, cy, w, h in found:
+            assert w == pytest.approx(P.LIGHTBOX_VENT_W)
+            assert h == pytest.approx(P.LIGHTBOX_VENT_L)
+            assert cy == pytest.approx(m["blank_d"] / 2)
+
+    def test_no_slot_is_near_enough_a_bend_to_distort(self, pack):
+        """A slot nearer a fold than ~3t is pulled out of shape by the brake."""
+        m = F.lightbox_metrics()
+        a = m["wall"]
+        for cx, _, w, _ in slots(read(pack, "lightbox.dxf")):
+            for bend in (a, a + m["base_w"]):
+                assert abs(cx - bend) - w / 2 >= 3 * m["t"], cx
+
+    def test_the_end_slots_are_where_the_model_cuts_them(self, pack):
+        from cad.growlab_cad import fixture
+
+        found = sorted(slots(read(pack, "lightbox.dxf")))
+        up = fixture.end_slot_zc() - fixture.shell_z0()
+        assert found[0][0] == pytest.approx(up)
+        assert found[-1][0] == pytest.approx(F.lightbox_metrics()["blank_w"] - up)
+
+
+class TestTheTrayFlatFoldsBackIntoThePart:
+    def test_the_blank_is_the_sum_of_the_faces(self, pack):
+        m = F.tray_metrics()
+        x0, y0, x1, y1 = extents(read(pack, "tray.dxf"))
+        assert (x1 - x0) == pytest.approx(m["blank_w"], abs=1e-6)
+        assert (y1 - y0) == pytest.approx(m["blank_d"], abs=1e-6)
+        assert m["base_w"] + 2 * m["t"] == pytest.approx(P.TRAY_W)
+        assert m["wall"] == pytest.approx(P.TRAY_UPSTAND)
+
+    def test_the_mast_notch_splits_the_back_bend(self, pack):
+        m = F.tray_metrics()
+        x0, x1, _ = F.tray_notch_flat()
+        back_y = m["wall"] + m["base_d"]
+        bends = entities(read(pack, "tray.dxf"), "bend")
+        assert len(bends) == 5
+        back = sorted((round(min(b.dxf.start.x, b.dxf.end.x), 5),
+                       round(max(b.dxf.start.x, b.dxf.end.x), 5))
+                      for b in bends if b.dxf.start.y == pytest.approx(back_y)
+                      and b.dxf.end.y == pytest.approx(back_y))
+        assert back == [(pytest.approx(m["wall"]), pytest.approx(x0)),
+                        (pytest.approx(x1), pytest.approx(m["wall"] + m["base_w"]))]
+
+    def test_the_notch_is_where_the_mast_is(self):
+        from cad.growlab_cad import tray
+
+        m = F.tray_metrics()
+        x0, x1, y_front = F.tray_notch_flat()
+        cx, cy = tray.plan_centre()
+        # Back to model coordinates: the base's left/front inside edge is at wall.
+        mx = (x0 + x1) / 2 - m["wall"] + cx - m["base_w"] / 2
+        my = y_front - m["wall"] + cy - m["base_d"] / 2
+        assert mx == pytest.approx(P.MAST_X)
+        assert my == pytest.approx(P.MAST_Y - P.MAST_D / 2 - P.MAST_NOTCH_CLEARANCE)
+        assert x1 - x0 == pytest.approx(P.MAST_W + 2 * P.MAST_NOTCH_CLEARANCE)
+
+    def test_four_pad_cutouts_under_the_block(self, pack):
+        from cad.growlab_cad import tray
+
+        m = F.tray_metrics()
+        cut = P.PAD_SIZE + 2 * P.PAD_CUTOUT_CLEARANCE
+        pads = [s for s in slots(read(pack, "tray.dxf"))
+                if s[2] == pytest.approx(cut) and s[3] == pytest.approx(cut)]
+        assert len(pads) == 4
+        cx, cy = tray.plan_centre()
+        want = sorted((round(px - cx + m["blank_w"] / 2, 5), round(py - cy + m["blank_d"] / 2, 5))
+                      for px, py in tray.pad_centres())
+        assert sorted((round(x, 5), round(y, 5)) for x, y, _, _ in pads) == want
+
+
+class TestTheBackplate:
+    def test_it_is_the_blank(self, pack):
+        x0, y0, x1, y1 = extents(read(pack, "backplate.dxf"))
+        assert (x1 - x0, y1 - y0) == pytest.approx(F.backplate_size())
+        assert len(entities(read(pack, "backplate.dxf"))) == 4
+
+
 class TestTheCutList:
     def test_every_part_has_a_real_size(self):
         data = F.cutlist()
@@ -234,6 +360,18 @@ class TestTheCutList:
         assert sheet["Instrument case body"]["blank"][0] == pytest.approx(
             F.case_metrics()["blank_w"])
 
+    def test_every_sheet_part_has_a_file_and_a_machine(self):
+        """No shear in the shop, so nothing is 'plain rectangle, no DXF', and
+        nothing is left for the shop to develop from the STEP."""
+        for r in F.cutlist()["sheet"]:
+            assert r["file"].endswith(".dxf"), r["part"]
+            assert r["cut_on"] in ("waterjet", "CNC plasma", "CO2 laser"), r["part"]
+
+    def test_only_what_fits_the_waterjet_is_on_it(self):
+        for r in F.cutlist()["sheet"]:
+            if r["cut_on"] == "waterjet":
+                assert max(r["blank"]) <= 12.0, r["part"]
+
     def test_it_says_what_is_still_unmeasured(self):
         pending = " ".join(F.cutlist()["pending"]).lower()
         assert "studs" in pending and "inky" in pending
@@ -257,7 +395,6 @@ def test_the_pack_builds_from_a_clean_shell(tmp_path):
     )
     assert r.returncode == 0, r.stdout + r.stderr
     assert "SCRIBE RINGS" not in r.stdout
-    for name in ("plate.dxf", "case_body.dxf", "fascia.dxf",
-                 "cutlist.md", "cutlist.json", "README.md"):
+    for name in ("plate.dxf", "case_body.dxf", "fascia.dxf", "backplate.dxf",
+                 "lightbox.dxf", "tray.dxf", "cutlist.md", "cutlist.json", "README.md"):
         assert (tmp_path / name).exists(), name
-    assert not (tmp_path / "backplate.dxf").exists(), "a plain rectangle needs no DXF"
