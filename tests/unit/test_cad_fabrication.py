@@ -70,7 +70,7 @@ class TestTheFilesSayInchesAndMeanIt:
     """The exporter tags a unit without converting. Both have to agree."""
 
     @pytest.mark.parametrize("name", ["plate", "case_body", "fascia", "backplate",
-                                      "lightbox", "tray"])
+                                      "lightbox", "tray", "ubolt_plate", "fit_coupon"])
     def test_header_says_inches(self, pack, name):
         assert read(pack, f"{name}.dxf").header["$INSUNITS"] == 1  # 1 = inches
 
@@ -326,64 +326,64 @@ class TestTheBackplate:
         assert len(entities(read(pack, "backplate.dxf"))) == 4
 
 
-class TestThePlyIsTheCarcass:
-    """The router files, one part each, have to close back into the cabinet."""
+class TestTheRouterFiles:
+    """One file per carcass part, read back: what the machine gets."""
 
-    def test_every_part_is_written_in_inches(self, pack):
-        for r in F.ply_parts():
-            doc = read(pack, r["file"])
-            assert doc.header["$INSUNITS"] == 1, r["file"]
+    def test_every_part_is_written_in_inches_at_its_size(self, pack):
+        for f, p in F.ply_files().items():
+            doc = read(pack, f"{f}.dxf")
+            assert doc.header["$INSUNITS"] == 1, f
             x0, y0, x1, y1 = extents(doc)
-            assert (x1 - x0, y1 - y0) == pytest.approx(F._bbox(r["sketch"]), abs=1e-6), r["file"]
+            assert (x1 - x0, y1 - y0) == pytest.approx(p.size_uv(), abs=1e-6), f
 
-    def test_the_cut_list_is_the_files(self):
-        rows = {r["part"]: r for r in F.cutlist()["ply"]["parts"]}
-        for r in F.ply_parts():
-            assert rows[r["part"]]["file"] == r["file"]
-            assert rows[r["part"]]["qty"] == r["qty"]
+    def test_every_housing_is_on_a_pocket_layer_named_for_its_depth(self, pack):
+        for f, p in F.ply_files().items():
+            layers = {e.dxf.layer for e in read(pack, f"{f}.dxf").modelspace()}
+            want = {f"pocket_{p.depth_of(k):.3f}" for k in p.pockets}
+            want |= {f"pocket_{b.depth:.3f}" for b in p.bores}
+            assert want <= layers, (f, want - layers)
+            if not (p.pockets or p.bores):
+                assert not any(n.startswith("pocket") for n in layers), f
 
-    def test_the_box_closes(self):
-        size = {r["part"]: F._bbox(r["sketch"]) for r in F.ply_parts()}
-        inside_w = P.INSIDE_X1 - P.INSIDE_X0
-        carcass_h = P.TRAY_RIM_Z - P.SHADOW_GAP_H
-        assert size["Side, left"] == pytest.approx((P.PLINTH_D, carcass_h))
-        assert size["Rear panel"] == pytest.approx((inside_w, carcass_h))
-        assert size["Floor"][0] == pytest.approx(inside_w)
-        # Floor + front panel + rear panel = the depth of the sides.
-        assert size["Floor"][1] + P.CARCASS_T + P.REAR_PANEL_T == pytest.approx(P.PLINTH_D)
-        # The front is two pieces with the open band between them.
-        band = plinth._fascia_band()
-        assert (size["Front panel, lower"][1] + (band[1] - band[0] - P.FASCIA_TOP_LIP)
-                + size["Front header"][1]) == pytest.approx(P.RAIL_BOTTOM_Z - P.SHADOW_GAP_H)
+    def test_a_step_for_fusion_beside_every_dxf(self, pack):
+        for f, p in F.ply_files().items():
+            assert (pack / f"{f}.step").stat().st_size > 1000, f
 
-    def test_the_rails_butt_instead_of_overlapping(self):
-        """The old list had every rail full-length, so the corners collided."""
-        rl = F.rail_lengths()
-        assert rl["front"] == pytest.approx(P.INSIDE_X1 - P.INSIDE_X0)
-        assert rl["between"] + 2 * P.CARCASS_T == pytest.approx(P.REAR_INSIDE_Y - P.CARCASS_T)
-        gap = P.MAST_W + 2 * P.MAST_NOTCH_CLEARANCE
-        assert rl["back_left"] + gap + rl["back_right"] == pytest.approx(rl["front"])
+    def test_the_step_is_the_panel_flat_in_millimetres(self):
+        from cad.growlab_cad._shapes import bbox_in
 
-    @pytest.mark.parametrize("name", ["ply_side_left.dxf", "ply_side_right.dxf"])
-    def test_the_band_notch_is_dogboned_for_the_acrylic(self, pack, name):
-        doc = read(pack, name)
-        # They join the outline, so they come back as arcs, not circles.
-        bones = [(a.dxf.center.x, a.dxf.center.y, 2 * a.dxf.radius)
-                 for a in entities(doc, "cut", "ARC")
-                 if 2 * a.dxf.radius == pytest.approx(P.ROUTER_BIT_DIA)]
-        assert len(bones) == 2
-        r = P.ROUTER_BIT_DIA / 2
-        a, b = (z - P.SHADOW_GAP_H for z in plinth._fascia_band())
-        for x, y, _ in bones:
-            # Each passes through its inside corner of the notch.
-            corner = (P.FASCIA_POCKET, a) if y < (a + b) / 2 else (P.FASCIA_POCKET, b)
-            assert ((x - corner[0]) ** 2 + (y - corner[1]) ** 2) ** 0.5 == pytest.approx(r)
+        p = F.ply_files()["ply_floor"]
+        bb = bbox_in(F.ply_solid(p))
+        su, sv = p.size_uv()
+        assert (bb["x1"] - bb["x0"], bb["y1"] - bb["y0"]) == pytest.approx((su, sv), abs=1e-4)
+        assert bb["z0"] == pytest.approx(0.0, abs=1e-6)
+        assert bb["z1"] == pytest.approx(p.t, abs=1e-6)
 
     def test_the_u_bolt_holes_are_marked_not_cut(self, pack):
-        """Their spacing is a CHOICE and the U-bolts are not bought."""
+        """Drilled through the steel backing plates, which are the template."""
         doc = read(pack, "ply_rear.dxf")
         assert len(circles(doc, "mark")) == 2 * P.MAST_STRAP_COUNT
         assert circles(doc, "cut") == []
+
+    def test_the_two_cleats_are_one_blank(self):
+        rows = {r["file"]: r for r in F.cutlist()["ply"]["parts"]}
+        assert rows["ply_front_cleat.dxf"]["qty"] == 2
+
+    def test_the_fit_coupon_brackets_the_model_width(self, pack):
+        ws = F.coupon_widths()
+        assert [s for s, _ in ws] == ["3/4"] * 3 + ["1/2"] * 3
+        from cad.growlab_cad import carcass as C
+
+        assert ws[1][1] == pytest.approx(C.TA + C.CLR)
+        assert ws[4][1] == pytest.approx(C.HA + C.CLR)
+        doc = read(pack, "fit_coupon.dxf")
+        assert len(entities(doc, f"pocket_{P.DADO_D:.3f}", "LINE")) >= 6 * 2
+
+    def test_the_backing_plate_spans_the_u_bolt(self, pack):
+        cut = sorted(circles(read(pack, "ubolt_plate.dxf")))
+        assert len(cut) == 2
+        assert cut[1][0] - cut[0][0] == pytest.approx(P.MAST_STRAP_SPAN)
+        assert P.MAST_STRAP_SPAN == pytest.approx(P.MAST_OD + P.MAST_STRAP_ROD)
 
     def test_the_pads_are_on_the_list(self):
         rows = {r["part"]: r for r in F.cutlist()["ply"]["parts"]}
@@ -462,5 +462,6 @@ def test_the_pack_builds_from_a_clean_shell(tmp_path):
     assert "SCRIBE RINGS" not in r.stdout
     for name in ("plate.dxf", "case_body.dxf", "fascia.dxf", "backplate.dxf",
                  "lightbox.dxf", "tray.dxf", "ply_side_left.dxf", "ply_rear.dxf",
+                 "ply_deck.dxf", "ply_deck.step", "fit_coupon.dxf", "ubolt_plate.dxf",
                  "cutlist.md", "cutlist.json", "README.md"):
         assert (tmp_path / name).exists(), name

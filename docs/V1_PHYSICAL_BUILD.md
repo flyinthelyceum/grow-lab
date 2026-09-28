@@ -143,13 +143,13 @@ Why this arrangement, in three numbers:
 light together; the lift does not change with it. **36 is decided** (2026-09-04, from the
 viewer's stand-in-front view): panel centre 28.2 in.
 
-**Tray is a flush rebate**, not a raised collar — it drops into the cabinet's top frame and
-becomes the top surface, flush with the sides. One clean volume, no step.
+**Tray is a flush rebate**, not a raised collar — it drops into the cabinet's top and
+sits on the deck, becoming the top surface, flush with the sides. One clean volume, no step.
 
-**Build the reservoir shelf adjustable** — slotted supports. 1.08 ft is comfortable on
-paper, but Stage 0.2 decides it, and moving the shelf an inch afterwards should not mean
-rebuilding the cabinet. The shelf can go up ~0.8 in before the pan no longer clears the
-rail, and down as far as the lift allows.
+**Build the reservoir shelf adjustable** — it stands on shelf pins, two columns of five
+holes at 1 in pitch in the left side and the divider. 1.08 ft is comfortable on paper, but
+Stage 0.2 decides it, and moving the shelf an inch afterwards means moving four pins. The
+top row is the design height, which is as high as the pan can go and still clear the deck.
 
 Wet bay (reservoir) and dry bay (mast, PSU, driver) hard-divided behind the console
 partition; console bay (Pi, i3, meters, Inky, meter driver) in front of both. Wet bay vented
@@ -157,9 +157,30 @@ high in the left side — an open reservoir in a sealed box makes a humid box �
 console bay vented low in the right side for PSU heat, away from the wet zone.
 
 **Access.** The rear door is the wet bay's full width and height, so the pan comes straight
-out. The front panel, with the face in it, is one removable piece: unscrew it and the
-console bay is open; the partition stops at the divider, so the dry bay behind it is
+out. The front panel below the band is one removable piece on four M5 knock-down bolts
+into threaded inserts in two cleats: take it off and the console bay is open; the partition stops at the divider, so the dry bay behind it is
 reached the same way. The face itself is removable on its own (F1–4) for the instruments.
+
+### Carcass joinery — the house CNC grammar (red-teamed 2026-09-28)
+
+The cabinet had no joinery until 2026-09-28: every panel was a butt joint, and the block's
+~50 lb went through six 3/4 sticks and two end-grain joints in series. It is now built to the
+house CNC joinery grammar (v1.4, `lib/house.py` in workbench and fabrication), in
+`cad/growlab_cad/carcass.py`, which the plinth, the router files and the STEPs all come from:
+
+- **Every joint housed**, through and never stopped: floor in rabbets at the foot of the
+  sides and the rear; rear panel in rabbets in the sides; deck, apron and ledge in dados.
+- **A deck, not a rail grid.** One panel housed in both sides and the rear carries the pads,
+  screwed up from below, and is the diaphragm that squares the top of the box.
+- **The partition and divider are the shear walls**, housed on three edges each and glued:
+  with the front open across the band and the rear mostly door, they are what resists racking.
+- **An apron, not a header strip:** a 3/4 strip on edge, housed, glued under the deck's front
+  edge, its face the glass's backstop. The fascia's top row screws into face grain.
+- **Pockets on one face of every panel**, widths from the MEASURED sheet plus 0.1 mm. The two
+  sheet thicknesses are estimates until calipered; the fit coupon proves them first.
+- **Hardware the grammar allows:** cup hinges on the door (a pocket, not an edge mortise), M5
+  knock-down bolts on the front panel, the floor bolted down through the frame ring, and a steel
+  backing plate outside each mast U-bolt, which the ply is drilled through.
 
 ### Tray and block interface
 
@@ -176,8 +197,8 @@ reached the same way. The face itself is removable on its own (F1–4) for the i
   white without arguing with it, the rim shows barely at all under the block, and a
   stainless pan reading as a stainless pan is honest about what it is. If V2 ever gets a
   powder booth, the outer face is the first thing to go through it.
-- **The tray carries water, never weight.** Pads rise from the cabinet rail through
-  cutouts in the tray floor so the block bears on the carcass. ~50 lb on 16 ga sheet would
+- **The tray carries water, never weight.** Pads rise from the deck through cutouts in
+  the tray floor so the block bears on the carcass. ~50 lb on 16 ga sheet would
   dimple it and destroy the drain fall.
 - **The block sits above its own runoff** on 0.75 in pads. Standing in it wicks salts back
   up and defeats the point of runoff-to-tray.

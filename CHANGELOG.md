@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-28 (the carcass gets joinery)
+
+### Red team
+The cabinet had never been checked against the house CNC joinery grammar (v1.4, workbench and
+fabrication). It had no joinery at all: every panel a butt joint, the block's ~50 lb carried
+through six ply sticks and two end-grain joints in series, nothing resisting racking, the
+fascia's top row screwed into a 0.35 strip held by its end grain. The router files from the
+entry below were butt-joint blanks and were never cut.
+
+### Changed
+- **`carcass.py`: the panels, with their joinery, in one model.** The plinth is the union of
+  its panels; the router DXFs, one STEP per part for Fusion, and the ply cut list all read the
+  same panels. `carcass.problems()` checks the grammar (one pocketed face, widths from
+  measured stock, T/3 dados and T/2 rabbets, through never stopped) and the tests add the two
+  things a rule check misses: no two panels share volume, and every housing has its part in it.
+- **Deck for the rail grid; apron for the header strip.** Partition and divider housed on three
+  edges as shear walls. Floor and rear panel in rabbets; deck, apron and ledge in dados.
+- **Shelf on pins** (not slotted cleats), **door on cup hinges**, **front panel on M5
+  knock-down bolts** into cleats, **floor bolted to the frame ring**.
+- **The sides' band notch is a reveal**, one cutter radius taller than the glass top and
+  bottom, instead of dogbones behind clear acrylic (rule 6: nothing visible is dogboned).
+- **U-bolt span is derived**: a U-bolt's inside width is the tube it fits, so the legs are the
+  OD plus one rod (1.75), not OD + 0.6. Steel backing plates outside the rear panel, ×3.
+
+### Measure before cutting
+- `PLY_T_ACTUAL` and `HALF_T_ACTUAL` are estimates (nominal). Caliper both sheets, re-run,
+  cut `fit_coupon.dxf`, and only then the panels.
+
 ## 2026-09-28 (the carcass, for the router)
 
 ### Added

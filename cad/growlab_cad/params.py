@@ -136,9 +136,60 @@ LEDGE_CHASE = 0.75  # gap behind the ledge, the cable route down
 CARCASS_T = 0.75  # CHOICE: 3/4 in sheet stock for sides, top frame and floor
 REAR_PANEL_T = 0.75  # "full-height rear panel in the carcass" — the mast fixes here
 DOOR_GAP = 0.0625  # CHOICE: clearance around the rear door
-ROUTER_BIT_DIA = 0.25  # CHOICE: the end mill the ply DXFs are dogboned for.
-                       # A smaller bit is fine; a bigger one leaves corners
-                       # the acrylic's square edge will not seat in
+ROUTER_BIT_DIA = 0.25  # CHOICE: the 1/4 compression bit the carcass is cut with
+
+# --- carcass joinery -------------------------------------------------------
+# The house CNC joinery grammar, v1.4 (workbench and fabrication, lib/house.py):
+# three-axis, one-sided, flat. Every joint housed in a through dado or rabbet,
+# pockets on one face of a panel only, housing widths from MEASURED stock, dado
+# T/3 and rabbet T/2 of the panel they are cut in. See carcass.py.
+#
+# Widths come from the sheet as it is, not as it is sold. "3/4" birch is 18 mm
+# or 23/32 and never 0.750, so these two are ESTIMATES until the sheets are
+# calipered at five points -- record the reading in the components library and
+# import it here. The fit coupon (fab/fit_coupon.dxf) proves the width before
+# any panel is cut.
+PLY_T_ACTUAL = CARCASS_T  # ESTIMATE: the 3/4 sheet, nominal until calipered
+HALF_T_ACTUAL = 0.5  # ESTIMATE: the 1/2 sheet (partition, divider), nominal until calipered
+JOINT_CLEAR = 0.1 / IN  # LIB: house JOINT_CLEAR, 0.1 mm total -- a mallet fit that takes glue
+DADO_D = CARCASS_T / 3  # DERIVED: grammar rule 4, a through dado is T/3 of its panel
+RABBET_D = CARCASS_T / 2  # DERIVED: rule 4, a rabbet at a panel end goes to T/2
+HALF_RABBET_D = 0.5 / 2  # DERIVED: the same rule in the 1/2 divider
+BAND_REVEAL = ROUTER_BIT_DIA / 2  # DERIVED: the sides' band notch runs one cutter radius
+                                  # past the glass top and bottom, so its filleted
+                                  # inside corners sit in a reveal the acrylic never
+                                  # meets. An aperture rounds inward (rule 5); nothing
+                                  # visible is dogboned (rule 6)
+
+# The reservoir shelf stands on pins, not slotted cleats: a column of holes is
+# the adjustment, and the flow test just picks one. CHOICE throughout.
+SHELF_PIN_D = 0.25  # CHOICE: 1/4 in shelf pins
+SHELF_PIN_DEPTH = 0.375  # CHOICE: blind in the 3/4 side; through the 1/2 divider
+SHELF_PIN_PITCH = 1.0  # CHOICE
+SHELF_PIN_N = 5  # CHOICE: the design height and four steps down
+SHELF_PIN_INSET = 1.5  # CHOICE: pin rows from the shelf's front and back edges
+SHELF_GAP = 0.0625  # CHOICE: a loose shelf, all round
+
+# The removable front panel: knock-down bolts through the panel into threaded
+# inserts in two cleats face-glued to the sides (rule 9: bolts through holes).
+FRONT_CLEAT_W = 1.0  # CHOICE: stops short of the right side's console vents
+FRONT_BOLT_DIA = 5.5 / IN  # CHOICE: M5 clearance, the house knock-down screw
+FRONT_BOLT_FROM_END = 1.5  # CHOICE: bolt rows in from the panel's top and bottom
+CLEAT_SCREW_DIA = 0.17  # CHOICE: #8 pan head, cleat into side, from inside
+
+# The rear door hangs on two European cup hinges: the cup is a pocket on the
+# door's inside face, which the grammar allows and a butt hinge's edge mortise
+# does not. Inset hinge, plate on the left side's inside face.
+HINGE_CUP_D = 35.0 / IN  # ESTIMATE: the European standard cup -- confirm on the hinge bought
+HINGE_CUP_DEPTH = 13.0 / IN  # ESTIMATE: from the hinge's drilling template
+HINGE_CUP_INSET = 22.5 / IN  # ESTIMATE: door edge to cup centre, from the template
+HINGE_FROM_END = 3.0  # CHOICE: cup centres in from the door's top and bottom
+DOOR_PULL_DIA = 1.0  # CHOICE: a finger hole, and the wet bay breathes through it
+
+PAD_SCREW_DIA = 0.17  # CHOICE: #8, up through the deck into each pad
+FRAME_BOLT_DIA = 0.28  # CHOICE: 1/4-20 down through the floor and the frame ring
+FRAME_BOLT_INSET = 4.0  # CHOICE: along the left and right ring members from their
+                        # ends -- off the welded corners, clear of the partition dado
 
 # Console bay: the dry slice directly behind the front face, full width.
 # INSTRUMENT_HEAD_PLANS.md § Depth stack: meters, Inky, i3 and Pi "both fit
@@ -242,7 +293,15 @@ MAST_SIDE_CLEARANCE = 0.125  # CHOICE: between the shaft and the divider
 MAST_STRAP_COUNT = 3
 MAST_STRAP_PITCH = 9.0  # CHOICE: spread along the fixing length
 MAST_STRAP_BOLT_DIA = 0.28  # 1/4-20 U-bolt legs, clearance
-MAST_STRAP_SPAN = MAST_OD + 0.6  # CHOICE: leg centres, straddling the tube
+MAST_STRAP_ROD = 0.25  # CHOICE: 1/4-20 U-bolts
+# A U-bolt is sold by the tube it fits: its inside width IS the tube's OD, so
+# the leg centres are the OD plus one rod. 0.6 of slack here was a guess that
+# matched no U-bolt anyone sells.
+MAST_STRAP_SPAN = MAST_OD + MAST_STRAP_ROD  # DERIVED
+# The mast's whole moment goes into the rear panel through these. A steel plate
+# outside at each strap spreads it, and is the template the ply is drilled to.
+UBOLT_PLATE_W = MAST_STRAP_SPAN + 1.0  # CHOICE: 1/2 in of steel beyond each leg
+UBOLT_PLATE_H = 1.0  # CHOICE
 # The tube stands 0.125 off the divider, so the U-bolt's divider-side leg runs
 # through the divider's back end. A notch there at each strap, from the rear
 # panel forward past the tube's front face -- the whole U, whatever its shape.
