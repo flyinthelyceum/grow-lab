@@ -39,12 +39,34 @@ web. In the print every one of them is a column growing from the bed, and the
 part has no internal bridge longer than a vent slot.
 
 **Base plate**, printed top face down as well, so its countersinks and foot
-recesses open upward and nothing on it bridges. The walls stand on it and it is
-the full footprint, chamfered to match — a plain butt joint with no fit to get
-wrong, and no slot at the back for the block's own damp air. The seam is a
-hairline 2.5 mm above the block, and the case stands 18.5 overall. With the lip gone the plate is a flat
-rectangle with four holes and three recesses in it, which is the whole of what
-it ever needed to be. The ADS1115 and the BME280 are taped to its inner face.
+recesses open upward and nothing on it bridges. It is a flat plate and the
+ADS1115 and the BME280 are taped to its inner face.
+
+The closure, Rev J
+------------------
+The plate **nests in a rebate** in the walls' bottom rim: the inner half of the
+wall is stepped away the plate's thickness, the outer half runs on down to the
+block, and the plate drops into the step with a slip fit. It is a rabbet, the
+same joint the carcass is built from, and it does three things the butt joint
+before it could not:
+
+* **The walls locate the plate; the screws only clamp it.** Before, the four
+  countersinks did both, which is to say the plate sat wherever four clearance
+  holes let it. Separate location from fastening.
+* **The seam goes underneath.** The walls run straight down to the block, so
+  the only joint line is on the face that sits on it. The old one was a
+  hairline all the way round, 2.5 mm up the side of a matte white object.
+* **Light has to turn a corner** to get in through the joint, which a light
+  meter's case should want even while its walls are a diffuser.
+
+The cable and probe notches still open to the bottom edge, through the skin, so
+the leads drop in rather than being threaded. A **tab** on the plate fills each
+notch's floor, as the plate itself used to; and because one tab is at the rear
+and the other at an end, the plate goes in one way round only.
+
+Rev E chose the butt joint for having "no fit to get wrong". That was right
+while the fit was a guess. The thread coupon has since measured how this printer
+runs openings, and SC_REBATE_CLEAR is sized from it.
 
 The AS7341 that is actually in hand
 -----------------------------------
@@ -342,11 +364,48 @@ def foot_points() -> list[tuple[float, float]]:
             (P.SC_X, P.SC_Y - 8.0 * _MM)]
 
 
+def rebate_half() -> tuple[float, float]:
+    """Half-extents of the step in the rim the plate nests in."""
+    return P.SC_LEN / 2 - P.SC_REBATE_SKIN, P.SC_WID / 2 - P.SC_REBATE_SKIN
+
+
+def plate_half() -> tuple[float, float]:
+    """Half-extents of the plate: the rebate, less the slip fit each side."""
+    rx, ry = rebate_half()
+    return rx - P.SC_REBATE_CLEAR, ry - P.SC_REBATE_CLEAR
+
+
+def notch_floors() -> list[tuple[float, float, float, float]]:
+    """Where the skin is cut away under each lead's notch, (cx, cy, lx, ly):
+    through the skin only, from the rebate out to the outer face."""
+    rx, ry = rebate_half()
+    skin = P.SC_REBATE_SKIN
+    return [
+        (P.SC_X, P.SC_Y + ry + skin / 2, P.SC_CABLE_W, skin),        # rear: the cable
+        (P.SC_X + rx + skin / 2, P.SC_Y, skin, P.SC_PROBE_W),        # +X end: the probe
+    ]
+
+
+def tab_boxes() -> list[tuple[float, float, float, float]]:
+    """The plate's two tabs, (cx, cy, lx, ly): each fills a notch's floor, from
+    the plate's edge to the outer face, with the slip fit at its sides. One at
+    the rear and one at an end, so the plate has one way in."""
+    px, py = plate_half()
+    c = P.SC_REBATE_CLEAR
+    ry_out = P.SC_WID / 2
+    rx_out = P.SC_LEN / 2
+    return [
+        (P.SC_X, P.SC_Y + (py + ry_out) / 2, P.SC_CABLE_W - 2 * c, ry_out - py),
+        (P.SC_X + (px + rx_out) / 2, P.SC_Y, rx_out - px, P.SC_PROBE_W - 2 * c),
+    ]
+
+
 # --------------------------------------------------------------------------
 # Geometry
 # --------------------------------------------------------------------------
 
-def _chamfer_verticals(part: "Part", z0: float, z1: float) -> "Part":
+def _chamfer_verticals(part: "Part", z0: float, z1: float,
+                       half: tuple[float, float] | None = None) -> "Part":
     """Take SC_CHAMFER off the four vertical corners, as plinth.py does.
 
     Cut with a rotated box rather than a kernel fillet: this package has no
@@ -358,7 +417,7 @@ def _chamfer_verticals(part: "Part", z0: float, z1: float) -> "Part":
     from ._shapes import box, location_in
 
     s = P.SC_CHAMFER * 2 ** 0.5
-    hx, hy = P.SC_LEN / 2, P.SC_WID / 2
+    hx, hy = half if half else (P.SC_LEN / 2, P.SC_WID / 2)
     over = 1.0 * _MM
     for sx in (-1, 1):
         for sy in (-1, 1):
@@ -372,15 +431,22 @@ def build_body() -> "Part":
     from ._shapes import CENTRE, box, cyl_z, labelled
 
     z0, z1 = plate_top(), top_face()
-    h = z1 - z0
     ix, iy = inner_half()
     px, py = port_centre()
     over = 0.5 * _MM
 
-    body = box(P.SC_LEN, P.SC_WID, h, at=(P.SC_X, P.SC_Y, z0))
+    # The walls run all the way down to the block; the plate nests inside them.
+    body = box(P.SC_LEN, P.SC_WID, z1 - P.SC_Z0, at=(P.SC_X, P.SC_Y, P.SC_Z0))
 
     # Hollow from below. The top wall stays; the bottom is open to the plate.
-    body -= box(2 * ix, 2 * iy, h - P.SC_WALL + over, at=(P.SC_X, P.SC_Y, z0 - over))
+    body -= box(2 * ix, 2 * iy, ceiling() - P.SC_Z0 + over,
+                at=(P.SC_X, P.SC_Y, P.SC_Z0 - over))
+
+    # The rebate: the rim's inner half stepped away the plate's thickness, its
+    # corners chamfered like the outside so the skin is never thinner there.
+    rx, ry = rebate_half()
+    rebate = box(2 * rx, 2 * ry, P.SC_BASE_T + over, at=(P.SC_X, P.SC_Y, P.SC_Z0 - over))
+    body -= _chamfer_verticals(rebate, P.SC_Z0 - over, z0, half=(rx, ry))
 
     # Corner bosses, ceiling to plate, each fused to its corner by a web.
     for (bx, by), (wx, wy, wl, ww) in zip(boss_points(), web_boxes()):
@@ -425,6 +491,13 @@ def build_body() -> "Part":
     # at the wall instead of reaching the solder joints.
     body -= box(P.SC_CABLE_W, P.SC_WALL * 3, P.SC_CABLE_H + over,
                 at=(P.SC_X, rear_wall_y(), z0 - over))
+    # ...and on down through the skin, so the lead still drops in from below;
+    # the plate's tab fills this and is the notch's floor.
+    rear, end = notch_floors()
+    body -= box(rear[2], rear[3] + 2 * over, P.SC_BASE_T + 2 * over,
+                at=(rear[0], rear[1], P.SC_Z0 - over))
+    body -= box(end[2] + 2 * over, end[3], P.SC_BASE_T + 2 * over,
+                at=(end[0], end[1], P.SC_Z0 - over))
 
     # Probe entry: the same, in the +X end wall, over that end's core.
     body -= box(P.SC_WALL * 3, P.SC_PROBE_W, P.SC_PROBE_H + over,
@@ -449,8 +522,13 @@ def build_base() -> "Part":
     z0 = P.SC_Z0
     over = 0.5 * _MM
 
-    plate = box(P.SC_LEN, P.SC_WID, P.SC_BASE_T, at=(P.SC_X, P.SC_Y, z0))
-    plate = _chamfer_verticals(plate, z0, z0 + P.SC_BASE_T)
+    # The rebate's outline less the slip fit, chamfered to match, plus a tab
+    # under each notch.
+    hx, hy = plate_half()
+    plate = box(2 * hx, 2 * hy, P.SC_BASE_T, at=(P.SC_X, P.SC_Y, z0))
+    plate = _chamfer_verticals(plate, z0, z0 + P.SC_BASE_T, half=(hx, hy))
+    for cx, cy, lx, ly in tab_boxes():
+        plate += box(lx, ly, P.SC_BASE_T, at=(cx, cy, z0))
 
     # No printed fence round the ADS1115, deliberately. A fence has to be sized
     # to an outline, and this one comes off a vendor listing rather than a

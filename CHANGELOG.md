@@ -2,6 +2,33 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-30 (sensor case Rev J: the plate nests in a rebate)
+
+### Changed
+- **The plate nests in the walls instead of butting against them.** The inner half of the rim
+  is stepped away the plate's thickness (`SC_REBATE_SKIN`, 1.0) and the plate drops into the
+  step with a 0.2 mm slip fit (`SC_REBATE_CLEAR`). It is a rabbet, the carcass's own joint. The
+  walls now locate the plate on all four sides and the four screws only clamp it; before, the
+  countersinks did both. The seam moves from a hairline round all four sides, 2.5 mm up a matte
+  white object, to the face that sits on the block. And light has to turn a corner to get in
+  through the joint.
+- **A tab on the plate under each notch.** The cable and probe notches still open through the
+  rim so the leads drop in rather than being threaded; each tab fills its notch's floor, as the
+  plate used to. One is at the rear and one at the +X end, so the plate goes in one way only.
+- Overall size, interior, bosses, inserts and screws are unchanged. Rev I, with the butt joint,
+  is printed and is the prototype.
+
+### Why not before
+- Rev E chose the butt joint for having "no fit to get wrong". That was right while the fit
+  between two printed parts was a guess. The thread coupon has since measured how this printer
+  runs openings (0.1-0.2 under), and the clearance is sized from it.
+
+### Tests
+- The plate nests inside the walls and seats against the ledge; the two halves end in the same
+  plane under the block; turned 180 degrees the plate collides with the body; skin and ledge are
+  whole extrusion lines; the countersinks and feet keep plate round them. All the printability
+  checks still pass on the solid: one solid each, no support, no bridge over 6 mm.
+
 ## 2026-09-28 (the carcass gets joinery)
 
 ### Red team

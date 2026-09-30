@@ -530,6 +530,50 @@ class TestItPrintsWithoutTricks:
         wall = (P.SC_AS7341_BOSS_DIA - P.SC_AS7341_PILOT) / 2
         assert mm(wall) >= 1.5, f"only {mm(wall):.2f} mm round the pilot"
 
+    def test_the_rebate_leaves_whole_lines_either_side(self):
+        """Rev J splits the wall at the rim: the skin that runs down past the
+        plate and the ledge the plate seats against. Both are whole lines."""
+        for name, t in (("skin", P.SC_REBATE_SKIN), ("ledge", P.SC_WALL - P.SC_REBATE_SKIN)):
+            lines = mm(t) / self.EXTRUSION
+            assert lines == pytest.approx(round(lines)), f"{name} is {lines:.2f} lines"
+            assert round(lines) >= 2, f"{name} is one line"
+
+    def test_the_fit_is_a_slip_fit(self):
+        """Between two printed parts: loose enough to go in after the coupon's
+        0.1-0.2 of shrink, tight enough to locate. The screws do the rest."""
+        c = mm(P.SC_REBATE_CLEAR)
+        assert 0.1 <= c <= 0.3, f"{c} mm a side"
+
+    def test_the_countersinks_keep_plate_round_them(self):
+        """The plate is 1.2 smaller each side than it was. Every countersink
+        still has a millimetre of plate between its mouth and the edge."""
+        hx, hy = SC.plate_half()
+        for bx, by in SC.boss_points():
+            ex = hx - abs(bx - P.SC_X) - P.SC_SCREW_CSK / 2
+            ey = hy - abs(by - P.SC_Y) - P.SC_SCREW_CSK / 2
+            assert mm(min(ex, ey)) >= 1.0, f"{mm(min(ex, ey)):.2f} mm at ({bx}, {by})"
+
+    def test_the_feet_are_inside_the_nested_plate(self):
+        hx, hy = SC.plate_half()
+        r = P.SC_FOOT_DIA / 2
+        for fx, fy in SC.foot_points():
+            assert abs(fx - P.SC_X) + r < hx and abs(fy - P.SC_Y) + r < hy
+
+    def test_each_tab_fills_its_notch_with_the_fit_either_side(self):
+        rear, end = SC.tab_boxes()
+        c = P.SC_REBATE_CLEAR
+        assert rear[2] == pytest.approx(P.SC_CABLE_W - 2 * c)
+        assert end[3] == pytest.approx(P.SC_PROBE_W - 2 * c)
+        assert rear[1] + rear[3] / 2 == pytest.approx(P.SC_Y + P.SC_WID / 2), "short of the rear face"
+        assert end[0] + end[2] / 2 == pytest.approx(P.SC_X + P.SC_LEN / 2), "short of the end face"
+
+    def test_the_tabs_make_the_plate_asymmetric(self):
+        """One at the rear and one at +X: turned end for end, neither lands
+        where a notch is."""
+        tabs = {(round(cx - P.SC_X, 9), round(cy - P.SC_Y, 9)) for cx, cy, _, _ in SC.tab_boxes()}
+        turned = {(-x, -y) for x, y in tabs}
+        assert not tabs & turned
+
     def test_nothing_opens_in_the_face_that_meets_the_block(self):
         """The plate's underside is a seating face and a splash shield. Every
         opening in the case is in a wall."""
@@ -570,7 +614,7 @@ class TestTheGeometryBuilds:
         assert mm(bb["x1"] - bb["x0"]) == pytest.approx(mm(P.SC_LEN), abs=0.01)
         assert mm(bb["y1"] - bb["y0"]) == pytest.approx(mm(P.SC_WID), abs=0.01)
         assert bb["z1"] == pytest.approx(SC.top_face())
-        assert bb["z0"] == pytest.approx(SC.plate_top())
+        assert bb["z0"] == pytest.approx(P.SC_Z0), "the walls run down to the block (Rev J)"
 
     def test_the_case_is_the_footprint_a_mortise_would_take(self, parts):
         """One pocket, straight-sided, in the top face. Every printed thing is
@@ -583,26 +627,58 @@ class TestTheGeometryBuilds:
             assert mm(bb["x1"] - bb["x0"]) <= mm(P.SC_LEN) + 0.01, f"{name} past the ends"
             assert bb["y1"] <= P.SC_Y1 + 1e-9 and bb["y0"] >= P.SC_Y - P.SC_WID / 2 - 1e-9
 
-    def test_the_plate_is_a_flat_rectangle_on_the_block(self, parts):
-        """No lip, nothing below the block's top face, nothing past its rear."""
+    def test_the_plate_nests_inside_the_walls(self, parts):
+        """Rev J: inside the rim, flush with it underneath, nothing past the
+        block's rear arris. Its outline is the rebate's less the slip fit, and
+        only its two tabs reach the outer faces."""
         from cad.growlab_cad._shapes import bbox_in
 
         bb = bbox_in(parts["base"])
+        hx, hy = SC.plate_half()
         assert bb["z0"] == pytest.approx(P.SC_Z0), "something hangs below the block"
         assert bb["z1"] == pytest.approx(SC.plate_top())
         assert bb["y1"] <= P.CMU_Y + P.CMU_W / 2 + 1e-9, "past the rear arris"
-        assert mm(bb["y1"] - bb["y0"]) == pytest.approx(mm(P.SC_WID), abs=0.01)
+        assert bb["x0"] == pytest.approx(P.SC_X - hx), "the -X end is the rebate, no tab"
+        assert bb["y0"] == pytest.approx(P.SC_Y - hy), "the front is the rebate, no tab"
+        assert bb["x1"] == pytest.approx(P.SC_X + P.SC_LEN / 2), "the probe tab reaches the end"
+        assert bb["y1"] == pytest.approx(P.SC_Y1), "the cable tab reaches the rear"
 
     def test_the_two_halves_meet_without_interfering(self, parts):
         shared = (parts["body"] & parts["base"]).volume / P.IN**3
         assert shared < 1e-4, f"{shared:.5f} in3 of overlap"
 
-    def test_the_walls_stand_on_the_plate(self, parts):
-        """Not floating above it: the seam is a joint, not a shadow gap."""
+    def test_the_plate_seats_against_the_ledge(self, parts):
+        """The step the rebate leaves is what the plate is pulled up against:
+        body just above the plate's top, over the ledge, and the plate just
+        below it."""
+        from cad.growlab_cad._shapes import box
+
+        ix, _ = SC.inner_half()
+        rx, _ = SC.rebate_half()
+        ledge_x = P.SC_X - (ix + rx) / 2  # over the -X ledge, clear of everything
+        eps = 0.05 * P.MM
+        above = box(0.2 * P.MM, 2.0 * P.MM, eps, at=(ledge_x, P.SC_Y, SC.plate_top()))
+        below = box(0.2 * P.MM, 2.0 * P.MM, eps, at=(ledge_x, P.SC_Y, SC.plate_top() - eps))
+        assert (above & parts["body"]).volume > 0.99 * above.volume, "no ledge over the plate"
+        assert (below & parts["base"]).volume > 0.99 * below.volume, "no plate under the ledge"
+
+    def test_the_seam_is_underneath(self, parts):
+        """The butt joint put a hairline round all four sides, 2.5 mm up. Now
+        the body's outer faces run down to the block and both halves end in
+        the same plane there."""
         from cad.growlab_cad._shapes import bbox_in
 
-        assert bbox_in(parts["body"])["z0"] == pytest.approx(
-            bbox_in(parts["base"])["z1"])
+        assert bbox_in(parts["body"])["z0"] == pytest.approx(bbox_in(parts["base"])["z0"])
+
+    def test_the_plate_has_one_way_in(self, parts):
+        """Turned 180 degrees, the tabs land on skin rather than in notches."""
+        from build123d import Axis
+
+        from cad.growlab_cad._shapes import location_in
+
+        turned = (location_in(P.SC_X, P.SC_Y, 0)
+                  * (location_in(-P.SC_X, -P.SC_Y, 0) * parts["base"]).rotate(Axis.Z, 180))
+        assert (turned & parts["body"]).volume / P.IN**3 > 1e-4, "it fits both ways round"
 
     def test_the_baffle_bore_is_clear_through(self, parts):
         """From the board right out through the diffuser recess. The bore is
