@@ -770,13 +770,29 @@ SC_BOARD_T = 1.6 * MM
 # clear half millimetre off the +X corner bosses instead of a tenth.
 SC_LEN = 60.0 * MM
 SC_WID = 27.0 * MM  # inside the CMU's 31.75 face shell with 4.75 to spare
-SC_HGT = 18.5 * MM  # body 16.0 + base plate 2.5. Rev G was 18.0; the extra
-                    # 0.5 is what keeps 2.0 mm between the plate boards' tallest
-                    # part and the underside of the hanging AS7341 once the
-                    # measured sockets pushed that board 1.8 lower
+SC_HGT = 18.5 * MM  # overall, block to top face; the plate nests inside the
+                    # bottom 2.5 of it. Rev G was 18.0; the extra 0.5 is what
+                    # keeps 2.0 mm between the plate boards' tallest part and
+                    # the underside of the hanging AS7341 once the measured
+                    # sockets pushed that board 1.8 lower
 SC_WALL = 2.0 * MM  # CHOICE: 4 perimeters at 0.50 extrusion width, exactly
 SC_BASE_T = 2.5 * MM  # 5 lines. Under a 1.1 mm countersink that leaves 1.4
 SC_CHAMFER = 1.5 * MM  # the four vertical corners, 45 deg, cut like the plinth's
+
+# --- The closure: a rabbet, Rev J -----------------------------------------
+# The plate nests in a rebate in the walls' bottom rim instead of butting
+# against it. The walls locate it on all four sides before a screw goes in, so
+# the screws only clamp; the seam moves from a hairline round the sides to the
+# face that sits on the block; and the joint is a stepped path, which light does
+# not cross the way it crosses a butt seam. Rev E chose the butt joint for
+# having "no fit to get wrong"; the thread coupon has since measured how this
+# printer runs holes, and a fit is a number now rather than a guess.
+SC_REBATE_SKIN = SC_WALL / 2  # CHOICE: the wall's outer half runs down past the
+                              # plate -- 2 lines, and the other 2 are the ledge
+                              # the plate seats against
+SC_REBATE_CLEAR = 0.2 * MM  # CHOICE: per side, printed part in printed pocket.
+                            # The coupon's openings ran 0.1-0.2 under, so this
+                            # is a slip fit that the screws then pull tight
 
 # --- The optical stack ----------------------------------------------------
 SC_DISC_DIA = 12.0 * MM  # the PTFE disc as bought
