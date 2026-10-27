@@ -26,8 +26,15 @@ Geometry: `cad/growlab_cad/proto.py`. Cut files: `python cad/proto_build.py` →
 - **The light.** A white oak beam. The two aluminium heatsink bars sit **flush
   in its top**, so they shed heat to the room exactly as bare bars do (33 W
   measured for both, about 40 W/m); the LEDs are recessed 1.7 in up inside it,
-  so nobody standing beside it sees a die. The conduit lands in a printed PETG
-  hub on top through a real 3/4 EMT set-screw connector and locknut.
+  so nobody standing beside it sees a die. Its +X end block is the **camera's
+  bay**: Camera Module 3, tilted 30° at the plants, under a printed lid. Its
+  cable runs in a groove along the top of the spine to the hub.
+- **The telescope.** The light's height adjusts: **12 to 24 in over the media**.
+  A 1/2 EMT inner tube carries the beam and slides inside the crook's 3/4 drop.
+  A 3/4 set-screw coupling on the drop's end locks it, bearing through a slot in
+  a printed sleeve that centres the 1/2 in the coupling. A printed bushing on
+  the inner tube's top end is the second guide. Loosen, slide, tighten. The 1/2
+  lands in the beam's printed hub through a set-screw connector.
 - **The ground plate.** 1/4 steel under both, set back half an inch from every
   visible edge. Free-standing, the instrument block tips at about 2.6 lb of side
   push at the beam. Bolted to the plate, with the light hanging inside the
@@ -52,11 +59,15 @@ are typical figures, not this block's. Caliper, then re-run `proto_build.py`:
 - [ ] **The instrument block:** overall size; face-shell, end-shell and web
       thickness; where the web sits. Then lay `face_template.dxf` against the
       block's side and check that its tunnel lines land on the real web.
-- [ ] **The Weston flange OD** (`DIAL_FLANGE`, 3.5 nominal). The holes are set
-      so the two flanges just clear each other.
+- [x] **The Weston flange OD** -- 3.510, calipered 2026-10-27, in the components
+      library. The holes are set so the two flanges just clear each other.
 - [ ] **The Inky board**, to check it fits behind the window.
-- [ ] **The EMT**, OD, and **your bender's take-up**, which is stamped on the shoe
-      (`EMT_OD`, `TAKE_UP`). The marks follow from the take-up.
+- [ ] **The EMT**, 3/4 and 1/2, OD and bore, and **your bender's take-up**, which
+      is stamped on the shoe (`EMT_OD`, `INNER_OD`, `TAKE_UP`). The marks follow
+      from the take-up.
+- [ ] **The 3/4 set-screw coupling**, length and OD, before printing the sleeve.
+- [ ] **The camera and its CSI-to-HDMI adapter**, before printing anything for
+      the bay; and the micro-HDMI plug, to check it passes the 1/2 bore.
 - [ ] **The steam pan**, top and floor, before cutting the plate.
 
 ## Buy
@@ -64,9 +75,12 @@ are typical figures, not this block's. Caliper, then re-run `proto_build.py`:
 - 3 CMUs (8 × 8 × 16 stretchers): planter, instrument, and one to practise the
   coring on. They are about $2 each.
 - 1 full-size 2-1/2 in steam table pan.
-- 1 × 10 ft 3/4 EMT; a 3/4 EMT set-screw connector and locknut; a 3/4
-  insulating bushing for the stub's end; 2 one-hole straps with clamp backs;
-  3/16 Tapcons.
+- 2 × 10 ft 3/4 EMT (one to practise on); 1 × 10 ft 1/2 EMT; a 3/4 set-screw
+  coupling; a 1/2 set-screw connector and locknut; a 3/4 insulating bushing for
+  the stub's end; 2 one-hole straps with clamp backs; 3/16 Tapcons.
+- An HDMI cable with a **micro-HDMI** plug at one end (about 3 m) and a
+  micro-HDMI-female to HDMI-A adapter: the micro end is the one pulled through
+  the conduit.
 - A 2-3/4 in diamond core bit and a 1/2 in masonry bit; a diamond blade for the grinder.
 - White oak, 10/4 (or two 5/4 glued) for an 18 × 5 in blank.
 - 3 mm matte white cast acrylic for the caps; 1/8 ply or acrylic for the template.
@@ -83,8 +97,10 @@ are typical figures, not this block's. Caliper, then re-run `proto_build.py`:
 3. **Mill the beam.** Two setups on the router: `beam_top.dxf` (the bar pockets,
    0.525 deep, and the hub pilots), then flip end for end and run
    `beam_bottom.dxf` (the two light channels, through to the pockets inside a
-   1/8 ledge). The 1/4 wire hole goes through the spine at the middle. Finish it
-   with oil, then fit the bars, LEDs down, and screw on the hub.
+   1/8 ledge, and the camera's lens window). Setup 1 also cuts the camera bay,
+   its lid's rebate and the cable groove. The 1/4 wire hole goes through the
+   spine at the middle. Finish it with oil, then fit the bars (LEDs down), the
+   camera and the lid, and screw on the hub.
 4. **Core the instrument block.** Practise on the spare first. Hold the template
    square to the face and drill the pilots through it. Core the two dial holes
    wet, with the 2-3/4 bit and no hammer. For the window, drill the four corners
@@ -92,12 +108,16 @@ are typical figures, not this block's. Caliper, then re-run `proto_build.py`:
    round and there is no overcut. Drill the 3/8 bolt hole through the bottom end
    shell.
 5. **Bend the crook** from the bend sheet. Practise the stub and one back-to-back
-   on the leftover first; then bend from one end of the stick and lay it flat
-   between bends to check it hasn't dog-legged. Cut the drop and ream it.
+   on the spare stick first; then bend the real one, laying it flat between
+   bends to check it hasn't dog-legged. Cut the drop and ream it. Cut the 1/2
+   inner tube (step 5 of the sheet), press the printed bushing on its top end,
+   and slide it up into the drop. Fit the coupling and the sleeve.
 6. **Set it out.** Lay the plate down, then the pan on it, then the pads and the
    planter. Bolt the instrument block down through the lower tunnel. Swing the
    crook's stub in through the lower right opening and strap the riser on its
-   clamp backs into the back face shell's edge. Then hang the beam on the drop.
+   clamp backs into the back face shell's edge. Pull the camera's micro-HDMI end
+   through first, then the LED pair. Then hang the beam on the inner tube and
+   set the height.
 7. **Fit the stack.** Upper tunnel: the dial bodies at the front, set in the
    holes with neutral-cure silicone; the Pi and i3 behind them. Lower tunnel: the
    Inky behind its window, and the LED driver and supplies along the back, clear
@@ -109,11 +129,13 @@ are typical figures, not this block's. Caliper, then re-run `proto_build.py`:
 
 - V1's cabinet, mast, carriage, steel case, fascia and tray: parked, with their
   files and tests intact.
-- The canopy fan and the camera: not mounted in P1.
-- Light height: fixed at 20 in over the media. A different height is a new stick.
+- The canopy fan.
 
 ## Known risks
 
+- **The crook is about 58 in tall.** The telescope needs 12 in of travel plus
+  2-1/2 in of overlap in a straight piece of the drop, short of the last bend.
+  That sets how high the run goes.
 - **Dial-hole edges.** There is 0.6 in of concrete between each dial hole and
   the block's free edge. Practise on the spare block.
 - **The window's reveal is 1.25 in deep**, the face shell's thickness. Looking

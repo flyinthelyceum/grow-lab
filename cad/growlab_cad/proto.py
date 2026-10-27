@@ -23,8 +23,13 @@ The composition, in the order the eye reads it
   the LED cable's raceway. ``bend_sheet()`` is the marks.
 * **The light.** A white oak beam, the two aluminium heatsink bars set flush
   into its top so they shed heat to the room exactly as they do bare, the LEDs
-  recessed 1.7 in up inside it so no one standing beside it sees a die. The
-  conduit lands in a printed hub on top, through a real EMT connector.
+  recessed 1.7 in up inside it so no one standing beside it sees a die. Its
+  +X end is the camera's bay, tilted at the plants.
+* **The telescope.** The drop's straight is long, and a 1/2 EMT inner tube
+  carrying the beam slides inside it: 12 in of travel, 12 to 24 in over the
+  media. A 3/4 set-screw coupling on the drop's end locks it through a slot in
+  a printed sleeve; a printed bushing on the inner tube's top is the second
+  guide. The 1/2 lands in the beam's printed hub through a set-screw connector.
 * **The ground plate.** 1/4 steel under both blocks, set back from every
   visible edge. Without it the crook tips the instrument over at under two
   pounds of side load; with it the light hangs over the plate's own footprint
@@ -43,7 +48,8 @@ from __future__ import annotations
 import math
 
 from components import lm301h_heatsink_module as HS
-from pi.dashboard.panel_geometry import DIAL_BEZEL_OD, WINDOW_HEIGHT, WINDOW_WIDTH
+from components import weston_301
+from pi.dashboard.panel_geometry import WINDOW_HEIGHT, WINDOW_WIDTH
 
 from . import params as P
 
@@ -75,8 +81,6 @@ TAKE_UP = 6.0  # ESTIMATE: read it off the bender's shoe; 3/4 EMT shoes are stam
 STICK = 120.0  # CHOICE: one 10 ft stick
 STUB_BACK = 7.0  # CHOICE: the leg into the lower tunnel, end to back of bend.
                  # A hand bender cannot make a stub shorter than its take-up
-DROP_STRAIGHT = 1.5  # CHOICE: straight conduit showing above the connector
-CONNECTOR_STOP = 0.6  # ESTIMATE: hub top to the stop inside a 3/4 set-screw connector
 STANDOFF = 0.25  # CHOICE: the riser rides on clamp backs, off the block's side. It
                  # is also what keeps the first bend's arc clear of the web's edge
                  # where it sweeps out of the lower tunnel
@@ -84,22 +88,53 @@ CRAWL = 0.6  # CHOICE: the crook's plane, in from the tunnel's back wall, so the
              # stub lies along the back of the lower tunnel out of the hardware's way
 
 # The light.
-LIGHT_GAP = 20.0  # CHOICE: media to the underside of the beam. Fixed: a different
-                  # height is a new stick, which is eight dollars
-BEAM_END = 0.75  # CHOICE: oak beyond the bars at each end
+# The light's height: a telescope at the end of the drop. A 1/2 EMT inner tube
+# carries the beam and slides inside the 3/4 drop; a 3/4 set-screw coupling on
+# the drop's end locks it, through a slot in a printed sleeve that centres the
+# 1/2 in the coupling's free half. Loosen, slide, tighten.
+GAP_MIN = 12.0  # CHOICE: V1's closest useful working distance, for seedlings
+GAP_MAX = 24.0  # CHOICE: a grown ranunculus, about 18 in, with 6 to spare
+DRAWN_GAP = GAP_MIN  # CHOICE: where the model and the renders hang it
+INNER_OD = 0.706  # ESTIMATE: 1/2 EMT -- caliper it
+INNER_ID = 0.622  # ESTIMATE: 1/2 EMT's bore; every cable to the beam goes through it
+EMT_ID = 0.824  # ESTIMATE: 3/4 EMT's bore
+COUPLING_L = 1.75  # ESTIMATE: a 3/4 set-screw coupling, end to end
+COUPLING_OD = 1.1  # ESTIMATE
+HALF_STOP = 0.5  # ESTIMATE: hub top to the stop in a 1/2 set-screw connector
+OVERLAP_MIN = 2.5  # CHOICE: inner tube inside the drop proper, at the lowest light
+SHOW_MIN = 1.0  # CHOICE: hub top to coupling, at the highest light
+TANGENT_CLEAR = 0.25  # CHOICE: the inner tube stops short of the last bend
+SLEEVE_LIP = 0.125  # CHOICE: the printed sleeve's stop, under the coupling
+SLEEVE_SLOT = 0.3  # CHOICE: the window the set screw bears through
+BUSHING_L = 1.0  # CHOICE: printed, on the inner tube's top end -- the second guide
+MICRO_HDMI = (0.44, 0.27)  # ESTIMATE: the micro-HDMI plug's overmold, w x t -- measure
+BEAM_END = 2.25  # CHOICE: oak beyond the bars at each end; the +X end is the camera bay
 BEAM_RAIL = 0.625  # CHOICE: oak beside the bars
-BEAM_SPINE = 0.375  # CHOICE: oak between the two bars, full height -- two channels of light
+BEAM_SPINE = 0.5  # CHOICE: oak between the two bars, full height -- two channels of light.
+                  # 1/2 so the camera cable's groove in its top keeps 1/8 walls
 BEAM_H = 2.25  # CHOICE: the bars' 0.525 plus 1.725 of regress below them
 BAR_CLEAR = 0.02  # CHOICE: a side, bar in its pocket
 LEDGE = 0.125  # CHOICE: oak the bar rests on, all round, outside the LED board
 HUB_L = 2.75  # CHOICE: printed PETG, along the beam
 HUB_H = 0.875  # CHOICE: tall enough for the connector's locknut inside it
 WIRE_HOLE = 0.25  # CHOICE: through the spine under the hub, leads to the boards
-KNOCKOUT = 1.125  # ESTIMATE: the trade knockout for 3/4 conduit -- check the connector
+KNOCKOUT = 0.875  # ESTIMATE: the trade knockout for 1/2 conduit -- check the connector
+
+# The camera: Camera Module 3, in a bay in the beam's +X end block, tilted
+# toward the plants, its cable in a groove along the top of the spine to the hub
+# and down the telescope as a micro-HDMI pull (a standard HDMI plug will not
+# pass a 1/2 EMT bore; the micro end is the one pulled, then adapted).
+CAM_BAY = (1.5, 1.5)  # CHOICE: x by y, blind from the top
+CAM_FLOOR = 0.25  # CHOICE: oak left under the bay
+CAM_LENS = 0.75  # CHOICE: the window through the floor
+CAM_LID = 0.125  # CHOICE: a printed lid, flush in a rebate round the bay
+CAM_TILT = 30.0  # CHOICE: degrees off straight down, toward the plants
+CAM_HFOV = 66.0  # ESTIMATE: Camera Module 3 standard, horizontal -- the wide is 102
+GROOVE = 0.25  # CHOICE: width and depth, in the spine's top
 
 # The face of the instrument block.
 DIAL_GAP = 0.125  # CHOICE: between the two dial flanges
-DIAL_FLANGE = DIAL_BEZEL_OD  # the plate's figure: 'Weston 301, 3-1/2 in' -- caliper it
+DIAL_FLANGE = weston_301.FLANGE_OD  # LIB: 3.51, calipered 2026-10-27
 DIAL_HOLE = P.DIAL_CUT_DIAMETER  # LIB: what passes the body, 2.75
 WINDOW_W, WINDOW_H = WINDOW_WIDTH, WINDOW_HEIGHT  # the plate's: the Inky's active area
 WINDOW_CORNER = 0.25  # CHOICE: a 1/2 in masonry bit at each corner first, so the
@@ -195,10 +230,10 @@ def bend_radius() -> float:
     return TAKE_UP - EMT_OD / 2
 
 
-def beam_box() -> tuple[float, float, float, float, float, float]:
+def beam_box(gap: float = DRAWN_GAP) -> tuple[float, float, float, float, float, float]:
     l = HS.LENGTH + 2 * BAR_CLEAR + 2 * BEAM_END
     w = beam_width()
-    z0 = media_top() + LIGHT_GAP
+    z0 = media_top() + gap
     cy = crook_y()
     return (-l / 2, l / 2, cy - w / 2, cy + w / 2, z0, z0 + BEAM_H)
 
@@ -207,8 +242,29 @@ def beam_width() -> float:
     return 2 * (HS.WIDTH + 2 * BAR_CLEAR) + BEAM_SPINE + 2 * BEAM_RAIL
 
 
-def hub_top() -> float:
-    return beam_box()[5] + HUB_H
+def hub_top(gap: float = DRAWN_GAP) -> float:
+    return beam_box(gap)[5] + HUB_H
+
+
+def coupling_bottom() -> float:
+    """Fixed on the drop's end: set by the highest light, plus a little tube."""
+    return hub_top(GAP_MAX) + SHOW_MIN
+
+
+def inner_tube(gap: float = DRAWN_GAP) -> tuple[float, float]:
+    """(z_bottom, z_top) of the 1/2 inner tube with the light at ``gap``.
+
+    Its length is what keeps OVERLAP_MIN inside the drop at the lowest light,
+    and its top short of the bend at the highest.
+    """
+    z_tip = coupling_bottom() + COUPLING_L / 2  # the 3/4 drop's end
+    length = (z_tip + OVERLAP_MIN) - (hub_top(GAP_MIN) + HALF_STOP)
+    z0 = hub_top(gap) + HALF_STOP
+    return z0, z0 + length
+
+
+def travel() -> float:
+    return GAP_MAX - GAP_MIN
 
 
 def crook_points() -> dict[str, tuple[float, float]]:
@@ -218,15 +274,19 @@ def crook_points() -> dict[str, tuple[float, float]]:
     p1    -- stub meets riser, against the block's +X side
     p2    -- riser meets run, over the block's top
     p3    -- run meets drop, over the planter's centre
-    tip   -- the drop's end, at the stop inside the hub's connector
+    tip   -- the drop's end, at the stop inside the telescope's coupling
+
+    The drop's straight is the telescope's: the inner tube at the highest
+    light has to fit inside it, short of the bend, which is what sets how high
+    the run goes.
     """
     d = EMT_OD
     x_r = instrument_box()[1] + STANDOFF + d / 2  # on clamp backs, under its straps
     z_low = tunnels()["lower"][0] + d / 2  # the stub lies on the tunnel floor
     x_end = x_r + d / 2 - STUB_BACK
-    z_tip = hub_top() + CONNECTOR_STOP
-    drop_back = TAKE_UP + DROP_STRAIGHT  # back of the last bend to the tip
-    z_run = z_tip + drop_back - d / 2
+    z_tip = coupling_bottom() + COUPLING_L / 2
+    z_tangent = inner_tube(GAP_MAX)[1] + TANGENT_CLEAR
+    z_run = z_tangent + bend_radius()
     return {"end": (x_end, z_low), "p1": (x_r, z_low), "p2": (x_r, z_run),
             "p3": (0.0, z_run), "tip": (0.0, z_tip)}
 
@@ -267,6 +327,9 @@ def bend_sheet() -> list[dict]:
          "mark": run_back, "use": "star", "back_of_bend": run_back},
         {"step": 4, "bend": "cut", "from": "back of bend 3 (top of the run)",
          "mark": drop_back, "use": "hacksaw, ream", "back_of_bend": drop_back},
+        {"step": 5, "bend": "cut 1/2 EMT", "from": "end to end, the inner tube",
+         "mark": inner_tube()[1] - inner_tube()[0], "use": "hacksaw, ream both ends",
+         "back_of_bend": inner_tube()[1] - inner_tube()[0]},
     ]
 
 
@@ -481,7 +544,37 @@ def build_beam():
         beam -= _wbox((-pl / 2 + LEDGE, pl / 2 - LEDGE, ycen - pw / 2 + LEDGE, ycen + pw / 2 - LEDGE,
                        b[4] - 0.1, b[5] - hh + 0.001))
     beam -= cyl_z(WIRE_HOLE, BEAM_H + 0.2, at=(0.0, cy, b[4] - 0.1))
+    # The camera bay in the +X end, its lid's rebate, the lens window through
+    # its floor, and the cable's groove in the spine's top back to the hub.
+    bx0, bx1, by0, by1 = cam_bay()
+    beam -= _wbox((bx0, bx1, by0, by1, b[4] + CAM_FLOOR, b[5] + 0.1))
+    beam -= _wbox((bx0 - CAM_LID, bx1 + CAM_LID, by0 - CAM_LID, by1 + CAM_LID,
+                   b[5] - CAM_LID, b[5] + 0.1))
+    beam -= cyl_z(CAM_LENS, CAM_FLOOR + 0.2, at=((bx0 + bx1) / 2, cy, b[4] - 0.1))
+    beam -= _wbox((-HUB_L / 2 + 0.25, bx0 + 0.01, cy - GROOVE / 2, cy + GROOVE / 2,
+                   b[5] - GROOVE, b[5] + 0.1))
     return labelled(beam, "p1_beam")
+
+
+def cam_bay() -> tuple[float, float, float, float]:
+    """(x0, x1, y0, y1) of the camera bay, in the +X end block."""
+    b = beam_box()
+    x0 = HS.LENGTH / 2 + BAR_CLEAR + (BEAM_END - CAM_BAY[0]) / 2
+    cy = crook_y()
+    return x0, x0 + CAM_BAY[0], cy - CAM_BAY[1] / 2, cy + CAM_BAY[1] / 2
+
+
+def camera_sees(gap: float) -> tuple[float, float]:
+    """The planter's far and near ends, as angles off the camera's tilted
+    axis, in degrees, at ``gap``. Both inside half the field of view means it
+    frames both plants."""
+    bx0, bx1, *_ = cam_bay()
+    xc = (bx0 + bx1) / 2
+    h = beam_box(gap)[4] + CAM_FLOOR - media_top()
+    x0, x1, *_ = planter_box()
+    far = math.degrees(math.atan2(xc - x0, h))
+    near = math.degrees(math.atan2(xc - x1, h))
+    return far - CAM_TILT, near - CAM_TILT
 
 
 def build_bars():
@@ -511,6 +604,9 @@ def build_hub():
     hub -= _wbox((-HUB_L / 2 + 0.25, HUB_L / 2 - 0.25, b[2] + BEAM_RAIL, b[3] - BEAM_RAIL,
                   b[5] - 0.1, b[5] + HUB_H - 0.1875))
     hub -= cyl_z(KNOCKOUT, 1.0, at=(0.0, cy, b[5] + HUB_H - 0.5))
+    # The camera cable's groove carries on under the hub's end wall.
+    hub -= _wbox((HUB_L / 2 - 0.3, HUB_L / 2 + 0.1, cy - GROOVE / 2, cy + GROOVE / 2,
+                  b[5] - 0.1, b[5] + 0.0625))
     for x, y in hub_screws():
         hub -= cyl_z(HUB_SCREW, HUB_H + 0.2, at=(x, y, b[5] - 0.1))
     return labelled(hub, "p1_hub")
@@ -528,11 +624,70 @@ def hub_screws() -> list[tuple[float, float]]:
             for y in (b[2] + BEAM_RAIL / 2, b[3] - BEAM_RAIL / 2)]
 
 
+def _tube(od: float, idia: float, z0: float, z1: float, x: float = 0.0):
+    from ._shapes import cyl_z
+
+    y = crook_y()
+    return cyl_z(od, z1 - z0, at=(x, y, z0)) - cyl_z(idia, z1 - z0 + 0.2, at=(x, y, z0 - 0.1))
+
+
+def build_inner():
+    """The 1/2 EMT inner tube, at the drawn height."""
+    from ._shapes import labelled
+
+    z0, z1 = inner_tube()
+    return labelled(_tube(INNER_OD, INNER_ID, z0, z1), "p1_inner_tube")
+
+
+def build_coupling():
+    """Reference: the 3/4 set-screw coupling on the drop's end."""
+    from ._shapes import labelled
+
+    zc = coupling_bottom()
+    return labelled(_tube(COUPLING_OD, EMT_OD + 0.005, zc, zc + COUPLING_L), "p1_coupling")
+
+
+def build_sleeve():
+    """Printed: centres the 1/2 tube in the coupling's free half, a lip under
+    it for a stop, and a slot for the coupling's set screw to bear through."""
+    from ._shapes import labelled
+
+    zc = coupling_bottom()
+    y = crook_y()
+    sleeve = _tube(EMT_OD - 0.01, INNER_OD + 0.02, zc, zc + COUPLING_L / 2 - 0.05)
+    sleeve += _tube(COUPLING_OD, INNER_OD + 0.02, zc - SLEEVE_LIP, zc)
+    sleeve -= _wbox((-SLEEVE_SLOT / 2, SLEEVE_SLOT / 2, y, y + EMT_OD,
+                     zc + 0.15, zc + COUPLING_L / 2 - 0.15))
+    return labelled(sleeve, "p1_sleeve")
+
+
+def build_bushing():
+    """Printed: on the inner tube's top end, a slide fit in the 3/4 bore --
+    the telescope's second guide, so it cannot rack."""
+    from ._shapes import labelled
+
+    z1 = inner_tube()[1]
+    return labelled(_tube(EMT_ID - 0.02, INNER_OD, z1 - BUSHING_L, z1), "p1_bushing")
+
+
+def build_lid():
+    """Printed: the camera bay's lid, flush in its rebate."""
+    from ._shapes import labelled
+
+    b = beam_box()
+    bx0, bx1, by0, by1 = cam_bay()
+    c = 0.01
+    return labelled(_wbox((bx0 - CAM_LID + c, bx1 + CAM_LID - c, by0 - CAM_LID + c,
+                           by1 + CAM_LID - c, b[5] - CAM_LID, b[5])), "p1_cam_lid")
+
+
 def build() -> dict:
     """Every P1 part, in place: fabricated first, then reference."""
     return {
         "plate": build_plate(), "instrument": build_instrument(), "crook": build_crook(),
         "beam": build_beam(), "hub": build_hub(), "pads": build_pads(),
+        "inner": build_inner(), "sleeve": build_sleeve(), "bushing": build_bushing(),
+        "lid": build_lid(),
         "planter": build_planter(), "media": build_media(), "pan": build_pan(),
-        "bars": build_bars(),
+        "bars": build_bars(), "coupling": build_coupling(),
     }
