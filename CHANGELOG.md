@@ -2,6 +2,33 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-10-27 (P1: branch to a first-install prototype)
+
+### Added
+- **`docs/P1_PROTOTYPE.md`, `cad/growlab_cad/proto.py`, `cad/proto_build.py`.** A
+  prototype to build and photograph now, with V1's cabinet, mast and steel case
+  parked rather than deleted:
+  - **Planter:** a CMU on the floor, media straight in its cores, in a steam pan.
+  - **Instrument:** a second CMU stood on end, with both Weston dials and the
+    e-ink cored into its solid face and the hardware stack in the two tunnels
+    its cores become.
+  - **Crook:** one stick of 3/4 EMT with three hand-bender 90s (a stub and two
+    back-to-backs), with a generated bend sheet.
+  - **Light:** a white oak beam with the heatsink bars flush in its top and the
+    LEDs recessed out of sight.
+  - **Ground plate:** 1/4 steel, because free-standing the instrument block tips
+    at 2.6 lb.
+- The pack: router files for the beam, a printed hub and pads, a laser-cut
+  template that marks the coring, laser-cut tunnel caps, the plate for the plasma,
+  and the bend sheet.
+
+### Found while drawing it
+- **At the bender's radius, the stub's bend sweeps out of the lower tunnel**
+  instead of along its floor. Tight to the block, it cleared the web by 0.06 in.
+  The riser now rides on clamp backs 1/4 in off the block, which drops the arc's
+  exit 1.6 in below the web. The lower right cap is notched where the arc
+  actually crosses.
+
 ## 2026-09-30 (sensor case Rev J: the plate nests in a rebate)
 
 ### Changed
