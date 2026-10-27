@@ -232,3 +232,25 @@ class TestTheGeometryBuilds:
         for name in ("p1.step", "beam_top.dxf", "beam_bottom.dxf", "hub.stl", "sleeve.stl",
                      "face_template.dxf", "plate.dxf", "cap_lower_right.dxf", "bend_sheet.md"):
             assert (tmp_path / name).exists(), name
+
+
+class TestTheViewer:
+    def test_it_knows_every_part(self, parts):
+        """A part added to the model must not silently vanish from the page."""
+        from cad.proto_viewer import PARTS
+
+        assert set(PARTS) == set(parts)
+
+    def test_what_rides_the_telescope_is_what_hangs_off_the_tube(self):
+        from cad.proto_viewer import PARTS
+
+        rides = {n for n, s in PARTS.items() if s.get("rides")}
+        assert rides == {"inner", "bushing", "beam", "bars", "hub", "lid"}
+
+    def test_the_slider_runs_the_whole_travel(self):
+        from cad.proto_viewer import heights
+
+        h = heights()
+        assert h[0]["gap"] == Q.GAP_MIN and h[-1]["gap"] == Q.GAP_MAX
+        assert h[0]["held"] == pytest.approx(Q.OVERLAP_MIN)
+        assert h[-1]["hub_clear"] == pytest.approx(Q.SHOW_MIN)
