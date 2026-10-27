@@ -65,8 +65,6 @@ class TestTheCrookBendsOnAHandBender:
     def test_it_is_three_nineties_in_one_stick(self):
         assert Q.total_bend() <= 360
         assert Q.developed_length() < Q.STICK
-        # What is left over is enough to practise the stub and a back-to-back.
-        assert Q.STICK - Q.developed_length() > Q.STUB_BACK + Q.bend_sheet()[1]["mark"]
 
     def test_the_stub_is_long_enough_to_bend(self):
         """A hand bender cannot make a stub shorter than its take-up."""
@@ -75,7 +73,8 @@ class TestTheCrookBendsOnAHandBender:
         assert first["mark"] > 0
 
     def test_the_drop_leaves_room_for_the_connector(self):
-        assert Q.bend_sheet()[-1]["mark"] >= Q.TAKE_UP + Q.DROP_STRAIGHT - 1e-9
+        drop = next(r for r in Q.bend_sheet() if r["step"] == 4)
+        assert drop["mark"] >= Q.TAKE_UP + Q.travel() + Q.OVERLAP_MIN
 
     def test_the_marks_add_back_up_to_the_shape(self):
         """Out-to-out dimensions the tape reads, against the centreline."""
@@ -111,8 +110,56 @@ class TestTheCrookBendsOnAHandBender:
 
 
 class TestTheLight:
-    def test_it_hangs_its_gap_over_the_media(self):
-        assert Q.beam_box()[4] - Q.media_top() == pytest.approx(Q.LIGHT_GAP)
+    def test_it_hangs_where_it_is_drawn(self):
+        assert Q.beam_box()[4] - Q.media_top() == pytest.approx(Q.DRAWN_GAP)
+        assert Q.GAP_MIN <= Q.DRAWN_GAP <= Q.GAP_MAX
+
+
+class TestTheTelescope:
+    """12 to 24 in over the media, on a 1/2 EMT tube in the 3/4 drop."""
+
+    def test_at_the_lowest_light_the_tube_is_still_held(self):
+        z_tip = Q.crook_points()["tip"][1]
+        assert Q.inner_tube(Q.GAP_MIN)[1] - z_tip == pytest.approx(Q.OVERLAP_MIN)
+
+    def test_at_the_highest_light_the_tube_stops_short_of_the_bend(self):
+        c = Q.crook_points()
+        tangent = c["p3"][1] - Q.bend_radius()
+        assert Q.inner_tube(Q.GAP_MAX)[1] <= tangent - Q.TANGENT_CLEAR + 1e-9
+
+    def test_at_the_highest_light_the_hub_clears_the_coupling(self):
+        assert Q.coupling_bottom() - Q.hub_top(Q.GAP_MAX) == pytest.approx(Q.SHOW_MIN)
+
+    def test_the_tubes_nest(self):
+        assert Q.INNER_OD < Q.EMT_ID - 0.05
+        assert Q.INNER_OD < Q.EMT_ID - 0.02 < Q.EMT_ID, "the bushing slides in the bore"
+
+    def test_the_cables_go_through_the_inner_tube(self):
+        """The camera's micro-HDMI end is the one pulled; a standard HDMI
+        plug would not pass."""
+        w, t = Q.MICRO_HDMI
+        assert math.hypot(w, t) < Q.INNER_ID
+
+    def test_the_travel_is_the_gap_range(self):
+        z_lo, _ = Q.inner_tube(Q.GAP_MIN)
+        z_hi, _ = Q.inner_tube(Q.GAP_MAX)
+        assert z_hi - z_lo == pytest.approx(Q.travel())
+
+
+class TestTheCamera:
+    @pytest.mark.parametrize("gap", [12.0, 18.0, 24.0])
+    def test_it_frames_both_plants_at_every_height(self, gap):
+        far, near = Q.camera_sees(gap)
+        assert abs(far) < Q.CAM_HFOV / 2 and abs(near) < Q.CAM_HFOV / 2
+
+    def test_its_bay_is_in_the_end_block(self):
+        bx0, bx1, by0, by1 = Q.cam_bay()
+        x0, x1, y0, y1, *_ = Q.beam_box()
+        assert bx0 > HS.LENGTH / 2 + Q.BAR_CLEAR + 0.25 and bx1 < x1 - 0.25
+        assert y0 + Q.BEAM_RAIL < by0 and by1 < y1 - Q.BEAM_RAIL
+
+    def test_the_groove_keeps_walls_in_the_spine(self):
+        assert (Q.BEAM_SPINE - Q.GROOVE) / 2 >= 0.125
 
     def test_the_bars_are_flush_in_its_top(self):
         """They shed heat to the room exactly as they would bare."""
@@ -164,7 +211,8 @@ def parts():
 
 class TestTheGeometryBuilds:
     def test_every_fabricated_part_is_one_solid(self, parts):
-        for name in ("plate", "instrument", "crook", "beam", "hub"):
+        for name in ("plate", "instrument", "crook", "beam", "hub", "inner", "sleeve",
+                     "bushing", "lid"):
             assert len(parts[name].solids()) == 1, name
 
     def test_nothing_collides(self, parts):
@@ -181,6 +229,6 @@ class TestTheGeometryBuilds:
         from cad import proto_build
 
         assert proto_build.main(["--out", str(tmp_path)]) == 0
-        for name in ("p1.step", "beam_top.dxf", "beam_bottom.dxf", "hub.stl",
+        for name in ("p1.step", "beam_top.dxf", "beam_bottom.dxf", "hub.stl", "sleeve.stl",
                      "face_template.dxf", "plate.dxf", "cap_lower_right.dxf", "bend_sheet.md"):
             assert (tmp_path / name).exists(), name

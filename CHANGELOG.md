@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-10-27 (P1: the light adjusts, and the camera rides in the beam)
+
+### Changed
+- **The light telescopes: 12 to 24 in over the media.** It was fixed at 20 in, which
+  served neither stage: at 33 W the LEDs want to be close to seedlings, and a grown
+  ranunculus is about 18 in tall. A 1/2 EMT inner tube carries the beam inside the
+  crook's 3/4 drop. A 3/4 set-screw coupling locks it through a slot in a printed
+  sleeve, and a printed bushing on its top end is the second guide. The cost is
+  height: the drop needs 12 in of travel plus overlap in a straight run, so the
+  crook's top goes from 40 in to 58 in.
+- **The camera is in the beam's +X end**, in a bay, tilted 30° at the plants. With
+  the standard lens it frames both ends of the planter from 12 to 24 in. Its cable
+  runs in a groove in the spine's top to the hub, then down the telescope. A
+  standard HDMI plug will not pass a 1/2 EMT bore, so the end pulled through the
+  conduit is a micro-HDMI plug.
+- **The dial flange is calipered, 3.510**, and now comes from the components
+  library (`weston_301.FLANGE_OD`, components-v1.100).
+- The beam is 20 in long (2-1/4 in end blocks) with a 1/2 in spine.
+- The canopy fan stays parked.
+
 ## 2026-10-27 (P1: branch to a first-install prototype)
 
 ### Added
