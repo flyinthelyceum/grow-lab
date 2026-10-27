@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-10-27 (P1: a viewer)
+
+### Added
+- **`cad/proto_viewer.py`**: the P1 prototype as one self-contained HTML page, in the
+  pattern of the station and sensor case viewers. A slider runs the telescope
+  through its 12 in of travel and reads out what the model holds it to; one view
+  looks through the Pi camera as it sits in the beam, at its field of view; a
+  portfolio view; and the crook in four DTM colours. CI builds it into the CAD
+  artifact, and a test keeps its parts list level with `proto.build()`.
+- It shows that the camera's 30° tilt is right for the lowest light and off-centre
+  at the highest. That is now listed under P1's known risks.
+
 ## 2026-10-27 (P1: the light adjusts, and the camera rides in the beam)
 
 ### Changed

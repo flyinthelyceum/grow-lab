@@ -9,6 +9,12 @@ physical build.
 Geometry: `cad/growlab_cad/proto.py`. Cut files: `python cad/proto_build.py` →
 `cad/out/proto/`. Tests: `tests/unit/test_cad_proto.py`.
 
+To look at it: `python cad/proto_viewer.py` → `cad/out/proto_viewer.html`, one
+file that opens in a browser with nothing installed. It has a slider for the
+light's height that moves everything on the telescope, a view through the Pi
+camera as it is tilted in the beam, a portfolio three-quarter view, and the
+crook in a few DTM colours.
+
 ## The piece
 
 - **The planter.** A CMU lying on the floor as it was made, coir straight in
@@ -143,3 +149,8 @@ are typical figures, not this block's. Caliper, then re-run `proto_build.py`:
   that matters, chamfer the top edge with the grinder.
 - **The stub's bend leaves the lower tunnel at the bender's radius**, about 4 to
   6 in up the right-hand opening, so the lower right cap is notched there.
+- **The camera's tilt is set for the lowest light.** At 12 in, 30° centres the
+  planter in the frame. At 24 in both ends are still in shot, but the planter
+  sits to one side of it (4.6° and 27° off axis); about 19° would centre it
+  there. The bay could be cut for a tilt in between, or the camera's mount made
+  adjustable. The viewer's camera view shows both.
